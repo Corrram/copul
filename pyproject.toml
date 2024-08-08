@@ -21,7 +21,7 @@ classifiers = [
 
 [tool.poetry]
 name = "copul"
-version = "0.0.7"
+version = "0.0.8"
 description = "Mathematical computation and visualization of bivariate copulas."
 authors = ["Marcus Rockel <marcus.rockel@finance.uni-freiburg.de>"]
 repository = "https://github.com/Corrram/copul"
@@ -29,11 +29,11 @@ homepage = "https://github.com/Corrram/copul"
 documentation = "https://github.com/Corrram/copul"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 pandas = "^2.2"
 sympy = "^1.12"
 numpy = "^2.0"
-scipy = "^1.12"
+scipy = "^1.14"
 pillow = "^10.3"
 interval = "^1.0"
 matplotlib = "^3.8"
