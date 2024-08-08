@@ -21,12 +21,17 @@ classifiers = [
 
 [tool.poetry]
 name = "copul"
-version = "0.0.8"
+version = "0.0.9"
 description = "Mathematical computation and visualization of bivariate copulas."
+readme = "README.md"
 authors = ["Marcus Rockel <marcus.rockel@finance.uni-freiburg.de>"]
 repository = "https://github.com/Corrram/copul"
-homepage = "https://github.com/Corrram/copul"
-documentation = "https://github.com/Corrram/copul"
+# homepage = "https://github.com/Corrram/copul"
+documentation = "https://copul.readthedocs.io"
+
+[tool.poetry.urls]
+# "Homepage" = "https://github.com/Corrram/copul"
+"Issue Tracker" = "https://github.com/Corrram/copul/issues"
 
 [tool.poetry.dependencies]
 python = "^3.10"
@@ -43,5 +48,4 @@ statsmodels = "^0.14"
 [tool.poetry.group.dev.dependencies]
 sphinx = "^7.4"
 sphinx-rtd-theme = "^2.0"
-black = "^24.8.0"
-
+black = "^24.8"
