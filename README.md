@@ -1,14 +1,15 @@
-# copulas_in_systemic_risk
+# copul
 
 ## Copula properties
-For any of the copula families below, e.g. `copula = copul.Galambos()`, get the following properties:
-* Cumulative distribution function via copula.cdf
-* Density function via copula.pdf
+For any of the bivariate copula families specified below, e.g. `copula = copul.Galambos()`, get the following properties:
+* Cumulative distribution function via `copula.cdf`
+* Density function via `copula.pdf`
+* Conditional distribution function via `copula.cond_distr_1` and `copula.cond_distr_2`
 
 ## Supported copula families:
 
 ### Archimedean Copulas
-The 22 copula families from Nelsen, accessible via
+The 22 Archimedean copula families from the book "Nelsen - An Introduction to Copulas", accessible via
 `copul.archimedean.Nelsen1`, `copul.archimedean.Nelsen2`, etc.
 Let `copula` be any instance of those classes, e.g. `copula = copul.archimedean.Nelsen1()`.
 
@@ -30,7 +31,7 @@ For these families, the following properties are available:
 * tawn
 
 Let `copula` be any instance of those classes, e.g. `copula = copul.extreme_value.Galambos()`.
-Then, the Pickand function is available via e.g. `copula.pickand`.
+Then, the Pickands function is available via e.g. `copula.pickands`.
 
 ### Other
 * Farlie-Gumbel-Morgenstern
@@ -45,7 +46,7 @@ import copul
 
 galambos = copul.extreme_value.Galambos()
 params = galambos.sample_parameters(3)
-galambos.plot_pickand(params)
+galambos.plot_pickands(params)
 
 clayton = copul.archimedean.Clayton()
 clayton(theta=1.5).plot_cdf()

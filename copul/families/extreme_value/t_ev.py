@@ -24,7 +24,7 @@ class tEV(ExtremeValueCopula):
         return True
 
     @property
-    def pickand(self):
+    def pickands(self):
         def z(t):
             return (
                 (1 + self.nu) ** (1 / 2)

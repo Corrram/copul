@@ -28,7 +28,7 @@ class HueslerReiss(ExtremeValueCopula):
         return True
 
     @property
-    def pickand(self):
+    def pickands(self):
         std_norm = stats.cdf(stats.Normal("x", 0, 1))
         return (1 - self.t) * std_norm(self._z(1 - self.t)) + self.t * std_norm(
             self._z(self.t)

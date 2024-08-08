@@ -19,7 +19,7 @@ class Galambos(ExtremeValueCopula):
         return True
 
     @property
-    def pickand(self):
+    def pickands(self):
         t = self.t
         delta = self.delta
         return 1 - (t ** (-delta) + (1 - t) ** (-delta)) ** (-1 / delta)
@@ -33,7 +33,8 @@ class Galambos(ExtremeValueCopula):
             u
             * v
             * sympy.exp(
-                (sympy.log(1 / u) ** (-delta) + sympy.log(1 / v) ** (-delta)) ** (-1 / delta)
+                (sympy.log(1 / u) ** (-delta) + sympy.log(1 / v) ** (-delta))
+                ** (-1 / delta)
             )
         )
         return SymPyFunctionWrapper(cdf)
@@ -49,11 +50,13 @@ class Galambos(ExtremeValueCopula):
                 (
                     (
                         (
-                            ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
+                            ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
+                            ** delta
                             + (sympy.log(v) / sympy.log(u * v)) ** delta
                         )
                         / (
-                            ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
+                            ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
+                            ** delta
                             * (sympy.log(v) / sympy.log(u * v)) ** delta
                         )
                     )
@@ -116,11 +119,13 @@ class Galambos(ExtremeValueCopula):
                     * (
                         (
                             (
-                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
+                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
+                                ** delta
                                 + (sympy.log(v) / sympy.log(u * v)) ** delta
                             )
                             / (
-                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
+                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
+                                ** delta
                                 * (sympy.log(v) / sympy.log(u * v)) ** delta
                             )
                         )
@@ -140,11 +145,13 @@ class Galambos(ExtremeValueCopula):
                     * (
                         (
                             (
-                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
+                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
+                                ** delta
                                 + (sympy.log(v) / sympy.log(u * v)) ** delta
                             )
                             / (
-                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
+                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
+                                ** delta
                                 * (sympy.log(v) / sympy.log(u * v)) ** delta
                             )
                         )

@@ -80,7 +80,7 @@ class Tawn(ExtremeValueCopula):
         return True
 
     @property
-    def pickand(self):
+    def pickands(self):
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
         t = self.t

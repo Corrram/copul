@@ -1,3 +1,4 @@
+import itertools
 import warnings
 from contextlib import contextmanager
 
@@ -20,11 +21,11 @@ class ExtremeValueCopula(AbstractCopula):
     _t_min = 0
     _t_max = 1
     t = sympy.symbols("t", positive=True)
-    pickand = sympy.Function("A")(t)
+    pickands = sympy.Function("A")(t)
     intervals = None
 
     def deriv_pickand_at_0(self):
-        diff = sympy.simplify(sympy.diff(self.pickand, self.t))
+        diff = sympy.simplify(sympy.diff(self.pickands, self.t))
         diff_at_0 = sympy.limit(diff, self.t, 0)
         return diff_at_0
 
@@ -37,7 +38,7 @@ class ExtremeValueCopula(AbstractCopula):
     @property
     def cdf(self):
         """Cumulative distribution function of the copula"""
-        cop = (self.u * self.v) ** self.pickand.subs(
+        cop = (self.u * self.v) ** self.pickands.subs(
             self.t, sympy.ln(self.v) / sympy.ln(self.u * self.v)
         )
         cop = self._get_simplified_solution(cop)
@@ -47,25 +48,25 @@ class ExtremeValueCopula(AbstractCopula):
     def pdf(self):
         """Probability density function of the copula"""
         _xi_1, u, v = sympy.symbols("_xi_1 u v")
-        pickand = self.pickand
+        pickands = self.pickands
         t = self.t
         pdf = (
-            (u * v) ** pickand.subs(t, log(v) / log(u * v))
+            (u * v) ** pickands.subs(t, log(v) / log(u * v))
             * (
                 -(
                     (log(v) - log(u * v))
                     * Subs(
-                        Derivative(pickand.subs(t, _xi_1), _xi_1),
+                        Derivative(pickands.subs(t, _xi_1), _xi_1),
                         _xi_1,
                         log(v) / log(u * v),
                     )
-                    - pickand.subs(t, log(v) / log(u * v)) * log(u * v)
+                    - pickands.subs(t, log(v) / log(u * v)) * log(u * v)
                 )
                 * (
-                    pickand.subs(t, log(v) / log(u * v)) * log(u * v)
+                    pickands.subs(t, log(v) / log(u * v)) * log(u * v)
                     - log(v)
                     * Subs(
-                        Derivative(pickand.subs(t, _xi_1), _xi_1),
+                        Derivative(pickands.subs(t, _xi_1), _xi_1),
                         _xi_1,
                         log(v) / log(u * v),
                     )
@@ -74,7 +75,7 @@ class ExtremeValueCopula(AbstractCopula):
                 + (log(v) - log(u * v))
                 * log(v)
                 * Subs(
-                    Derivative(pickand.subs(t, _xi_1), (_xi_1, 2)),
+                    Derivative(pickands.subs(t, _xi_1), (_xi_1, 2)),
                     _xi_1,
                     log(v) / log(u * v),
                 )
@@ -93,7 +94,7 @@ class ExtremeValueCopula(AbstractCopula):
         return rho
 
     def _rho_int_1(self):
-        return sympy.simplify((self.pickand + 1) ** (-2))
+        return sympy.simplify((self.pickands + 1) ** (-2))
 
     def _rho(self):
         return sympy.simplify(
@@ -102,8 +103,8 @@ class ExtremeValueCopula(AbstractCopula):
 
     def tau(self):  # nelsen 5.15
         t = self.t
-        diff2_pickand = sympy.diff(self.pickand, t, 2)
-        integrand = sympy.simplify(t * (1 - t) / self.pickand * diff2_pickand)
+        diff2_pickands = sympy.diff(self.pickands, t, 2)
+        integrand = sympy.simplify(t * (1 - t) / self.pickands * diff2_pickands)
         print("integrand: ", integrand)
         print("integrand latex: ", sympy.latex(integrand))
         integral = sympy.integrate(integrand, (t, 0, 1))
@@ -154,7 +155,7 @@ class ExtremeValueCopula(AbstractCopula):
         y = [lambda_func(i) for i in x]
         plt.plot(x, y, label=par_str)
 
-    def plot_pickand(self, subs):
+    def plot_pickands(self, subs):
         if subs is None:
             subs = {}
         subs = {
@@ -166,8 +167,8 @@ class ExtremeValueCopula(AbstractCopula):
         plot_vals = self._mix_params(subs)
         for plot_val in plot_vals:
             subs_dict = {str(k): v for k, v in plot_val.items()}
-            pickand = self(**subs_dict).pickand
-            self._get_function_graph(pickand, plot_val)
+            pickands = self(**subs_dict).pickand
+            self._get_function_graph(pickands, plot_val)
 
         @contextmanager
         def suppress_warnings():
@@ -195,6 +196,21 @@ class ExtremeValueCopula(AbstractCopula):
         with suppress_warnings():
             plt.show()
         return None
+
+    @staticmethod
+    def _mix_params(params):
+        cross_prod_keys = [
+            key
+            for key, value in params.items()
+            if isinstance(value, (str, list, property))
+        ]
+        values_to_cross_product = [
+            val if isinstance(val, list) else [val] for val in params.values()
+        ]
+        cross_prod = list(itertools.product(*values_to_cross_product))
+        return [
+            dict(zip(cross_prod_keys, cross_prod[i])) for i in range(len(cross_prod))
+        ]
 
     def minimize_func_empirically(self, func, parameters):
         b = [0.01, 0.99]

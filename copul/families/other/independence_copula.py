@@ -15,5 +15,5 @@ class IndependenceCopula(Frechet):
         return 0
 
     @property
-    def pickand(self):
+    def pickands(self):
         return sympy.Max(1)

@@ -42,7 +42,7 @@ class MarshallOlkin(ExtremeValueCopula):
         self._alpha_2 = value
 
     @property
-    def pickand(self):
+    def pickands(self):
         return sympy.Max(1 - self.alpha_1 * (1 - self.t), 1 - self.alpha_2 * self.t)
 
     @property

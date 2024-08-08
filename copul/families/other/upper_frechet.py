@@ -16,5 +16,5 @@ class UpperFrechet(Frechet):
         return 0
 
     @property
-    def pickand(self):
+    def pickands(self):
         return sympy.Max(self.t, 1 - self.t)

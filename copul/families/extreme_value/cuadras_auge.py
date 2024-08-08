@@ -33,7 +33,7 @@ class CuadrasAuge(ExtremeValueCopula):
         return self.delta == 0
 
     @property
-    def pickand(self):
+    def pickands(self):
         return 1 - self.delta * sympy.Min(1 - self.t, self.t)
 
     @property

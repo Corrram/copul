@@ -38,7 +38,7 @@ class BB5(ExtremeValueCopula):
         return True
 
     @property
-    def pickand(self):
+    def pickands(self):
         theta = self.theta
         t = self.t
         return (

@@ -19,14 +19,17 @@ class GumbelHougaard(ExtremeValueCopula):
     intervals = {"theta": sympy.Interval(1, np.inf, left_open=False, right_open=True)}
 
     @property
-    def pickand(self):
+    def pickands(self):
         return (self.t**self.theta + (1 - self.t) ** self.theta) ** (1 / self.theta)
 
     @property
     def cdf(self):
         cdf = sympy.exp(
             -(
-                (sympy.log(1 / self.v) ** self.theta + sympy.log(1 / self.u) ** self.theta)
+                (
+                    sympy.log(1 / self.v) ** self.theta
+                    + sympy.log(1 / self.u) ** self.theta
+                )
                 ** (1 / self.theta)
             )
         )

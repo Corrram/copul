@@ -90,7 +90,7 @@ class JoeEV(ExtremeValueCopula):
         return True
 
     @property
-    def pickand(self):
+    def pickands(self):
         delta = self.delta
         t = self.t
         alpha_1 = self.alpha_1
