@@ -206,7 +206,7 @@ class ChatterjeePlotter:
         interval = self.copul.intervals[str(self.copul.params[0])]
         if isinstance(interval, sympy.FiniteSet):
             return np.array([float(val) for val in interval])
-        cut_off = self.log_cut_off if log_scale else 20
+        cut_off = self.log_cut_off if log_scale else 10
         if log_scale:
             inf = float(interval.inf)
             if isinstance(cut_off, tuple):

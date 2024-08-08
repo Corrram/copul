@@ -7,6 +7,10 @@ from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
 class CuadrasAuge(ExtremeValueCopula):
+    """
+    Cuadras-Auge copula, special case of the Marshall-Olkin copula.
+    """
+
     @property
     def is_symmetric(self) -> bool:
         return True
@@ -30,7 +34,7 @@ class CuadrasAuge(ExtremeValueCopula):
 
     @property
     def pickand(self):
-        return sympy.Max(1 - self.delta * (1 - self.t), 1 - self.delta * (1 - self.t))
+        return 1 - self.delta * sympy.Min(1 - self.t, self.t)
 
     @property
     def cdf(self):

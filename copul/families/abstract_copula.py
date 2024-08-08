@@ -206,13 +206,18 @@ class AbstractCopula(ABC):
     def _squared_cond_distr_1(self, u, v):
         return sympy.simplify(self.cond_distr_1().func ** 2)
 
-    def plot(self, **kwargs):
-        if not kwargs:
+    def plot(self, *args, **kwargs):
+        if not args and not kwargs:
             return self.plot_cdf()
+        for i, function in enumerate(args):
+            if len(args) > 1:
+                kwargs[f"Function {i + 1}"] = function
+            else:
+                kwargs[""] = function
+        free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
         for function_name, function in kwargs.items():
-            free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
             if not free_symbol_dict:
-                return self._plot3d(function, title=f"{function_name}", zlabel="")
+                self._plot3d(function, title=f"{function_name}", zlabel="")
             elif len([*free_symbol_dict]) == 1:
                 param_str = [*free_symbol_dict][0]
                 param_ = free_symbol_dict[param_str]
@@ -236,15 +241,15 @@ class AbstractCopula(ABC):
                     ]
                     y = np.array(y_list)
                     plt.plot(x, y, label=f"{function_name}")
-        plt.legend()
-        plt.title(f"{self.__class__.__name__} {', '.join([*kwargs])}")
-        plt.grid(True)
-        pathlib.Path("images").mkdir(exist_ok=True)
-        fig1 = plt.gcf()
-        plt.show()
-        plt.draw()
-        fig1.savefig(f"images/{self.__class__.__name__}.png")
-        # sympy.plot(function, (param, lower_bound, upper_bound))
+        if free_symbol_dict:
+            plt.legend()
+            plt.title(f"{self.__class__.__name__} {', '.join([*kwargs])}")
+            plt.grid(True)
+            pathlib.Path("images").mkdir(exist_ok=True)
+            fig1 = plt.gcf()
+            plt.show()
+            plt.draw()
+            fig1.savefig(f"images/{self.__class__.__name__}.png")
 
     def plot_cdf(self, data=None, title=None, zlabel=None):
         if title is None:
@@ -287,7 +292,7 @@ class AbstractCopula(ABC):
         n_obs,
         n_params,
         plot_var=False,
-        ylim=(0, 1),
+        ylim=(-1, 1),
         params=None,
         log_cut_off=None,
     ):
@@ -300,9 +305,13 @@ class AbstractCopula(ABC):
         return self._plot3d(pdf, title=f"{type(self).__name__} Copula", zlabel="PDF")
 
     def _plot3d(self, func, title, zlabel, zlim=None):
-        parameters = inspect.signature(func).parameters
-        if isinstance(func, types.MethodType) and len(parameters) == 0:
-            func = func()
+        try:
+            parameters = inspect.signature(func).parameters
+        except TypeError:
+            pass
+        else:
+            if isinstance(func, types.MethodType) and len(parameters) == 0:
+                func = func()
         if isinstance(func, SymPyFunctionWrapper):
             f = sympy.lambdify((self.u, self.v), func.func)
         elif isinstance(func, sympy.Expr):

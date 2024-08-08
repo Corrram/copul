@@ -43,4 +43,5 @@ statsmodels = "^0.14"
 [tool.poetry.group.dev.dependencies]
 sphinx = "^7.4"
 sphinx-rtd-theme = "^2.0"
+black = "^24.8.0"
 
