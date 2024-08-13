@@ -6,7 +6,7 @@
 copul documentation
 ===================
 
-**copul** is a package for designed for mathematical computation and visualization of bivariate copula families.
+**copul** is a package designed for mathematical computation and visualization of bivariate copula families.
 It accompanies the `Dependence properties of bivariate copula families <https://www.degruyter.com/document/doi/10.1515/demo-2024-0002/html>`_ article released in the Dependence Modeling journal.
 
 -------------------
