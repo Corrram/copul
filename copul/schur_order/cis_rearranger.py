@@ -28,7 +28,7 @@ class CISRearranger:
     @staticmethod
     def rearrange_checkerboard(ccop):
         """
-        Implements Algorithm 1 from 2022 Strothmann, Dette, Siburg - Rearranged
+        Implements Algorithm 1 on p.8 from 2022 Strothmann, Dette, Siburg - Rearranged
         dependence measures. Computes the rearranged copula from the checkerboard,
         which is CIS (with respect to conditioning on the first variable, which
         corresponds to the matrix row entries).
