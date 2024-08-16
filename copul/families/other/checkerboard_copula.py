@@ -85,9 +85,11 @@ class CheckerboardCopula(AbstractCopula):
         )
         return 12 * result - 3
 
-    def xi(self):
+    def xi(self, condition_on_y=False):
+        method = self.cond_distr_2 if condition_on_y else self.cond_distr_1
+
         def f(x, y):
-            return self.cond_distr_1(x, y) ** 2
+            return method(x, y) ** 2
 
         result = basictools.monte_carlo_integral(
             f, self.n_samples, vectorized_func=False
