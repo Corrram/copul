@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 import sympy
 
@@ -9,7 +11,7 @@ class CheckerboardCopula(AbstractCopula):
     params = []
     intervals = {}
 
-    def __init__(self, matr, mc_size=1_000_000, **kwargs):
+    def __init__(self, matr, mc_size=100_000, **kwargs):
         if isinstance(matr, (list, sympy.matrices.dense.Matrix)):
             matr = np.array(matr)
         self.matr = matr / matr.sum()
@@ -55,7 +57,7 @@ class CheckerboardCopula(AbstractCopula):
         result = total_integral * self.matr.shape[0]
         return result
 
-    def cond_distr_2(self, u, v):
+    def cond_distr_2(self, u, v) -> Union[float, np.ndarray]:
         if isinstance(v, np.ndarray):
             return np.array([self.cond_distr_2(u, v_) for v_ in v])
         if isinstance(u, np.ndarray):

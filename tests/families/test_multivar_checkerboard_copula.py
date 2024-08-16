@@ -18,7 +18,3 @@ def test_multivar_checkerboard():
     assert copula.cdf(0.5, 0.5, 0.5) == 0.125
     assert copula.pdf(0.5, 0.5, 0.5) == 0.125
     # ToDo - add tests for non-boundary values and implement cdf and pdf accordingly
-
-
-if __name__ == "__main__":
-    test_multivar_checkerboard()
