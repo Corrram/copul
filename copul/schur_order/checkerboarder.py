@@ -24,25 +24,25 @@ class Checkerboarder:
             def cdf(u, v):
                 return copula.cdf()(u, v)
 
-        cmatr = sympy.Matrix.zeros(self.nrow, self.ncol)
-        for i, j in np.ndindex(self.nrow, self.ncol):
+        nrow = self.nrow
+        ncol = self.ncol
+        cmatr = sympy.Matrix.zeros(nrow, ncol)
+        for i, j in np.ndindex(nrow, ncol):
             if i == 0:
                 if j == 0:
-                    cmatr[i, j] = cdf(1 / self.nrow, 1 / self.ncol)
+                    cmatr[i, j] = cdf(1 / nrow, 1 / ncol)
                 else:
-                    cmatr[i, j] = cdf(1 / self.nrow, (j + 1) / self.ncol) - cdf(
-                        1 / self.nrow, j / self.ncol
+                    cmatr[i, j] = cdf(1 / nrow, (j + 1) / ncol) - cdf(
+                        1 / nrow, j / ncol
                     )
             elif j == 0:
-                cmatr[i, j] = cdf((i + 1) / self.nrow, 1 / self.ncol) - cdf(
-                    i / self.nrow, 1 / self.ncol
-                )
+                cmatr[i, j] = cdf((i + 1) / nrow, 1 / ncol) - cdf(i / nrow, 1 / ncol)
             else:
                 cmatr[i, j] = (
-                    cdf((i + 1) / self.nrow, (j + 1) / self.ncol)
-                    + cdf(i / self.nrow, j / self.ncol)
-                    - cdf(i / self.nrow, (j + 1) / self.ncol)
-                    - cdf((i + 1) / self.nrow, j / self.ncol)
+                    cdf((i + 1) / nrow, (j + 1) / ncol)
+                    + cdf(i / nrow, j / ncol)
+                    - cdf(i / nrow, (j + 1) / ncol)
+                    - cdf((i + 1) / nrow, j / ncol)
                 )
         return CheckerboardCopula(cmatr)
 

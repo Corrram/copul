@@ -17,7 +17,9 @@ class HueslerReiss(ExtremeValueCopula):
     params = [delta]
     intervals = {"delta": sympy.Interval(0, np.inf, left_open=False, right_open=True)}
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            self.delta = args[0]
         if "delta" in kwargs and kwargs["delta"] == 0:
             del kwargs["delta"]
             return IndependenceCopula()(**kwargs)

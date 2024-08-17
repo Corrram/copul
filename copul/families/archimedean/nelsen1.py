@@ -15,7 +15,9 @@ class Clayton(ArchimedeanCopula):
     def _generator(self):
         return ((1 / self.t) ** self.theta - 1) / self.theta
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            self.theta = args[0]
         if "theta" in kwargs and kwargs["theta"] == -1:
             del kwargs["theta"]
             return LowerFrechet()(**kwargs)
@@ -103,4 +105,4 @@ Nelsen1 = Clayton
 
 B4 = Clayton
 
-PiOverSigmaMinusPi = Clayton()(theta=1)
+PiOverSigmaMinusPi = Clayton(1)

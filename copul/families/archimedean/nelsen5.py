@@ -20,7 +20,9 @@ class Frank(ArchimedeanCopula):
             (sympy.exp(-self.theta * self.t) - 1) / (sympy.exp(-self.theta) - 1)
         )
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            self.theta = args[0]
         if "theta" in kwargs and kwargs["theta"] == 0:
             del kwargs["theta"]
             return IndependenceCopula()(**kwargs)

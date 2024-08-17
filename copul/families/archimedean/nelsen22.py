@@ -11,7 +11,9 @@ class Nelsen22(ArchimedeanCopula):
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, 1, left_open=False, right_open=False)
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            self.theta = args[0]
         if "theta" in kwargs and kwargs["theta"] == 0:
             del kwargs["theta"]
             return IndependenceCopula()(**kwargs)
@@ -40,8 +42,7 @@ class Nelsen22(ArchimedeanCopula):
             (
                 (sympy.sin(sympy.asin(u**theta - 1) + sympy.asin(v**theta - 1)) + 1)
                 ** (1 / theta),
-                sympy.asin(u**theta - 1) + sympy.asin(v**theta - 1)
-                >= -sympy.pi / 2,
+                sympy.asin(u**theta - 1) + sympy.asin(v**theta - 1) >= -sympy.pi / 2,
             ),
             (0, True),
         )

@@ -11,7 +11,9 @@ class Nelsen19(ArchimedeanCopula):
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, np.inf, left_open=False, right_open=True)
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            self.theta = args[0]
         if "theta" in kwargs and kwargs["theta"] == 0:
             del kwargs["theta"]
             return PiOverSigmaMinusPi()(**kwargs)
@@ -33,6 +35,8 @@ class Nelsen19(ArchimedeanCopula):
     @property
     def cdf(self):
         cdf = self.theta / sympy.log(
-            -sympy.exp(self.theta) + sympy.exp(self.theta / self.u) + sympy.exp(self.theta / self.v)
+            -sympy.exp(self.theta)
+            + sympy.exp(self.theta / self.u)
+            + sympy.exp(self.theta / self.v)
         )
         return SymPyFunctionWrapper(cdf)

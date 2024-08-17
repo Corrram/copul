@@ -19,7 +19,7 @@ It accompanies the `Dependence properties of bivariate copula families <https://
     Max(0, (-1 + v**(-theta) + u**(-theta))**(-1/theta))
     >>> clayton_cdf(u=0.5, v=0.5, theta=0.3)
     0.281766567506623
-    >>> copul.archimedean.GumbelHougaard(theta=1).pdf()
+    >>> copul.archimedean.GumbelHougaard(1).pdf()
     1
 
 **Visualize cumulative distribution functions of copulas**::
@@ -35,7 +35,7 @@ It accompanies the `Dependence properties of bivariate copula families <https://
 
 .. code-block:: python
 
-    >>> plackett = cp.Plackett(theta=0.1)
+    >>> plackett = cp.Plackett(0.1)
     >>> plackett.plot(plackett.cond_distr_1, plackett.cond_distr_2)
 
 .. image:: _static/images/cond_distr_pl_1.png
@@ -50,7 +50,7 @@ It accompanies the `Dependence properties of bivariate copula families <https://
 
 **Visualize probability density functions of copulas**::
 
-    >>> cp.extreme_value.HueslerReiss(delta=0.3).plot_pdf()
+    >>> cp.extreme_value.HueslerReiss(0.3).plot_pdf()
 
 .. image:: _static/images/hr_delta0point3_pdf.png
     :alt: alternate text

@@ -35,9 +35,11 @@ class AbstractCopula(ABC):
     def __str__(self):
         return self.__class__.__name__
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
         new_copula = copy.copy(self)
         new_copula._are_class_vars(kwargs)
+        for i in range(len(args)):
+            setattr(new_copula, self.params[i], args[i])
         for k, v in kwargs.items():
             if isinstance(v, str):
                 v = getattr(self.__class__, v)

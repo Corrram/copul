@@ -21,13 +21,18 @@ class BB5(ExtremeValueCopula):
         "delta": sympy.Interval(0, np.inf, left_open=True, right_open=True),
     }
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) == 2:
+            self.theta = args[0]
+            self.delta = args[1]
+        elif args is not None:
+            raise ValueError("BB5 copula requires two parameters")
         if "theta" in kwargs and kwargs["theta"] == 1:
             del kwargs["theta"]
             return Galambos(delta=self.delta)(**kwargs)
         elif "delta" in kwargs and kwargs["delta"] == 0:
             del kwargs["delta"]
-            return GumbelHougaard(theta=self.theta)(**kwargs)
+            return GumbelHougaard(self.theta)(**kwargs)
         elif "delta" in kwargs and kwargs["delta"] == sympy.oo:
             del kwargs["delta"]
             return UpperFrechet(**kwargs)

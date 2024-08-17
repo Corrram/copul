@@ -9,7 +9,9 @@ class Nelsen17(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta_interval = sympy.Interval(-np.inf, np.inf, left_open=True, right_open=True)
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            self.theta = args[0]
         if "theta" in kwargs and kwargs["theta"] == 0:
             raise ValueError("theta cannot be 0")
         return super().__call__(**kwargs)
@@ -20,15 +22,17 @@ class Nelsen17(ArchimedeanCopula):
 
     @property
     def _generator(self):
-        return -sympy.log(((1 + self.t) ** (-self.theta) - 1) / (2 ** (-self.theta) - 1))
+        return -sympy.log(
+            ((1 + self.t) ** (-self.theta) - 1) / (2 ** (-self.theta) - 1)
+        )
 
     @property
     def inv_generator(self):
         theta = self.theta
         y = self.y
-        gen = (2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)) ** (
-            1 / theta
-        ) - 1
+        gen = (
+            2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)
+        ) ** (1 / theta) - 1
         return SymPyFunctionWrapper(gen)
 
     @property
@@ -36,9 +40,12 @@ class Nelsen17(ArchimedeanCopula):
         v = self.v
         u = self.u
         theta = self.theta
-        cdf = (1 + ((1 + u) ** (-theta) - 1) * ((1 + v) ** (-theta) - 1) / (2 ** (-theta) - 1)) ** (
-            -1 / theta
-        ) - 1
+        cdf = (
+            1
+            + ((1 + u) ** (-theta) - 1)
+            * ((1 + v) ** (-theta) - 1)
+            / (2 ** (-theta) - 1)
+        ) ** (-1 / theta) - 1
         return SymPyFunctionWrapper(cdf)
 
     @property
@@ -303,7 +310,12 @@ class Nelsen17(ArchimedeanCopula):
                         - (2**theta - 1) * (u + 1) ** theta * (v + 1) ** theta
                     )
                     * (
-                        2 * 2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
+                        2
+                        * 2**theta
+                        * theta
+                        * (v + 1) ** theta
+                        * ((u + 1) ** theta - 1)
+                        / (v + 1)
                         - 2
                         * theta
                         * (2**theta - 1)
@@ -324,8 +336,15 @@ class Nelsen17(ArchimedeanCopula):
                     - 4**theta
                     * (theta + 1)
                     * (
-                        2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
-                        + theta * ((u + 1) * (v + 1)) ** theta * (1 - 2**theta) / (v + 1)
+                        2**theta
+                        * theta
+                        * (v + 1) ** theta
+                        * ((u + 1) ** theta - 1)
+                        / (v + 1)
+                        + theta
+                        * ((u + 1) * (v + 1)) ** theta
+                        * (1 - 2**theta)
+                        / (v + 1)
                     )
                     * ((u + 1) ** theta - 1)
                     * ((v + 1) ** theta - 1)
@@ -371,7 +390,11 @@ class Nelsen17(ArchimedeanCopula):
                     * ((v + 1) ** theta - 1)
                 )
                 * (
-                    -(2**theta) * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
+                    -(2**theta)
+                    * theta
+                    * (v + 1) ** theta
+                    * ((u + 1) ** theta - 1)
+                    / (v + 1)
                     + theta * ((u + 1) * (v + 1)) ** theta * (1 - 2**theta) / (v + 1)
                     + theta * ((u + 1) * (v + 1)) ** theta * (2**theta - 1) / (v + 1)
                     + theta * (2 * u + 2) ** theta * (v + 1) ** theta / (v + 1)
@@ -388,7 +411,12 @@ class Nelsen17(ArchimedeanCopula):
                         - (2**theta - 1) * (u + 1) ** theta * (v + 1) ** theta
                     )
                     * (
-                        2 * 2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
+                        2
+                        * 2**theta
+                        * theta
+                        * (v + 1) ** theta
+                        * ((u + 1) ** theta - 1)
+                        / (v + 1)
                         - 2
                         * theta
                         * (2**theta - 1)
@@ -403,8 +431,15 @@ class Nelsen17(ArchimedeanCopula):
                         + (2 * u + 2) ** theta * ((v + 1) ** theta - 1)
                     )
                     * (
-                        2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
-                        + theta * ((u + 1) * (v + 1)) ** theta * (1 - 2**theta) / (v + 1)
+                        2**theta
+                        * theta
+                        * (v + 1) ** theta
+                        * ((u + 1) ** theta - 1)
+                        / (v + 1)
+                        + theta
+                        * ((u + 1) * (v + 1)) ** theta
+                        * (1 - 2**theta)
+                        / (v + 1)
                     )
                     - 2 ** (theta + 1)
                     * theta**2
@@ -448,8 +483,15 @@ class Nelsen17(ArchimedeanCopula):
                     - 4**theta
                     * (theta + 1)
                     * (
-                        2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
-                        + theta * ((u + 1) * (v + 1)) ** theta * (1 - 2**theta) / (v + 1)
+                        2**theta
+                        * theta
+                        * (v + 1) ** theta
+                        * ((u + 1) ** theta - 1)
+                        / (v + 1)
+                        + theta
+                        * ((u + 1) * (v + 1)) ** theta
+                        * (1 - 2**theta)
+                        / (v + 1)
                     )
                     * ((u + 1) ** theta - 1)
                     * ((v + 1) ** theta - 1)
@@ -466,13 +508,24 @@ class Nelsen17(ArchimedeanCopula):
                     * (theta + 1)
                     * (4 * u + 4) ** theta
                     * (
-                        2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
-                        + theta * ((u + 1) * (v + 1)) ** theta * (1 - 2**theta) / (v + 1)
+                        2**theta
+                        * theta
+                        * (v + 1) ** theta
+                        * ((u + 1) ** theta - 1)
+                        / (v + 1)
+                        + theta
+                        * ((u + 1) * (v + 1)) ** theta
+                        * (1 - 2**theta)
+                        / (v + 1)
                     )
                     * ((v + 1) ** theta - 1)
                 )
                 - (
-                    2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
+                    2**theta
+                    * theta
+                    * (v + 1) ** theta
+                    * ((u + 1) ** theta - 1)
+                    / (v + 1)
                     + theta * ((u + 1) * (v + 1)) ** theta * (1 - 2**theta) / (v + 1)
                 )
                 * (
@@ -527,7 +580,12 @@ class Nelsen17(ArchimedeanCopula):
                         - (2**theta - 1) * (u + 1) ** theta * (v + 1) ** theta
                     )
                     * (
-                        2 * 2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
+                        2
+                        * 2**theta
+                        * theta
+                        * (v + 1) ** theta
+                        * ((u + 1) ** theta - 1)
+                        / (v + 1)
                         - 2
                         * theta
                         * (2**theta - 1)
@@ -548,8 +606,15 @@ class Nelsen17(ArchimedeanCopula):
                     - 4**theta
                     * (theta + 1)
                     * (
-                        2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
-                        + theta * ((u + 1) * (v + 1)) ** theta * (1 - 2**theta) / (v + 1)
+                        2**theta
+                        * theta
+                        * (v + 1) ** theta
+                        * ((u + 1) ** theta - 1)
+                        / (v + 1)
+                        + theta
+                        * ((u + 1) * (v + 1)) ** theta
+                        * (1 - 2**theta)
+                        / (v + 1)
                     )
                     * ((u + 1) ** theta - 1)
                     * ((v + 1) ** theta - 1)
@@ -586,7 +651,11 @@ class Nelsen17(ArchimedeanCopula):
                 )
             )
             + (
-                -(2**theta) * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
+                -(2**theta)
+                * theta
+                * (v + 1) ** theta
+                * ((u + 1) ** theta - 1)
+                / (v + 1)
                 + theta * (2**theta - 1) * (u + 1) ** theta * (v + 1) ** theta / (v + 1)
             )
             * (
@@ -814,8 +883,18 @@ class Nelsen17(ArchimedeanCopula):
                     - (2**theta - 1) * (u + 1) ** theta * (v + 1) ** theta
                 )
                 * (
-                    2 * 2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
-                    - 2 * theta * (2**theta - 1) * (u + 1) ** theta * (v + 1) ** theta / (v + 1)
+                    2
+                    * 2**theta
+                    * theta
+                    * (v + 1) ** theta
+                    * ((u + 1) ** theta - 1)
+                    / (v + 1)
+                    - 2
+                    * theta
+                    * (2**theta - 1)
+                    * (u + 1) ** theta
+                    * (v + 1) ** theta
+                    / (v + 1)
                 )
                 + 4**theta
                 * theta
@@ -830,7 +909,11 @@ class Nelsen17(ArchimedeanCopula):
                 + 4**theta
                 * (theta + 1)
                 * (
-                    2**theta * theta * (v + 1) ** theta * ((u + 1) ** theta - 1) / (v + 1)
+                    2**theta
+                    * theta
+                    * (v + 1) ** theta
+                    * ((u + 1) ** theta - 1)
+                    / (v + 1)
                     - theta * ((u + 1) * (v + 1)) ** theta * (2**theta - 1) / (v + 1)
                 )
                 * ((u + 1) ** theta - 1)

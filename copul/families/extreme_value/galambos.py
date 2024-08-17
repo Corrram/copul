@@ -47,46 +47,11 @@ class Galambos(ExtremeValueCopula):
         return (
             (u * v)
             ** (
-                (
-                    (
-                        (
-                            ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
-                            ** delta
-                            + (sympy.log(v) / sympy.log(u * v)) ** delta
-                        )
-                        / (
-                            ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
-                            ** delta
-                            * (sympy.log(v) / sympy.log(u * v)) ** delta
-                        )
-                    )
-                    ** (1 / delta)
-                    - 1
-                )
-                / (
-                    (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        + (sympy.log(v) / sympy.log(u * v)) ** delta
-                    )
-                    / (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        * (sympy.log(v) / sympy.log(u * v)) ** delta
-                    )
-                )
-                ** (1 / delta)
+                (self._eval_sub_expr_3(delta, u, v) ** (1 / delta) - 1)
+                / self._eval_sub_expr_3(delta, u, v) ** (1 / delta)
             )
             * (
-                (
-                    (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        + (sympy.log(v) / sympy.log(u * v)) ** delta
-                    )
-                    / (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        * (sympy.log(v) / sympy.log(u * v)) ** delta
-                    )
-                )
-                ** (1 / delta)
+                self._eval_sub_expr_3(delta, u, v) ** (1 / delta)
                 * (delta + 1)
                 * (
                     ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
@@ -101,81 +66,23 @@ class Galambos(ExtremeValueCopula):
                         + (sympy.log(v) / sympy.log(u * v)) ** delta
                     )
                     * sympy.log(v) ** 2
-                    - (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        * (sympy.log(v) - sympy.log(u * v))
-                        + (sympy.log(v) / sympy.log(u * v)) ** delta * sympy.log(v)
-                    )
-                    ** 2
+                    - (self._eval_sub_expr(delta, u, v)) ** 2
                 )
                 + (
-                    ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                    * (sympy.log(v) - sympy.log(u * v))
-                    + (sympy.log(v) / sympy.log(u * v)) ** delta * sympy.log(v)
-                    + (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        + (sympy.log(v) / sympy.log(u * v)) ** delta
-                    )
-                    * (
-                        (
-                            (
-                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
-                                ** delta
-                                + (sympy.log(v) / sympy.log(u * v)) ** delta
-                            )
-                            / (
-                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
-                                ** delta
-                                * (sympy.log(v) / sympy.log(u * v)) ** delta
-                            )
-                        )
-                        ** (1 / delta)
-                        - 1
-                    )
+                    self._eval_sub_expr(delta, u, v)
+                    + self._eval_sub_expr_2(delta, u, v)
                     * (sympy.log(v) - sympy.log(u * v))
                 )
                 * (
-                    ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                    * (sympy.log(v) - sympy.log(u * v))
-                    + (sympy.log(v) / sympy.log(u * v)) ** delta * sympy.log(v)
-                    + (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        + (sympy.log(v) / sympy.log(u * v)) ** delta
-                    )
-                    * (
-                        (
-                            (
-                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
-                                ** delta
-                                + (sympy.log(v) / sympy.log(u * v)) ** delta
-                            )
-                            / (
-                                ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v))
-                                ** delta
-                                * (sympy.log(v) / sympy.log(u * v)) ** delta
-                            )
-                        )
-                        ** (1 / delta)
-                        - 1
-                    )
-                    * sympy.log(v)
+                    self._eval_sub_expr(delta, u, v)
+                    + self._eval_sub_expr_2(delta, u, v) * sympy.log(v)
                 )
                 * sympy.log(u * v)
             )
             / (
                 u
                 * v
-                * (
-                    (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        + (sympy.log(v) / sympy.log(u * v)) ** delta
-                    )
-                    / (
-                        ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
-                        * (sympy.log(v) / sympy.log(u * v)) ** delta
-                    )
-                )
-                ** (2 / delta)
+                * self._eval_sub_expr_3(delta, u, v) ** (2 / delta)
                 * (
                     ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
                     + (sympy.log(v) / sympy.log(u * v)) ** delta
@@ -185,6 +92,25 @@ class Galambos(ExtremeValueCopula):
                 * sympy.log(v)
                 * sympy.log(u * v)
             )
+        )
+
+    def _eval_sub_expr_2(self, delta, u, v):
+        return ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta + (
+            sympy.log(v) / sympy.log(u * v)
+        ) ** delta * (self._eval_sub_expr_3(delta, u, v) ** (1 / delta) - 1)
+
+    def _eval_sub_expr(self, delta, u, v):
+        return ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta * (
+            sympy.log(v) - sympy.log(u * v)
+        ) + ((sympy.log(v) / sympy.log(u * v)) ** delta) * sympy.log(v)
+
+    def _eval_sub_expr_3(self, delta, u, v):
+        return (
+            ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
+            + (sympy.log(v) / sympy.log(u * v)) ** delta
+        ) / (
+            ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta
+            * (sympy.log(v) / sympy.log(u * v)) ** delta
         )
 
 

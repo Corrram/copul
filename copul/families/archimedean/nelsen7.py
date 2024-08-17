@@ -21,7 +21,9 @@ class Nelsen7(ArchimedeanCopula):
     def inv_generator(self):  # ToDo multiply indicator function
         y = self.y
         ind = sympy.Heaviside(-y - sympy.log(1 - self.theta))
-        gen = ind * ((self.theta * sympy.exp(y) - sympy.exp(y) + 1) * sympy.exp(-y) / self.theta)
+        gen = ind * (
+            (self.theta * sympy.exp(y) - sympy.exp(y) + 1) * sympy.exp(-y) / self.theta
+        )
         return SymPyFunctionWrapper(gen)
 
     @property
@@ -33,7 +35,7 @@ class Nelsen7(ArchimedeanCopula):
         return SymPyFunctionWrapper(cdf)
 
     def xi(self):
-        return SymPyFunctionWrapper(1 - self.theta)
+        return 1 - self.theta
 
     def cond_distr_1(self) -> SymPyFunctionWrapper:
         diff = (self.theta * self.v - self.theta + 1) * sympy.Heaviside(

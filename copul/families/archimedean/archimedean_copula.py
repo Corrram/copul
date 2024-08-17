@@ -16,21 +16,9 @@ class ArchimedeanCopula(AbstractCopula, ABC):
     theta_interval = None
     params = [theta]
 
-    def __init__(self, theta_min=None, theta_max=None, **kwargs):
-        if theta_min is not None:
-            self.theta_interval = sympy.Interval(
-                theta_min,
-                self.theta_max,
-                left_open=self.theta_interval.left_open,
-                right_open=self.theta_interval.right_open,
-            )
-        if theta_max is not None:
-            self.theta_interval = sympy.Interval(
-                self.theta_min,
-                theta_max,
-                left_open=self.theta_interval.left_open,
-                right_open=self.theta_interval.right_open,
-            )
+    def __init__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            self.theta = args[0]
         super().__init__(**kwargs)
 
     def __str__(self):
@@ -151,20 +139,27 @@ class ArchimedeanCopula(AbstractCopula, ABC):
         minus_log_derivative = self.ci_char()
         first_deriv = self.first_deriv_of_ci_char()
         second_deriv = self.second_deriv_of_ci_char()
-        return self._compute_log2_der_of(first_deriv, minus_log_derivative, second_deriv)
+        return self._compute_log2_der_of(
+            first_deriv, minus_log_derivative, second_deriv
+        )
 
     @property
     def log2_der(self):
         log_second_derivative = self.tp2_char(self.u, self.v)
         first_deriv = self.first_deriv_of_tp2_char()
         second_deriv = self.second_deriv_of_tp2_char()
-        return self._compute_log2_der_of(first_deriv, log_second_derivative, second_deriv)
+        return self._compute_log2_der_of(
+            first_deriv, log_second_derivative, second_deriv
+        )
 
     def _compute_log2_der_of(self, first_deriv, log_second_derivative, second_deriv):
         log_der_lambda = sympy.lambdify([(self.y, self.theta)], second_deriv)
         bounds = [(self._t_min, self._t_max), (self.theta_min, self.theta_max)]
         starting_point = np.array(
-            [min(self._t_min + 0.5, self._t_max), min(self.theta_min + 0.5, self.theta_max)]
+            [
+                min(self._t_min + 0.5, self._t_max),
+                min(self.theta_min + 0.5, self.theta_max),
+            ]
         )
         min_val = optimize.minimize(log_der_lambda, starting_point, bounds=bounds)
         return (
@@ -180,7 +175,9 @@ class ArchimedeanCopula(AbstractCopula, ABC):
             limit = sympy.limit(self._generator, self.t, 0)
         except TypeError:
             limit = sympy.limit(
-                self._generator.subs(self.theta, (self.theta_max - self.theta_min) / 2), self.t, 0
+                self._generator.subs(self.theta, (self.theta_max - self.theta_min) / 2),
+                self.t,
+                0,
             )
         return sympy.simplify(limit)
 
@@ -189,5 +186,7 @@ class ArchimedeanCopula(AbstractCopula, ABC):
         return sympy.limit(expr, self.y, sympy.oo, dir="-")
 
     def lambda_U(self):
-        expr = (1 - self.inv_generator(y=2 * self.y).func) / (1 - self.inv_generator(y=self.y).func)
+        expr = (1 - self.inv_generator(y=2 * self.y).func) / (
+            1 - self.inv_generator(y=self.y).func
+        )
         return sympy.simplify(2 - sympy.limit(expr, self.y, 0, dir="+"))
