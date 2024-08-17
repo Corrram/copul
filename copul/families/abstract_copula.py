@@ -111,7 +111,7 @@ class AbstractCopula(ABC):
     def _sample_val(self, function, n=1):
         sampler = CopulaSampler(self)
         result = np.array([sampler.sample_val(function) for _ in range(n)])
-        print(sampler.err_counter)
+        log.debug(sampler.err_counter)
         return result
 
     @property
@@ -163,19 +163,19 @@ class AbstractCopula(ABC):
         return sympy.simplify(12 * self._rho_int_2() - 3)
 
     def tau(self):
-        # print("tau")
+        # log.debug("tau")
         # if isinstance(self.cdf, SymPyFunctionWrapper):
         #     integrand = self.cdf.func * self.pdf
         # else:
         #     integrand = self.cdf * self.pdf
-        # print("integrand sympy: ", integrand)
-        # print("integrand latex: ", sympy.latex(integrand))
+        # log.debug("integrand sympy: ", integrand)
+        # log.debug("integrand latex: ", sympy.latex(integrand))
         # int_1 = self._tau_int_1()
-        # print("int_1 sympy: ", int_1)
-        # print("int_1 latex: ", sympy.latex(int_1))
+        # log.debug("int_1 sympy: ", int_1)
+        # log.debug("int_1 latex: ", sympy.latex(int_1))
         # int_2 = self._tau_int_2()
-        # print("int_2 sympy: ", int_2)
-        # print("int_2 latex: ", sympy.latex(int_2))
+        # log.debug("int_2 sympy: ", int_2)
+        # log.debug("int_2 latex: ", sympy.latex(int_2))
         tau = self._tau()
         log.debug("tau sympy: ", tau)
         log.debug("tau latex: ", sympy.latex(tau))
@@ -250,10 +250,10 @@ class AbstractCopula(ABC):
             title = CopulaGraphs(self).get_copula_title()
             plt.title(f"{title} {', '.join([*kwargs])}")
             plt.grid(True)
-            pathlib.Path("images").mkdir(exist_ok=True)
             plt.show()
             plt.draw()
             plt.close()
+            # pathlib.Path("images").mkdir(exist_ok=True)
             # fig1 = plt.gcf()
             # filepath = f"{self._package_path}/images/{self.__class__.__name__}.png"
             # fig1.savefig(filepath)

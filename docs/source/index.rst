@@ -7,32 +7,32 @@ copul documentation
 ===================
 
 **copul** is a package designed for mathematical computation and visualization of bivariate copula families.
-It accompanies the `Dependence properties of bivariate copula families <https://www.degruyter.com/document/doi/10.1515/demo-2024-0002/html>`_ article released in the Dependence Modeling journal and in particular covers implementations of
-the following copula families:
+It accompanies the `Dependence properties of bivariate copula families <https://www.degruyter.com/document/doi/10.1515/demo-2024-0002/html>`_ article released in the Dependence Modeling journal.
 
-- **Archimedean** copula families including Clayton, Gumbel, Frank, Joe, Ali-Mikhail-Haq, and more
-- **Extreme-value** copulas families including Hüsler-Reiss, Galambos, Marshall-Olkin, etc.
-- **Elliptical** copula families: Gaussian, Student's t, and Laplace.
-- Unclassified copula families like the Farlie-Gumbel-Morgenstern, Plackett or Raftery copula families.
-- Independence copula, lower and upper Fréchet bounds
-- **Checkerboard** copulas
-
-A list of all implemented copulas can be found in :py:mod:`copul.Families`.
+Here are some examples of how to use the package with various copula families. For a reference list of implemented copula families, their properties, and available methods, see :doc:`overview`.
 
 -------------------
 
-**Perform mathematical computations with copul**
+**Import the package**
 
 .. highlight:: python
 .. code-block:: python
 
     >>> import copul as cp
+
+**Calling a copula with properties**
+
+.. highlight:: python
+.. code-block:: python
+
     >>> cp.Clayton().cdf()
     Max(0, -1 + v**(-theta) + u**(-theta))**(-1/theta)
-    >>> cp.Clayton().cdf(u=0.5, v=0.5, theta=0.3)
-    0.28176656750662277
-    >>> cp.AliMikhailHaq(0).pdf()
-    1
+    >>> cp.Clayton(theta=0.5).cdf()
+    Max(0, u**(-0.5) + v**(-0.5) - 1)**(-2.0)
+    >>> cp.Clayton(0.5).cdf()
+    Max(0, u**(-0.5) + v**(-0.5) - 1)**(-2.0)
+    >>> cp.Clayton(0.5).cdf(u=0.3, v=1)
+    0.3
 
 -------------------
 
@@ -102,6 +102,20 @@ A list of all implemented copulas can be found in :py:mod:`copul.Families`.
     :alt: alternate text
     :width: 500px
     :align: center
+
+-------------------
+
+**Perform mathematical computations with copul**
+
+.. highlight:: python
+.. code-block:: python
+
+    >>> cp.Clayton().cdf()
+    Max(0, -1 + v**(-theta) + u**(-theta))**(-1/theta)
+    >>> cp.Clayton().cdf(u=0.5, v=0.5, theta=0.3)
+    0.28176656750662277
+    >>> cp.AliMikhailHaq(0).pdf()
+    1
 
 -------------------
 

@@ -3,6 +3,10 @@ import sympy
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class MarshallOlkin(ExtremeValueCopula):
     @property
@@ -111,9 +115,6 @@ class MarshallOlkin(ExtremeValueCopula):
         int_1 = sympy.simplify(
             sympy.integrate(integrand_1, (u, 0, v ** (alpha_2 / alpha_1)))
         )
-        int_2 = sympy.simplify(
-            sympy.integrate(integrand_2, (u, v ** (alpha_2 / alpha_1), 1))
-        )
         int_2 = (
             v**2
             * (alpha_1 - 1) ** 2
@@ -121,7 +122,7 @@ class MarshallOlkin(ExtremeValueCopula):
             / (2 * alpha_1 - 1)
         )
         int_2 = sympy.simplify(int_2)
-        print(sympy.latex(int_2))
+        log.debug(sympy.latex(int_2))
         return sympy.simplify(int_1 + int_2)
 
     def _xi_int_1(self, v):
@@ -130,8 +131,8 @@ class MarshallOlkin(ExtremeValueCopula):
         alpha_2 = self.alpha_2
         integrand_1 = (u * v ** (1 - alpha_2)) ** 2 / u**2
         integrand_2 = (u ** (1 - alpha_1) * v * (alpha_1 - 1)) ** 2 / u**2
-        print(sympy.latex(sympy.simplify(integrand_1)))
-        print(sympy.latex(sympy.simplify(integrand_2)))
+        log.debug(sympy.latex(sympy.simplify(integrand_1)))
+        log.debug(sympy.latex(sympy.simplify(integrand_2)))
         int_1 = sympy.simplify(
             sympy.integrate(integrand_1, (u, 0, v ** (alpha_2 / alpha_1)))
         )
@@ -139,8 +140,8 @@ class MarshallOlkin(ExtremeValueCopula):
             sympy.integrate(integrand_2, (u, v ** (alpha_2 / alpha_1), 1))
         )
         int_2 = sympy.simplify(int_2)
-        print(sympy.latex(int_1))
-        print(sympy.latex(int_2))
+        log.debug(sympy.latex(int_1))
+        log.debug(sympy.latex(int_2))
         return sympy.simplify(int_1 + int_2)
 
     # def _xi_int_2(self):

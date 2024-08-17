@@ -175,10 +175,12 @@ class ExtremeValueCopula(AbstractCopula):
             if not isinstance(value, list):
                 subs[key] = [value]
         plot_vals = self._mix_params(subs)
-        for plot_val in plot_vals:
-            subs_dict = {str(k): v for k, v in plot_val.items()}
-            pickands = self(**subs_dict).pickands
-            self._get_function_graph(pickands.func, plot_val)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            for plot_val in plot_vals:
+                subs_dict = {str(k): v for k, v in plot_val.items()}
+                pickands = self(**subs_dict).pickands
+                self._get_function_graph(pickands.func, plot_val)
 
         @contextmanager
         def suppress_warnings():
