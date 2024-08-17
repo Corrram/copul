@@ -9,7 +9,8 @@ import numpy as np
 import sympy
 from matplotlib import pyplot as plt
 
-from copul.families.chatterjee_plotter import ChatterjeePlotter
+from copul.families.copula_graphs import CopulaGraphs
+from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.cis_verifier import CISVerifier
 from copul.families.copula_sampler import CopulaSampler
 from copul.families.tp2_verifier import TP2Verifier
@@ -176,8 +177,8 @@ class AbstractCopula(ABC):
         # print("int_2 sympy: ", int_2)
         # print("int_2 latex: ", sympy.latex(int_2))
         tau = self._tau()
-        print("tau sympy: ", tau)
-        print("tau latex: ", sympy.latex(tau))
+        log.debug("tau sympy: ", tau)
+        log.debug("tau latex: ", sympy.latex(tau))
         return tau
 
     def _tau(self):
@@ -246,7 +247,7 @@ class AbstractCopula(ABC):
                     plt.plot(x, y, label=f"{function_name}")
         if free_symbol_dict:
             plt.legend()
-            title = self._get_copula_title()
+            title = CopulaGraphs(self).get_copula_title()
             plt.title(f"{title} {', '.join([*kwargs])}")
             plt.grid(True)
             pathlib.Path("images").mkdir(exist_ok=True)
@@ -260,7 +261,7 @@ class AbstractCopula(ABC):
     def scatter_plot(self, n=1_000):
         data_ = self.rvs(n)
         plt.scatter(data_[:, 0], data_[:, 1], s=n)
-        title = self._get_copula_title()
+        title = CopulaGraphs(self).get_copula_title()
         plt.title(title)
         plt.xlabel("u")
         plt.ylabel("v")
@@ -272,23 +273,13 @@ class AbstractCopula(ABC):
 
     def plot_cdf(self, data=None, title=None, zlabel=None):
         if title is None:
-            title = self._get_copula_title()
+            title = CopulaGraphs(self).get_copula_title()
         if zlabel is None:
             zlabel = ""
         if data is None:
             return self._plot3d(self.cdf, title=title, zlabel=zlabel, zlim=(0, 1))
         else:
             self._plot_cdf_from_data(data)
-
-    def _get_copula_title(self):
-        title = f"{type(self).__name__}"
-        if not title.endswith("Copula"):
-            title += " Copula"
-        param_dict = {s: getattr(self, s) for s in self.intervals}
-        if param_dict:
-            param_dict_str = ", ".join([f"{k}={v}" for k, v in param_dict.items()])
-            title += f" ({param_dict_str})"
-        return title
 
     @staticmethod
     def _plot_cdf_from_data(data):
@@ -316,7 +307,7 @@ class AbstractCopula(ABC):
         ax.set_zlabel("CDF")
         plt.show()
 
-    def plot_chatterjee(
+    def plot_rank_correlations(
         self,
         n_obs,
         n_params,
@@ -325,13 +316,13 @@ class AbstractCopula(ABC):
         params=None,
         log_cut_off=None,
     ):
-        plotter = ChatterjeePlotter(self, log_cut_off)
-        plotter.plot_chatterjee(n_obs, n_params, params, plot_var, ylim)
+        plotter = RankCorrelationPlotter(self, log_cut_off)
+        plotter.plot_rank_correlations(n_obs, n_params, params, plot_var, ylim)
 
     def plot_pdf(self):
         free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
         pdf = self(**free_symbol_dict).pdf
-        title = self._get_copula_title()
+        title = CopulaGraphs(self).get_copula_title()
         return self._plot3d(pdf, title=title, zlabel="PDF")
 
     def _plot3d(self, func, title, zlabel, zlim=None):

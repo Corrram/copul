@@ -31,14 +31,6 @@ copul.families.abstract\_multivar\_copula module
    :undoc-members:
    :show-inheritance:
 
-copul.families.chatterjee\_plotter module
------------------------------------------
-
-.. automodule:: copul.families.chatterjee_plotter
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 copul.families.cis\_verifier module
 -----------------------------------
 
@@ -47,10 +39,26 @@ copul.families.cis\_verifier module
    :undoc-members:
    :show-inheritance:
 
+copul.families.copula\_graphs module
+------------------------------------
+
+.. automodule:: copul.families.copula_graphs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 copul.families.copula\_sampler module
 -------------------------------------
 
 .. automodule:: copul.families.copula_sampler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+copul.families.rank\_correlation\_plotter module
+------------------------------------------------
+
+.. automodule:: copul.families.rank_correlation_plotter
    :members:
    :undoc-members:
    :show-inheritance:

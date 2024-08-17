@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 from scipy import optimize
 from copul.families import concrete_expand_log, get_simplified_solution
 from copul.families.abstract_copula import AbstractCopula
+from copul.families.copula_graphs import CopulaGraphs
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
 log = logging.getLogger(__name__)
@@ -204,7 +205,7 @@ class ArchimedeanCopula(AbstractCopula, ABC):
         z = [inv_generator(i) for i in x]
         plt.plot(x, y, label="Generator $\\varphi$")
         plt.plot(x, z, label="Inverse generator $\psi$")
-        title = self._get_copula_title()
+        title = CopulaGraphs(self).get_copula_title()
         plt.title(title)
         plt.legend()
         plt.grid()

@@ -1,9 +1,13 @@
 import sympy
+import logging
 
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.sympy_wrapper import SymPyFunctionWrapper
+
+
+log = logging.getLogger(__name__)
 
 
 class CuadrasAuge(ExtremeValueCopula):
@@ -86,10 +90,10 @@ class CuadrasAuge(ExtremeValueCopula):
         # int2 = sympy.simplify(sympy.integrate(func_u_greater_v, (u, v, 1)))
         int2 = sympy.integrate(func_u_greater_v, (u, v, 1))
         # int2 = -v**2*v**(1 - 2*delta)*(delta - 1)**2/(1 - 2*delta) + v**2*(delta - 1)**2/(1 - 2*delta)
-        print("sub int1 sympy: ", int1)
-        print("sub int1: ", sympy.latex(int1))
-        print("sub int2 sympy: ", int2)
-        print("sub int2: ", sympy.latex(int2))
+        log.debug("sub int1 sympy: ", int1)
+        log.debug("sub int1: ", sympy.latex(int1))
+        log.debug("sub int2 sympy: ", int2)
+        log.debug("sub int2: ", sympy.latex(int2))
         return sympy.simplify(int1 + int2)
 
     def xi(self):

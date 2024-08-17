@@ -92,11 +92,11 @@ class ExtremeValueCopula(AbstractCopula):
 
     def rho(self):
         integrand = self._rho_int_1()  # nelsen 5.15
-        print("integrand: ", integrand)
-        print("integrand latex: ", sympy.latex(integrand))
+        log_.debug("integrand: ", integrand)
+        log_.debug("integrand latex: ", sympy.latex(integrand))
         rho = self._rho()
-        print("rho: ", rho)
-        print("rho latex: ", sympy.latex(rho))
+        log_.debug("rho: ", rho)
+        log_.debug("rho latex: ", sympy.latex(rho))
         return rho
 
     def _rho_int_1(self):
@@ -110,7 +110,8 @@ class ExtremeValueCopula(AbstractCopula):
     def tau(self):  # nelsen 5.15
         t = self.t
         diff2_pickands = sympy.diff(self.pickands, t, 2)
-        integrand = sympy.simplify(t * (1 - t) / self.pickands.func * diff2_pickands)
+        integrand = t * (1 - t) / self.pickands.func * diff2_pickands.func
+        integrand = sympy.simplify(integrand)
         log_.debug("integrand: ", integrand)
         log_.debug("integrand latex: ", sympy.latex(integrand))
         integral = sympy.integrate(integrand, (t, 0, 1))
@@ -149,7 +150,7 @@ class ExtremeValueCopula(AbstractCopula):
                 return solution, x0
             except TypeError:
                 i += 1
-                print(i)
+                log_.debug(i)
                 continue
         return None, x0
 

@@ -10,16 +10,17 @@ from matplotlib import pyplot as plt
 from scipy.interpolate import CubicSpline
 
 from copul import chatterjee
+from copul.families.copula_graphs import CopulaGraphs
 
 log = logging.getLogger(__name__)
 
 
-class ChatterjeePlotter:
+class RankCorrelationPlotter:
     def __init__(self, copul, log_cut_off=None):
         self.copul = copul
         self.log_cut_off = log_cut_off
 
-    def plot_chatterjee(
+    def plot_rank_correlations(
         self, n_obs=10_000, n_params=20, params=None, plot_var=False, ylim=(-1, 1)
     ):
         log.info(f"Plotting Chatterjee graph for {type(self.copul).__name__} copula")
@@ -69,14 +70,15 @@ class ChatterjeePlotter:
         x_label = f"$\\{x_param}${legend_suffix}"
         plt.xlabel(x_label)
         plt.ylim(0, 1) if mixed_params else plt.ylim(*ylim)
-        plt.title(f"{self.__class__.__name__} Copula")
+        title = CopulaGraphs(self.copul, False).get_copula_title()
+        plt.title(title)
         plt.grid(True)
         pathlib.Path("images").mkdir(exist_ok=True)
-        fig1 = plt.gcf()
         plt.show()
         plt.draw()
-        fig1.savefig(f"images/{self.__class__.__name__}{filename_suffix}.png")
-        pathlib.Path("images/functions").mkdir(exist_ok=True)
+        # fig1 = plt.gcf()
+        # fig1.savefig(f"images/{self.__class__.__name__}{filename_suffix}.png")
+        # pathlib.Path("images/functions").mkdir(exist_ok=True)
 
     def _construct_xi_graph_for(
         self, n_obs, n_params, new_copula, plot_var, label=r"$\xi$", log_scale=False
@@ -140,7 +142,6 @@ class ChatterjeePlotter:
         data_points = np.array(data_points)
         x = data_points[:, 0]
         y = data_points[:, 1]
-        # y_errs = data_points[:, 2]
         y_rho = data_points[:, 3]
         y_tau = data_points[:, 4]
         cs = CubicSpline(x, y) if len(x) > 1 else lambda x_: x_
@@ -175,9 +176,7 @@ class ChatterjeePlotter:
             new_ticklabels = [f"${infimum} + 10^{{{int(np.log10(t))}}}$" for t in ticks]
             plt.xticks(ticks, new_ticklabels)
             plt.xlim(x[0] - inf, x[-1] - inf)
-        # plt.fill_between(x - inf, y - y_errs, y + y_errs, alpha=0.2)
-
-        self._save_data_and_splines(cs, data_points)
+        # self._save_data_and_splines(cs, data_points)
 
     def _save_data_and_splines(self, cs, data_points):
         pathlib.Path("images/functions").mkdir(exist_ok=True, parents=True)

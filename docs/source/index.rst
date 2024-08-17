@@ -25,10 +25,9 @@ the following copulas:
 .. code-block:: python
 
     >>> import copul as cp
-    >>> clayton_cdf = cp.Clayton().cdf()
-    >>> clayton_cdf
+    >>> cp.Clayton().cdf()
     Max(0, -1 + v**(-theta) + u**(-theta))**(-1/theta)
-    >>> clayton_cdf(u=0.5, v=0.5, theta=0.3)
+    >>> cp.Clayton().cdf(u=0.5, v=0.5, theta=0.3)
     0.28176656750662277
     >>> cp.AliMikhailHaq(0).pdf()
     1
@@ -137,7 +136,7 @@ Checkerboard copulas are copulas that have probability density functions, which 
 
 -------------------
 
-**Plot generator and inverse generator functions for Archimedean copulas**
+**Generator and inverse generator functions for Archimedean copulas**
 
 Archimedean copulas are characterized by a generator function, which is available in the package.
 
@@ -147,6 +146,8 @@ Archimedean copulas are characterized by a generator function, which is availabl
     >>> nelsen7 = cp.Nelsen7()
     >>> nelsen7.generator
     -log(t*theta - theta + 1)
+    >>> nelsen7.inv_generator
+    (theta*exp(y) - exp(y) + 1)*exp(-y)*Heaviside(-y - log(1 - theta))/theta
     >>> cp.Nelsen7(0.5).plot_generator()
 
 .. image:: _static/images/Nelsen7_generator.png
@@ -154,7 +155,7 @@ Archimedean copulas are characterized by a generator function, which is availabl
     :width: 500px
     :align: center
 
-**Plot pickands dependence functions for extreme-value copulas**
+**Pickands dependence functions for extreme-value copulas**
 
 Extreme-value copulas are characterized by a pickands dependence function, which is also available in the package.
 
@@ -174,15 +175,23 @@ Extreme-value copulas are characterized by a pickands dependence function, which
 
 -------------------
 
-**Plot Spearman's rho, Kendall's tau and Chatterjee's xi**
+**Spearman's rho, Kendall's tau and Chatterjee's xi**
 
 .. highlight:: python
 .. code-block:: python
 
-    cp.Frank().plot_chatterjee(100_000, 30)
+    >>> cp.CuadrasAuge().rho()
+    -3*delta/(delta - 4)
+    >>> cp.CuadrasAuge(0.5).rho()
+    0.428571428571427
+    >>> cp.FarlieGumbelMorgenstern().tau()
+    2*theta/9
+    >>> cp.AliMikhailHaq().xi()
+    -theta/6 - 0.666666666666667 + 3/theta - 2/theta**2 - 2*(1 - theta)**2*log(1 - theta)/theta**3
+    >>> cp.Frank().plot_rank_correlations(1_000_000, 50)
 
 
-.. image:: _static/images/frank_xi_rho_tau.png
+.. image:: _static/images/Gaussian_rank_correlations.png
     :alt: alternate text
     :width: 500px
     :align: center
