@@ -39,9 +39,12 @@ class CheckerboardCopula(AbstractCopula):
         overlap_x = u * self.m - x
         overlap_y = v * self.matr.shape[1] - y
         total_integral = self.matr[:x, :y].sum()
-        total_integral += overlap_x * self.matr[x, :y].sum()
-        total_integral += overlap_y * self.matr[:x, y].sum()
-        total_integral += overlap_x * overlap_y * self.matr[x, y]
+        if overlap_x > 0:
+            total_integral += overlap_x * self.matr[x, :y].sum()
+        if overlap_y > 0:
+            total_integral += overlap_y * self.matr[:x, y].sum()
+        if overlap_x > 0 and overlap_y > 0:
+            total_integral += overlap_x * overlap_y * self.matr[x, y]
         return total_integral
 
     def cond_distr_1(self, u, v):
@@ -53,7 +56,8 @@ class CheckerboardCopula(AbstractCopula):
         y = int(v * self.matr.shape[1])
         total_integral = self.matr[x, :y].sum()
         overlap_y = v * self.matr.shape[1] - y
-        total_integral += overlap_y * self.matr[x, y]
+        if overlap_y > 0:
+            total_integral += overlap_y * self.matr[x, y]
         result = total_integral * self.matr.shape[0]
         return result
 
@@ -66,14 +70,22 @@ class CheckerboardCopula(AbstractCopula):
         y = int(v * self.matr.shape[1])
         total_integral = self.matr[:x, y].sum()
         overlap_x = u * self.matr.shape[0] - x
-        total_integral += overlap_x * self.matr[x, y]
+        if overlap_x > 0:
+            total_integral += overlap_x * self.matr[x, y]
         result = total_integral * self.matr.shape[1]
         return result
 
     def pdf(self, u, v):
         x = int(u * self.matr.shape[0])
         y = int(v * self.matr.shape[1])
-        return self.matr[x, y]
+        try:
+            return self.matr[x, y]
+        except IndexError as e:
+            if u == 1:
+                return self.matr[x - 1, y]
+            if v == 1:
+                return self.matr[x, y - 1]
+            raise e
 
     def tau(self):
         result = basictools.monte_carlo_integral(

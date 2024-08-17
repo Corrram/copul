@@ -1,10 +1,32 @@
 # copul
 
+**copul** is a package designed for mathematical computation and visualization of bivariate copula families.
+
+# Install
+
+Install the copul library using pip.
+
+```bash
+pip install copul
+```
+
+# Documentation
+
+A guide and documentation is available at [https://copul.readthedocs.io/](https://copul.readthedocs.io/).
+
 ## Copula properties
-For any of the bivariate copula families specified below, e.g. `copula = copul.Galambos()`, get the following properties:
+For any of the bivariate copula families specified below, e.g. `copula = copul.Galambos()`, get the following properties (if applicable):
 * Cumulative distribution function via `copula.cdf`
 * Density function via `copula.pdf`
 * Conditional distribution function via `copula.cond_distr_1` and `copula.cond_distr_2`
+* Data sampling from the copula via `copula.rvs`. The number of samples can be specified as an argument, e.g. `copula.rvs(1000)`
+
+The following measures of association and dependence are also added if closed-forms are known:
+* `copula.lambda_L` - lower tail dependence coefficient
+* `copula.lambda_U` - upper tail dependence coefficient
+* `copula.tau` - Kendall's tau	
+* `copula.rho` - Spearman's rho
+* `copula.xi` - Chatterjee's xi
 
 ## Supported copula families:
 
@@ -33,22 +55,14 @@ For these families, the following properties are available:
 Let `copula` be any instance of those classes, e.g. `copula = copul.extreme_value.Galambos()`.
 Then, the Pickands function is available via e.g. `copula.pickands`.
 
+### Elliptical Copulas
+* Gaussian
+* Student-t
+* Laplace
+
 ### Other
 * Farlie-Gumbel-Morgenstern
 * Fréchet
 * Mardia
 * Plackett
 * Raftery
-
-## Sample Usage
-```
-import copul
-
-galambos = copul.extreme_value.Galambos()
-params = galambos.sample_parameters(3)
-galambos.plot_pickands(params)
-
-clayton = copul.archimedean.Clayton()
-clayton(theta=1.5).plot_cdf()
-clayton(theta=2.5).plot_pdf()
-```

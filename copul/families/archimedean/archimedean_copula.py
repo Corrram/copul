@@ -4,6 +4,7 @@ import logging
 
 import numpy as np
 import sympy
+from matplotlib import pyplot as plt
 from scipy import optimize
 from copul.families import concrete_expand_log, get_simplified_solution
 from copul.families.abstract_copula import AbstractCopula
@@ -194,3 +195,18 @@ class ArchimedeanCopula(AbstractCopula, ABC):
             1 - self.inv_generator(y=self.y).func
         )
         return sympy.simplify(2 - sympy.limit(expr, self.y, 0, dir="+"))
+
+    def plot_generator(self, start=0, stop=1):
+        generator = sympy.lambdify(self.t, self.generator.func)
+        inv_generator = sympy.lambdify(self.y, self.inv_generator.func)
+        x = np.linspace(start, stop, 1000)
+        y = [generator(i) for i in x]
+        z = [inv_generator(i) for i in x]
+        plt.plot(x, y, label="Generator $\\varphi$")
+        plt.plot(x, z, label="Inverse generator $\psi$")
+        title = self._get_copula_title()
+        plt.title(title)
+        plt.legend()
+        plt.grid()
+        plt.show()
+        return

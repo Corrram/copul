@@ -23,6 +23,7 @@ class AbstractCopula(ABC):
     u, v = sympy.symbols("u v", positive=True)
     intervals = None
     log_cut_off = 4
+    _package_path = pathlib.Path(__file__).parent.parent
 
     def __init__(self, *args, **kwargs):
         if args and len(args) == len(self.params):
@@ -245,23 +246,49 @@ class AbstractCopula(ABC):
                     plt.plot(x, y, label=f"{function_name}")
         if free_symbol_dict:
             plt.legend()
-            plt.title(f"{self.__class__.__name__} {', '.join([*kwargs])}")
+            title = self._get_copula_title()
+            plt.title(f"{title} {', '.join([*kwargs])}")
             plt.grid(True)
             pathlib.Path("images").mkdir(exist_ok=True)
-            fig1 = plt.gcf()
             plt.show()
             plt.draw()
-            fig1.savefig(f"images/{self.__class__.__name__}.png")
+            plt.close()
+            # fig1 = plt.gcf()
+            # filepath = f"{self._package_path}/images/{self.__class__.__name__}.png"
+            # fig1.savefig(filepath)
+
+    def scatter_plot(self, n=1_000):
+        data_ = self.rvs(n)
+        plt.scatter(data_[:, 0], data_[:, 1], s=n)
+        title = self._get_copula_title()
+        plt.title(title)
+        plt.xlabel("u")
+        plt.ylabel("v")
+        plt.grid(True)
+        plt.show()
+        plt.close()
+        # filepath = f"{self._package_path}/images/{type(self).__name__}_scatter.png"
+        # plt.savefig(filepath)
 
     def plot_cdf(self, data=None, title=None, zlabel=None):
         if title is None:
-            title = f"{type(self).__name__} Copula"
+            title = self._get_copula_title()
         if zlabel is None:
             zlabel = ""
         if data is None:
             return self._plot3d(self.cdf, title=title, zlabel=zlabel, zlim=(0, 1))
         else:
             self._plot_cdf_from_data(data)
+
+    def _get_copula_title(self):
+        title = f"{type(self).__name__}"
+        if not title.endswith("Copula"):
+            title += " Copula"
+        param_dict = {s: getattr(self, s) for s in self.intervals}
+        if param_dict:
+            param_dict_str = ", ".join([f"{k}={v}" for k, v in param_dict.items()])
+            title += f" ({param_dict_str})"
+        return title
 
     @staticmethod
     def _plot_cdf_from_data(data):
@@ -304,7 +331,8 @@ class AbstractCopula(ABC):
     def plot_pdf(self):
         free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
         pdf = self(**free_symbol_dict).pdf
-        return self._plot3d(pdf, title=f"{type(self).__name__} Copula", zlabel="PDF")
+        title = self._get_copula_title()
+        return self._plot3d(pdf, title=title, zlabel="PDF")
 
     def _plot3d(self, func, title, zlabel, zlim=None):
         try:

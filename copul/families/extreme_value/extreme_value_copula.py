@@ -162,7 +162,9 @@ class ExtremeValueCopula(AbstractCopula):
         y = [lambda_func(i) for i in x]
         plt.plot(x, y, label=par_str)
 
-    def plot_pickands(self, subs):
+    def plot_pickands(self, subs=None, **kwargs):
+        if kwargs:
+            subs = kwargs
         if subs is None:
             subs = {}
         subs = {
@@ -174,8 +176,8 @@ class ExtremeValueCopula(AbstractCopula):
         plot_vals = self._mix_params(subs)
         for plot_val in plot_vals:
             subs_dict = {str(k): v for k, v in plot_val.items()}
-            pickands = self(**subs_dict).pickand
-            self._get_function_graph(pickands, plot_val)
+            pickands = self(**subs_dict).pickands
+            self._get_function_graph(pickands.func, plot_val)
 
         @contextmanager
         def suppress_warnings():
@@ -190,7 +192,7 @@ class ExtremeValueCopula(AbstractCopula):
         dict_str = ", ".join(
             f"\\{key}={value}" for key, value in defined_params.items()
         )
-        x_label = f"$t$ (with ${dict_str}$)"
+        x_label = f"$t$"
         plt.xlabel(x_label)
 
         plt.grid(True)
@@ -199,10 +201,10 @@ class ExtremeValueCopula(AbstractCopula):
         plt.title(f"{self.__class__.__name__}")
         plt.ylabel("$A(t)$")
         plt.legend()
-        plt.savefig(f"images/{self.__class__.__name__}_pickand.png")
         with suppress_warnings():
             plt.show()
-        return None
+        # filepath = f"{self._package_path}/images/{self.__class__.__name__}_pickand.png"
+        # plt.savefig(filepath)
 
     @staticmethod
     def _mix_params(params):
