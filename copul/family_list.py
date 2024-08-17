@@ -4,6 +4,20 @@ from copul.families import archimedean, elliptical, extreme_value, other
 
 
 class Families(Enum):
+    """
+    Enum for **all copula families** available in the package.
+    Any of the below listed copula families can be called
+    via the enum or directly by calling the class from the package.
+    For example, we can call the Clayton copula in the following two ways:
+
+    .. highlight:: python
+    .. code-block:: python
+
+        >>> import copul as cp
+        >>> cp.Families.CLAYTON.value()
+        >>> cp.Clayton()
+    """
+
     CLAYTON = archimedean.Clayton
     NELSEN1 = archimedean.Nelsen1
     NELSEN2 = archimedean.Nelsen2

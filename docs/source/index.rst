@@ -8,7 +8,7 @@ copul documentation
 
 **copul** is a package designed for mathematical computation and visualization of bivariate copula families.
 It accompanies the `Dependence properties of bivariate copula families <https://www.degruyter.com/document/doi/10.1515/demo-2024-0002/html>`_ article released in the Dependence Modeling journal and in particular covers implementations of
-the following copulas:
+the following copula families:
 
 - **Archimedean** copula families including Clayton, Gumbel, Frank, Joe, Ali-Mikhail-Haq, and more
 - **Extreme-value** copulas families including Hüsler-Reiss, Galambos, Marshall-Olkin, etc.
@@ -16,6 +16,8 @@ the following copulas:
 - Unclassified copula families like the Farlie-Gumbel-Morgenstern, Plackett or Raftery copula families.
 - Independence copula, lower and upper Fréchet bounds
 - **Checkerboard** copulas
+
+A list of all implemented copulas can be found in :py:mod:`copul.Families`.
 
 -------------------
 
