@@ -24,7 +24,10 @@ class AbstractCopula(ABC):
     intervals = None
     log_cut_off = 4
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
+        if args and len(args) == len(self.params):
+            for i in range(len(args)):
+                setattr(self, str(self.params[i]), args[i])
         self._are_class_vars(kwargs)
         for k, v in kwargs.items():
             if isinstance(v, str):

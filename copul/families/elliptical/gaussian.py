@@ -17,7 +17,9 @@ class Gaussian(EllipticalCopula):
 
     generator = sympy.exp(-EllipticalCopula.t / 2)
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) == 1:
+            kwargs["rho"] = args[0]
         if "rho" in kwargs:
             if kwargs["rho"] == -1:
                 del kwargs["rho"]

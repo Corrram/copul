@@ -147,7 +147,8 @@ class ExtremeValueCopula(AbstractCopula):
                 continue
         return None, x0
 
-    def _get_function_graph(self, func, par):
+    @staticmethod
+    def _get_function_graph(func, par):
         par_str = ", ".join(f"$\\{key}={value}$" for key, value in par.items())
         par_str = par_str.replace("oo", "\\infty")
         lambda_func = sympy.lambdify("t", func)
