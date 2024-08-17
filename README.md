@@ -1,6 +1,6 @@
 # copul
 
-**copul** is a package designed for mathematical computation and visualization of bivariate copula families.
+**copul** is a package designed for mathematical computation with and visualization of bivariate copula families.
 
 # Install
 
@@ -14,55 +14,69 @@ pip install copul
 
 A guide and documentation is available at [https://copul.readthedocs.io/](https://copul.readthedocs.io/).
 
-## Copula properties
-For any of the bivariate copula families specified below, e.g. `copula = copul.Galambos()`, get the following properties (if applicable):
-* Cumulative distribution function via `copula.cdf`
-* Density function via `copula.pdf`
-* Conditional distribution function via `copula.cond_distr_1` and `copula.cond_distr_2`
-* Data sampling from the copula via `copula.rvs`. The number of samples can be specified as an argument, e.g. `copula.rvs(1000)`
+# Copula families and copulas
 
-The following measures of association and dependence are also added if closed-forms are known:
-* `copula.lambda_L` - lower tail dependence coefficient
-* `copula.lambda_U` - upper tail dependence coefficient
-* `copula.tau` - Kendall's tau	
-* `copula.rho` - Spearman's rho
-* `copula.xi` - Chatterjee's xi
+The `copul` package covers implementations of the following copula families:
 
-## Supported copula families:
+- **Archimedean copula families**: The 22 Archimedean copula families from the book "Nelsen - An Introduction to Copulas" including 
+    * Clayton
+    * Gumbel-Hougaard
+    * Frank
+    * Joe
+    * Ali-Mikhail-Haq
+    * etc.
+- **Extreme-value copulas families**:
+    * BB5
+    * Cuadras-Augé
+    * Galambos
+    * Gumbel
+    * Husler-Reiss
+    * Joe
+    * Marshall-Olkin
+    * tEV
+    * Tawn
+- **Elliptical copula families**:
+    * Gaussian
+    * Student's t
+    * Laplace.
+- **Other copula families**:
+    * Farlie-Gumbel-Morgenstern
+    * Fréchet
+    * Mardia
+    * Plackett
+    * Raftery
 
-### Archimedean Copulas
-The 22 Archimedean copula families from the book "Nelsen - An Introduction to Copulas", accessible via
-`copul.archimedean.Nelsen1`, `copul.archimedean.Nelsen2`, etc.
-Let `copula` be any instance of those classes, e.g. `copula = copul.archimedean.Nelsen1()`.
 
-For these families, the following properties are available:
-* generator function is available via e.g. `copula.generator`
-* inverse generator function is available via e.g. `copula.inverse_generator`
-* CI char function is available via e.g. `copula.ci_char`
-* the MTP2 char function is available via e.g. `copula.mtp2_char`
+Furthermore, the package provides the following copulas:
 
-### Extreme Value Copulas
-* BB5
-* Cuadras-Augé
-* Galambos
-* Gumbel
-* Husler-Reiss
-* Joe
-* Marshall-Olkin
-* tEV
-* tawn
+- Independence copula
+- Lower and upper Fréchet bounds
+- Checkerboard copulas
 
-Let `copula` be any instance of those classes, e.g. `copula = copul.extreme_value.Galambos()`.
-Then, the Pickands function is available via e.g. `copula.pickands`.
+<!--A list of all implemented copulas can be found in `copul.Families`.
 
-### Elliptical Copulas
-* Gaussian
-* Student-t
-* Laplace
+> **Note**: The following examples are also available as a Jupyter notebook in the `notes/examples` folder.-->
 
-### Other
-* Farlie-Gumbel-Morgenstern
-* Fréchet
-* Mardia
-* Plackett
-* Raftery
+# Copula properties
+
+The following properties are available for the above copula families and copulas if they exist and are known:
+
+- `cdf`: Cumulative distribution function
+- `pdf`: Probability density function
+- `cond_distr_1`, `cond_distr_2`: Conditional distribution functions
+- `lambda_L`, `lambda_U`: Lower and upper tail dependence coefficients
+- `rho`, `tau`, `xi`: Spearman's rho, Kendall's tau, and Chatterjee's xi
+- `generator`, `inv_generator`: Generator and inverse generator for Archimedean copula families
+- `pickands`: Pickands dependence functions for extreme-value copula families
+
+# Copula methods
+
+The following methods are available for the above copula families and copulas:
+
+- `rvs`: Generate random samples from the copula
+- `scatter_plot`: Generate a scatter plot of the copula
+- `plot_cdf`: Visualize the cumulative distribution function
+- `plot_pdf`: Visualize the probability density function
+- `plot_rank_correlations`: Visualize Spearman's rho, Kendall's tau, and Chatterjee's xi
+- `plot_generator`: Visualize the generator function
+- `plot_pickands`: Visualize the Pickands dependence function

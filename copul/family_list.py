@@ -7,7 +7,7 @@ class Families(Enum):
     """
     Enum for **all copula families** available in the package.
     Any of the below listed copula families can be called
-    via the enum or directly by calling the class from the package.
+    via the enum or directly by instanciating the class from the package.
     For example, we can call the Clayton copula in the following two ways:
 
     .. highlight:: python
