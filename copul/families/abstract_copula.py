@@ -27,7 +27,7 @@ class AbstractCopula(ABC):
     def __init__(self, *args, **kwargs):
         if args and len(args) == len(self.params):
             for i in range(len(args)):
-                setattr(self, str(self.params[i]), args[i])
+                kwargs[str(self.params[i])] = args[i]
         self._are_class_vars(kwargs)
         for k, v in kwargs.items():
             if isinstance(v, str):
@@ -123,66 +123,63 @@ class AbstractCopula(ABC):
         return SymPyFunctionWrapper(sympy.diff(self.cdf, self.v))
 
     def xi(self):
-        print("xi")
+        log.debug("xi")
         cond_distri_1 = sympy.simplify(self.cond_distr_1())
-        print("cond_distr_1 sympy: ", cond_distri_1)
-        print("cond_distr_1: ", sympy.latex(cond_distri_1))
-        # sample_int = sympy.simplify(sympy.integrate(cond_distri_1, self.u))
-        # print("sample_int sympy: ", sample_int)
-        # print("sample_int: ", sympy.latex(sample_int))
+        log.debug("cond_distr_1 sympy: ", cond_distri_1)
+        log.debug("cond_distr_1: ", sympy.latex(cond_distri_1))
         squared_cond_distr_1 = self._squared_cond_distr_1(self.u, self.v)
-        print("squared_cond_distr_1 sympy: ", squared_cond_distr_1)
-        print("squared_cond_distr_1: ", sympy.latex(squared_cond_distr_1))
+        log.debug("squared_cond_distr_1 sympy: ", squared_cond_distr_1)
+        log.debug("squared_cond_distr_1: ", sympy.latex(squared_cond_distr_1))
         int_1 = self._xi_int_1(self.v)
-        print("int_1 sympy: ", int_1)
-        print("int_1: ", sympy.latex(int_1))
+        log.debug("int_1 sympy: ", int_1)
+        log.debug("int_1: ", sympy.latex(int_1))
         int_2 = self._xi_int_2()
-        print("int_2 sympy: ", int_2)
-        print("int_2: ", sympy.latex(int_2))
+        log.debug("int_2 sympy: ", int_2)
+        log.debug("int_2: ", sympy.latex(int_2))
         xi = self._xi()
-        print("xi sympy: ", xi)
-        print("xi: ", sympy.latex(xi))
+        log.debug("xi sympy: ", xi)
+        log.debug("xi: ", sympy.latex(xi))
         return SymPyFunctionWrapper(xi)
 
     def rho(self):
-        print("rho")
-        if isinstance(self.cdf, SymPyFunctionWrapper):
-            cdf = sympy.simplify(self.cdf.func)
-        else:
-            cdf = self.cdf
-        print("cdf sympy: ", cdf)
-        print("cdf latex: ", sympy.latex(cdf))
-        int_1 = self._rho_int_1()
-        print("int_1 sympy: ", int_1)
-        print("int_1 latex: ", sympy.latex(int_1))
+        # log.debug("rho")
+        # if isinstance(self.cdf, SymPyFunctionWrapper):
+        #     cdf = sympy.simplify(self.cdf.func)
+        # else:
+        #     cdf = self.cdf
+        # log.debug("cdf sympy: ", cdf)
+        # log.debug("cdf latex: ", sympy.latex(cdf))
+        # int_1 = self._rho_int_1()
+        # log.debug("int_1 sympy: ", int_1)
+        # log.debug("int_1 latex: ", sympy.latex(int_1))
         rho = self._rho()
-        print("rho sympy: ", rho)
-        print("rho latex: ", sympy.latex(rho))
+        log.debug("rho sympy: ", rho)
+        log.debug("rho latex: ", sympy.latex(rho))
         return rho
 
     def _rho(self):
         return sympy.simplify(12 * self._rho_int_2() - 3)
 
     def tau(self):
-        print("tau")
-        if isinstance(self.cdf, SymPyFunctionWrapper):
-            integrand = self.cdf.func * self.pdf
-        else:
-            integrand = self.cdf * self.pdf
-        print("integrand sympy: ", integrand)
-        print("integrand latex: ", sympy.latex(integrand))
-        int_1 = self._tau_int_1()
-        print("int_1 sympy: ", int_1)
-        print("int_1 latex: ", sympy.latex(int_1))
-        int_2 = self._tau_int_2()
-        print("int_2 sympy: ", int_2)
-        print("int_2 latex: ", sympy.latex(int_2))
+        # print("tau")
+        # if isinstance(self.cdf, SymPyFunctionWrapper):
+        #     integrand = self.cdf.func * self.pdf
+        # else:
+        #     integrand = self.cdf * self.pdf
+        # print("integrand sympy: ", integrand)
+        # print("integrand latex: ", sympy.latex(integrand))
+        # int_1 = self._tau_int_1()
+        # print("int_1 sympy: ", int_1)
+        # print("int_1 latex: ", sympy.latex(int_1))
+        # int_2 = self._tau_int_2()
+        # print("int_2 sympy: ", int_2)
+        # print("int_2 latex: ", sympy.latex(int_2))
         tau = self._tau()
         print("tau sympy: ", tau)
         print("tau latex: ", sympy.latex(tau))
         return tau
 
-    def _tau(self, *args):
+    def _tau(self):
         return 4 * self._tau_int_2() - 1
 
     def _xi(self):

@@ -1,5 +1,6 @@
 import itertools
 import warnings
+import logging
 from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
@@ -13,15 +14,16 @@ from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
 plt.rc("text", usetex=True)  # Enable LaTeX rendering
-# plt.rc("font", family="serif")  # Optional: use serif font
 plt.rc("font", size=12)  # You can adjust this value as needed
+
+log_ = logging.getLogger(__name__)
 
 
 class ExtremeValueCopula(AbstractCopula):
     _t_min = 0
     _t_max = 1
     t = sympy.symbols("t", positive=True)
-    pickands = sympy.Function("A")(t)
+    pickands = SymPyFunctionWrapper(sympy.Function("A")(t))
     intervals = None
 
     def deriv_pickand_at_0(self):
@@ -36,10 +38,14 @@ class ExtremeValueCopula(AbstractCopula):
         }
 
     @property
+    def is_ci(self):
+        return True
+
+    @property
     def cdf(self):
         """Cumulative distribution function of the copula"""
-        cop = (self.u * self.v) ** self.pickands.subs(
-            self.t, sympy.ln(self.v) / sympy.ln(self.u * self.v)
+        cop = (self.u * self.v) ** self.pickands(
+            sympy.ln(self.v) / sympy.ln(self.u * self.v)
         )
         cop = self._get_simplified_solution(cop)
         return SymPyFunctionWrapper(cop)
@@ -48,7 +54,7 @@ class ExtremeValueCopula(AbstractCopula):
     def pdf(self):
         """Probability density function of the copula"""
         _xi_1, u, v = sympy.symbols("_xi_1 u v")
-        pickands = self.pickands
+        pickands = self.pickands.func
         t = self.t
         pdf = (
             (u * v) ** pickands.subs(t, log(v) / log(u * v))
@@ -94,7 +100,7 @@ class ExtremeValueCopula(AbstractCopula):
         return rho
 
     def _rho_int_1(self):
-        return sympy.simplify((self.pickands + 1) ** (-2))
+        return sympy.simplify((self.pickands.func + 1) ** (-2))
 
     def _rho(self):
         return sympy.simplify(
@@ -104,13 +110,13 @@ class ExtremeValueCopula(AbstractCopula):
     def tau(self):  # nelsen 5.15
         t = self.t
         diff2_pickands = sympy.diff(self.pickands, t, 2)
-        integrand = sympy.simplify(t * (1 - t) / self.pickands * diff2_pickands)
-        print("integrand: ", integrand)
-        print("integrand latex: ", sympy.latex(integrand))
+        integrand = sympy.simplify(t * (1 - t) / self.pickands.func * diff2_pickands)
+        log_.debug("integrand: ", integrand)
+        log_.debug("integrand latex: ", sympy.latex(integrand))
         integral = sympy.integrate(integrand, (t, 0, 1))
         tau = sympy.simplify(integral)
-        print("tau: ", tau)
-        print("tau latex: ", sympy.latex(tau))
+        log_.debug("tau: ", tau)
+        log_.debug("tau latex: ", sympy.latex(tau))
         return tau
 
     def minimize_func(self, sympy_func):

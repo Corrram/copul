@@ -3,6 +3,7 @@ import sympy
 from sympy import stats
 
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
+from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
 # noinspection PyPep8Naming
@@ -32,6 +33,8 @@ class tEV(ExtremeValueCopula):
                 * (1 - self.rho**2) ** (-1 / 2)
             )
 
-        return (1 - self.t) * stats.cdf(stats.StudentT("x", self.nu + 1))(
-            z(1 - self.t)
-        ) + self.t * stats.cdf(stats.StudentT("x", self.nu + 1))(z(self.t))
+        student_t = stats.StudentT("x", self.nu + 1)
+        func = (1 - self.t) * stats.cdf(student_t)(z(1 - self.t)) + self.t * stats.cdf(
+            student_t
+        )(z(self.t))
+        return SymPyFunctionWrapper(func)

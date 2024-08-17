@@ -101,9 +101,10 @@ class JoeEV(ExtremeValueCopula):
         t = self.t
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
-        return 1 - ((alpha_1 * (1 - t)) ** (-delta) + (alpha_2 * t) ** (-delta)) ** (
+        func = 1 - ((alpha_1 * (1 - t)) ** (-delta) + (alpha_2 * t) ** (-delta)) ** (
             -1 / delta
         )
+        return SymPyFunctionWrapper(func)
 
     @property
     def cdf(self):

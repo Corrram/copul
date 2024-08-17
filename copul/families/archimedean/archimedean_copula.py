@@ -1,11 +1,15 @@
 from abc import ABC
 
+import logging
+
 import numpy as np
 import sympy
 from scipy import optimize
 from copul.families import concrete_expand_log, get_simplified_solution
 from copul.families.abstract_copula import AbstractCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
+
+log = logging.getLogger(__name__)
 
 
 class ArchimedeanCopula(AbstractCopula, ABC):
@@ -18,7 +22,7 @@ class ArchimedeanCopula(AbstractCopula, ABC):
 
     def __init__(self, *args, **kwargs):
         if args is not None and len(args) > 0:
-            self.theta = args[0]
+            kwargs["theta"] = args[0]
         super().__init__(**kwargs)
 
     def __str__(self):
@@ -77,20 +81,20 @@ class ArchimedeanCopula(AbstractCopula, ABC):
 
     def tau(self):
         inv_gen = self.generator.func
-        print("inv gen: ", inv_gen)
-        print("inv gen latex: ", sympy.latex(inv_gen))
+        log.debug("inv gen: ", inv_gen)
+        log.debug("inv gen latex: ", sympy.latex(inv_gen))
         inv_gen_diff = sympy.diff(inv_gen, self.t)
-        print("inv gen diff: ", inv_gen_diff)
-        print("inv gen diff latex: ", sympy.latex(inv_gen_diff))
+        log.debug("inv gen diff: ", inv_gen_diff)
+        log.debug("inv gen diff latex: ", sympy.latex(inv_gen_diff))
         frac = inv_gen / inv_gen_diff
-        print("frac: ", frac)
-        print("frac latex: ", sympy.latex(frac))
+        log.debug("frac: ", frac)
+        log.debug("frac latex: ", sympy.latex(frac))
         integral = sympy.integrate(frac, (self.t, 0, 1))
-        print("integral: ", integral)
-        print("integral latex: ", sympy.latex(integral))
+        log.debug("integral: ", integral)
+        log.debug("integral latex: ", sympy.latex(integral))
         tau = 1 + 4 * integral
-        print("tau: ", tau)
-        print("tau latex: ", sympy.latex(tau))
+        log.debug("tau: ", tau)
+        log.debug("tau latex: ", sympy.latex(tau))
         return tau
 
     @property

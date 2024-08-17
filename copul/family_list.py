@@ -4,16 +4,6 @@ from copul.families import archimedean, elliptical, extreme_value, other
 
 
 class Families(Enum):
-    """Enum class for the different copula families.
-
-    The following copula families are available:
-
-    - 'clayton'
-    - 'frank'
-    - 'gumbel'
-    - 'independent'
-    """
-
     CLAYTON = archimedean.Clayton
     NELSEN1 = archimedean.Nelsen1
     NELSEN2 = archimedean.Nelsen2

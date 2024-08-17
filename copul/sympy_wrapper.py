@@ -1,3 +1,4 @@
+import numpy as np
 import sympy
 
 
@@ -18,13 +19,17 @@ class SymPyFunctionWrapper:
     def __repr__(self):
         return repr(self._func)
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
         free_symbols = {str(f) for f in self._func.free_symbols}
+        if args and len(free_symbols) == len(args):
+            kwargs = {str(f): arg for f, arg in zip(free_symbols, args)}
         assert set(kwargs).issubset(
             free_symbols
         ), f"keys: {set(kwargs)}, free symbols: {self._func.free_symbols}"
         vars_ = {f: kwargs[str(f)] for f in self._func.free_symbols if str(f) in kwargs}
         self._func = self._func.subs(vars_)
+        if isinstance(self._func, sympy.Float):
+            return float(self._func)
         return self
 
     @property

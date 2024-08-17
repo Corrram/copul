@@ -1,5 +1,6 @@
 import sympy
 
+from copul.families.other import IndependenceCopula, LowerFrechet
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -8,6 +9,22 @@ class Nelsen7(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, 1, left_open=False, right_open=False)
+
+    def __init__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            kwargs["theta"] = args[0]
+        super().__init__(**kwargs)
+
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            kwargs["theta"] = args[0]
+        if "theta" in kwargs and kwargs["theta"] == 0:
+            del kwargs["theta"]
+            return LowerFrechet()(**kwargs)
+        if "theta" in kwargs and kwargs["theta"] == 1:
+            del kwargs["theta"]
+            return IndependenceCopula()(**kwargs)
+        return super().__call__(**kwargs)
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -70,6 +87,10 @@ class Nelsen7(ArchimedeanCopula):
 
     def _rho(self):
         theta = self.theta
+        if theta == 0:
+            return -1
+        elif theta == 1:
+            return 0
         rho = (
             -3
             + 9 / theta
@@ -78,8 +99,12 @@ class Nelsen7(ArchimedeanCopula):
         )
         return sympy.Piecewise((rho, theta < 1), (0, True))
 
-    def _tau(self):
+    def tau(self):
         theta = self.theta
+        if theta == 0:
+            return -1
+        elif theta == 1:
+            return 0
         tau = 2 - 2 / theta - 2 * (theta - 1) ** 2 * sympy.log(1 - theta) / theta**2
         return sympy.Piecewise((tau, theta < 1), (0, True))
 

@@ -2,6 +2,7 @@ import numpy as np
 import sympy
 from scipy import stats
 
+from copul.families.other import LowerFrechet, UpperFrechet
 from copul.families.elliptical.elliptical_copula import EllipticalCopula
 
 from numpy.linalg import svd
@@ -306,6 +307,19 @@ for name in ["logpdf", "pdf", "logcdf", "cdf", "rvs"]:
 
 
 class Laplace(EllipticalCopula):
+
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) == 1:
+            kwargs["rho"] = args[0]
+        if "rho" in kwargs:
+            if kwargs["rho"] == -1:
+                del kwargs["rho"]
+                return LowerFrechet()(**kwargs)
+            elif kwargs["rho"] == 1:
+                del kwargs["rho"]
+                return UpperFrechet()(**kwargs)
+        return super().__call__(**kwargs)
+
     @property
     def is_symmetric(self) -> bool:
         return True

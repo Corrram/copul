@@ -36,7 +36,8 @@ class CuadrasAuge(ExtremeValueCopula):
 
     @property
     def pickands(self):
-        return 1 - self.delta * sympy.Min(1 - self.t, self.t)
+        func = 1 - self.delta * sympy.Min(1 - self.t, self.t)
+        return SymPyFunctionWrapper(func)
 
     @property
     def cdf(self):
@@ -92,17 +93,7 @@ class CuadrasAuge(ExtremeValueCopula):
         return sympy.simplify(int1 + int2)
 
     def xi(self):
-        print("xi")
-        int_1 = self._xi_int_1(self.v)
-        print("int_1 sympy: ", int_1)
-        print("int_1: ", sympy.latex(int_1))
-        int_2 = self._xi_int_2()
-        print("int_2 sympy: ", int_2)
-        print("int_2: ", sympy.latex(int_2))
-        xi = self._xi()
-        print("xi sympy: ", xi)
-        print("xi: ", sympy.latex(xi))
-        return xi
+        return self._xi()
 
 
 B12 = CuadrasAuge

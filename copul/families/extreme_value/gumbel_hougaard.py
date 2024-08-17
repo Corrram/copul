@@ -1,11 +1,21 @@
 import numpy as np
 import sympy
 
+from copul.families.other import IndependenceCopula
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
 class GumbelHougaard(ExtremeValueCopula):
+
+    def __call__(self, *args, **kwargs):
+        if args is not None and len(args) > 0:
+            kwargs["theta"] = args[0]
+        if "theta" in kwargs and kwargs["theta"] == 1:
+            del kwargs["theta"]
+            return IndependenceCopula()(**kwargs)
+        return super().__call__(**kwargs)
+
     @property
     def is_absolutely_continuous(self) -> bool:
         return True
@@ -20,7 +30,8 @@ class GumbelHougaard(ExtremeValueCopula):
 
     @property
     def pickands(self):
-        return (self.t**self.theta + (1 - self.t) ** self.theta) ** (1 / self.theta)
+        func = (self.t**self.theta + (1 - self.t) ** self.theta) ** (1 / self.theta)
+        return SymPyFunctionWrapper(func)
 
     @property
     def cdf(self):

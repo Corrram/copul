@@ -6,6 +6,7 @@ from sympy import stats
 
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other.independence_copula import IndependenceCopula
+from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
 class HueslerReiss(ExtremeValueCopula):
@@ -32,9 +33,10 @@ class HueslerReiss(ExtremeValueCopula):
     @property
     def pickands(self):
         std_norm = stats.cdf(stats.Normal("x", 0, 1))
-        return (1 - self.t) * std_norm(self._z(1 - self.t)) + self.t * std_norm(
+        func = (1 - self.t) * std_norm(self._z(1 - self.t)) + self.t * std_norm(
             self._z(self.t)
         )
+        return SymPyFunctionWrapper(func)
 
     def _z(self, t):
         if t == 0:

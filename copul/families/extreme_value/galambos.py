@@ -22,7 +22,8 @@ class Galambos(ExtremeValueCopula):
     def pickands(self):
         t = self.t
         delta = self.delta
-        return 1 - (t ** (-delta) + (1 - t) ** (-delta)) ** (-1 / delta)
+        func = 1 - (t ** (-delta) + (1 - t) ** (-delta)) ** (-1 / delta)
+        return SymPyFunctionWrapper(func)
 
     @property
     def cdf(self):

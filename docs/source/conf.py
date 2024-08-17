@@ -19,10 +19,8 @@ author = "Marcus Rockel"
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
-    # "sphinx.ext.todo",
-    # "sphinx.ext.viewcode",
+    "sphinx.ext.doctest",
 ]
 templates_path = ["_templates"]
 exclude_patterns = []

@@ -46,12 +46,13 @@ class BB5(ExtremeValueCopula):
     def pickands(self):
         theta = self.theta
         t = self.t
-        return (
+        func = (
             t**theta
             + (1 - t) ** theta
             - ((1 - t) ** (-theta * self.delta) + t ** (-theta * self.delta))
             ** (-1 / self.delta)
         ) ** (1 / theta)
+        return SymPyFunctionWrapper(func)
 
     @property
     def cdf(self):

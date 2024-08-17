@@ -38,14 +38,6 @@ copul.chatterjee module
    :undoc-members:
    :show-inheritance:
 
-copul.double\_stochastic\_matrix module
----------------------------------------
-
-.. automodule:: copul.double_stochastic_matrix
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 copul.email\_notifier module
 ----------------------------
 
