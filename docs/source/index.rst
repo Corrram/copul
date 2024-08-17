@@ -7,9 +7,14 @@ copul documentation
 ===================
 
 **copul** is a package designed for mathematical computation and visualization of bivariate copula families.
-It accompanies the `Dependence properties of bivariate copula families <https://www.degruyter.com/document/doi/10.1515/demo-2024-0002/html>`_ article released in the Dependence Modeling journal.
+It accompanies the `Dependence properties of bivariate copula families <https://www.degruyter.com/document/doi/10.1515/demo-2024-0002/html>`_ article released in the Dependence Modeling journal and in particular covers implementations of 35+ copula families of various types:
 
-Here are some examples of how to use the package with various copula families. For a reference list of implemented copula families, their properties, and available methods, see :doc:`overview`.
+- **Archimedean** copula families: Clayton, Ali-Mikhail-Haq, Gumbel-Hougaard, etc.
+- **Extreme-value** copula families: Galambos, Marshall-Olkin, ...
+- **Elliptical** copula families: Gaussian, Student's t, or Laplace.
+- Unclassified copula families: Farlie-Gumbel-Morgenstern, Plackett, Raftery, etc.
+
+For a full reference list of implemented copula families, their properties, and available methods, see :doc:`overview`.
 
 -------------------
 
@@ -19,6 +24,29 @@ Here are some examples of how to use the package with various copula families. F
 .. code-block:: python
 
     >>> import copul as cp
+
+**Visualize cumulative distribution functions of copulas**
+
+.. highlight:: python
+.. code-block:: python
+
+    cp.UpperFrechet().plot_cdf()
+    cp.LowerFrechet().plot_cdf()
+
+.. image:: _static/images/LowerFrechet.png
+   :alt: alternate text
+   :width: 280px
+   :align: left
+
+.. image:: _static/images/UpperFrechet.png
+   :alt: alternate text
+   :width: 300px
+   :align: right
+
+
+.. raw:: html
+
+   <br style="clear: both;"><br>
 
 **Calling a copula with properties**
 
@@ -33,8 +61,6 @@ Here are some examples of how to use the package with various copula families. F
     Max(0, u**(-0.5) + v**(-0.5) - 1)**(-2.0)
     >>> cp.Clayton(0.5).cdf(u=0.3, v=1)
     0.3
-
--------------------
 
 **Generate scatter plots of a copula**
 
@@ -53,28 +79,6 @@ Here are some examples of how to use the package with various copula families. F
    :alt: alternate text
    :width: 300px
    :align: right
-
-**Visualize cumulative distribution functions of copulas**
-
-.. highlight:: python
-.. code-block:: python
-
-    cp.UpperFrechet().plot_cdf()
-    cp.LowerFrechet().plot_cdf()
-
-.. image:: _static/images/UpperFrechet.png
-   :alt: alternate text
-   :width: 300px
-   :align: left
-
-.. image:: _static/images/LowerFrechet.png
-   :alt: alternate text
-   :width: 280px
-   :align: right
-
-.. raw:: html
-
-   <br style="clear: both;"><br>
 
 **Visualize conditional distributions of copulas**::
 
@@ -102,20 +106,6 @@ Here are some examples of how to use the package with various copula families. F
     :alt: alternate text
     :width: 500px
     :align: center
-
--------------------
-
-**Perform mathematical computations with copul**
-
-.. highlight:: python
-.. code-block:: python
-
-    >>> cp.Clayton().cdf()
-    Max(0, -1 + v**(-theta) + u**(-theta))**(-1/theta)
-    >>> cp.Clayton().cdf(u=0.5, v=0.5, theta=0.3)
-    0.28176656750662277
-    >>> cp.AliMikhailHaq(0).pdf()
-    1
 
 -------------------
 
@@ -217,6 +207,7 @@ Extreme-value copulas are characterized by a pickands dependence function, which
    :maxdepth: 2
    :caption: Contents:
 
+   overview
    modules
 
 Indices and tables
