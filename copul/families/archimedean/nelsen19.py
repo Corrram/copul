@@ -1,6 +1,7 @@
 import numpy as np
 import sympy
 
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
 from copul.sympy_wrapper import SymPyFunctionWrapper
@@ -39,4 +40,4 @@ class Nelsen19(ArchimedeanCopula):
             + sympy.exp(self.theta / self.u)
             + sympy.exp(self.theta / self.v)
         )
-        return SymPyFunctionWrapper(cdf)
+        return CDFWrapper(cdf)

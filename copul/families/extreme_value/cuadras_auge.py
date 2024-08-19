@@ -1,6 +1,7 @@
 import sympy
 import logging
 
+from copul.cd1_wrapper import CD1Wrapper
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
@@ -50,21 +51,19 @@ class CuadrasAuge(ExtremeValueCopula):
         )
         return SymPyFunctionWrapper(cdf)
 
-    def cond_distr_1(self) -> SymPyFunctionWrapper:
-        u = self.u
-        v = self.v
+    def cond_distr_1(self, u=None, v=None):
         delta = self.delta
         cond_distr_1 = (
-            v ** (1 - delta)
+            self.v ** (1 - delta)
             * (
-                delta * u * sympy.Heaviside(-u + v)
-                - delta * sympy.Min(u, v)
-                + sympy.Min(u, v)
+                delta * self.u * sympy.Heaviside(-self.u + self.v)
+                - delta * sympy.Min(self.u, self.v)
+                + sympy.Min(self.u, self.v)
             )
-            * sympy.Min(u, v) ** (delta - 1)
-            / u**delta
+            * sympy.Min(self.u, self.v) ** (delta - 1)
+            / self.u**delta
         )
-        return SymPyFunctionWrapper(cond_distr_1)
+        return CD1Wrapper(cond_distr_1)(u, v)
 
     def _squared_cond_distr_1(self, v, u):
         delta = self.delta

@@ -1,6 +1,8 @@
 import numpy as np
 import sympy
 
+from copul.cd1_wrapper import CD1Wrapper
+from copul.cd2_wrapper import CD2Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -28,31 +30,33 @@ class Nelsen2(ArchimedeanCopula):
 
     @property
     def cdf(self):
-        expr = 1 - ((1 - self.u) ** self.theta + (1 - self.v) ** self.theta) ** (1 / self.theta)
+        expr = 1 - ((1 - self.u) ** self.theta + (1 - self.v) ** self.theta) ** (
+            1 / self.theta
+        )
         gen = sympy.Max(0, expr)
         return SymPyFunctionWrapper(gen)
 
-    def cond_distr_1(self) -> SymPyFunctionWrapper:
-        u = self.u
-        v = self.v
+    def cond_distr_1(self, u=None, v=None):
         theta = self.theta
         cond_distr_1 = (
-            (1 - u) ** (theta - 1)
-            * ((1 - u) ** theta + (1 - v) ** theta) ** ((1 - theta) / theta)
-            * sympy.Heaviside(1 - ((1 - u) ** theta + (1 - v) ** theta) ** (1 / theta))
+            (1 - self.u) ** (theta - 1)
+            * ((1 - self.u) ** theta + (1 - self.v) ** theta) ** ((1 - theta) / theta)
+            * sympy.Heaviside(
+                1 - ((1 - self.u) ** theta + (1 - self.v) ** theta) ** (1 / theta)
+            )
         )
-        return SymPyFunctionWrapper(cond_distr_1)
+        return CD1Wrapper(cond_distr_1)(u, v)
 
-    def cond_distr_2(self):
+    def cond_distr_2(self, u=None, v=None):
         theta = self.theta
-        u = self.u
-        v = self.v
         cond_distr = (
-            (1 - v) ** (theta - 1)
-            * ((1 - u) ** theta + (1 - v) ** theta) ** ((1 - theta) / theta)
-            * sympy.Heaviside(1 - ((1 - u) ** theta + (1 - v) ** theta) ** (1 / theta))
+            (1 - self.v) ** (theta - 1)
+            * ((1 - self.u) ** theta + (1 - self.v) ** theta) ** ((1 - theta) / theta)
+            * sympy.Heaviside(
+                1 - ((1 - self.u) ** theta + (1 - self.v) ** theta) ** (1 / theta)
+            )
         )
-        return SymPyFunctionWrapper(cond_distr)
+        return CD2Wrapper(cond_distr)(u, v)
 
     def _squared_cond_distr_1(self, u, v):
         theta = self.theta

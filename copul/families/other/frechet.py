@@ -2,6 +2,7 @@ import copy
 
 import sympy
 
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.abstract_copula import AbstractCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -42,7 +43,10 @@ class Frechet(AbstractCopula):
     def beta(self, value):
         self._beta = value
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
+        if args and len(args) == 2:
+            kwargs["alpha"] = args[0]
+            kwargs["beta"] = args[1]
         if "alpha" in kwargs:
             self._alpha = kwargs["alpha"]
             self.intervals["beta"] = sympy.Interval(
@@ -59,7 +63,10 @@ class Frechet(AbstractCopula):
             del kwargs["beta"]
         super().__init__(**kwargs)
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args and len(args) == 2:
+            kwargs["alpha"] = args[0]
+            kwargs["beta"] = args[1]
         if "alpha" in kwargs:
             new_copula = copy.deepcopy(self)
             new_copula._alpha = kwargs["alpha"]
@@ -93,15 +100,15 @@ class Frechet(AbstractCopula):
             + (1 - self._alpha - self._beta) * self.u * self.v
             + self._beta * frechet_lower
         )
-        return SymPyFunctionWrapper(cdf)
+        return CDFWrapper(cdf)
 
-    def cond_distr_2(self):
+    def cond_distr_2(self, u=None, v=None):
         cond_distr = (
             self._alpha * sympy.Heaviside(self.u - self.v)
             + self._beta * sympy.Heaviside(self.u + self.v - 1)
             + self.u * (-self._alpha - self._beta + 1)
         )
-        return SymPyFunctionWrapper(cond_distr)
+        return SymPyFunctionWrapper(cond_distr)(u, v)
 
     @property
     def spearmans_rho(self):

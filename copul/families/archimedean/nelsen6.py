@@ -27,32 +27,38 @@ class Joe(HeavyComputeArch):
     @property
     def cdf(self):
         theta = self.theta
-        gen = 1 - (-((1 - self.u) ** theta - 1) * ((1 - self.v) ** theta - 1) + 1) ** (1 / theta)
+        gen = 1 - (-((1 - self.u) ** theta - 1) * ((1 - self.v) ** theta - 1) + 1) ** (
+            1 / theta
+        )
         return SymPyFunctionWrapper(gen)
 
-    def cond_distr_1(self) -> SymPyFunctionWrapper:
+    def cond_distr_1(self, u=None, v=None):
         theta = self.theta
-        u = self.u
-        v = self.v
         cond_distr_1 = (
-            -((1 - u) ** theta)
-            * ((1 - (1 - u) ** theta) * ((1 - v) ** theta - 1) + 1) ** (1 / theta)
-            * ((1 - v) ** theta - 1)
-            / ((1 - u) * ((1 - (1 - u) ** theta) * ((1 - v) ** theta - 1) + 1))
+            -((1 - self.u) ** theta)
+            * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1)
+            ** (1 / theta)
+            * ((1 - self.v) ** theta - 1)
+            / (
+                (1 - self.u)
+                * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1)
+            )
         )
-        return SymPyFunctionWrapper(cond_distr_1)
+        return SymPyFunctionWrapper(cond_distr_1)(u, v)
 
-    def cond_distr_2(self) -> SymPyFunctionWrapper:
+    def cond_distr_2(self, u=None, v=None):
         theta = self.theta
-        u = self.u
-        v = self.v
         cond_distr_2 = (
-            (1 - v) ** theta
-            * (1 - (1 - u) ** theta)
-            * ((1 - (1 - u) ** theta) * ((1 - v) ** theta - 1) + 1) ** (1 / theta)
-            / ((1 - v) * ((1 - (1 - u) ** theta) * ((1 - v) ** theta - 1) + 1))
+            (1 - self.v) ** theta
+            * (1 - (1 - self.u) ** theta)
+            * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1)
+            ** (1 / theta)
+            / (
+                (1 - self.v)
+                * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1)
+            )
         )
-        return SymPyFunctionWrapper(cond_distr_2)
+        return SymPyFunctionWrapper(cond_distr_2)(u, v)
 
     def lambda_L(self):
         return 0

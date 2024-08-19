@@ -4,3 +4,4 @@
 *.pyc
 /copul/expirements.py
 /copul/images/
+__pycache__

@@ -38,10 +38,6 @@ class Raftery(AbstractCopula):
         )
         return SymPyFunctionWrapper(cdf)
 
-    # def _B(self, u, v):
-    #     delta = self.delta
-    #     return u - (1-delta)/(1+delta)*u**(1/(1-delta))*(v**(-delta/(1-delta)) - v**(1/(1-delta)))
-
     @property
     def pdf(self):
         pdf = self._b(sympy.Min(self.u, self.v), sympy.Max(self.u, self.v))

@@ -296,22 +296,21 @@ class Plackett(AbstractCopula):
             )
         )
 
-    def cond_distr_1(self) -> SymPyFunctionWrapper:
-        u = self.u
-        v = self.v
+    def cond_distr_1(self, u=None, v=None):
         theta = self.theta
         cond_distr_1 = (
             theta
             - (
-                -2 * theta * v * (theta - 1)
-                + (2 * theta - 2) * ((theta - 1) * (u + v) + 1) / 2
+                -2 * theta * self.v * (theta - 1)
+                + (2 * theta - 2) * ((theta - 1) * (self.u + self.v) + 1) / 2
             )
             / sympy.sqrt(
-                -4 * theta * u * v * (theta - 1) + ((theta - 1) * (u + v) + 1) ** 2
+                -4 * theta * self.u * self.v * (theta - 1)
+                + ((theta - 1) * (self.u + self.v) + 1) ** 2
             )
             - 1
         ) / (2 * (theta - 1))
-        return SymPyFunctionWrapper(cond_distr_1)
+        return SymPyFunctionWrapper(cond_distr_1)(u, v)
 
 
 B2 = Plackett

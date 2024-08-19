@@ -60,9 +60,9 @@ class Families(Enum):
 
     GAUSSIAN = elliptical.Gaussian
     T = elliptical.StudentT
-    LAPLACE = elliptical.Laplace
+    # LAPLACE = elliptical.Laplace
 
-    B11 = other.B11
+    # B11 = other.B11
     CHECKERBOARD = other.CheckerboardCopula
     FARLIE_GUMBEL_MORGENSTERN = other.FarlieGumbelMorgenstern
     FRECHET = other.Frechet
@@ -72,3 +72,6 @@ class Families(Enum):
     PLACKETT = other.Plackett
     RAFTERY = other.Raftery
     UPPER_FRECHET = other.UpperFrechet
+
+
+families = [f.value.__name__ for f in Families]

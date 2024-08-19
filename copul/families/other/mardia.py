@@ -15,18 +15,24 @@ class Mardia(AbstractCopula):
     params = [theta]
     intervals = {"theta": sympy.Interval(-1, 1, left_open=False, right_open=False)}
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
+        if args and len(args) == 1:
+            kwargs["theta"] = args[0]
         if "theta" in kwargs:
             self.theta = kwargs["theta"]
             self.params = [param for param in self.params if str(param) != "theta"]
             del kwargs["theta"]
         super().__init__(**kwargs)
 
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
+        if args and len(args) == 1:
+            kwargs["theta"] = args[0]
         if "theta" in kwargs:
             new_copula = copy.deepcopy(self)
             new_copula.theta = kwargs["theta"]
-            new_copula.params = [param for param in new_copula.params if str(param) != "theta"]
+            new_copula.params = [
+                param for param in new_copula.params if str(param) != "theta"
+            ]
             del kwargs["theta"]
             return new_copula.__call__(**kwargs)
         return super().__call__(**kwargs)

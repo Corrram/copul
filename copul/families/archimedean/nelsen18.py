@@ -1,6 +1,7 @@
 import numpy as np
 import sympy
 
+from copul.cd2_wrapper import CD2Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -34,10 +35,12 @@ class Nelsen18(ArchimedeanCopula):
                     / sympy.log(
                         (
                             sympy.Piecewise(
-                                (0, self.u >= 1), (sympy.exp(self.theta / (self.u - 1)), True)
+                                (0, self.u >= 1),
+                                (sympy.exp(self.theta / (self.u - 1)), True),
                             )
                             + sympy.Piecewise(
-                                (0, self.v >= 1), (sympy.exp(self.theta / (self.v - 1)), True)
+                                (0, self.v >= 1),
+                                (sympy.exp(self.theta / (self.v - 1)), True),
                             )
                         )
                     )
@@ -47,27 +50,32 @@ class Nelsen18(ArchimedeanCopula):
         )
         return SymPyFunctionWrapper(cdf)
 
-    def cond_distr_2(self) -> SymPyFunctionWrapper:
+    def cond_distr_2(self, u=None, v=None):
         cond_distr = (
             self.theta**2
             * sympy.exp(self.theta / (self.v - 1))
             * sympy.Heaviside(
                 self.theta
                 / sympy.log(
-                    sympy.exp(self.theta / (self.u - 1)) + sympy.exp(self.theta / (self.v - 1))
+                    sympy.exp(self.theta / (self.u - 1))
+                    + sympy.exp(self.theta / (self.v - 1))
                 )
                 + 1
             )
             / (
                 (self.v - 1) ** 2
-                * (sympy.exp(self.theta / (self.u - 1)) + sympy.exp(self.theta / (self.v - 1)))
+                * (
+                    sympy.exp(self.theta / (self.u - 1))
+                    + sympy.exp(self.theta / (self.v - 1))
+                )
                 * sympy.log(
-                    sympy.exp(self.theta / (self.u - 1)) + sympy.exp(self.theta / (self.v - 1))
+                    sympy.exp(self.theta / (self.u - 1))
+                    + sympy.exp(self.theta / (self.v - 1))
                 )
                 ** 2
             )
         )
-        return SymPyFunctionWrapper(cond_distr)
+        return CD2Wrapper(cond_distr)(u, v)
 
     def lambda_L(self):
         return 0

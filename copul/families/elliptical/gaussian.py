@@ -39,20 +39,42 @@ class Gaussian(EllipticalCopula):
     def rvs(self, n=1):
         return GaussianCopula(self.rho).rvs(n)
 
+    @property
     def cdf(self):
-        return lambda u, v: GaussianCopula(self.rho).cdf([u, v])
+        cop = GaussianCopula(self.rho)
 
-    def cond_distr_1(self):
-        scale = sympy.sqrt(1 - self.rho**2)
-        return lambda u, v: norm.cdf(
-            norm.ppf(v), loc=self.rho * norm.ppf(u), scale=scale
-        )
+        def gauss_cdf(u, v):
+            if u == 0 or v == 0:
+                return 0
+            else:
+                return cop.cdf([u, v])
 
-    def cond_distr_2(self):
+        return lambda u, v: gauss_cdf(u, v)
+
+    def _conditional_distribution(self, u=None, v=None):
         scale = sympy.sqrt(1 - self.rho**2)
-        return lambda u, v: norm.cdf(
-            norm.ppf(u), loc=self.rho * norm.ppf(v), scale=scale
-        )
+
+        def conditional_func(u_, v_):
+            return norm.cdf(norm.ppf(v_), loc=self.rho * norm.ppf(u_), scale=scale)
+
+        if u is None and v is None:
+            return conditional_func
+        elif u is not None and v is not None:
+            return conditional_func(u, v)
+        elif u is not None:
+            return lambda v_: conditional_func(u, v_)
+        else:
+            return lambda u_: conditional_func(u_, v)
+
+    def cond_distr_1(self, u=None, v=None):
+        if v in [0, 1]:
+            return v
+        return self._conditional_distribution(u, v)
+
+    def cond_distr_2(self, u=None, v=None):
+        if u in [0, 1]:
+            return u
+        return self._conditional_distribution(v, u)
 
     def pdf(self):
         return lambda u, v: GaussianCopula(self.rho).pdf([u, v])

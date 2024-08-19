@@ -1,6 +1,7 @@
 import numpy as np
 import sympy
 
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
@@ -45,7 +46,7 @@ class GumbelHougaard(ArchimedeanCopula):
                 ** (1 / self.theta)
             )
         )
-        return SymPyFunctionWrapper(gen)
+        return CDFWrapper(gen)
 
     def lambda_L(self):
         return 0

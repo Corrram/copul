@@ -24,8 +24,9 @@ class FarlieGumbelMorgenstern(AbstractCopula):
         cdf = u * v + self.theta * u * v * (1 - u) * (1 - v)
         return SymPyFunctionWrapper(cdf)
 
-    def cond_distr_2(self):
-        return SymPyFunctionWrapper(self.u + self.theta * self.u * (1 - self.u) * (1 - 2 * self.v))
+    def cond_distr_2(self, u=None, v=None):
+        cd2 = self.u + self.theta * self.u * (1 - self.u) * (1 - 2 * self.v)
+        return SymPyFunctionWrapper(cd2)(u, v)
 
     @property
     def pdf(self):

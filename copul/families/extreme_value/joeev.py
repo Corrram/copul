@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import sympy
 
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.extreme_value.galambos import Galambos
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
@@ -119,4 +120,4 @@ class JoeEV(ExtremeValueCopula):
                 ** (-1 / self.delta)
             )
         )
-        return SymPyFunctionWrapper(cdf)
+        return CDFWrapper(cdf)

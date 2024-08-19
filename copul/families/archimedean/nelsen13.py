@@ -1,6 +1,7 @@
 import numpy as np
 import sympy
 
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
@@ -43,7 +44,7 @@ class Nelsen13(ArchimedeanCopula):
             )
             ** (1 / self.theta)
         )
-        return SymPyFunctionWrapper(cdf)
+        return CDFWrapper(cdf)
 
     def lambda_L(self):
         return 0
