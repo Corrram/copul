@@ -57,6 +57,7 @@ def setup_checkerboard_copula():
 def test_ccop_plotting(setup_checkerboard_copula, plotting_method):
     ccop = setup_checkerboard_copula
 
+    plotting_method(ccop)
     try:
         plotting_method(ccop)
     except Exception as e:

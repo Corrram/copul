@@ -9,6 +9,8 @@ import numpy as np
 import sympy
 from matplotlib import pyplot as plt
 
+from copul.cd1_wrapper import CD1Wrapper
+from copul.cd2_wrapper import CD2Wrapper
 from copul.families.copula_graphs import CopulaGraphs
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.cis_verifier import CISVerifier
@@ -99,7 +101,7 @@ class AbstractCopula(ABC):
 
         cond_distr = self.cond_distr_2
         sig = inspect.signature(cond_distr)
-        params = list(sig.parameters.values())
+        params = set(sig.parameters.keys()) & set(self.intervals)
         if params:
             func2_ = cond_distr
         else:
@@ -118,11 +120,13 @@ class AbstractCopula(ABC):
     def pdf(self):
         return sympy.simplify(sympy.diff(self.cond_distr_2(), self.u))
 
-    def cond_distr_1(self) -> SymPyFunctionWrapper:
-        return SymPyFunctionWrapper(sympy.diff(self.cdf, self.u))
+    def cond_distr_1(self, u=None, v=None):
+        result = CD1Wrapper(sympy.diff(self.cdf, self.u))
+        return result(u, v)
 
-    def cond_distr_2(self) -> SymPyFunctionWrapper:
-        return SymPyFunctionWrapper(sympy.diff(self.cdf, self.v))
+    def cond_distr_2(self, u=None, v=None):
+        result = CD2Wrapper(sympy.diff(self.cdf, self.v))
+        return result(u, v)
 
     def xi(self):
         log.debug("xi")
@@ -220,6 +224,11 @@ class AbstractCopula(ABC):
                 kwargs[""] = function
         free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
         for function_name, function in kwargs.items():
+            if function.__name__ in ["cond_distr_1", "cond_distr_2"]:
+                try:
+                    function = function()
+                except TypeError:
+                    pass
             if not free_symbol_dict:
                 self._plot3d(function, title=f"{function_name}", zlabel="")
             elif len([*free_symbol_dict]) == 1:
@@ -309,8 +318,8 @@ class AbstractCopula(ABC):
 
     def plot_rank_correlations(
         self,
-        n_obs,
-        n_params,
+        n_obs=10_000,
+        n_params=20,
         plot_var=False,
         ylim=(-1, 1),
         params=None,

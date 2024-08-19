@@ -1,5 +1,7 @@
 import numpy as np
 import sympy
+
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.other.upper_frechet import UpperFrechet
 
 from copul.families.extreme_value.gumbel_hougaard import GumbelHougaard
@@ -74,4 +76,4 @@ class BB5(ExtremeValueCopula):
                 ** (1 / theta)
             )
         )
-        return SymPyFunctionWrapper(cdf)
+        return CDFWrapper(cdf)

@@ -9,6 +9,7 @@ import scipy
 import sympy
 from sympy import Derivative, Subs, log
 
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.abstract_copula import AbstractCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -46,9 +47,9 @@ class ExtremeValueCopula(AbstractCopula):
         """Cumulative distribution function of the copula"""
         cop = (self.u * self.v) ** self.pickands(
             sympy.ln(self.v) / sympy.ln(self.u * self.v)
-        )
+        ).func
         cop = self._get_simplified_solution(cop)
-        return SymPyFunctionWrapper(cop)
+        return CDFWrapper(cop)
 
     @property
     def pdf(self):
@@ -245,4 +246,4 @@ class ExtremeValueCopula(AbstractCopula):
         if isinstance(simplified_sol, sympy.core.containers.Tuple):
             return simplified_sol[0]
         else:
-            return simplified_sol
+            return simplified_sol.evalf()

@@ -2,6 +2,7 @@ import numpy as np
 import sympy
 from scipy.integrate import nquad, quad
 
+from copul.cd2_wrapper import CD2Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -37,19 +38,27 @@ class Nelsen21(ArchimedeanCopula):
 
     def _cdf(self, u, v, t):
         return 1 - (
-            1 - np.max((1 - (1 - u) ** t) ** (1 / t) + (1 - (1 - v) ** t) ** (1 / t) - 1, 0) ** t
+            1
+            - np.max(
+                (1 - (1 - u) ** t) ** (1 / t) + (1 - (1 - v) ** t) ** (1 / t) - 1, 0
+            )
+            ** t
         ) ** (1 / t)
 
-    def cond_distr_2(self) -> SymPyFunctionWrapper:
+    def cond_distr_2(self, u=None, v=None):
         th = self.theta
-        expr = (1 - (1 - self.u) ** th) ** (1 / th) + (1 - (1 - self.v) ** th) ** (1 / th) - 1
+        expr = (
+            (1 - (1 - self.u) ** th) ** (1 / th)
+            + (1 - (1 - self.v) ** th) ** (1 / th)
+            - 1
+        )
         cond_distr = (
             ((1 - self.v) * sympy.Max(0, expr)) ** (th - 1)
             * (1 - (1 - self.v) ** th) ** ((1 - th) / th)
             * (1 - sympy.Max(0, expr) ** th) ** ((1 - th) / th)
             * sympy.Heaviside(expr)
         )
-        return SymPyFunctionWrapper(cond_distr)
+        return CD2Wrapper(cond_distr)(u, v)
 
     def lambda_L(self):
         return 0

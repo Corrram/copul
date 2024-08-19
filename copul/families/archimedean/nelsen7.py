@@ -1,5 +1,7 @@
 import sympy
 
+from copul.cd1_wrapper import CD1Wrapper
+from copul.cd2_wrapper import CD2Wrapper
 from copul.families.other import IndependenceCopula, LowerFrechet
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
@@ -54,17 +56,17 @@ class Nelsen7(ArchimedeanCopula):
     def xi(self):
         return 1 - self.theta
 
-    def cond_distr_1(self) -> SymPyFunctionWrapper:
+    def cond_distr_1(self, u=None, v=None):
         diff = (self.theta * self.v - self.theta + 1) * sympy.Heaviside(
             self.theta * self.u * self.v + (1 - self.theta) * (self.u + self.v - 1)
         )
-        return SymPyFunctionWrapper(diff)
+        return CD1Wrapper(diff)(u, v)
 
-    def cond_distr_2(self) -> SymPyFunctionWrapper:
+    def cond_distr_2(self, u=None, v=None):
         diff = (self.theta * self.u - self.theta + 1) * sympy.Heaviside(
             self.theta * self.u * self.v + (1 - self.theta) * (self.u + self.v - 1)
         )
-        return SymPyFunctionWrapper(diff)
+        return CD2Wrapper(diff)(u, v)
 
     def _rho_int_1(self):
         theta = self.theta

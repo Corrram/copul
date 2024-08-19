@@ -1,5 +1,7 @@
 import sympy
 
+from copul.cd1_wrapper import CD1Wrapper
+from copul.cd2_wrapper import CD2Wrapper
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -59,28 +61,28 @@ class MarshallOlkin(ExtremeValueCopula):
         cdf = sympy.Min(arg1, arg2)
         return SymPyFunctionWrapper(cdf)
 
-    def cond_distr_1(self):
-        u = self.u
-        v = self.v
+    def cond_distr_1(self, u=None, v=None):
         alpha_1 = self.alpha_1
         alpha2 = self.alpha_2
-        heavy_expr = u * v ** (1 - alpha2) - u ** (1 - alpha_1) * v
-        return (
-            u * v ** (1 - alpha2) * sympy.Heaviside(-heavy_expr)
-            - u ** (1 - alpha_1) * v * (alpha_1 - 1) * sympy.Heaviside(heavy_expr)
-        ) / u
+        heavy_expr = self.u * self.v ** (1 - alpha2) - self.u ** (1 - alpha_1) * self.v
+        cd1 = (
+            self.u * self.v ** (1 - alpha2) * sympy.Heaviside(-heavy_expr)
+            - self.u ** (1 - alpha_1)
+            * self.v
+            * (alpha_1 - 1)
+            * sympy.Heaviside(heavy_expr)
+        ) / self.u
+        return CD1Wrapper(cd1)(u, v)
 
-    def cond_distr_2(self):
-        u = self.u
-        v = self.v
+    def cond_distr_2(self, u=None, v=None):
         alpha1 = self.alpha_1
         alpha2 = self.alpha_2
-        heavy_expr = -u * v ** (1 - alpha2) + u ** (1 - alpha1) * v
+        heavy_expr = -self.u * self.v ** (1 - alpha2) + self.u ** (1 - alpha1) * self.v
         cond_distr = (
-            u * v ** (1 - alpha2) * (1 - alpha2) * sympy.Heaviside(heavy_expr)
-            + u ** (1 - alpha1) * v * sympy.Heaviside(-heavy_expr)
-        ) / v
-        return SymPyFunctionWrapper(cond_distr)
+            self.u * self.v ** (1 - alpha2) * (1 - alpha2) * sympy.Heaviside(heavy_expr)
+            + self.u ** (1 - alpha1) * self.v * sympy.Heaviside(-heavy_expr)
+        ) / self.v
+        return CD2Wrapper(cond_distr)(u, v)
 
     def _squared_cond_distr_1(self, u, v):
         alpha1 = self.alpha_1
@@ -94,17 +96,6 @@ class MarshallOlkin(ExtremeValueCopula):
             * (alpha1 - 1)
             * sympy.Heaviside(u * v ** (1 - alpha2) - u ** (1 - alpha1) * v)
         ) ** 2 / u**2
-
-    # def xi(self):
-    #     alpha_1 = self.alpha_1
-    #     alpha_2 = self.alpha_2
-    #     xi = (-(alpha_1**2) * alpha_2 + 2 * alpha_1 * alpha_2 - 3 * alpha_1 - alpha_2) / (
-    #         3 * (2 * alpha_1 * alpha_2 - 3 * alpha_1 - alpha_2)
-    #     )
-    #     xi = sympy.simplify(6 * xi - 2)
-    #     print("xi: ", xi)
-    #     print("xi latex: ", sympy.latex(xi))
-    #     return SymPyFunctionWrapper(xi)
 
     def _xi_int_1(self, v):
         u = self.u

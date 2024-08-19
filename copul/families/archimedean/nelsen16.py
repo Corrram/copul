@@ -1,6 +1,7 @@
 import numpy as np
 import sympy
 
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -36,10 +37,11 @@ class Nelsen16(ArchimedeanCopula):
             + v * (th + u) * (u - 1)
             + sympy.sqrt(
                 4 * th * u**2 * v**2
-                + (u * v * (1 - th) + u * (th + v) * (v - 1) + v * (th + u) * (u - 1)) ** 2
+                + (u * v * (1 - th) + u * (th + v) * (v - 1) + v * (th + u) * (u - 1))
+                ** 2
             )
         ) / (2 * u * v)
-        return SymPyFunctionWrapper(cdf)
+        return CDFWrapper(cdf)
 
     def first_deriv_of_ci_char(self):
         theta = self.theta

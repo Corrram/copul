@@ -54,12 +54,12 @@ class Frank(ArchimedeanCopula):
         )
         return SymPyFunctionWrapper(cdf)
 
-    def cond_distr_1(self):
+    def cond_distr_1(self, u=None, v=None):
         expr_u = sympy.exp(-self.theta * self.u)
         expr_v = sympy.exp(-self.theta * self.v) - 1
         expr = sympy.exp(-self.theta) - 1
         cond_distr_1 = expr_v * expr_u / (expr + (-1 + expr_u) * expr_v)
-        return SymPyFunctionWrapper(cond_distr_1)
+        return SymPyFunctionWrapper(cond_distr_1)(u, v)
 
     def _squared_cond_distr_1(self, v, u):
         theta = self.theta

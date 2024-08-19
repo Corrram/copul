@@ -44,16 +44,14 @@ class AliMikhailHaq(ArchimedeanCopula):
         cdf = (u * v) / (1 - theta * (1 - u) * (1 - v))
         return SymPyFunctionWrapper(cdf)
 
-    def cond_distr_1(self):
+    def cond_distr_1(self, u=None, v=None):
         theta = self.theta
-        u = self.u
-        v = self.v
         cond_distr_1 = (
-            v
-            * (theta * u * (v - 1) - theta * (u - 1) * (v - 1) + 1)
-            / (theta * (u - 1) * (v - 1) - 1) ** 2
+            self.v
+            * (theta * self.u * (self.v - 1) - theta * (self.u - 1) * (self.v - 1) + 1)
+            / (theta * (self.u - 1) * (self.v - 1) - 1) ** 2
         )
-        return SymPyFunctionWrapper(cond_distr_1)
+        return SymPyFunctionWrapper(cond_distr_1)(u, v)
 
     def rho(self):
         th = self.theta

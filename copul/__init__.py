@@ -10,7 +10,7 @@ from copul.families.other.mardia import Mardia
 from copul.families.other.plackett import Plackett
 from copul.families.other.raftery import Raftery
 from copul.chatterjee import xi_ncalculate
-from copul.family_list import Families
+from copul.family_list import Families, families
 from copul.schur_order.checkerboarder import Checkerboarder
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.families.archimedean import (
@@ -78,6 +78,7 @@ __all__ = [
     "extreme_value",
     "xi_ncalculate",
     "Families",
+    "families",
     "AliMikhailHaq",
     "Clayton",
     "Frank",

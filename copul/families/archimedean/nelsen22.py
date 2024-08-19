@@ -46,38 +46,7 @@ class Nelsen22(ArchimedeanCopula):
             ),
             (0, True),
         )
-        # cdf = sympy.Max(
-        #     (
-        #         1
-        #         - (1 - u**theta) * sympy.sqrt(1 - (1 - v**theta) ** 2)
-        #         - (1 - v**theta) * sympy.sqrt(1 - (1 - u**theta) ** 2)
-        #     )
-        #     ** (1 / theta),
-        #     0,
-        # )
         return SymPyFunctionWrapper(cdf)
-
-    # def cond_distr_2(self) -> SymPyFunctionWrapper:
-    #     u = self.u
-    #     v = self.v
-    #     theta = self.theta
-    #     sub_expr = (
-    #         sympy.sqrt(1 - (1 - u**theta) ** 2) * (v**theta - 1)
-    #         + sympy.sqrt(1 - (1 - v**theta) ** 2) * (u**theta - 1)
-    #         + 1
-    #     )
-    #     cond_distr = (
-    #         theta**2
-    #         * v ** (theta - 1)
-    #         * (
-    #             sympy.sqrt(1 - (1 - u**theta) ** 2) * sympy.sqrt(1 - (1 - v**theta) ** 2)
-    #             - (u**theta - 1) * (v**theta - 1)
-    #         )
-    #         * sub_expr ** (theta - 1)
-    #         * sympy.Heaviside(sub_expr**theta)
-    #         / sympy.sqrt(1 - (1 - v**theta) ** 2)
-    #     )
-    #     return SymPyFunctionWrapper(cond_distr)
 
     def compute_gen_max(self):
         return np.pi / 2

@@ -7,6 +7,8 @@ import sympy
 
 import scipy.optimize as opt
 
+from copul.cd2_wrapper import CD2Wrapper
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
@@ -50,20 +52,20 @@ class Nelsen20(HeavyComputeArch):
             + sympy.exp(self.v ** (-self.theta))
             - np.e
         ) ** (-1 / self.theta)
-        return SymPyFunctionWrapper(cdf)
+        return CDFWrapper(cdf)
 
-    def cond_distr_2(self):
+    def cond_distr_2(self, u=None, v=None):
         theta = self.theta
-        v = self.v
-        u = self.u
         cond_distr = 1 / (
-            v ** (theta + 1)
+            self.v ** (theta + 1)
             * (
-                sympy.exp(u ** (-theta) - v ** (-theta))
+                sympy.exp(self.u ** (-theta) - self.v ** (-theta))
                 + 1
-                - np.e * sympy.exp(-(v ** (-theta)))
+                - np.e * sympy.exp(-(self.v ** (-theta)))
             )
-            * sympy.log(sympy.exp(u ** (-theta)) + sympy.exp(v ** (-theta)) - np.e)
+            * sympy.log(
+                sympy.exp(self.u ** (-theta)) + sympy.exp(self.v ** (-theta)) - np.e
+            )
             ** ((theta + 1) / theta)
         )
-        return SymPyFunctionWrapper(cond_distr)
+        return CD2Wrapper(cond_distr)(u, v)

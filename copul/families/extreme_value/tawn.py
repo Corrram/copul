@@ -3,6 +3,7 @@ import copy
 import numpy as np
 import sympy
 
+from copul.cdf_wrapper import CDFWrapper
 from copul.families.extreme_value import GumbelHougaard
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
 
@@ -100,17 +101,22 @@ class Tawn(ExtremeValueCopula):
 
     @property
     def cdf(self):
+        theta = self.theta
+        alpha_1 = self.alpha_1
+        alpha_2 = self.alpha_2
+        u = self.u
+        v = self.v
         cdf = (
-            self.u ** (1 - self.alpha_1)
-            * self.v ** (1 - self.alpha_2)
+            u ** (1 - alpha_1)
+            * v ** (1 - alpha_2)
             * sympy.exp(
                 -(
                     (
-                        (self.alpha_1 * sympy.log(1 / self.u)) ** self.theta
-                        + (self.alpha_2 * sympy.log(1 / self.v)) ** self.theta
+                        (alpha_1 * sympy.log(1 / u)) ** theta
+                        + (alpha_2 * sympy.log(1 / v)) ** theta
                     )
-                    ** (1 / self.theta)
+                    ** (1 / theta)
                 )
             )
         )
-        return SymPyFunctionWrapper(cdf)
+        return CDFWrapper(cdf)
