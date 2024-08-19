@@ -41,4 +41,4 @@ class FarlieGumbelMorgenstern(AbstractCopula):
         return 2 * self.theta / 9
 
 
-B10 = FarlieGumbelMorgenstern
+# B10 = FarlieGumbelMorgenstern

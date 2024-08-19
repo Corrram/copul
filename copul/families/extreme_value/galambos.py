@@ -108,4 +108,4 @@ class Galambos(ExtremeValueCopula):
         )
 
 
-B7 = Galambos
+# B7 = Galambos

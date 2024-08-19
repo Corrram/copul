@@ -1,4 +1,3 @@
-from copul.families.other.b11 import B11
 from copul.families.other.checkerboard_copula import CheckerboardCopula
 from copul.families.other.farlie_gumbel_morgenstern import FarlieGumbelMorgenstern
 from copul.families.other.frechet import Frechet

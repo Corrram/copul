@@ -27,3 +27,29 @@ def test_gaussian_rvs():
 def test_gaussian_cdf():
     cop = Gaussian()(0.5)
     assert np.isclose(cop.cdf(0.5, 0.5), 1 / 3)
+
+
+@pytest.mark.parametrize(
+    "rho, expected",
+    [
+        (-1, -1),
+        (0, 0),
+        (1, 1),
+    ],
+)
+def test_gaussian_tau(rho, expected):
+    cop = Gaussian()(rho)
+    assert cop.tau() == expected
+
+
+@pytest.mark.parametrize(
+    "rho, expected",
+    [
+        (-1, 1),
+        (0, 0),
+        (1, 1),
+    ],
+)
+def test_gaussian_xi(rho, expected):
+    cop = Gaussian()(rho)
+    assert cop.xi() == expected

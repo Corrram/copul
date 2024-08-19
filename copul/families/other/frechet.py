@@ -136,4 +136,4 @@ class Frechet(AbstractCopula):
         return ((self.alpha - self.beta) * (self.alpha + self.beta + 2)) / 3
 
 
-B11 = lambda: Frechet(beta=0)
+# B11 = lambda: Frechet(beta=0)
