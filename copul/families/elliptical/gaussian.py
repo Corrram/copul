@@ -1,3 +1,4 @@
+import numpy as np
 import sympy
 from scipy.stats import norm
 from statsmodels.distributions.copula.elliptical import GaussianCopula
@@ -79,5 +80,11 @@ class Gaussian(EllipticalCopula):
     def pdf(self):
         return lambda u, v: GaussianCopula(self.rho).pdf([u, v])
 
+    def xi(self):
+        return 3 / np.pi * np.arcsin(1 / 2 + self.rho**2 / 2) - 0.5
 
-B1 = Gaussian
+    def _rho(self):  # ToDo - solve conflict in notation with copula family parameter
+        return 6 / np.pi * np.arcsin(self.rho / 2)
+
+    def tau(self):
+        return 2 / np.pi * np.arcsin(self.rho)

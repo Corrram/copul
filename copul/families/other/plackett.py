@@ -313,4 +313,4 @@ class Plackett(AbstractCopula):
         return SymPyFunctionWrapper(cond_distr_1)(u, v)
 
 
-B2 = Plackett
+# B2 = Plackett

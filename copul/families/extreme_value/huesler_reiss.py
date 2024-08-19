@@ -46,4 +46,4 @@ class HueslerReiss(ExtremeValueCopula):
         return 1 / self.delta + self.delta / 2 * sympy.ln(t / (1 - t))
 
 
-B8 = HueslerReiss
+# B8 = HueslerReiss

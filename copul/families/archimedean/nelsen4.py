@@ -57,4 +57,4 @@ class GumbelHougaard(ArchimedeanCopula):
 
 Nelsen4 = GumbelHougaard
 
-B6 = GumbelHougaard
+# B6 = GumbelHougaard

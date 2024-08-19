@@ -99,4 +99,4 @@ class CuadrasAuge(ExtremeValueCopula):
         return self._xi()
 
 
-B12 = CuadrasAuge
+# B12 = CuadrasAuge

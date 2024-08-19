@@ -138,4 +138,4 @@ class Frank(ArchimedeanCopula):
 
 Nelsen5 = Frank
 
-B3 = Frank
+# B3 = Frank

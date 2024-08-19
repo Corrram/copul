@@ -69,4 +69,4 @@ class Joe(HeavyComputeArch):
 
 Nelsen6 = Joe
 
-B5 = Joe
+# B5 = Joe

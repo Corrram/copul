@@ -120,4 +120,4 @@ class Raftery(AbstractCopula):
         return sympy.simplify(int1 + int2)
 
 
-B9 = Raftery
+# B9 = Raftery

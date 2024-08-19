@@ -101,6 +101,6 @@ class Clayton(ArchimedeanCopula):
 
 Nelsen1 = Clayton
 
-B4 = Clayton
+# B4 = Clayton
 
 PiOverSigmaMinusPi = Clayton(1)
