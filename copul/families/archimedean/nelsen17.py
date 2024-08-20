@@ -53,7 +53,7 @@ class Nelsen17(ArchimedeanCopula):
         theta = self.theta
         u = self.u
         v = self.v
-        return (
+        pdf = (
             2**theta
             * theta
             * (
@@ -86,6 +86,7 @@ class Nelsen17(ArchimedeanCopula):
             )
             ** 3
         )
+        return SymPyFunctionWrapper(pdf)
 
     @property
     def first_deriv_of_inv_gen(self):

@@ -30,7 +30,8 @@ class FarlieGumbelMorgenstern(AbstractCopula):
 
     @property
     def pdf(self):
-        return 1 + self.theta * (1 - 2 * self.u) * (1 - 2 * self.v)
+        result = 1 + self.theta * (1 - 2 * self.u) * (1 - 2 * self.v)
+        return SymPyFunctionWrapper(result)
 
     @property
     def spearmans_rho(self):

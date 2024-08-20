@@ -118,7 +118,8 @@ class AbstractCopula(ABC):
 
     @property
     def pdf(self):
-        return sympy.simplify(sympy.diff(self.cond_distr_2(), self.u))
+        result = sympy.simplify(sympy.diff(self.cond_distr_2().func, self.u))
+        return SymPyFunctionWrapper(result)
 
     def cond_distr_1(self, u=None, v=None):
         result = CD1Wrapper(sympy.diff(self.cdf, self.u))
@@ -128,7 +129,7 @@ class AbstractCopula(ABC):
         result = CD2Wrapper(sympy.diff(self.cdf, self.v))
         return result(u, v)
 
-    def xi(self):
+    def chatterjees_xi(self):
         log.debug("xi")
         cond_distri_1 = sympy.simplify(self.cond_distr_1())
         log.debug("cond_distr_1 sympy: ", cond_distri_1)
@@ -147,7 +148,7 @@ class AbstractCopula(ABC):
         log.debug("xi: ", sympy.latex(xi))
         return SymPyFunctionWrapper(xi)
 
-    def rho(self):
+    def spearmans_rho(self):
         # log.debug("rho")
         # if isinstance(self.cdf, SymPyFunctionWrapper):
         #     cdf = sympy.simplify(self.cdf.func)
@@ -166,7 +167,7 @@ class AbstractCopula(ABC):
     def _rho(self):
         return sympy.simplify(12 * self._rho_int_2() - 3)
 
-    def tau(self):
+    def kendalls_tau(self):
         # log.debug("tau")
         # if isinstance(self.cdf, SymPyFunctionWrapper):
         #     integrand = self.cdf.func * self.pdf

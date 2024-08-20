@@ -24,6 +24,6 @@ def test_xi_computation():
     copula = copul.Families.NELSEN7.value(0.5)
     checkerboarder = copul.Checkerboarder(10)
     ccop = checkerboarder.compute_check_copula(copula)
-    orig_xi = copula.xi()
-    xi = ccop.xi()
+    orig_xi = copula.chatterjees_xi()
+    xi = ccop.chatterjees_xi()
     assert xi <= orig_xi

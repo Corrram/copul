@@ -75,8 +75,7 @@ It accompanies the `Dependence properties of bivariate copula families <https://
 
    >>> cp.Plackett().cond_distr_1()
    (theta - (-2*theta*v*(theta - 1) + (2*theta - 2)*((theta - 1)*(u + v) + 1)/2)/sqrt(-4*theta*u*v*(theta - 1) + ((theta - 1)*(u + v) + 1)**2) - 1)/(2*theta - 2)
-   >>> cp.Plackett(0.1).cond_distr_2()
-   cp.Plackett(0.1).plot(plackett.cond_distr_1, plackett.cond_distr_2)
+   >>> cp.Plackett(0.1).plot(plackett.cond_distr_1, plackett.cond_distr_2)
 
 .. image:: _static/images/cond_distr_pl_1.png
    :alt: alternate text
@@ -92,7 +91,7 @@ It accompanies the `Dependence properties of bivariate copula families <https://
 
 .. highlight:: python
 .. code-block:: python
-   >>>
+
    >>> cp.HueslerReiss(0.3).pdf
    (u*v)**(-(log(v)/log(u*v) - 1)*(erf(sqrt(2)*(0.15*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 3.33333333333333)/2)/2 + 1/2) + (erf(sqrt(2)*(0.15*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 3.33333333333333)/2)/2 + 1/2)*log(v)/log(u*v))*((-((log(v)/log(u*v) - 1)*(erf(sqrt(2)*(0.15*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 3.33333333333333)/2)/2 + 1/2) - (erf(sqrt(2)*(0.15*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 3.33333333333333)/2)/2 + 1/2)*log(v)/log(u*v))*log(u*v) - (log(v) - log(u*v))*(-0.075*sqrt(2)*(log(v)/log(u*v) - 1)*(-1/(log(v)/log(u*v) - 1) + log(v)/((log(v)/log(u*v) - 1)**2*log(u*v)))*exp(-5.55555555555556*(0.045*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 1)**2)/sqrt(pi) + 0.075*sqrt(2)*((log(v)/log(u*v) - 1)*log(u*v)**2/log(v)**2 - log(u*v)/log(v))*exp(-5.55555555555556*(0.045*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 1)**2)*log(v)/(sqrt(pi)*log(u*v)) + erf(sqrt(2)*(0.15*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 3.33333333333333)/2)/2 - erf(sqrt(2)*(0.15*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 3.33333333333333)/2)/2))*(-((log(v)/log(u*v) - 1)*(erf(sqrt(2)*(0.15*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 3.33333333333333)/2)/2 + 1/2) - (erf(sqrt(2)*(0.15*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 3.33333333333333)/2)/2 + 1/2)*log(v)/log(u*v))*log(u*v) - (-0.075*sqrt(2)*(log(v)/log(u*v) - 1)*(-1/(log(v)/log(u*v) - 1) + log(v)/((log(v)/log(u*v) - 1)**2*log(u*v)))*exp(-5.55555555555556*(0.045*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 1)**2)/sqrt(pi) + 0.075*sqrt(2)*((log(v)/log(u*v) - 1)*log(u*v)**2/log(v)**2 - log(u*v)/log(v))*exp(-5.55555555555556*(0.045*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 1)**2)*log(v)/(sqrt(pi)*log(u*v)) + erf(sqrt(2)*(0.15*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 3.33333333333333)/2)/2 - erf(sqrt(2)*(0.15*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 3.33333333333333)/2)/2)*log(v))*log(u*v) + sqrt(2)*(log(v) - log(u*v))*(-0.0375*(-1 + log(v)/((log(v)/log(u*v) - 1)*log(u*v)))**2*(0.045*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 1)*exp(-5.55555555555556*(0.045*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 1)**2)*log(u*v)/log(v) + (-0.15 + 0.15*log(v)/((log(v)/log(u*v) - 1)*log(u*v)))*exp(-5.55555555555556*(0.045*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 1)**2)/(log(v)/log(u*v) - 1) - (-0.075 + 0.075*log(v)/((log(v)/log(u*v) - 1)*log(u*v)))*exp(-5.55555555555556*(0.045*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 1)**2)*log(u*v)/log(v) - (-0.075 + 0.075*log(v)/((log(v)/log(u*v) - 1)*log(u*v)))*exp(-5.55555555555556*(0.045*log(-log(v)/((log(v)/log(u*v) - 1)*log(u*v))) + 1)**2)/(log(v)/log(u*v) - 1) + (-0.15*(log(v)/log(u*v) - 1)*log(u*v)/log(v) + 0.15)*exp(-5.55555555555556*(0.045*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 1)**2)*log(u*v)/log(v) - (-0.075*(log(v)/log(u*v) - 1)*log(u*v)/log(v) + 0.075)*exp(-5.55555555555556*(0.045*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 1)**2)*log(u*v)/log(v) + 0.0375*(-(log(v)/log(u*v) - 1)*log(u*v)/log(v) + 1)**2*(0.045*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 1)*exp(-5.55555555555556*(0.045*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 1)**2)/(log(v)/log(u*v) - 1) - (-0.075*(log(v)/log(u*v) - 1)*log(u*v)/log(v) + 0.075)*exp(-5.55555555555556*(0.045*log(-(log(v)/log(u*v) - 1)*log(u*v)/log(v)) + 1)**2)/(log(v)/log(u*v) - 1))*log(v)/sqrt(pi))/(u*v*log(u*v)**3)
    >>> cp.HueslerReiss(0.3).plot_pdf()
@@ -131,6 +130,10 @@ It accompanies the `Dependence properties of bivariate copula families <https://
    :alt: alternate text
    :width: 300px
    :align: right
+
+.. raw:: html
+
+   <br style="clear: both;"><br>
 
 -------------------
 
@@ -172,13 +175,13 @@ Checkerboard copulas are copulas that have probability density functions, which 
 .. highlight:: python
 .. code-block:: python
 
-    >>> cp.CuadrasAuge().rho()
+    >>> cp.CuadrasAuge().spearmans_rho()
     -3*delta/(delta - 4)
-    >>> cp.CuadrasAuge(0.5).rho()
+    >>> cp.CuadrasAuge(0.5).spearmans_rho()
     0.428571428571427
-    >>> cp.FarlieGumbelMorgenstern().tau()
+    >>> cp.FarlieGumbelMorgenstern().kendalls_tau()
     2*theta/9
-    >>> cp.AliMikhailHaq().xi()
+    >>> cp.AliMikhailHaq().chatterjees_xi()
     -theta/6 - 0.666666666666667 + 3/theta - 2/theta**2 - 2*(1 - theta)**2*log(1 - theta)/theta**3
     >>> cp.Frank().plot_rank_correlations(1_000_000, 50)
 

@@ -49,7 +49,7 @@ class Galambos(ExtremeValueCopula):
         sub_expr_3 = self._eval_sub_expr_3(delta, u, v)
         sub_expr = self._eval_sub_expr(delta, u, v)
         sub_expr_2 = self._eval_sub_expr_2(delta, u, v)
-        return (
+        result = (
             (u * v) ** ((sub_expr_3 ** (1 / delta) - 1) / sub_expr_3 ** (1 / delta))
             * (
                 sub_expr_3 ** (1 / delta)
@@ -87,6 +87,7 @@ class Galambos(ExtremeValueCopula):
                 * sympy.log(u * v)
             )
         )
+        return SymPyFunctionWrapper(result)
 
     def _eval_sub_expr_2(self, delta, u, v):
         return ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta + (

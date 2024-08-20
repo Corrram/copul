@@ -77,14 +77,15 @@ class Gaussian(EllipticalCopula):
             return u
         return self._conditional_distribution(v, u)
 
+    @property
     def pdf(self):
         return lambda u, v: GaussianCopula(self.rho).pdf([u, v])
 
-    def xi(self):
+    def chatterjees_xi(self):
         return 3 / np.pi * np.arcsin(1 / 2 + self.rho**2 / 2) - 0.5
 
-    def _rho(self):  # ToDo - solve conflict in notation with copula family parameter
+    def spearmans_rho(self):
         return 6 / np.pi * np.arcsin(self.rho / 2)
 
-    def tau(self):
+    def kendalls_tau(self):
         return 2 / np.pi * np.arcsin(self.rho)

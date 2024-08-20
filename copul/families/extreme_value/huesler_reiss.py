@@ -45,5 +45,12 @@ class HueslerReiss(ExtremeValueCopula):
             return 1
         return 1 / self.delta + self.delta / 2 * sympy.ln(t / (1 - t))
 
+    # @property
+    # def pdf(self):
+    #     u = self.u
+    #     v = self.v
+    #     result = None
+    #     return SymPyFunctionWrapper(result)
+
 
 # B8 = HueslerReiss
