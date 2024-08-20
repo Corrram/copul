@@ -39,8 +39,6 @@ pandas = "^2.2"
 sympy = "^1.13"
 numpy = "^2.0"
 scipy = "^1.14"
-pillow = "^10.3"
-interval = "^1.0"
 matplotlib = "^3.9"
 sympy-plot-backends = "^3.1"
 statsmodels = "^0.14"
@@ -52,6 +50,7 @@ black = "^24.8"
 pytest = "^8.3.2"
 pytest-pycharm = "^0.7.0"
 jupyter = "^1.0.0"
+pytest-cov = "^5.0.0"
 
 [tool.pytest.ini_options]
 #log_cli = true
