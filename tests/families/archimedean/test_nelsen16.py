@@ -10,6 +10,7 @@ def test_nelsen16_scatter():
     nelsen = Nelsen16()
 
     # Call plot_cdf and simply ensure it does not raise an exception
+    nelsen.plot_rank_correlations(10, 10)
     try:
         nelsen.plot_rank_correlations(10, 10)
     except Exception as e:

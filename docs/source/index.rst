@@ -33,6 +33,54 @@ It accompanies the `Dependence properties of bivariate copula families <https://
    >>> cp.families
    ['Clayton', 'Nelsen2', 'AliMikhailHaq', 'GumbelHougaard', 'Frank', 'Joe', 'Nelsen7', 'Nelsen8', 'GumbelBarnett', 'Nelsen10', 'Nelsen11', 'Nelsen12', 'Nelsen13', 'Nelsen14', 'GenestGhoudi', 'Nelsen16', 'Nelsen17', 'Nelsen18', 'Nelsen19', 'Nelsen20', 'Nelsen21', 'Nelsen22', 'JoeEV', 'BB5', 'CuadrasAuge', 'Galambos', 'GumbelHougaard', 'HueslerReiss', 'Tawn', 'tEV', 'MarshallOlkin', 'Gaussian', 'StudentT', 'Laplace', 'B11', 'CheckerboardCopula', 'FarlieGumbelMorgenstern', 'Frechet', 'IndependenceCopula', 'LowerFrechet', 'Mardia', 'Plackett', 'Raftery', 'UpperFrechet']
 
+
+**Call a copula family and view its parameters**
+
+.. highlight:: python
+.. code-block:: python
+
+   >>> clayton = cp.Clayton()
+   >>> cp.Clayton().parameters
+   {'theta': Interval(-1, oo)}
+   >>> cp.MarshallOlkin().parameters
+   {'alpha_1': Interval(0, 1), 'alpha_2': Interval(0, 1)}
+
+-------------------
+
+**Simulate data points from a copula**
+
+.. highlight:: python
+.. code-block:: python
+
+    >>> cp.Clayton(0.5).rvs(n=3)
+    array([[0.33620426, 0.34329421],
+           [0.34242024, 0.21372513],
+           [0.5785887 , 0.94612088]])
+
+**Generate scatter plots of a copula**
+
+.. highlight:: python
+.. code-block:: python
+
+    cp.GenestGhoudi(4).scatter_plot()
+    cp.GenestGhoudi(8).scatter_plot()
+
+.. image:: _static/images/GenestGhoudi_scatter_plot_4.png
+   :alt: alternate text
+   :width: 300px
+   :align: left
+
+.. image:: _static/images/GenestGhoudi_scatter_plot_8.png
+   :alt: alternate text
+   :width: 300px
+   :align: right
+
+.. raw:: html
+
+   <br style="clear: both;"><br>
+
+-------------------
+
 **Cumlative distribution functions**
 
 .. highlight:: python
@@ -75,7 +123,8 @@ It accompanies the `Dependence properties of bivariate copula families <https://
 
    >>> cp.Plackett().cond_distr_1()
    (theta - (-2*theta*v*(theta - 1) + (2*theta - 2)*((theta - 1)*(u + v) + 1)/2)/sqrt(-4*theta*u*v*(theta - 1) + ((theta - 1)*(u + v) + 1)**2) - 1)/(2*theta - 2)
-   >>> cp.Plackett(0.1).plot(plackett.cond_distr_1, plackett.cond_distr_2)
+   >>> plackett = cp.Plackett(0.1)
+   >>> plackett.plot(plackett.cond_distr_1, plackett.cond_distr_2)
 
 .. image:: _static/images/cond_distr_pl_1.png
    :alt: alternate text
@@ -101,39 +150,6 @@ It accompanies the `Dependence properties of bivariate copula families <https://
     :width: 500px
     :align: center
 
--------------------
-
-**Simulate data points from a copula**
-
-.. highlight:: python
-.. code-block:: python
-
-    >>> cp.Clayton(0.5).rvs(n=3)
-    array([[0.33620426, 0.34329421],
-           [0.34242024, 0.21372513],
-           [0.5785887 , 0.94612088]])
-
-**Generate scatter plots of a copula**
-
-.. highlight:: python
-.. code-block:: python
-
-    cp.GenestGhoudi(4).scatter_plot()
-    cp.GenestGhoudi(8).scatter_plot()
-
-.. image:: _static/images/GenestGhoudi_scatter_plot_4.png
-   :alt: alternate text
-   :width: 300px
-   :align: left
-
-.. image:: _static/images/GenestGhoudi_scatter_plot_8.png
-   :alt: alternate text
-   :width: 300px
-   :align: right
-
-.. raw:: html
-
-   <br style="clear: both;"><br>
 
 -------------------
 
@@ -144,7 +160,6 @@ Checkerboard copulas are copulas that have probability density functions, which 
 .. highlight:: python
 .. code-block:: python
 
-    >>> import copul as cp
     >>> matr = [[0, 9, 1], [1, 0, 9], [9, 1, 0]]
     >>> ccop = cp.CheckerboardCopula(matr)
     >>> ccop.cdf(0.2, 1)
@@ -183,7 +198,7 @@ Checkerboard copulas are copulas that have probability density functions, which 
     2*theta/9
     >>> cp.AliMikhailHaq().chatterjees_xi()
     -theta/6 - 0.666666666666667 + 3/theta - 2/theta**2 - 2*(1 - theta)**2*log(1 - theta)/theta**3
-    >>> cp.Frank().plot_rank_correlations(1_000_000, 50)
+    >>> cp.Gaussian().plot_rank_correlations(1_000_000, 50)
 
 
 .. image:: _static/images/Gaussian_rank_correlations.png
@@ -219,7 +234,7 @@ Extreme-value copulas are characterized by a pickands dependence function, which
 .. highlight:: python
 .. code-block:: python
 
-    >>> galambos = copul.Galambos()
+    >>> galambos = cp.Galambos()
     >>> galambos.pickands
     1 - 1/((1 - t)**(-delta) + t**(-delta))**(1/delta)
     >>> galambos.plot_pickands(delta=[0.5, 1, 2])

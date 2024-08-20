@@ -105,12 +105,14 @@ class Frank(ArchimedeanCopula):
             )
         )
 
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         theta = self.theta
         func = 1 - 12 / theta * (self._d_1() - self._d_2())
         return sympy.Piecewise((func, theta != 0), (0, True))
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         theta = self.theta
         func = 1 - 4 / theta * (1 - self._d_1())
         return sympy.Piecewise((func, theta != 0), (0, True))

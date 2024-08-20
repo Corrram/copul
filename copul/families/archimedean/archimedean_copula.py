@@ -36,7 +36,11 @@ class ArchimedeanCopula(AbstractCopula, ABC):
 
     @property
     def intervals(self):
-        return {"theta": self.theta_interval}
+        return {"theta": self.theta_interval} if self.theta_interval is not None else {}
+
+    @intervals.setter
+    def intervals(self, value):
+        self.theta_interval = value["theta"] if "theta" in value else None
 
     @property
     def _generator(self):
@@ -81,7 +85,8 @@ class ArchimedeanCopula(AbstractCopula, ABC):
         diff = sympy.diff(self.inv_generator.func, self.y)
         return sympy.simplify(diff)
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         inv_gen = self.generator.func
         log.debug("inv gen: ", inv_gen)
         log.debug("inv gen latex: ", sympy.latex(inv_gen))

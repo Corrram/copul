@@ -29,7 +29,7 @@ class AbstractCopula(ABC):
     _package_path = pathlib.Path(__file__).parent.parent
 
     def __init__(self, *args, **kwargs):
-        if args and len(args) == len(self.params):
+        if args and len(args) <= len(self.params):
             for i in range(len(args)):
                 kwargs[str(self.params[i])] = args[i]
         self._are_class_vars(kwargs)
@@ -38,6 +38,9 @@ class AbstractCopula(ABC):
                 v = getattr(self.__class__, v)
             setattr(self, k, v)
         self.params = [param for param in self.params if str(param) not in kwargs]
+        self.intervals = {
+            k: v for k, v in self.intervals.items() if str(k) not in kwargs
+        }
 
     def __str__(self):
         return self.__class__.__name__
@@ -46,17 +49,32 @@ class AbstractCopula(ABC):
         new_copula = copy.copy(self)
         new_copula._are_class_vars(kwargs)
         for i in range(len(args)):
-            setattr(new_copula, self.params[i], args[i])
+            kwargs[str(self.params[i])] = args[i]
         for k, v in kwargs.items():
             if isinstance(v, str):
                 v = getattr(self.__class__, v)
             setattr(new_copula, k, v)
         new_copula.params = [param for param in self.params if str(param) not in kwargs]
+        new_copula.intervals = {
+            k: v for k, v in self.intervals.items() if str(k) not in kwargs
+        }
         return new_copula
 
     @property
     def name(self):
         return self.__class__.__name__
+
+    @property
+    def parameters(self):
+        return self.intervals
+
+    def _set_params(self, args, kwargs):
+        if args and len(args) <= len(self.params):
+            for i in range(len(args)):
+                kwargs[str(self.params[i])] = args[i]
+        if kwargs:
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
     def _are_class_vars(self, kwargs):
         class_vars = set(dir(self))
@@ -129,7 +147,8 @@ class AbstractCopula(ABC):
         result = CD2Wrapper(sympy.diff(self.cdf, self.v))
         return result(u, v)
 
-    def chatterjees_xi(self):
+    def chatterjees_xi(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         log.debug("xi")
         cond_distri_1 = sympy.simplify(self.cond_distr_1())
         log.debug("cond_distr_1 sympy: ", cond_distri_1)
@@ -148,7 +167,8 @@ class AbstractCopula(ABC):
         log.debug("xi: ", sympy.latex(xi))
         return SymPyFunctionWrapper(xi)
 
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         # log.debug("rho")
         # if isinstance(self.cdf, SymPyFunctionWrapper):
         #     cdf = sympy.simplify(self.cdf.func)
@@ -167,7 +187,8 @@ class AbstractCopula(ABC):
     def _rho(self):
         return sympy.simplify(12 * self._rho_int_2() - 3)
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         # log.debug("tau")
         # if isinstance(self.cdf, SymPyFunctionWrapper):
         #     integrand = self.cdf.func * self.pdf
