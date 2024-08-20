@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import sympy
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, rcParams
 
 from copul.cd1_wrapper import CD1Wrapper
 from copul.cd2_wrapper import CD2Wrapper
@@ -291,7 +291,7 @@ class AbstractCopula(ABC):
 
     def scatter_plot(self, n=1_000):
         data_ = self.rvs(n)
-        plt.scatter(data_[:, 0], data_[:, 1], s=n)
+        plt.scatter(data_[:, 0], data_[:, 1], s=rcParams['lines.markersize'] ** 2)
         title = CopulaGraphs(self).get_copula_title()
         plt.title(title)
         plt.xlabel("u")
