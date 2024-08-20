@@ -121,28 +121,34 @@ class MarshallOlkin(ExtremeValueCopula):
     def pdf(self):
         raise PropertyUnavailableException("Marshall-Olkin copula does not have a pdf")
 
-    def spearmans_rho(self):
-        return (
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
+        result = (
             3
             * self.alpha_1
             * self.alpha_2
             / (2 * self.alpha_1 - self.alpha_1 * self.alpha_2 + 2 * self.alpha_2)
         )
+        return result
 
-    def kendalls_tau(self):
-        return (
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
+        result = (
             self.alpha_1
             * self.alpha_2
             / (self.alpha_1 - self.alpha_1 * self.alpha_2 + self.alpha_2)
         )
+        return result
 
-    def chatterjees_xi(self):
-        return (
+    def chatterjees_xi(self, *args, **kwargs):
+        self._set_params(args, kwargs)
+        result = (
             2
             * self.alpha_1**2
             * self.alpha_2
             / (3 * self.alpha_1 + self.alpha_2 - 2 * self.alpha_1 * self.alpha_2)
         )
+        return result
 
 
 MarshallOlkinDiag = lambda: MarshallOlkin()(alpha2=MarshallOlkin.alpha_1)

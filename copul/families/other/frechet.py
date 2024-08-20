@@ -111,12 +111,12 @@ class Frechet(AbstractCopula):
         )
         return SymPyFunctionWrapper(cond_distr)(u, v)
 
-    @property
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return self._alpha - self._beta
 
-    @property
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return (self._alpha - self._beta) * (2 + self._alpha + self._beta) / 3
 
     @property
@@ -127,14 +127,9 @@ class Frechet(AbstractCopula):
     def lambda_U(self):
         return self._alpha
 
-    def chatterjees_xi(self):
+    def chatterjees_xi(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return (self.alpha - self.beta) ** 2 + self.alpha * self.beta
-
-    def spearmans_rho(self):
-        return self.alpha - self.beta
-
-    def kendalls_tau(self):
-        return ((self.alpha - self.beta) * (self.alpha + self.beta + 2)) / 3
 
     @property
     def pdf(self):

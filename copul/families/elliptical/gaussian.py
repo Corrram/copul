@@ -81,11 +81,14 @@ class Gaussian(EllipticalCopula):
     def pdf(self):
         return lambda u, v: GaussianCopula(self.rho).pdf([u, v])
 
-    def chatterjees_xi(self):
+    def chatterjees_xi(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return 3 / np.pi * np.arcsin(1 / 2 + self.rho**2 / 2) - 0.5
 
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return 6 / np.pi * np.arcsin(self.rho / 2)
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return 2 / np.pi * np.arcsin(self.rho)

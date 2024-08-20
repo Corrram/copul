@@ -58,6 +58,13 @@ class AbstractCopula(ABC):
     def name(self):
         return self.__class__.__name__
 
+    def _set_params(self, args, kwargs):
+        if args and len(args) == len(self.params):
+            kwargs = {str(k): v for k, v in zip(self.params, args)}
+        if kwargs:
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
     def _are_class_vars(self, kwargs):
         class_vars = set(dir(self))
         assert set(kwargs).issubset(
@@ -129,7 +136,8 @@ class AbstractCopula(ABC):
         result = CD2Wrapper(sympy.diff(self.cdf, self.v))
         return result(u, v)
 
-    def chatterjees_xi(self):
+    def chatterjees_xi(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         log.debug("xi")
         cond_distri_1 = sympy.simplify(self.cond_distr_1())
         log.debug("cond_distr_1 sympy: ", cond_distri_1)
@@ -148,7 +156,8 @@ class AbstractCopula(ABC):
         log.debug("xi: ", sympy.latex(xi))
         return SymPyFunctionWrapper(xi)
 
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         # log.debug("rho")
         # if isinstance(self.cdf, SymPyFunctionWrapper):
         #     cdf = sympy.simplify(self.cdf.func)
@@ -167,7 +176,8 @@ class AbstractCopula(ABC):
     def _rho(self):
         return sympy.simplify(12 * self._rho_int_2() - 3)
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         # log.debug("tau")
         # if isinstance(self.cdf, SymPyFunctionWrapper):
         #     integrand = self.cdf.func * self.pdf

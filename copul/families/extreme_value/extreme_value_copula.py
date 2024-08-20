@@ -92,7 +92,8 @@ class ExtremeValueCopula(AbstractCopula):
         pdf = self._get_simplified_solution(pdf)
         return SymPyFunctionWrapper(pdf)
 
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         integrand = self._rho_int_1()  # nelsen 5.15
         log_.debug(f"integrand: {integrand}")
         log_.debug(f"integrand latex: {sympy.latex(integrand)}")
@@ -109,7 +110,8 @@ class ExtremeValueCopula(AbstractCopula):
             12 * sympy.integrate(self._rho_int_1(), (self.t, 0, 1)) - 3
         )
 
-    def kendalls_tau(self):  # nelsen 5.15
+    def kendalls_tau(self, *args, **kwargs):  # nelsen 5.15
+        self._set_params(args, kwargs)
         t = self.t
         diff2_pickands = sympy.diff(self.pickands, t, 2)
         integrand = t * (1 - t) / self.pickands.func * diff2_pickands.func

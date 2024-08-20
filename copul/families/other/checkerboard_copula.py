@@ -87,19 +87,22 @@ class CheckerboardCopula(AbstractCopula):
                 return self.matr[x, y - 1]
             raise e
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         result = basictools.monte_carlo_integral(
             lambda x, y: self.cdf(x, y) * self.pdf(x, y), self.n_samples
         )
         return 4 * result - 1
 
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         result = basictools.monte_carlo_integral(
             lambda x, y: self.cdf(x, y), self.n_samples
         )
         return 12 * result - 3
 
-    def chatterjees_xi(self, condition_on_y=False):
+    def chatterjees_xi(self, condition_on_y=False, *args, **kwargs):
+        self._set_params(args, kwargs)
         method = self.cond_distr_2 if condition_on_y else self.cond_distr_1
 
         def f(x, y):

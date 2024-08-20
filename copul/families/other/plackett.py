@@ -47,8 +47,8 @@ class Plackett(AbstractCopula):
         pdf = sympy.diff(self.cdf.func, self.u, self.v)
         return SymPyFunctionWrapper(get_simplified_solution(pdf))
 
-    @property
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return (self.theta + 1) / (self.theta - 1) - 4 * self.theta * sympy.log(
             self.theta
         ) / (self.theta - 1) ** 2

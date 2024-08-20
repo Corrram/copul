@@ -60,5 +60,6 @@ class GumbelHougaard(ExtremeValueCopula):
         # sympy.plot(integrand.subs(theta, 2), (t, 0, 1))
         return 12 * sympy.Integral(integrand, (t, 0, 1)) - 3
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return (self.theta - 1) / self.theta

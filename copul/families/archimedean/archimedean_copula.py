@@ -81,7 +81,8 @@ class ArchimedeanCopula(AbstractCopula, ABC):
         diff = sympy.diff(self.inv_generator.func, self.y)
         return sympy.simplify(diff)
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         inv_gen = self.generator.func
         log.debug("inv gen: ", inv_gen)
         log.debug("inv gen latex: ", sympy.latex(inv_gen))

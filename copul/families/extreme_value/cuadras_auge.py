@@ -100,13 +100,16 @@ class CuadrasAuge(ExtremeValueCopula):
         log.debug("sub int2: ", sp.latex(int2))
         return sp.simplify(int1 + int2)
 
-    def chatterjees_xi(self):
+    def chatterjees_xi(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return self.delta**2 / (2 - self.delta)
 
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return 3 * self.delta / (4 - self.delta)
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return self.delta / (2 - self.delta)
 
 

@@ -61,13 +61,16 @@ class Mardia(AbstractCopula):
     def lambda_U(self):
         return self.theta**2 * (1 + self.theta) / 2
 
-    def chatterjees_xi(self):
+    def chatterjees_xi(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return self.theta**4 * (3 * self.theta**2 + 1) / 4
 
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return self.theta**3
 
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return self.theta**3 * (self.theta**2 + 2) / 3
 
     @property
