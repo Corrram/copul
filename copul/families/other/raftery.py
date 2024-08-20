@@ -51,12 +51,12 @@ class Raftery(AbstractCopula):
             * (delta * v ** (-1 / (1 - delta)) + v ** (delta / (1 - delta)))
         )
 
-    @property
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return self.delta * (4 - 3 * self.delta) / (2 - self.delta) ** 2
 
-    @property
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return 2 * self.delta / (3 - self.delta)
 
     @property

@@ -33,12 +33,12 @@ class FarlieGumbelMorgenstern(AbstractCopula):
         result = 1 + self.theta * (1 - 2 * self.u) * (1 - 2 * self.v)
         return SymPyFunctionWrapper(result)
 
-    @property
-    def spearmans_rho(self):
+    def spearmans_rho(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return self.theta / 3
 
-    @property
-    def kendalls_tau(self):
+    def kendalls_tau(self, *args, **kwargs):
+        self._set_params(args, kwargs)
         return 2 * self.theta / 9
 
 
