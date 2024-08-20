@@ -3,6 +3,7 @@ import copy
 import sympy
 
 from copul.cdf_wrapper import CDFWrapper
+from copul.exceptions import PropertyUnavailableException
 from copul.families.abstract_copula import AbstractCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -126,14 +127,18 @@ class Frechet(AbstractCopula):
     def lambda_U(self):
         return self._alpha
 
-    def xi(self):
+    def chatterjees_xi(self):
         return (self.alpha - self.beta) ** 2 + self.alpha * self.beta
 
-    def rho(self):
+    def spearmans_rho(self):
         return self.alpha - self.beta
 
-    def tau(self):
+    def kendalls_tau(self):
         return ((self.alpha - self.beta) * (self.alpha + self.beta + 2)) / 3
+
+    @property
+    def pdf(self):
+        raise PropertyUnavailableException("Frechet copula does not have a pdf")
 
 
 # B11 = lambda: Frechet(beta=0)

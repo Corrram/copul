@@ -53,7 +53,7 @@ class AliMikhailHaq(ArchimedeanCopula):
         )
         return SymPyFunctionWrapper(cond_distr_1)(u, v)
 
-    def rho(self):
+    def spearmans_rho(self):
         th = self.theta
         t = sympy.symbols("t")
         integral = sympy.integrate(sympy.log(t) / (1 - t), (t, 1, 1 - th))
@@ -61,7 +61,7 @@ class AliMikhailHaq(ArchimedeanCopula):
             12 * (1 + th) * integral - 24 * (1 - th) * sympy.log(1 - th)
         ) / th**2 - 3 * (th + 12) / th
 
-    def tau(self):
+    def kendalls_tau(self):
         theta = self.theta
         return (
             1
@@ -69,7 +69,7 @@ class AliMikhailHaq(ArchimedeanCopula):
             - 2 * (1 - theta) ** 2 / (3 * theta**2) * sympy.log(1 - theta)
         )
 
-    def xi(self):
+    def chatterjees_xi(self):
         theta = self.theta
         return (
             3 / theta

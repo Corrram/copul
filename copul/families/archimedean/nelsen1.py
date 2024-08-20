@@ -81,12 +81,13 @@ class Clayton(ArchimedeanCopula):
     @property
     def pdf(self):
         theta = self.theta
-        return (
+        result = (
             (self.u ** (-theta) + self.v ** (-theta) - 1) ** (-2 - 1 / theta)
             * self.u ** (-theta - 1)
             * self.v ** (-theta - 1)
             * (theta + 1)
         )
+        return SymPyFunctionWrapper(result)
 
     @property
     def is_absolutely_continuous(self) -> bool:

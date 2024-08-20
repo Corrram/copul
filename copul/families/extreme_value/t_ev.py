@@ -38,3 +38,10 @@ class tEV(ExtremeValueCopula):
             student_t
         )(z(self.t))
         return SymPyFunctionWrapper(func)
+
+    # @property
+    # def pdf(self):
+    #     u = self.u
+    #     v = self.v
+    #     result = None
+    #     return SymPyFunctionWrapper(result)

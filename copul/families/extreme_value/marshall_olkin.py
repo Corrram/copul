@@ -2,6 +2,7 @@ import sympy
 
 from copul.cd1_wrapper import CD1Wrapper
 from copul.cd2_wrapper import CD2Wrapper
+from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -103,25 +104,6 @@ class MarshallOlkin(ExtremeValueCopula):
         alpha_2 = self.alpha_2
         integrand_1 = (u * v ** (1 - alpha_2)) ** 2 / u**2
         integrand_2 = (u ** (1 - alpha_1) * v * (alpha_1 - 1)) ** 2 / u**2
-        int_1 = sympy.simplify(
-            sympy.integrate(integrand_1, (u, 0, v ** (alpha_2 / alpha_1)))
-        )
-        int_2 = (
-            v**2
-            * (alpha_1 - 1) ** 2
-            * (v ** ((alpha_2 / alpha_1) - 2 * alpha_2) - 1)
-            / (2 * alpha_1 - 1)
-        )
-        int_2 = sympy.simplify(int_2)
-        log.debug(sympy.latex(int_2))
-        return sympy.simplify(int_1 + int_2)
-
-    def _xi_int_1(self, v):
-        u = self.u
-        alpha_1 = self.alpha_1
-        alpha_2 = self.alpha_2
-        integrand_1 = (u * v ** (1 - alpha_2)) ** 2 / u**2
-        integrand_2 = (u ** (1 - alpha_1) * v * (alpha_1 - 1)) ** 2 / u**2
         log.debug(sympy.latex(sympy.simplify(integrand_1)))
         log.debug(sympy.latex(sympy.simplify(integrand_2)))
         int_1 = sympy.simplify(
@@ -135,21 +117,32 @@ class MarshallOlkin(ExtremeValueCopula):
         log.debug(sympy.latex(int_2))
         return sympy.simplify(int_1 + int_2)
 
-    # def _xi_int_2(self):
-    #     v = self.v
-    #     alpha_1 = self.alpha_1
-    #     alpha_2 = self.alpha_2
-    #     integrand = (
-    #         v**2
-    #         * (
-    #             -(alpha_1**2)
-    #             + alpha_1**2 * v ** (alpha_2 / alpha_1) / v ** (2 * alpha_2)
-    #             + 2 * alpha_1
-    #             - 1
-    #         )
-    #         / (2 * alpha_1 - 1)
-    #     )
-    #     return sympy.simplify(sympy.integrate(integrand, (v, 0, 1)))
+    @property
+    def pdf(self):
+        raise PropertyUnavailableException("Marshall-Olkin copula does not have a pdf")
+
+    def spearmans_rho(self):
+        return (
+            3
+            * self.alpha_1
+            * self.alpha_2
+            / (2 * self.alpha_1 - self.alpha_1 * self.alpha_2 + 2 * self.alpha_2)
+        )
+
+    def kendalls_tau(self):
+        return (
+            self.alpha_1
+            * self.alpha_2
+            / (self.alpha_1 - self.alpha_1 * self.alpha_2 + self.alpha_2)
+        )
+
+    def chatterjees_xi(self):
+        return (
+            2
+            * self.alpha_1**2
+            * self.alpha_2
+            / (3 * self.alpha_1 + self.alpha_2 - 2 * self.alpha_1 * self.alpha_2)
+        )
 
 
 MarshallOlkinDiag = lambda: MarshallOlkin()(alpha2=MarshallOlkin.alpha_1)

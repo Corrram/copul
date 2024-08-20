@@ -10,6 +10,8 @@ from copul.families.extreme_value.marshall_olkin import MarshallOlkin
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
+from sympy import log
+
 
 class JoeEV(ExtremeValueCopula):
     @property
@@ -121,3 +123,10 @@ class JoeEV(ExtremeValueCopula):
             )
         )
         return CDFWrapper(cdf)
+
+    # @property
+    # def pdf(self):
+    #     u = self.u
+    #     v = self.v
+    #     result = None
+    #     return SymPyFunctionWrapper(result)

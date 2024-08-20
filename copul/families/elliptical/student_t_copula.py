@@ -90,5 +90,6 @@ class StudentT(EllipticalCopula):
             return u
         return self._conditional_distribution(v, u)
 
+    @property
     def pdf(self):
         return lambda u, v: StudentTCopula(self.rho, df=self.nu).pdf([u, v])

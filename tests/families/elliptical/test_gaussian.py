@@ -39,7 +39,7 @@ def test_gaussian_cdf():
 )
 def test_gaussian_tau(rho, expected):
     cop = Gaussian()(rho)
-    assert cop.tau() == expected
+    assert cop.kendalls_tau() == expected
 
 
 @pytest.mark.parametrize(
@@ -52,4 +52,4 @@ def test_gaussian_tau(rho, expected):
 )
 def test_gaussian_xi(rho, expected):
     cop = Gaussian()(rho)
-    assert cop.xi() == expected
+    assert cop.chatterjees_xi() == expected

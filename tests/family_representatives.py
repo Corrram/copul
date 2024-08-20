@@ -1,4 +1,4 @@
-family_representatives = {
+archimedean_representatives = {
     "Clayton": 0.5,
     "Nelsen2": 0.5,
     "AliMikhailHaq": 0.5,
@@ -21,6 +21,9 @@ family_representatives = {
     "Nelsen20": 0.5,
     "Nelsen21": 3,
     "Nelsen22": 0.5,
+}
+
+family_representatives = archimedean_representatives | {
     "JoeEV": (0.5, 0.5, 2),
     "BB5": (2, 2),
     "CuadrasAuge": 0.5,

@@ -53,7 +53,7 @@ class Nelsen7(ArchimedeanCopula):
         cdf = sympy.Max(theta * u * v + (1 - theta) * (u + v - 1), 0)
         return SymPyFunctionWrapper(cdf)
 
-    def xi(self):
+    def chatterjees_xi(self):
         return 1 - self.theta
 
     def cond_distr_1(self, u=None, v=None):
@@ -101,7 +101,7 @@ class Nelsen7(ArchimedeanCopula):
         )
         return sympy.Piecewise((rho, theta < 1), (0, True))
 
-    def tau(self):
+    def kendalls_tau(self):
         theta = self.theta
         if theta == 0:
             return -1

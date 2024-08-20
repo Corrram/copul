@@ -2,6 +2,7 @@ import copy
 
 import sympy
 
+from copul.exceptions import PropertyUnavailableException
 from copul.families.abstract_copula import AbstractCopula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
@@ -60,11 +61,15 @@ class Mardia(AbstractCopula):
     def lambda_U(self):
         return self.theta**2 * (1 + self.theta) / 2
 
-    def xi(self):
+    def chatterjees_xi(self):
         return self.theta**4 * (3 * self.theta**2 + 1) / 4
 
-    def rho(self):
+    def spearmans_rho(self):
         return self.theta**3
 
-    def tau(self):
+    def kendalls_tau(self):
         return self.theta**3 * (self.theta**2 + 2) / 3
+
+    @property
+    def pdf(self):
+        raise PropertyUnavailableException("Mardia copula does not have a pdf")

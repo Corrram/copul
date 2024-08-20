@@ -140,5 +140,5 @@ def test_ccop_cond_distr_2(matr, expected):
 )
 def test_ccop_xi(matr, expected):
     ccop = CheckerboardCopula(matr)
-    xi_estimate = ccop.xi()
+    xi_estimate = ccop.chatterjees_xi()
     assert np.abs(xi_estimate - expected) < 0.01

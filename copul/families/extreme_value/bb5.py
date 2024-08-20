@@ -77,3 +77,10 @@ class BB5(ExtremeValueCopula):
             )
         )
         return CDFWrapper(cdf)
+
+    # @property
+    # def pdf(self):
+    #     u = self.u
+    #     v = self.v
+    #     result = None
+    #     return SymPyFunctionWrapper(result)
