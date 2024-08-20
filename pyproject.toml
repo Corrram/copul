@@ -21,7 +21,7 @@ classifiers = [
 
 [tool.poetry]
 name = "copul"
-version = "0.0.16"
+version = "0.0.17"
 description = "Mathematical computation and visualization of bivariate copulas."
 readme = "README.md"
 authors = ["Marcus Rockel <marcus.rockel@finance.uni-freiburg.de>"]
