@@ -20,3 +20,19 @@ def test_from_cdf_with_gumbel_barnett():
     copula = copula_family(0.1)
     result = copula.cdf(0.5, 0.5)
     assert np.isclose(result, 0.2382726524420907)
+
+
+def test_from_cdf_with_gumbel_barnett_different_var_names():
+    cdf = "x*y*exp(-0.5*ln(x)*ln(y))"
+    copula_family = Copula.from_cdf(cdf)
+    copula = copula_family()
+    result = copula.cdf(0.5, 0.5)
+    assert np.isclose(result, 0.19661242613985133)
+
+
+def test_from_cdf_with_gumbel_barnett_different_var_names_and_theta():
+    cdf = "x*y*exp(-theta*ln(x)*ln(y))"
+    copula_family = Copula.from_cdf(cdf, "theta")
+    copula = copula_family(0.5)
+    result = copula.cdf(0.5, 0.5)
+    assert np.isclose(result, 0.19661242613985133)
