@@ -43,12 +43,11 @@ class ExtremeValueCopula(Copula):
         self._pickands = sp.sympify(new_pickands)
 
     @classmethod
-    def from_pickands(cls, pickands):
+    def from_pickands(cls, pickands, params=None):
         sp_pickands = sp.sympify(pickands)
-        free_symbols = {str(symbol): symbol for symbol in sp_pickands.free_symbols}
-        del free_symbols["t"]
-        obj = cls._from_string(free_symbols)
-        obj._pickands = sp_pickands.subs("t", cls.t)
+        func_vars, params = cls._segregate_symbols(sp_pickands, "t", params)
+        obj = cls._from_string(params)
+        obj._pickands = sp_pickands.subs(func_vars[0], cls.t)
         return obj
 
     def deriv_pickand_at_0(self):

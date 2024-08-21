@@ -32,12 +32,11 @@ class ArchimedeanCopula(Copula, ABC):
         return f"{self.__class__.__name__}({self.theta})"
 
     @classmethod
-    def from_generator(cls, generator):
+    def from_generator(cls, generator, params=None):
         sp_generator = sympy.sympify(generator)
-        free_symbols = {str(symbol): symbol for symbol in sp_generator.free_symbols}
-        del free_symbols["t"]
-        obj = cls._from_string(free_symbols)
-        obj._generator = sp_generator.subs("t", cls.t)
+        func_vars, params = cls._segregate_symbols(sp_generator, "t", params)
+        obj = cls._from_string(params)
+        obj._generator = sp_generator.subs(func_vars[0], cls.t)
         return obj
 
     @property
@@ -103,7 +102,7 @@ class ArchimedeanCopula(Copula, ABC):
         equation = sympy.Eq(self.y, self.generator.func)
 
         # Define the conditions: the equation and y > 0
-        conditions = [equation, self.y > 0, self.t > 0]
+        conditions = [equation, self.y >= 0]
 
         # Solve the equation under the given conditions for t
         solutions = sympy.solve(conditions, self.t)

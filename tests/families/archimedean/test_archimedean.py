@@ -15,3 +15,17 @@ def test_from_generator_with_nelsen2():
     assert copula(2).generator(0.5) == 0.25
     cdf = copula(2).cdf(0.5, 0.5)
     assert np.isclose(cdf, 0.2928932188134524)
+
+
+def test_from_generator_with_nelsen2_diff_params():
+    copula = ArchimedeanCopula.from_generator("(1 - x) ** theta", "theta")
+    assert copula(2).generator(0.5) == 0.25
+    cdf = copula(2).cdf(0.5, 0.5)
+    assert np.isclose(cdf, 0.2928932188134524)
+
+
+def test_from_generator_with_nelsen2_specific_theta_and_diff_params():
+    copula = ArchimedeanCopula.from_generator("(1 - x) ** 2")
+    assert copula(2).generator(0.5) == 0.25
+    cdf = copula(2).cdf(0.5, 0.5)
+    assert np.isclose(cdf, 0.2928932188134524)
