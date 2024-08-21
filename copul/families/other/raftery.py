@@ -1,12 +1,12 @@
 import sympy
 
-from copul.families.abstract_copula import AbstractCopula
+from copul.families.copula import Copula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
-class Raftery(AbstractCopula):
+class Raftery(Copula):
     @property
     def is_symmetric(self) -> bool:
         return True

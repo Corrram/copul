@@ -6,11 +6,11 @@ from contextlib import contextmanager
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
-import sympy
+import sympy as sp
 from sympy import Derivative, Subs, log
 
 from copul.cdf_wrapper import CDFWrapper
-from copul.families.abstract_copula import AbstractCopula
+from copul.families.copula import Copula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
@@ -20,16 +20,40 @@ plt.rc("font", size=12)  # You can adjust this value as needed
 log_ = logging.getLogger(__name__)
 
 
-class ExtremeValueCopula(AbstractCopula):
+class ExtremeValueCopula(Copula):
     _t_min = 0
     _t_max = 1
-    t = sympy.symbols("t", positive=True)
-    pickands = SymPyFunctionWrapper(sympy.Function("A")(t))
-    intervals = None
+    t = sp.symbols("t", positive=True)
+    _pickands = SymPyFunctionWrapper(sp.Function("A")(t))
+    intervals = {}
+    params = []
+    _free_symbols = {}
+
+    @property
+    def pickands(self):
+        # Recalculate pickands expression based on the current values of keys
+        expr = self._pickands
+        for key, value in self._free_symbols.items():
+            expr = expr.subs(value, getattr(self, key))
+        return SymPyFunctionWrapper(expr)
+
+    @pickands.setter
+    def pickands(self, new_pickands):
+        # Allow setting a new pickands expression if needed
+        self._pickands = sp.sympify(new_pickands)
+
+    @classmethod
+    def from_pickands(cls, pickands):
+        sp_pickands = sp.sympify(pickands)
+        free_symbols = {str(symbol): symbol for symbol in sp_pickands.free_symbols}
+        del free_symbols["t"]
+        obj = cls._from_string(free_symbols)
+        obj._pickands = sp_pickands.subs("t", cls.t)
+        return obj
 
     def deriv_pickand_at_0(self):
-        diff = sympy.simplify(sympy.diff(self.pickands, self.t))
-        diff_at_0 = sympy.limit(diff, self.t, 0)
+        diff = sp.simplify(sp.diff(self.pickands, self.t))
+        diff_at_0 = sp.limit(diff, self.t, 0)
         return diff_at_0
 
     def sample_parameters(self, n=1):
@@ -43,10 +67,18 @@ class ExtremeValueCopula(AbstractCopula):
         return True
 
     @property
+    def is_absolutely_continuous(self) -> bool:
+        raise NotImplementedError("This method should be implemented in the subclass")
+
+    @property
+    def is_symmetric(self) -> bool:
+        raise NotImplementedError("This method should be implemented in the subclass")
+
+    @property
     def cdf(self):
         """Cumulative distribution function of the copula"""
         cop = (self.u * self.v) ** self.pickands(
-            sympy.ln(self.v) / sympy.ln(self.u * self.v)
+            sp.ln(self.v) / sp.ln(self.u * self.v)
         ).func
         cop = self._get_simplified_solution(cop)
         return CDFWrapper(cop)
@@ -54,7 +86,7 @@ class ExtremeValueCopula(AbstractCopula):
     @property
     def pdf(self):
         """Probability density function of the copula"""
-        _xi_1, u, v = sympy.symbols("_xi_1 u v")
+        _xi_1, u, v = sp.symbols("_xi_1 u v")
         pickands = self.pickands.func
         t = self.t
         pdf = (
@@ -96,32 +128,30 @@ class ExtremeValueCopula(AbstractCopula):
         self._set_params(args, kwargs)
         integrand = self._rho_int_1()  # nelsen 5.15
         log_.debug(f"integrand: {integrand}")
-        log_.debug(f"integrand latex: {sympy.latex(integrand)}")
+        log_.debug(f"integrand latex: {sp.latex(integrand)}")
         rho = self._rho()
         log_.debug(f"rho: {rho}")
-        log_.debug(f"rho latex: {sympy.latex(rho)}")
+        log_.debug(f"rho latex: {sp.latex(rho)}")
         return rho
 
     def _rho_int_1(self):
-        return sympy.simplify((self.pickands.func + 1) ** (-2))
+        return sp.simplify((self.pickands.func + 1) ** (-2))
 
     def _rho(self):
-        return sympy.simplify(
-            12 * sympy.integrate(self._rho_int_1(), (self.t, 0, 1)) - 3
-        )
+        return sp.simplify(12 * sp.integrate(self._rho_int_1(), (self.t, 0, 1)) - 3)
 
     def kendalls_tau(self, *args, **kwargs):  # nelsen 5.15
         self._set_params(args, kwargs)
         t = self.t
-        diff2_pickands = sympy.diff(self.pickands, t, 2)
+        diff2_pickands = sp.diff(self.pickands, t, 2)
         integrand = t * (1 - t) / self.pickands.func * diff2_pickands.func
-        integrand = sympy.simplify(integrand)
+        integrand = sp.simplify(integrand)
         log_.debug("integrand: ", integrand)
-        log_.debug("integrand latex: ", sympy.latex(integrand))
-        integral = sympy.integrate(integrand, (t, 0, 1))
-        tau = sympy.simplify(integral)
+        log_.debug("integrand latex: ", sp.latex(integrand))
+        integral = sp.integrate(integrand, (t, 0, 1))
+        tau = sp.simplify(integral)
         log_.debug("tau: ", tau)
-        log_.debug("tau latex: ", sympy.latex(tau))
+        log_.debug("tau latex: ", sp.latex(tau))
         return tau
 
     def minimize_func(self, sympy_func):
@@ -162,7 +192,7 @@ class ExtremeValueCopula(AbstractCopula):
     def _get_function_graph(func, par):
         par_str = ", ".join(f"$\\{key}={value}$" for key, value in par.items())
         par_str = par_str.replace("oo", "\\infty")
-        lambda_func = sympy.lambdify("t", func)
+        lambda_func = sp.lambdify("t", func)
         x = np.linspace(0, 1, 1000)
         y = [lambda_func(i) for i in x]
         plt.plot(x, y, label=par_str)
@@ -194,7 +224,7 @@ class ExtremeValueCopula(AbstractCopula):
 
         params = {param: getattr(self, param) for param in [*self.intervals]}
         defined_params = {
-            k: v for k, v in params.items() if not isinstance(v, sympy.Symbol)
+            k: v for k, v in params.items() if not isinstance(v, sp.Symbol)
         }
         dict_str = ", ".join(
             f"\\{key}={value}" for key, value in defined_params.items()
@@ -245,8 +275,8 @@ class ExtremeValueCopula(AbstractCopula):
 
     @staticmethod
     def _get_simplified_solution(sol):
-        simplified_sol = sympy.simplify(sol)
-        if isinstance(simplified_sol, sympy.core.containers.Tuple):
+        simplified_sol = sp.simplify(sol)
+        if isinstance(simplified_sol, sp.core.containers.Tuple):
             return simplified_sol[0]
         else:
             return simplified_sol.evalf()

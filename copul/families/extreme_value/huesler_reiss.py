@@ -31,12 +31,11 @@ class HueslerReiss(ExtremeValueCopula):
         return True
 
     @property
-    def pickands(self):
+    def _pickands(self):
         std_norm = stats.cdf(stats.Normal("x", 0, 1))
-        func = (1 - self.t) * std_norm(self._z(1 - self.t)) + self.t * std_norm(
+        return (1 - self.t) * std_norm(self._z(1 - self.t)) + self.t * std_norm(
             self._z(self.t)
         )
-        return SymPyFunctionWrapper(func)
 
     def _z(self, t):
         if t == 0:

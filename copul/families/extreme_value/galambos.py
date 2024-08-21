@@ -16,15 +16,12 @@ class Galambos(ExtremeValueCopula):
     intervals = {"delta": sympy.Interval(0, np.inf, left_open=True, right_open=True)}
 
     @property
-    def is_absolutely_continuous(self) -> bool:
-        return True
+    def _pickands(self):
+        return 1 - (self.t ** (-self.delta) + (1 - self.t) ** (-self.delta)) ** (-1 / self.delta)
 
     @property
-    def pickands(self):
-        t = self.t
-        delta = self.delta
-        func = 1 - (t ** (-delta) + (1 - t) ** (-delta)) ** (-1 / delta)
-        return SymPyFunctionWrapper(func)
+    def is_absolutely_continuous(self) -> bool:
+        return True
 
     @property
     def cdf(self):

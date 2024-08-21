@@ -41,9 +41,8 @@ class CuadrasAuge(ExtremeValueCopula):
         return self.delta == 0
 
     @property
-    def pickands(self):
-        func = 1 - self.delta * sp.Min(1 - self.t, self.t)
-        return SymPyFunctionWrapper(func)
+    def _pickands(self):
+        return 1 - self.delta * sp.Min(1 - self.t, self.t)
 
     @property
     def cdf(self):

@@ -1,6 +1,6 @@
 import sympy
 
-from copul.families.abstract_copula import AbstractCopula
+from copul.families.copula import Copula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
@@ -19,9 +19,9 @@ class CDFWrapper(SymPyFunctionWrapper):
             if ("u", 0) in kwargs.items() or ("v", 0) in kwargs.items():
                 self._func = sympy.S.Zero
             if ("u", 1) in kwargs.items():
-                self._func = AbstractCopula.v
+                self._func = Copula.v
             if ("v", 1) in kwargs.items():
-                self._func = AbstractCopula.u
+                self._func = Copula.u
         self._func = self._func.subs(vars_)
         if isinstance(self._func, sympy.Number):
             return float(self._func)

@@ -99,15 +99,14 @@ class JoeEV(ExtremeValueCopula):
         return True
 
     @property
-    def pickands(self):
+    def _pickands(self):
         delta = self.delta
         t = self.t
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
-        func = 1 - ((alpha_1 * (1 - t)) ** (-delta) + (alpha_2 * t) ** (-delta)) ** (
+        return 1 - ((alpha_1 * (1 - t)) ** (-delta) + (alpha_2 * t) ** (-delta)) ** (
             -1 / delta
         )
-        return SymPyFunctionWrapper(func)
 
     @property
     def cdf(self):

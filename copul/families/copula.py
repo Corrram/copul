@@ -3,7 +3,6 @@ import inspect
 import logging
 import pathlib
 import types
-from abc import ABC, abstractmethod
 
 import numpy as np
 import sympy
@@ -21,12 +20,14 @@ from copul.sympy_wrapper import SymPyFunctionWrapper
 log = logging.getLogger(__name__)
 
 
-class AbstractCopula(ABC):
-    params = None
+class Copula:
+    params = []
     u, v = sympy.symbols("u v", positive=True)
-    intervals = None
+    intervals = {}
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
+    _cdf = None
+    _free_symbols = {}
 
     def __init__(self, *args, **kwargs):
         if args and len(args) <= len(self.params):
@@ -59,6 +60,28 @@ class AbstractCopula(ABC):
             k: v for k, v in self.intervals.items() if str(k) not in kwargs
         }
         return new_copula
+
+    @classmethod
+    def from_pickands(cls, cdf):
+        sp_cdf = sympy.sympify(cdf)
+        free_symbols = {str(symbol): symbol for symbol in sp_cdf.free_symbols}
+        del free_symbols["u"]
+        del free_symbols["v"]
+        obj = cls._from_string(free_symbols)
+        obj._cdf = sp_cdf.subs("u", cls.u).subs("v", cls.v)
+        return obj
+
+    @classmethod
+    def _from_string(cls, free_symbols):
+        obj = cls()
+        obj._free_symbols = free_symbols  # Store free symbols for later use
+
+        for key in free_symbols:
+            setattr(obj, key, sympy.symbols(key, real=True))
+            value = getattr(obj, key)
+            obj.params.append(value)
+            obj.intervals[value] = sympy.Interval(-np.inf, np.inf)
+        return obj
 
     @property
     def name(self):
@@ -100,19 +123,29 @@ class AbstractCopula(ABC):
         )
 
     @property
-    @abstractmethod
-    def cdf(self) -> SymPyFunctionWrapper:
-        pass
+    def cdf(self, u=None, v=None):
+        expr = self._cdf
+        for key, value in self._free_symbols.items():
+            expr = expr.subs(value, getattr(self, key))
+        return SymPyFunctionWrapper(expr)(u, v)
+
+    @classmethod
+    def from_cdf(cls, cdf):
+        sp_cdf = sympy.sympify(cdf)
+        free_symbols = {str(symbol): symbol for symbol in sp_cdf.free_symbols}
+        del free_symbols["u"]
+        del free_symbols["v"]
+        obj = cls._from_string(free_symbols)
+        obj._cdf = sp_cdf.subs("u", cls.u).subs("v", cls.v)
+        return obj
 
     @property
-    @abstractmethod
     def is_absolutely_continuous(self) -> bool:
-        pass
+        raise NotImplementedError("This method must be implemented in a subclass")
 
     @property
-    @abstractmethod
     def is_symmetric(self) -> bool:
-        pass
+        raise NotImplementedError("This method must be implemented in a subclass")
 
     def rvs(self, n=1):
         """Sample a value from the copula"""
@@ -291,7 +324,7 @@ class AbstractCopula(ABC):
 
     def scatter_plot(self, n=1_000):
         data_ = self.rvs(n)
-        plt.scatter(data_[:, 0], data_[:, 1], s=rcParams['lines.markersize'] ** 2)
+        plt.scatter(data_[:, 0], data_[:, 1], s=rcParams["lines.markersize"] ** 2)
         title = CopulaGraphs(self).get_copula_title()
         plt.title(title)
         plt.xlabel("u")
