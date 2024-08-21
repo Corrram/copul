@@ -25,7 +25,7 @@ class tEV(ExtremeValueCopula):
         return True
 
     @property
-    def pickands(self):
+    def _pickands(self):
         def z(t):
             return (
                 (1 + self.nu) ** (1 / 2)
@@ -34,10 +34,9 @@ class tEV(ExtremeValueCopula):
             )
 
         student_t = stats.StudentT("x", self.nu + 1)
-        func = (1 - self.t) * stats.cdf(student_t)(z(1 - self.t)) + self.t * stats.cdf(
+        return (1 - self.t) * stats.cdf(student_t)(z(1 - self.t)) + self.t * stats.cdf(
             student_t
         )(z(self.t))
-        return SymPyFunctionWrapper(func)
 
     # @property
     # def pdf(self):

@@ -87,17 +87,16 @@ class Tawn(ExtremeValueCopula):
         return True
 
     @property
-    def pickands(self):
+    def _pickands(self):
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
         t = self.t
         theta = self.theta
-        func = (
+        return (
             (1 - alpha_1) * (1 - t)
             + (1 - alpha_2) * t
             + ((alpha_1 * (1 - t)) ** theta + (alpha_2 * t) ** theta) ** (1 / theta)
         )
-        return SymPyFunctionWrapper(func)
 
     @property
     def cdf(self):

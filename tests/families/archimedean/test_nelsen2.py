@@ -16,3 +16,4 @@ def test_nelsen2_scatter():
         nelsen2.scatter_plot()
     except Exception as e:
         pytest.fail(f"plot_cdf() raised an exception: {e}")
+        

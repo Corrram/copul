@@ -8,7 +8,6 @@ from copul.families.extreme_value.gumbel_hougaard import GumbelHougaard
 from copul.families.extreme_value.galambos import Galambos
 
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
-from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
 class BB5(ExtremeValueCopula):
@@ -45,16 +44,15 @@ class BB5(ExtremeValueCopula):
         return True
 
     @property
-    def pickands(self):
+    def _pickands(self):
         theta = self.theta
         t = self.t
-        func = (
+        return (
             t**theta
             + (1 - t) ** theta
             - ((1 - t) ** (-theta * self.delta) + t ** (-theta * self.delta))
             ** (-1 / self.delta)
         ) ** (1 / theta)
-        return SymPyFunctionWrapper(func)
 
     @property
     def cdf(self):

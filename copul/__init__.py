@@ -12,6 +12,7 @@ from copul.chatterjee import xi_ncalculate
 from copul.family_list import Families, families
 from copul.schur_order.checkerboarder import Checkerboarder
 from copul.schur_order.cis_rearranger import CISRearranger
+from copul.families.copula import Copula
 from copul.families.archimedean import (
     AliMikhailHaq,
     Clayton,
@@ -63,6 +64,7 @@ __all__ = [
     "CheckerboardCopula",
     "Checkerboarder",
     "CISRearranger",
+    "Copula",
     "FarlieGumbelMorgenstern",
     "Frechet",
     "LowerFrechet",

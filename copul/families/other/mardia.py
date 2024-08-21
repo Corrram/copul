@@ -3,11 +3,11 @@ import copy
 import sympy
 
 from copul.exceptions import PropertyUnavailableException
-from copul.families.abstract_copula import AbstractCopula
+from copul.families.copula import Copula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
-class Mardia(AbstractCopula):
+class Mardia(Copula):
     @property
     def is_symmetric(self) -> bool:
         return True

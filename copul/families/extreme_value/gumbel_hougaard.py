@@ -29,9 +29,8 @@ class GumbelHougaard(ExtremeValueCopula):
     intervals = {"theta": sympy.Interval(1, np.inf, left_open=False, right_open=True)}
 
     @property
-    def pickands(self):
-        func = (self.t**self.theta + (1 - self.t) ** self.theta) ** (1 / self.theta)
-        return SymPyFunctionWrapper(func)
+    def _pickands(self):
+        return (self.t**self.theta + (1 - self.t) ** self.theta) ** (1 / self.theta)
 
     @property
     def cdf(self):

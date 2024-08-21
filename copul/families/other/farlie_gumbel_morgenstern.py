@@ -1,10 +1,10 @@
 import sympy
 
-from copul.families.abstract_copula import AbstractCopula
+from copul.families.copula import Copula
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
 
-class FarlieGumbelMorgenstern(AbstractCopula):
+class FarlieGumbelMorgenstern(Copula):
     theta = sympy.symbols("theta")
     params = [theta]
     intervals = {"theta": sympy.Interval(-1, 1, left_open=False, right_open=False)}

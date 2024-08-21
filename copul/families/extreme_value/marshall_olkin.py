@@ -49,9 +49,8 @@ class MarshallOlkin(ExtremeValueCopula):
         self._alpha_2 = value
 
     @property
-    def pickands(self):
-        func = sympy.Max(1 - self.alpha_1 * (1 - self.t), 1 - self.alpha_2 * self.t)
-        return SymPyFunctionWrapper(func)
+    def _pickands(self):
+        return sympy.Max(1 - self.alpha_1 * (1 - self.t), 1 - self.alpha_2 * self.t)
 
     @property
     def cdf(self):

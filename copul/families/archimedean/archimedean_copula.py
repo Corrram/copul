@@ -7,20 +7,21 @@ import sympy
 from matplotlib import pyplot as plt
 from scipy import optimize
 from copul.families import concrete_expand_log, get_simplified_solution
-from copul.families.abstract_copula import AbstractCopula
+from copul.families.copula import Copula
 from copul.families.copula_graphs import CopulaGraphs
 from copul.sympy_wrapper import SymPyFunctionWrapper
 
 log = logging.getLogger(__name__)
 
 
-class ArchimedeanCopula(AbstractCopula, ABC):
+class ArchimedeanCopula(Copula, ABC):
     _t_min = 0
     _t_max = 1
     y, t = sympy.symbols("y t", positive=True)
     theta = sympy.symbols("theta")
     theta_interval = None
     params = [theta]
+    _generator = None
 
     def __init__(self, *args, **kwargs):
         if args is not None and len(args) > 0:
@@ -29,6 +30,19 @@ class ArchimedeanCopula(AbstractCopula, ABC):
 
     def __str__(self):
         return f"{self.__class__.__name__}({self.theta})"
+
+    @classmethod
+    def from_generator(cls, generator):
+        sp_generator = sympy.sympify(generator)
+        free_symbols = {str(symbol): symbol for symbol in sp_generator.free_symbols}
+        del free_symbols["t"]
+        obj = cls._from_string(free_symbols)
+        obj._generator = sp_generator.subs("t", cls.t)
+        return obj
+
+    @property
+    def is_absolutely_continuous(self) -> bool:
+        raise NotImplementedError("This method should be implemented in the subclass")
 
     @property
     def is_symmetric(self) -> bool:
@@ -43,12 +57,15 @@ class ArchimedeanCopula(AbstractCopula, ABC):
         self.theta_interval = value["theta"] if "theta" in value else None
 
     @property
-    def _generator(self):
-        raise NotImplementedError
-
-    @property
     def generator(self):
-        return SymPyFunctionWrapper(self._generator)
+        expr = self._generator
+        for key, value in self._free_symbols.items():
+            expr = expr.subs(value, getattr(self, key))
+        return SymPyFunctionWrapper(expr)
+
+    @generator.setter
+    def generator(self, value):
+        self._generator = value
 
     @property
     def theta_max(self):
@@ -61,9 +78,10 @@ class ArchimedeanCopula(AbstractCopula, ABC):
     @property
     def cdf(self):
         """Cumulative distribution function of the copula"""
-        inv_gen_at_u = self._generator.subs(self.t, self.u)
-        inv_gen_at_v = self._generator.subs(self.t, self.v)
-        cdf = self.inv_generator.subs(self.y, inv_gen_at_u + inv_gen_at_v)
+        inv_gen_at_u = self.generator.subs(self.t, self.u)
+        inv_gen_at_v = self.generator.subs(self.t, self.v)
+        sum = inv_gen_at_u.func + inv_gen_at_v.func
+        cdf = self.inv_generator.subs(self.y, sum)
         return SymPyFunctionWrapper(get_simplified_solution(cdf.func))
 
     @property
@@ -74,10 +92,32 @@ class ArchimedeanCopula(AbstractCopula, ABC):
 
     @property
     def inv_generator(self) -> SymPyFunctionWrapper:
-        eq = sympy.Eq(self.y, self._generator)
-        sol = sympy.solve([eq, self.theta > 0, self.y > 0], self.t)
-        my_sol = sol[self.t] if isinstance(sol, dict) else sol[0]
+        """
+        Finds the inverse of the generator function for a given value of y,
+        considering the condition that y > 0.
+
+        Returns:
+            The inverse value(s) of t that satisfy the condition.
+        """
+        # Create the equation y = generator
+        equation = sympy.Eq(self.y, self.generator.func)
+
+        # Define the conditions: the equation and y > 0
+        conditions = [equation, self.y > 0, self.t > 0]
+
+        # Solve the equation under the given conditions for t
+        solutions = sympy.solve(conditions, self.t)
+
+        # If the solution is a dictionary, extract the value for t
+        if isinstance(solutions, dict):
+            my_sol = solutions[self.t]
+        elif isinstance(solutions, list):
+            my_sol = solutions[0]
+        else:
+            my_sol = solutions
+
         my_simplified_sol = get_simplified_solution(my_sol)
+
         return SymPyFunctionWrapper(my_simplified_sol)
 
     @property
