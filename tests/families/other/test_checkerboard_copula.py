@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import matplotlib
 import pytest
@@ -136,9 +138,11 @@ def test_ccop_cond_distr_2(matr, expected):
             [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
             0,
         ),
+        ([[1, 0], [0, 1]], 0),
     ],
 )
 def test_ccop_xi(matr, expected):
+    random.seed(1)
     ccop = CheckerboardCopula(matr)
     xi_estimate = ccop.chatterjees_xi()
     assert np.abs(xi_estimate - expected) < 0.01

@@ -2,9 +2,8 @@ from typing import Union
 
 import numpy as np
 
-from copul import basictools
-from copul.families.other.checkerboard_copula import CheckerboardCopula
 from copul.exceptions import PropertyUnavailableException
+from copul.families.other.checkerboard_copula import CheckerboardCopula
 
 
 class UpperCheckerboardCopula(CheckerboardCopula):
@@ -20,7 +19,7 @@ class UpperCheckerboardCopula(CheckerboardCopula):
 
     @property
     def is_absolutely_continuous(self) -> bool:
-        return True
+        return False
 
     def cdf(self, u, v):
         x = int((u * self.matr.shape[0]) // 1)
@@ -33,7 +32,7 @@ class UpperCheckerboardCopula(CheckerboardCopula):
         if overlap_y > 0:
             total_integral += overlap_y * self.matr[:x, y].sum()
         if overlap_x > 0 and overlap_y > 0:
-            total_integral += np.min(overlap_x, overlap_y) * self.matr[x, y]
+            total_integral += np.min([overlap_x, overlap_y]) * self.matr[x, y]
         return total_integral
 
     def cond_distr_1(self, u, v):
@@ -45,7 +44,9 @@ class UpperCheckerboardCopula(CheckerboardCopula):
         y = int(v * self.matr.shape[1])
         integral = self.matr[x, :y].sum()
         overlap_y = v * self.matr.shape[1] - y
-        if overlap_y > 0 and u <= v:
+        adjusted_u = u + y / self.matr.shape[1]
+        adjusted_v = v + x / self.matr.shape[0]
+        if overlap_y > 0 and adjusted_u <= adjusted_v:
             integral += self.matr[x, y]
         result = integral * self.matr.shape[0]
         return result
@@ -59,7 +60,9 @@ class UpperCheckerboardCopula(CheckerboardCopula):
         y = int(v * self.matr.shape[1])
         integral = self.matr[:x, y].sum()
         overlap_x = u * self.matr.shape[0] - x
-        if overlap_x > 0 and v <= u:
+        adjusted_v = v + x / self.matr.shape[0]
+        adjusted_u = u + y / self.matr.shape[1]
+        if overlap_x > 0 and adjusted_v <= adjusted_u:
             integral += self.matr[x, y]
         result = integral * self.matr.shape[1]
         return result
@@ -69,82 +72,17 @@ class UpperCheckerboardCopula(CheckerboardCopula):
         msg = "PDF does not exist for Upper Checkerboard Copula"
         raise PropertyUnavailableException(msg)
 
-    def kendalls_tau(self, *args, **kwargs):
-        self._set_params(args, kwargs)
-        result = basictools.monte_carlo_integral(
-            lambda x, y: self.cdf(x, y) * self.pdf(x, y), self.n_samples
-        )
-        return 4 * result - 1
-
-    def spearmans_rho(self, *args, **kwargs):
-        self._set_params(args, kwargs)
-        result = basictools.monte_carlo_integral(
-            lambda x, y: self.cdf(x, y), self.n_samples
-        )
-        return 12 * result - 3
-
-    def chatterjees_xi(self, condition_on_y=False, *args, **kwargs):
-        self._set_params(args, kwargs)
-        method = self.cond_distr_2 if condition_on_y else self.cond_distr_1
-
-        def f(x, y):
-            return method(x, y) ** 2
-
-        result = basictools.monte_carlo_integral(
-            f, self.n_samples, vectorized_func=False
-        )
-        return 6 * result - 2
-
     def rvs(self, n=1):
         sel_ele, sel_idx = self._weighted_random_selection(self.matr, n)
         u = np.random.rand(n) / self.m
-        v = np.random.rand(n) / self.n
+        v = u
         add_random = np.array([u, v]).T
         data_points = np.array([(idx[0] / self.m, idx[1] / self.n) for idx in sel_idx])
         data_points += add_random
         return data_points
 
-    @staticmethod
-    def _weighted_random_selection(matrix, num_samples):
-        """
-        Select elements from the matrix at random with likelihood proportional to their values.
-
-        Parameters
-        ----------
-        matrix : numpy.ndarray
-            2D array from which to select elements.
-        num_samples : int
-            Number of elements to select.
-
-        Returns
-        -------
-        selected_elements : numpy.ndarray
-            Array of selected elements.
-        selected_indices : list of tuples
-            List of indices of the selected elements in the original matrix.
-        """
-        # Flatten the matrix to a 1D array
-        matrix = np.asarray(matrix, dtype=np.float64)
-        flat_matrix = matrix.flatten()
-
-        # Create the probability distribution proportional to the values
-        probabilities = flat_matrix / np.sum(flat_matrix)
-
-        # Select indices based on the probability distribution
-        selected_indices_flat = np.random.choice(
-            np.arange(flat_matrix.size), size=num_samples, p=probabilities
-        )
-
-        # Map the selected indices back to the original matrix
-        selected_indices = [
-            np.unravel_index(idx, matrix.shape) for idx in selected_indices_flat
-        ]
-        selected_elements = matrix[tuple(np.array(selected_indices).T)]
-
-        return selected_elements, selected_indices
-
     def lambda_L(self):
-        return 0
+        return 1
 
     def lambda_U(self):
-        return 0
+        return 1

@@ -11,7 +11,7 @@ class CheckerboardCopula(Copula):
     params = []
     intervals = {}
 
-    def __init__(self, matr, mc_size=100_000, **kwargs):
+    def __init__(self, matr, mc_size=200_000, **kwargs):
         if isinstance(matr, (list, sympy.matrices.dense.Matrix)):
             matr = np.array(matr)
         self.matr = matr / matr.sum()

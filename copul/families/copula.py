@@ -405,6 +405,22 @@ class Copula:
         title = CopulaGraphs(self).get_copula_title()
         return self._plot3d(pdf, title=title, zlabel="PDF")
 
+    def plot_cond_distr_1(self):
+        free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
+        cond_distr_1 = self(**free_symbol_dict).cond_distr_1
+        title = CopulaGraphs(self).get_copula_title()
+        return self._plot3d(
+            cond_distr_1, title=title, zlabel="Conditional Distribution 1"
+        )
+
+    def plot_cond_distr_2(self):
+        free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
+        cond_distr_2 = self(**free_symbol_dict).cond_distr_2
+        title = CopulaGraphs(self).get_copula_title()
+        return self._plot3d(
+            cond_distr_2, title=title, zlabel="Conditional Distribution 2"
+        )
+
     def _plot3d(self, func, title, zlabel, zlim=None):
         try:
             parameters = inspect.signature(func).parameters

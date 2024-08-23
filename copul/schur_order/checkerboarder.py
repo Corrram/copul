@@ -22,7 +22,7 @@ class Checkerboarder:
         else:
 
             def cdf(u, v):
-                return copula.cdf()(u, v)
+                return copula.cdf(u, v)
 
         nrow = self.nrow
         ncol = self.ncol
