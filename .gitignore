@@ -2,7 +2,7 @@
 /dist/
 /.idea
 *.pyc
-/copul/expirements.py
+/copul/expirements*
 /copul/images/
 __pycache__
-/notes/examples/experiments.py
+/notes/examples/experiments*

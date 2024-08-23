@@ -17,7 +17,6 @@ class CopulaSampler:
         self._copul = copul
 
     def sample_val(self, function):
-        # random.seed(0)
         v = random.uniform(0, 1)
         t = random.uniform(0, 1)
 
