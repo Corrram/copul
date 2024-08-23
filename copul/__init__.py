@@ -1,5 +1,6 @@
 from copul.families import archimedean, extreme_value, elliptical
 from copul.families.other.checkerboard_copula import CheckerboardCopula
+from copul.families.other.upper_checkerboard import UpperCheckerboardCopula
 from copul.families.other.farlie_gumbel_morgenstern import FarlieGumbelMorgenstern
 from copul.families.other.frechet import Frechet
 from copul.families.other.independence_copula import IndependenceCopula
@@ -119,4 +120,5 @@ __all__ = [
     "Gaussian",
     "Laplace",
     "StudentT",
+    "UpperCheckerboardCopula",
 ]
