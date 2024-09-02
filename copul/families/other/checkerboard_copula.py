@@ -52,13 +52,15 @@ class CheckerboardCopula(Copula):
             return np.array([self.cond_distr_1(u_, v) for u_ in u])
         if isinstance(v, np.ndarray):
             return np.array([self.cond_distr_1(u, v_) for v_ in v])
-        x = int(u * self.matr.shape[0])
-        y = int(v * self.matr.shape[1])
+        nrow = self.matr.shape[0]
+        x = min(int(u * nrow), nrow - 1)
+        n_col = self.matr.shape[1]
+        y = min(int(v * n_col), n_col - 1)
         total_integral = self.matr[x, :y].sum()
-        overlap_y = v * self.matr.shape[1] - y
+        overlap_y = v * n_col - y
         if overlap_y > 0:
             total_integral += overlap_y * self.matr[x, y]
-        result = total_integral * self.matr.shape[0]
+        result = total_integral * nrow
         return result
 
     def cond_distr_2(self, u, v) -> Union[float, np.ndarray]:
