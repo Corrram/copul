@@ -6,3 +6,5 @@
 /copul/images/
 __pycache__
 /notes/examples/experiments*
+/docs/images/schur/
+/notes/examples/*.png

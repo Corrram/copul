@@ -1,3 +1,4 @@
+import os.path
 import pathlib
 
 import numpy as np
@@ -56,8 +57,15 @@ class SchurVisualizer:
         plt.xlabel(f"u (v={self._v})")
         plt.ylabel(f"Conditional CDF F(v={self._v}|u)")
         plt.title(f"Conditional CDF for {self.copula()}")
-        plt.savefig(f"../../images/schur/{self.copula()}_v{self._v}.png")
+        path = self._get_schur_image_path()
+        plt.savefig(f"{path}/{self.copula()}_v{self._v}.png")
         plt.show()
+
+    @staticmethod
+    def _get_schur_image_path():
+        path = os.path.abspath("../../docs/images/schur")
+        pathlib.Path(path).mkdir(exist_ok=True)
+        return path
 
     def _finish_rearrangend_plot(self, y_vals):
         param = self.copula.params[0]
@@ -71,7 +79,8 @@ class SchurVisualizer:
         plt.grid()
         plt.xlabel(f"u (v={self._v})")
         plt.title(f"Decreasing rearrangement for {self.copula()}")
-        plt.savefig(f"../../images/schur/{self.copula()}_v{self._v}_rearranged.png")
+        path = self._get_schur_image_path()
+        plt.savefig(f"{path}/{self.copula()}_v{self._v}_rearranged.png")
         plt.show()
 
 
@@ -83,14 +92,14 @@ def visualize_rearranged(nelsen, thetas, v, grid_size=10):
     for theta in thetas:
         schur8 = rearranger.rearrange_copula(nelsen(**{param: theta}))
         ccop = CheckerboardCopula(schur8)
-        y1 = SchurVisualizer(ccop, v=v).compute()
+        y1 = SchurVisualizer(ccop, v, x).compute()
         ax.plot(x, y1, label=f"{param}={theta}", linewidth=2)
     ax.legend()
     ax.grid()
     plt.xlabel(f"u (with v={v})")
     plt.title(f"Decreasing rearrangement for {nelsen()}")
-    pathlib.Path("../../../images/schur").mkdir(parents=True, exist_ok=True)
-    plt.savefig(f"../../images/schur/{nelsen.__name__}_rearranged_v{v}.png")
+    path = os.path.abspath("../../docs/images/schur")
+    plt.savefig(f"{path}/{nelsen.__name__}_rearranged_v{v}.png")
     plt.show()
 
 
@@ -99,15 +108,17 @@ if __name__ == "__main__":
         # "Nelsen1": [0.1, 1, 5],
         "Nelsen2": [1.4, 2]
     }
-    ell_thetas = {"Gaussian": [-0.3, 0, 0.6], "StudentT": [-0.3, 0, 0.9]}
-    v_seq = [0.1, 0.9]
+    ell_thetas = {"Gaussian": [-0.8, 0.5]}  # ], "StudentT": [-0.3, 0, 0.9]}
+    v_seq = [0.3, 0.9]
     for nelsen, nelsen_thetas in thetas.items():
         for v in v_seq:
             SchurVisualizer(archimedean.__dict__[nelsen], v=v).plot_for(nelsen_thetas)
     gaussian = copul.elliptical.Gaussian()
     t = copul.elliptical.StudentT(nu=1)
-    gauss_y_vals = SchurVisualizer(gaussian, v=0.6).plot_for(ell_thetas["Gaussian"])
-    student_t_y_vals = SchurVisualizer(t, v=0.6).plot_for(ell_thetas["StudentT"])
-    # grid_size = 20
-    # visualize_rearranged(archimedean.Nelsen2, thetas["Nelsen2"], 0.1, grid_size)
+    if "Gaussian" in ell_thetas:
+        gauss_y_vals = SchurVisualizer(gaussian, v=0.6).plot_for(ell_thetas["Gaussian"])
+    if "StudentT" in ell_thetas:
+        student_t_y_vals = SchurVisualizer(t, v=0.6).plot_for(ell_thetas["StudentT"])
+    grid_size = 10
+    visualize_rearranged(archimedean.Nelsen2, thetas["Nelsen2"], 0.1, grid_size)
     print("Done!")
