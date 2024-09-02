@@ -5,7 +5,7 @@ import sympy
 from copul.families import get_simplified_solution
 from copul.families.copula import Copula
 from copul.families.other.lower_frechet import LowerFrechet
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class Plackett(Copula):

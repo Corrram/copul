@@ -25,7 +25,7 @@ copul.basictools module
 copul.cdf\_wrapper module
 -------------------------
 
-.. automodule:: copul.cdf_wrapper
+.. automodule:: copul.wrapper.cdf_wrapper
    :members:
    :undoc-members:
    :show-inheritance:
@@ -65,7 +65,7 @@ copul.family\_list module
 copul.sympy\_wrapper module
 ---------------------------
 
-.. automodule:: copul.sympy_wrapper
+.. automodule:: copul.wrapper.sympy_wrapper
    :members:
    :undoc-members:
    :show-inheritance:

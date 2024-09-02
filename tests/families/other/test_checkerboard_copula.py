@@ -138,7 +138,7 @@ def test_ccop_cond_distr_2(matr, expected):
             [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
             0,
         ),
-        ([[1, 0], [0, 1]], 0),
+        ([[1, 0], [0, 1]], 0.5),
     ],
 )
 def test_ccop_xi(matr, expected):

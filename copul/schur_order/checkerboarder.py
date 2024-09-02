@@ -5,7 +5,7 @@ import pandas as pd
 import sympy
 
 from copul.families.other.checkerboard_copula import CheckerboardCopula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 log = logging.getLogger(__name__)
 

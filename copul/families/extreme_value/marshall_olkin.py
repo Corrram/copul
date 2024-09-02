@@ -1,10 +1,10 @@
 import sympy
 
-from copul.cd1_wrapper import CD1Wrapper
-from copul.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 import logging
 

@@ -8,14 +8,14 @@ import numpy as np
 import sympy
 from matplotlib import pyplot as plt, rcParams
 
-from copul.cd1_wrapper import CD1Wrapper
-from copul.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.families.copula_graphs import CopulaGraphs
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.cis_verifier import CISVerifier
 from copul.families.copula_sampler import CopulaSampler
 from copul.families.tp2_verifier import TP2Verifier
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 log = logging.getLogger(__name__)
 

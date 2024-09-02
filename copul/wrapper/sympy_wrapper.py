@@ -19,7 +19,14 @@ class SymPyFunctionWrapper:
         return repr(self._func)
 
     def __call__(self, *args, **kwargs):
-        free_symbols = {str(f) for f in self._func.free_symbols}
+        vars_, kwargs = self._prepare_call(args, kwargs)
+        func = self._func.subs(vars_)
+        if isinstance(func, sympy.Number):
+            return float(func)
+        return SymPyFunctionWrapper(func)
+
+    def _prepare_call(self, args, kwargs):
+        free_symbols = sorted([str(f) for f in self._func.free_symbols])
         if args and len(free_symbols) == len(args):
             if kwargs:
                 raise ValueError("Either args or kwargs, not both currently")
@@ -29,10 +36,7 @@ class SymPyFunctionWrapper:
             free_symbols
         ), f"keys: {set(kwargs)}, free symbols: {self._func.free_symbols}"
         vars_ = {f: kwargs[str(f)] for f in self._func.free_symbols if str(f) in kwargs}
-        self._func = self._func.subs(vars_)
-        if isinstance(self._func, sympy.Number):
-            return float(self._func)
-        return self
+        return vars_, kwargs
 
     @property
     def func(self):

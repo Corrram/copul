@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import copul
 from copul import CheckerboardCopula
 from copul.schur_order.cis_rearranger import CISRearranger
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class SchurVisualizer:

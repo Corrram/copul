@@ -3,7 +3,7 @@ import pytest
 
 from copul import Plackett
 
-matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
+# matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
 
 
 def test_plackett():

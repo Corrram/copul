@@ -6,7 +6,7 @@ from sympy import stats
 
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class HueslerReiss(ExtremeValueCopula):

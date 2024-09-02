@@ -4,7 +4,7 @@ import sympy
 
 from copul.exceptions import PropertyUnavailableException
 from copul.families.copula import Copula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class Mardia(Copula):

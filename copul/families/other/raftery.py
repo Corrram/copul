@@ -3,7 +3,7 @@ import sympy
 from copul.families.copula import Copula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class Raftery(Copula):
