@@ -18,7 +18,7 @@ from scipy.stats._multivariate import (
     multi_rv_frozen,
 )
 
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 # ==================== START OF THE LOGIC FOR MV LAPLACE =====================
 

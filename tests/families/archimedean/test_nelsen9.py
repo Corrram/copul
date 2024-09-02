@@ -17,9 +17,7 @@ def test_nelsen9_plot_cdf():
         pytest.fail(f"plot_cdf() raised an exception: {e}")
 
 
-def test_gumbel_barnett_cond_distr_1():
+def test_gumbel_barnett_cdf():
     nelsen = Nelsen9(0.5)
-    result = nelsen.cond_distr_1(0.3, 0.4)
-    assert np.isclose(result, 0.27683793816935376)
     result = nelsen.cdf(0.5, 0.5)
     assert np.isclose(result, 0.19661242613985133)

@@ -9,7 +9,7 @@ from scipy import optimize
 from copul.families import concrete_expand_log, get_simplified_solution
 from copul.families.copula import Copula
 from copul.families.copula_graphs import CopulaGraphs
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 log = logging.getLogger(__name__)
 

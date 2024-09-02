@@ -1,7 +1,7 @@
 import numpy as np
 import sympy
 
-from copul.cdf_wrapper import CDFWrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.other.upper_frechet import UpperFrechet
 
 from copul.families.extreme_value.gumbel_hougaard import GumbelHougaard

@@ -1,9 +1,9 @@
 import sympy
 
-from copul.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class GumbelBarnett(ArchimedeanCopula):
@@ -38,10 +38,6 @@ class GumbelBarnett(ArchimedeanCopula):
             * sympy.exp(-self.theta * sympy.log(self.u) * sympy.log(self.v))
         )
         return SymPyFunctionWrapper(cdf)
-
-    def _squared_cond_distr_1(self, u, v):
-        theta = self.theta
-        return v**2 * u ** (-2 * theta * sympy.log(v)) * (sympy.log(v**theta) - 1) ** 2
 
     def _xi_int_1(self, v):
         theta = self.theta

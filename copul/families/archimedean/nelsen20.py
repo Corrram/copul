@@ -7,13 +7,13 @@ import sympy
 
 import scipy.optimize as opt
 
-from copul.cd2_wrapper import CD2Wrapper
-from copul.cdf_wrapper import CDFWrapper
+from copul.wrapper.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 log = logging.getLogger(__name__)
 

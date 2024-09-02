@@ -1,13 +1,13 @@
 import numpy as np
 import sympy
 
-from copul.cd1_wrapper import CD1Wrapper
-from copul.cd2_wrapper import CD2Wrapper
-from copul.cdf_wrapper import CDFWrapper
+from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class Clayton(ArchimedeanCopula):

@@ -1,7 +1,7 @@
 import sympy
 
 from copul.families.copula import Copula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class FarlieGumbelMorgenstern(Copula):

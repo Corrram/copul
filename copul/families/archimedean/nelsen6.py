@@ -3,7 +3,7 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class Joe(HeavyComputeArch):

@@ -1,10 +1,10 @@
 import sympy
 
-from copul.cd1_wrapper import CD1Wrapper
-from copul.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.families.other import IndependenceCopula, LowerFrechet
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 class Nelsen7(ArchimedeanCopula):

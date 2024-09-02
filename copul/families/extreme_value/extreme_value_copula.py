@@ -9,9 +9,9 @@ import scipy
 import sympy as sp
 from sympy import Derivative, Subs, log
 
-from copul.cdf_wrapper import CDFWrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.copula import Copula
-from copul.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
 plt.rc("text", usetex=True)  # Enable LaTeX rendering
