@@ -11,7 +11,7 @@ from sympy import Derivative, Subs, log
 
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.bivcopula import BivCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 plt.rc("text", usetex=True)  # Enable LaTeX rendering
@@ -24,7 +24,7 @@ class ExtremeValueCopula(BivCopula):
     _t_min = 0
     _t_max = 1
     t = sp.symbols("t", positive=True)
-    _pickands = SymPyFunctionWrapper(sp.Function("A")(t))
+    _pickands = SymPyFuncWrapper(sp.Function("A")(t))
     intervals = {}
     params = []
     _free_symbols = {}
@@ -35,7 +35,7 @@ class ExtremeValueCopula(BivCopula):
         expr = self._pickands
         for key, value in self._free_symbols.items():
             expr = expr.subs(value, getattr(self, key))
-        return SymPyFunctionWrapper(expr)
+        return SymPyFuncWrapper(expr)
 
     @pickands.setter
     def pickands(self, new_pickands):
@@ -121,7 +121,7 @@ class ExtremeValueCopula(BivCopula):
             / (u * v * log(u * v) ** 3)
         )
         pdf = self._get_simplified_solution(pdf)
-        return SymPyFunctionWrapper(pdf)
+        return SymPyFuncWrapper(pdf)
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)

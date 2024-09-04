@@ -3,7 +3,7 @@ import sympy
 
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Galambos(ExtremeValueCopula):
@@ -86,7 +86,7 @@ class Galambos(ExtremeValueCopula):
                 * sympy.log(u * v)
             )
         )
-        return SymPyFunctionWrapper(result)
+        return SymPyFuncWrapper(result)
 
     def _eval_sub_expr_2(self, delta, u, v):
         return ((-sympy.log(v) + sympy.log(u * v)) / sympy.log(u * v)) ** delta + (

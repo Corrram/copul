@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 import copul
 from copul import CheckerboardCopula
 from copul.schur_order.cis_rearranger import CISRearranger
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class SchurVisualizer:
@@ -38,7 +38,7 @@ class SchurVisualizer:
         for theta in thetas:
             amh1 = self.copula(**{str(param): theta, "v": self._v})
             amh1_cd1 = amh1.cond_distr_1()
-            if isinstance(amh1_cd1, SymPyFunctionWrapper):
+            if isinstance(amh1_cd1, SymPyFuncWrapper):
                 amh1_cd1 = amh1_cd1.func
                 amh1_l = sp.lambdify(amh1.u, amh1_cd1, "numpy")
                 y1_vals = [amh1_l(x) for x in self._x_vals]

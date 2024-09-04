@@ -1,9 +1,9 @@
 import sympy
 
 
-class SymPyFunctionWrapper:
+class SymPyFuncWrapper:
     def __init__(self, sympy_func):
-        if isinstance(sympy_func, SymPyFunctionWrapper):
+        if isinstance(sympy_func, SymPyFuncWrapper):
             sympy_func = sympy_func.func
         type_ = type(sympy_func)
         allowed = (sympy.Expr, float)
@@ -23,7 +23,7 @@ class SymPyFunctionWrapper:
         func = self._func.subs(vars_)
         if isinstance(func, sympy.Number):
             return float(func)
-        return SymPyFunctionWrapper(func)
+        return SymPyFuncWrapper(func)
 
     def _prepare_call(self, args, kwargs):
         free_symbols = sorted([str(f) for f in self._func.free_symbols])

@@ -2,7 +2,7 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class AliMikhailHaq(ArchimedeanCopula):
@@ -34,7 +34,7 @@ class AliMikhailHaq(ArchimedeanCopula):
     def inv_generator(self):
         theta = self.theta
         gen = (theta - 1) / (theta - sympy.exp(self.y))
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -42,7 +42,7 @@ class AliMikhailHaq(ArchimedeanCopula):
         v = self.v
         theta = self.theta
         cdf = (u * v) / (1 - theta * (1 - u) * (1 - v))
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def cond_distr_1(self, u=None, v=None):
         theta = self.theta
@@ -51,7 +51,7 @@ class AliMikhailHaq(ArchimedeanCopula):
             * (theta * self.u * (self.v - 1) - theta * (self.u - 1) * (self.v - 1) + 1)
             / (theta * (self.u - 1) * (self.v - 1) - 1) ** 2
         )
-        return SymPyFunctionWrapper(cond_distr_1)(u, v)
+        return SymPyFuncWrapper(cond_distr_1)(u, v)
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)

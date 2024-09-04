@@ -3,7 +3,7 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Frank(ArchimedeanCopula):
@@ -35,7 +35,7 @@ class Frank(ArchimedeanCopula):
         gen = (
             theta + y - sympy.log(-sympy.exp(theta) + sympy.exp(theta + y) + 1)
         ) / theta
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -52,14 +52,14 @@ class Frank(ArchimedeanCopula):
                 / (sympy.exp(-theta) - 1)
             )
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def cond_distr_1(self, u=None, v=None):
         expr_u = sympy.exp(-self.theta * self.u)
         expr_v = sympy.exp(-self.theta * self.v) - 1
         expr = sympy.exp(-self.theta) - 1
         cond_distr_1 = expr_v * expr_u / (expr + (-1 + expr_u) * expr_v)
-        return SymPyFunctionWrapper(cond_distr_1)(u, v)
+        return SymPyFuncWrapper(cond_distr_1)(u, v)
 
     def _squared_cond_distr_1(self, v, u):
         theta = self.theta

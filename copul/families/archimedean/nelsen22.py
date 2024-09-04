@@ -3,7 +3,7 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen22(ArchimedeanCopula):
@@ -28,13 +28,13 @@ class Nelsen22(ArchimedeanCopula):
         return sympy.asin(1 - self.t**self.theta)
 
     @property
-    def inv_generator(self) -> SymPyFunctionWrapper:
+    def inv_generator(self) -> SymPyFuncWrapper:
         indicator = sympy.Piecewise((1, self.y <= sympy.pi / 2), (0, True))
         gen = (1 - sympy.sin(self.y)) ** (1 / self.theta) * indicator
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
-    def cdf(self) -> SymPyFunctionWrapper:
+    def cdf(self) -> SymPyFuncWrapper:
         u = self.u
         theta = self.theta
         v = self.v
@@ -46,7 +46,7 @@ class Nelsen22(ArchimedeanCopula):
             ),
             (0, True),
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def compute_gen_max(self):
         return np.pi / 2

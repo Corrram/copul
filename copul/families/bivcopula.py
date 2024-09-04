@@ -1,4 +1,3 @@
-import copy
 import inspect
 import logging
 import pathlib
@@ -8,30 +7,27 @@ import numpy as np
 import sympy
 from matplotlib import pyplot as plt, rcParams
 
+from copul.families.cis_verifier import CISVerifier
 from copul.families.copula import Copula
+from copul.families.copula_graphs import CopulaGraphs
+from copul.families.copula_sampler import CopulaSampler
+from copul.families.rank_correlation_plotter import RankCorrelationPlotter
+from copul.families.tp2_verifier import TP2Verifier
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
-from copul.families.copula_graphs import CopulaGraphs
-from copul.families.rank_correlation_plotter import RankCorrelationPlotter
-from copul.families.cis_verifier import CISVerifier
-from copul.families.copula_sampler import CopulaSampler
-from copul.families.tp2_verifier import TP2Verifier
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
 
 
 class BivCopula(Copula):
-    params = []
     u, v = sympy.symbols("u v", positive=True)
-    intervals = {}
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
-    _cdf = None
-    _free_symbols = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(2)
+        self.u_symbols = [self.u, self.v]
         if args and len(args) <= len(self.params):
             for i in range(len(args)):
                 kwargs[str(self.params[i])] = args[i]
@@ -47,29 +43,6 @@ class BivCopula(Copula):
 
     def __str__(self):
         return self.__class__.__name__
-
-    def __call__(self, *args, **kwargs):
-        new_copula = copy.copy(self)
-        new_copula._are_class_vars(kwargs)
-        for i in range(len(args)):
-            kwargs[str(self.params[i])] = args[i]
-        for k, v in kwargs.items():
-            if isinstance(v, str):
-                v = getattr(self.__class__, v)
-            setattr(new_copula, k, v)
-        new_copula.params = [param for param in self.params if str(param) not in kwargs]
-        new_copula.intervals = {
-            k: v for k, v in self.intervals.items() if str(k) not in kwargs
-        }
-        return new_copula
-
-    @classmethod
-    def from_cdf(cls, cdf, params=None):
-        sp_cdf = sympy.sympify(cdf)
-        func_vars, free_symbols = cls._segregate_symbols(sp_cdf, ["u", "v"], params)
-        obj = cls._from_string(free_symbols)
-        obj._cdf = sp_cdf.subs(func_vars[0], cls.u).subs(func_vars[1], cls.v)
-        return obj
 
     @classmethod
     def _segregate_symbols(cls, func, func_params, copula_params):
@@ -127,36 +100,6 @@ class BivCopula(Copula):
             for k, v in kwargs.items():
                 setattr(self, k, v)
 
-    def _are_class_vars(self, kwargs):
-        class_vars = set(dir(self))
-        assert set(kwargs).issubset(
-            class_vars
-        ), f"keys: {set(kwargs)}, free symbols: {class_vars}"
-
-    def slice_interval(self, param, interval_start=None, interval_end=None):
-        if not isinstance(param, str):
-            param = str(param)
-        left_open = self.intervals[param].left_open
-        right_open = self.intervals[param].right_open
-        if interval_start is None:
-            interval_start = self.intervals[param].inf
-        else:
-            left_open = False
-        if interval_end is None:
-            interval_end = self.intervals[param].sup
-        else:
-            right_open = False
-        self.intervals[param] = sympy.Interval(
-            interval_start, interval_end, left_open, right_open
-        )
-
-    @property
-    def cdf(self, u=None, v=None):
-        expr = self._cdf
-        for key, value in self._free_symbols.items():
-            expr = expr.subs(value, getattr(self, key))
-        return SymPyFunctionWrapper(expr)(u, v)
-
     @property
     def is_absolutely_continuous(self) -> bool:
         raise NotImplementedError("This method must be implemented in a subclass")
@@ -188,7 +131,7 @@ class BivCopula(Copula):
     @property
     def pdf(self):
         result = sympy.simplify(sympy.diff(self.cond_distr_2().func, self.u))
-        return SymPyFunctionWrapper(result)
+        return SymPyFuncWrapper(result)
 
     def cond_distr_1(self, u=None, v=None):
         result = CD1Wrapper(sympy.diff(self.cdf, self.u))
@@ -216,7 +159,7 @@ class BivCopula(Copula):
         xi = self._xi()
         log.debug("xi sympy: ", xi)
         log.debug("xi: ", sympy.latex(xi))
-        return SymPyFunctionWrapper(xi)
+        return SymPyFuncWrapper(xi)
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
@@ -431,7 +374,7 @@ class BivCopula(Copula):
         else:
             if isinstance(func, types.MethodType) and len(parameters) == 0:
                 func = func()
-        if isinstance(func, SymPyFunctionWrapper):
+        if isinstance(func, SymPyFuncWrapper):
             f = sympy.lambdify((self.u, self.v), func.func)
         elif isinstance(func, sympy.Expr):
             f = sympy.lambdify((self.u, self.v), func)

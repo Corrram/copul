@@ -3,7 +3,7 @@ import sympy
 from copul.families.bivcopula import BivCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Raftery(BivCopula):
@@ -36,12 +36,12 @@ class Raftery(BivCopula):
         cdf = sympy.Min(u, v) + (1 - d) / (1 + d) * (u * v) ** (1 / (1 - d)) * (
             1 - sympy.Max(u, v) ** (-(1 + d) / (1 - d))
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     @property
     def pdf(self):
         pdf = self._b(sympy.Min(self.u, self.v), sympy.Max(self.u, self.v))
-        return SymPyFunctionWrapper(pdf)
+        return SymPyFuncWrapper(pdf)
 
     def _b(self, u, v):
         delta = self.delta

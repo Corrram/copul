@@ -3,7 +3,7 @@ import sympy
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen11(ArchimedeanCopula):
@@ -29,7 +29,7 @@ class Nelsen11(ArchimedeanCopula):
     def inv_generator(self):
         ind = sympy.Piecewise((1, self.y <= sympy.log(2)), (0, True))
         gen = (2 - sympy.exp(self.y)) ** (1 / self.theta) * ind
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -38,7 +38,7 @@ class Nelsen11(ArchimedeanCopula):
             - 2 * (1 - self.u**self.theta) * (1 - self.v**self.theta),
             0,
         ) ** (1 / self.theta)
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def _rho_int_1(self):
         u = self.u

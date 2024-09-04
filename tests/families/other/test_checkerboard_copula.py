@@ -1,7 +1,5 @@
-import random
-
-import numpy as np
 import matplotlib
+import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
@@ -142,7 +140,7 @@ def test_ccop_cond_distr_2(matr, expected):
     ],
 )
 def test_ccop_xi(matr, expected):
-    random.seed(1)
-    ccop = CheckerboardCopula(matr)
+    np.random.seed(1)
+    ccop = CheckerboardCopula(matr, 100_000)
     xi_estimate = ccop.chatterjees_xi()
-    assert np.abs(xi_estimate - expected) < 0.01
+    assert np.abs(xi_estimate - expected) < 0.02

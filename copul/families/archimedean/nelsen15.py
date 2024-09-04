@@ -3,7 +3,7 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.lower_frechet import LowerFrechet
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GenestGhoudi(ArchimedeanCopula):
@@ -31,7 +31,7 @@ class GenestGhoudi(ArchimedeanCopula):
     def inv_generator(self):
         ind = sympy.Piecewise((1, self.y <= 1), (0, True))
         gen = (1 - self.y ** (1 / self.theta)) ** self.theta * ind
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -47,7 +47,7 @@ class GenestGhoudi(ArchimedeanCopula):
             )
             ** self.theta
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def lambda_L(self):
         return 0

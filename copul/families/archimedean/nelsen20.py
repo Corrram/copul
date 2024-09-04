@@ -13,7 +13,7 @@ from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class Nelsen20(HeavyComputeArch):
     @property
     def inv_generator(self):
         gen = sympy.log(self.y + sympy.E) ** (-1 / self.theta)
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):

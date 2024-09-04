@@ -3,7 +3,7 @@ import sympy
 
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen18(ArchimedeanCopula):
@@ -20,13 +20,13 @@ class Nelsen18(ArchimedeanCopula):
         return sympy.exp(self.theta / (self.t - 1))
 
     @property
-    def inv_generator(self) -> SymPyFunctionWrapper:
+    def inv_generator(self) -> SymPyFuncWrapper:
         ind = sympy.Heaviside(self.y - sympy.exp(-self.theta))
         gen = ind * self.theta / sympy.log(self.y) + 1
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
-    def cdf(self) -> SymPyFunctionWrapper:
+    def cdf(self) -> SymPyFuncWrapper:
         cdf = sympy.Max(
             (
                 1
@@ -48,7 +48,7 @@ class Nelsen18(ArchimedeanCopula):
             ),
             0,
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def cond_distr_2(self, u=None, v=None):
         cond_distr = (

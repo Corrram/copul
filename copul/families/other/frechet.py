@@ -5,7 +5,7 @@ import sympy
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.exceptions import PropertyUnavailableException
 from copul.families.bivcopula import BivCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Frechet(BivCopula):
@@ -109,7 +109,7 @@ class Frechet(BivCopula):
             + self._beta * sympy.Heaviside(self.u + self.v - 1)
             + self.u * (-self._alpha - self._beta + 1)
         )
-        return SymPyFunctionWrapper(cond_distr)(u, v)
+        return SymPyFuncWrapper(cond_distr)(u, v)
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)

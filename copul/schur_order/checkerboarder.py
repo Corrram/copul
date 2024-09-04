@@ -5,7 +5,7 @@ import pandas as pd
 import sympy
 
 from copul.families.other.checkerboard_copula import CheckerboardCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class Checkerboarder:
 
     def compute_check_copula(self, copula):
         log.debug("Computing checkerboard copula...")
-        if isinstance(copula.cdf, SymPyFunctionWrapper):
+        if isinstance(copula.cdf, SymPyFuncWrapper):
             cdf = sympy.lambdify([copula.u, copula.v], copula.cdf.func, ["numpy"])
         else:
 

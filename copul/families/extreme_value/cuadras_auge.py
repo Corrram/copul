@@ -6,7 +6,7 @@ from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 from sympy import Min, Heaviside, DiracDelta
 
 log = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class CuadrasAuge(ExtremeValueCopula):
         cdf = sp.Min(self.u, self.v) ** self.delta * (self.u * self.v) ** (
             1 - self.delta
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     @property
     def pdf(self):

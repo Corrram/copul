@@ -9,7 +9,7 @@ from scipy import optimize
 from copul.families import concrete_expand_log, get_simplified_solution
 from copul.families.bivcopula import BivCopula
 from copul.families.copula_graphs import CopulaGraphs
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
 
@@ -60,7 +60,7 @@ class ArchimedeanCopula(BivCopula, ABC):
         expr = self._generator
         for key, value in self._free_symbols.items():
             expr = expr.subs(value, getattr(self, key))
-        return SymPyFunctionWrapper(expr)
+        return SymPyFuncWrapper(expr)
 
     @generator.setter
     def generator(self, value):
@@ -81,7 +81,7 @@ class ArchimedeanCopula(BivCopula, ABC):
         inv_gen_at_v = self.generator.subs(self.t, self.v)
         sum = inv_gen_at_u.func + inv_gen_at_v.func
         cdf = self.inv_generator.subs(self.y, sum)
-        return SymPyFunctionWrapper(get_simplified_solution(cdf.func))
+        return SymPyFuncWrapper(get_simplified_solution(cdf.func))
 
     @property
     def pdf(self):
@@ -90,7 +90,7 @@ class ArchimedeanCopula(BivCopula, ABC):
         return sympy.diff(first_diff, self.v)
 
     @property
-    def inv_generator(self) -> SymPyFunctionWrapper:
+    def inv_generator(self) -> SymPyFuncWrapper:
         """
         Finds the inverse of the generator function for a given value of y,
         considering the condition that y > 0.
@@ -117,7 +117,7 @@ class ArchimedeanCopula(BivCopula, ABC):
 
         my_simplified_sol = get_simplified_solution(my_sol)
 
-        return SymPyFunctionWrapper(my_simplified_sol)
+        return SymPyFuncWrapper(my_simplified_sol)
 
     @property
     def first_deriv_of_inv_gen(self):
@@ -161,7 +161,7 @@ class ArchimedeanCopula(BivCopula, ABC):
     def ci_char(self):
         minus_gen_deriv = -self.first_deriv_of_inv_gen
         beauty_deriv = concrete_expand_log(sympy.simplify(sympy.log(minus_gen_deriv)))
-        return SymPyFunctionWrapper(beauty_deriv)
+        return SymPyFuncWrapper(beauty_deriv)
 
     def first_deriv_of_ci_char(self):
         chi_char_func = self.ci_char()
@@ -175,7 +175,7 @@ class ArchimedeanCopula(BivCopula, ABC):
         second_deriv = self.second_deriv_of_inv_gen.subs([(self.u, u), (self.v, v)])
         beauty_2deriv = concrete_expand_log(sympy.simplify(sympy.log(second_deriv)))
         print(sympy.latex(second_deriv))
-        return SymPyFunctionWrapper(beauty_2deriv)
+        return SymPyFuncWrapper(beauty_2deriv)
 
     def first_deriv_of_tp2_char(self):
         mtp2_char = self.tp2_char(self.u, self.v)

@@ -3,7 +3,7 @@ import sympy
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GumbelBarnett(ArchimedeanCopula):
@@ -28,7 +28,7 @@ class GumbelBarnett(ArchimedeanCopula):
     @property
     def inv_generator(self):
         gen = sympy.exp((1 - sympy.exp(self.y)) / self.theta)
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -37,7 +37,7 @@ class GumbelBarnett(ArchimedeanCopula):
             * self.v
             * sympy.exp(-self.theta * sympy.log(self.u) * sympy.log(self.v))
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def _xi_int_1(self, v):
         theta = self.theta

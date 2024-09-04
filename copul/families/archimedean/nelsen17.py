@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen17(ArchimedeanCopula):
@@ -33,7 +33,7 @@ class Nelsen17(ArchimedeanCopula):
         gen = (
             2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)
         ) ** (1 / theta) - 1
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -46,7 +46,7 @@ class Nelsen17(ArchimedeanCopula):
             * ((1 + v) ** (-theta) - 1)
             / (2 ** (-theta) - 1)
         ) ** (-1 / theta) - 1
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     @property
     def pdf(self):
@@ -86,7 +86,7 @@ class Nelsen17(ArchimedeanCopula):
             )
             ** 3
         )
-        return SymPyFunctionWrapper(pdf)
+        return SymPyFuncWrapper(pdf)
 
     @property
     def first_deriv_of_inv_gen(self):

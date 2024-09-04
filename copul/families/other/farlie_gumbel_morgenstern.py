@@ -1,7 +1,7 @@
 import sympy
 
 from copul.families.bivcopula import BivCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class FarlieGumbelMorgenstern(BivCopula):
@@ -22,16 +22,16 @@ class FarlieGumbelMorgenstern(BivCopula):
         u = self.u
         v = self.v
         cdf = u * v + self.theta * u * v * (1 - u) * (1 - v)
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def cond_distr_2(self, u=None, v=None):
         cd2 = self.u + self.theta * self.u * (1 - self.u) * (1 - 2 * self.v)
-        return SymPyFunctionWrapper(cd2)(u, v)
+        return SymPyFuncWrapper(cd2)(u, v)
 
     @property
     def pdf(self):
         result = 1 + self.theta * (1 - 2 * self.u) * (1 - 2 * self.v)
-        return SymPyFunctionWrapper(result)
+        return SymPyFuncWrapper(result)
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)

@@ -5,7 +5,7 @@ import sympy
 from copul.families import get_simplified_solution
 from copul.families.bivcopula import BivCopula
 from copul.families.other.lower_frechet import LowerFrechet
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Plackett(BivCopula):
@@ -40,12 +40,12 @@ class Plackett(BivCopula):
             )
         ) / (2 * (theta - 1))
         simplified_cdf = get_simplified_solution(cdf)
-        return SymPyFunctionWrapper(simplified_cdf)
+        return SymPyFuncWrapper(simplified_cdf)
 
     @property
     def pdf(self):
         pdf = sympy.diff(self.cdf.func, self.u, self.v)
-        return SymPyFunctionWrapper(get_simplified_solution(pdf))
+        return SymPyFuncWrapper(get_simplified_solution(pdf))
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
@@ -310,7 +310,7 @@ class Plackett(BivCopula):
             )
             - 1
         ) / (2 * (theta - 1))
-        return SymPyFunctionWrapper(cond_distr_1)(u, v)
+        return SymPyFuncWrapper(cond_distr_1)(u, v)
 
 
 # B2 = Plackett

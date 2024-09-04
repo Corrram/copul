@@ -4,7 +4,7 @@ import sympy
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen2(ArchimedeanCopula):
@@ -26,7 +26,7 @@ class Nelsen2(ArchimedeanCopula):
     @property
     def inv_generator(self):
         gen = sympy.Max(1 - self.y ** (1 / self.theta), 0)
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -34,7 +34,7 @@ class Nelsen2(ArchimedeanCopula):
             1 / self.theta
         )
         gen = sympy.Max(0, expr)
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     def cond_distr_1(self, u=None, v=None):
         theta = self.theta

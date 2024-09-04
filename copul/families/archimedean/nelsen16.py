@@ -3,7 +3,7 @@ import sympy
 
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen16(ArchimedeanCopula):
@@ -24,7 +24,7 @@ class Nelsen16(ArchimedeanCopula):
         theta = self.theta
         y = self.y
         gen = (1 - theta - y + sympy.sqrt((theta + y - 1) ** 2 + 4 * theta)) / 2
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):

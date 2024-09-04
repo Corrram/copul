@@ -3,7 +3,7 @@ import sympy
 from copul.families.bivcopula import BivCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class B11(BivCopula):
@@ -34,4 +34,4 @@ class B11(BivCopula):
         cdf = (
             self.delta * sympy.Min(self.u, self.v) + (1 - self.delta) * self.u * self.v
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
