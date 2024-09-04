@@ -1,10 +1,10 @@
 import numpy as np
 
 from copul import basictools
-from copul.families.abstract_multivar_copula import AbstractMultivarCopula
+from copul.families.copula import Copula
 
 
-class MultivarCheckerboardCopula(AbstractMultivarCopula):
+class MultivarCheckerboardCopula(Copula):
     params = []
     intervals = {}
 

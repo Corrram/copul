@@ -4,11 +4,11 @@ import sympy
 
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.exceptions import PropertyUnavailableException
-from copul.families.copula import Copula
+from copul.families.bivcopula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
-class Frechet(Copula):
+class Frechet(BivCopula):
     @property
     def is_symmetric(self) -> bool:
         return True

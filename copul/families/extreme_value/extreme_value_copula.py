@@ -10,7 +10,7 @@ import sympy as sp
 from sympy import Derivative, Subs, log
 
 from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.families.copula import Copula
+from copul.families.bivcopula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
@@ -20,7 +20,7 @@ plt.rc("font", size=12)  # You can adjust this value as needed
 log_ = logging.getLogger(__name__)
 
 
-class ExtremeValueCopula(Copula):
+class ExtremeValueCopula(BivCopula):
     _t_min = 0
     _t_max = 1
     t = sp.symbols("t", positive=True)
