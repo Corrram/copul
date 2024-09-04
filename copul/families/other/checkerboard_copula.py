@@ -4,10 +4,10 @@ import numpy as np
 import sympy
 
 from copul import basictools
-from copul.families.copula import Copula
+from copul.families.bivcopula import BivCopula
 
 
-class CheckerboardCopula(Copula):
+class CheckerboardCopula(BivCopula):
     params = []
     intervals = {}
 

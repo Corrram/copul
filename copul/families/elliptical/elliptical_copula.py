@@ -2,13 +2,13 @@ from abc import abstractmethod
 
 import sympy
 
-from copul.families.copula import Copula
+from copul.families.bivcopula import BivCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 
-class EllipticalCopula(Copula):
+class EllipticalCopula(BivCopula):
     t = sympy.symbols("t", positive=True)
     generator = None
     rho = sympy.symbols("rho", real=True)

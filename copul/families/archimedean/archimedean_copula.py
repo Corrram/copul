@@ -7,14 +7,14 @@ import sympy
 from matplotlib import pyplot as plt
 from scipy import optimize
 from copul.families import concrete_expand_log, get_simplified_solution
-from copul.families.copula import Copula
+from copul.families.bivcopula import BivCopula
 from copul.families.copula_graphs import CopulaGraphs
 from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
 
 log = logging.getLogger(__name__)
 
 
-class ArchimedeanCopula(Copula, ABC):
+class ArchimedeanCopula(BivCopula, ABC):
     _t_min = 0
     _t_max = 1
     y, t = sympy.symbols("y t", positive=True)
