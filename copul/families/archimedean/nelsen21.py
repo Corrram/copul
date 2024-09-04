@@ -4,7 +4,7 @@ from scipy.integrate import nquad, quad
 
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen21(ArchimedeanCopula):
@@ -21,20 +21,20 @@ class Nelsen21(ArchimedeanCopula):
         return 1 - (1 - (1 - self.t) ** self.theta) ** (1 / self.theta)
 
     @property
-    def inv_generator(self) -> SymPyFunctionWrapper:
+    def inv_generator(self) -> SymPyFuncWrapper:
         indicator = sympy.Piecewise((1, self.y <= sympy.pi / 2), (0, True))
         gen = (1 - (1 - (1 - self.y) ** self.theta) ** (1 / self.theta)) * indicator
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
-    def cdf(self) -> SymPyFunctionWrapper:
+    def cdf(self) -> SymPyFuncWrapper:
         t = self.theta
         u = self.u
         v = self.v
         expr = (1 - (1 - u) ** t) ** (1 / t) + (1 - (1 - v) ** t) ** (1 / t) - 1
         sympy_max = sympy.Max(expr, 0)
         cdf = 1 - (1 - sympy_max**t) ** (1 / t)
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def _cdf(self, u, v, t):
         return 1 - (

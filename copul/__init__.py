@@ -60,6 +60,7 @@ from copul.families.elliptical import (
     Laplace,
     StudentT,
 )
+from copul.families.copula_builder import from_cdf
 
 __all__ = [
     "CheckerboardCopula",
@@ -121,4 +122,5 @@ __all__ = [
     "Laplace",
     "StudentT",
     "UpperCheckerboardCopula",
+    "from_cdf",
 ]

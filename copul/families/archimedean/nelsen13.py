@@ -4,7 +4,7 @@ import sympy
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen13(ArchimedeanCopula):
@@ -29,9 +29,9 @@ class Nelsen13(ArchimedeanCopula):
         return (1 - sympy.log(self.t)) ** self.theta - 1
 
     @property
-    def inv_generator(self) -> SymPyFunctionWrapper:
+    def inv_generator(self) -> SymPyFuncWrapper:
         gen = sympy.exp(1 - (self.y + 1) ** (1 / self.theta))
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):

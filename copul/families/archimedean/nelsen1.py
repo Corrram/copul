@@ -7,7 +7,7 @@ from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Clayton(ArchimedeanCopula):
@@ -35,7 +35,7 @@ class Clayton(ArchimedeanCopula):
             (1, (self.y < -1 / self.theta) | (self.theta > 0)), (0, True)
         )
         cdf = ind * (self.theta * self.y + 1) ** (-1 / self.theta)
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     @property
     def cdf(self):
@@ -87,7 +87,7 @@ class Clayton(ArchimedeanCopula):
             * self.v ** (-theta - 1)
             * (theta + 1)
         )
-        return SymPyFunctionWrapper(result)
+        return SymPyFuncWrapper(result)
 
     @property
     def is_absolutely_continuous(self) -> bool:

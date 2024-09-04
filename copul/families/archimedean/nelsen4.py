@@ -4,7 +4,7 @@ import sympy
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GumbelHougaard(ArchimedeanCopula):
@@ -31,12 +31,12 @@ class GumbelHougaard(ArchimedeanCopula):
     @property
     def inv_generator(self):
         gen = sympy.exp(-self.y ** (1 / self.theta))
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
         if self.u == 0 or self.v == 0:
-            return SymPyFunctionWrapper(0)
+            return SymPyFuncWrapper(0)
         gen = sympy.exp(
             -(
                 (

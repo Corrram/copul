@@ -4,7 +4,7 @@ from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.families.other import IndependenceCopula, LowerFrechet
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen7(ArchimedeanCopula):
@@ -43,7 +43,7 @@ class Nelsen7(ArchimedeanCopula):
         gen = ind * (
             (self.theta * sympy.exp(y) - sympy.exp(y) + 1) * sympy.exp(-y) / self.theta
         )
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -51,7 +51,7 @@ class Nelsen7(ArchimedeanCopula):
         v = self.v
         theta = self.theta
         cdf = sympy.Max(theta * u * v + (1 - theta) * (u + v - 1), 0)
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def chatterjees_xi(self, *args, **kwargs):
         self._set_params(args, kwargs)

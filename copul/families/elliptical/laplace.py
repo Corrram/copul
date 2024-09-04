@@ -18,7 +18,7 @@ from scipy.stats._multivariate import (
     multi_rv_frozen,
 )
 
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 # ==================== START OF THE LOGIC FOR MV LAPLACE =====================
 
@@ -338,8 +338,8 @@ class Laplace(EllipticalCopula):
         u2 = stats.laplace.cdf(samples[:, 1])
         return np.array([u1, u2]).T
 
-    def cdf(self) -> SymPyFunctionWrapper:
+    def cdf(self) -> SymPyFuncWrapper:
         pass
 
-    def pdf(self) -> SymPyFunctionWrapper:
+    def pdf(self) -> SymPyFuncWrapper:
         pass

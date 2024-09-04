@@ -3,7 +3,7 @@ import sympy
 
 from copul.families.other import IndependenceCopula
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GumbelHougaard(ExtremeValueCopula):
@@ -43,7 +43,7 @@ class GumbelHougaard(ExtremeValueCopula):
                 ** (1 / self.theta)
             )
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def _rho(self):
         t = self.t

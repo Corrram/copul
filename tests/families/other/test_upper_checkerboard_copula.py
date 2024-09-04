@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pytest
 
@@ -97,7 +99,8 @@ def test_ccop_cond_distr_2(matr, point, expected):
         ),
     ],
 )
-def test_ccop_xi(matr, expected):
+def test_upper_ccop_xi(matr, expected):
+    random.seed(0)
     ccop = UpperCheckerboardCopula(matr)
     xi_estimate = ccop.chatterjees_xi()
     assert np.abs(xi_estimate - expected) < 0.01

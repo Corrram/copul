@@ -5,7 +5,7 @@ import sympy
 from copul.families.bivcopula import BivCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.families.other.upper_frechet import UpperFrechet
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class EllipticalCopula(BivCopula):
@@ -39,5 +39,5 @@ class EllipticalCopula(BivCopula):
 
     @property
     @abstractmethod
-    def cdf(self) -> SymPyFunctionWrapper:
+    def cdf(self) -> SymPyFuncWrapper:
         pass

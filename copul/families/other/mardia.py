@@ -4,7 +4,7 @@ import sympy
 
 from copul.exceptions import PropertyUnavailableException
 from copul.families.bivcopula import BivCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Mardia(BivCopula):
@@ -51,7 +51,7 @@ class Mardia(BivCopula):
             + (1 - self.theta**2) * self.u * self.v
             + self.theta**2 * (1 - self.theta) / 2 * frechet_lower
         )
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     @property
     def lambda_L(self):

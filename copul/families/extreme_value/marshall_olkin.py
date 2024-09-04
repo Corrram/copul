@@ -4,7 +4,7 @@ from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 import logging
 
@@ -55,11 +55,11 @@ class MarshallOlkin(ExtremeValueCopula):
     @property
     def cdf(self):
         if self.alpha_1 == self.alpha_2 == 0:
-            return SymPyFunctionWrapper(self.u * self.v)
+            return SymPyFuncWrapper(self.u * self.v)
         arg1 = self.v * self.u ** (1 - self.alpha_1)
         arg2 = self.u * self.v ** (1 - self.alpha_2)
         cdf = sympy.Min(arg1, arg2)
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def cond_distr_1(self, u=None, v=None):
         alpha_1 = self.alpha_1

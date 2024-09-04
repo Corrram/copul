@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen12(ArchimedeanCopula):
@@ -21,7 +21,7 @@ class Nelsen12(ArchimedeanCopula):
     @property
     def inv_generator(self):
         gen = 1 / (self.y ** (1 / self.theta) + 1)
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):
@@ -30,7 +30,7 @@ class Nelsen12(ArchimedeanCopula):
             + ((self.u ** (-1) - 1) ** self.theta + (self.v ** (-1) - 1) ** self.theta)
             ** (1 / self.theta)
         ) ** (-1)
-        return SymPyFunctionWrapper(cdf)
+        return SymPyFuncWrapper(cdf)
 
     def lambda_L(self):
         return 2 ** (-1 / self.theta)

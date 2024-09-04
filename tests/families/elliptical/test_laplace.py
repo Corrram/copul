@@ -10,7 +10,7 @@ from copul.families.elliptical.laplace import Laplace
         (1, UpperFrechet),
     ],
 )
-def test_gaussian_edge_cases(rho, expected_class):
+def test_laplace_edge_cases(rho, expected_class):
     cop = Laplace()(rho)
     assert isinstance(
         cop, expected_class

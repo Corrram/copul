@@ -2,7 +2,7 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen10(ArchimedeanCopula):
@@ -27,7 +27,7 @@ class Nelsen10(ArchimedeanCopula):
     @property
     def inv_generator(self):
         gen = (2 / (sympy.exp(self.y) + 1)) ** (1 / self.theta)
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):  # ToDo check why this differs from Nelsen cdf
@@ -40,4 +40,4 @@ class Nelsen10(ArchimedeanCopula):
                 + (self.u**self.theta - 2) * (self.v**self.theta - 2)
             )
         ) ** (1 / self.theta)
-        return SymPyFunctionWrapper(gen)
+        return SymPyFuncWrapper(gen)

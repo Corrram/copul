@@ -1,9 +1,9 @@
 import sympy
 
-from copul.wrapper.sympy_wrapper import SymPyFunctionWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class CD1Wrapper(SymPyFunctionWrapper):
+class CD1Wrapper(SymPyFuncWrapper):
 
     def __call__(self, *args, **kwargs):
         free_symbols = {str(f) for f in self._func.free_symbols}
