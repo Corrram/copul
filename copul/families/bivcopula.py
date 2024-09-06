@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt, rcParams
 from copul.families.cis_verifier import CISVerifier
 from copul.families.copula import Copula
 from copul.families.copula_graphs import CopulaGraphs
-from copul.families.copula_sampler import CopulaSampler
+from copul.copula_sampler import CopulaSampler
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.tp2_verifier import TP2Verifier
 from copul.wrapper.cd1_wrapper import CD1Wrapper
@@ -25,12 +25,10 @@ class BivCopula(Copula):
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(2)
         self.u_symbols = [self.u, self.v]
-        if args and len(args) <= len(self.params):
-            for i in range(len(args)):
-                kwargs[str(self.params[i])] = args[i]
+        self.dimension = 2
         self._are_class_vars(kwargs)
         for k, v in kwargs.items():
             if isinstance(v, str):
@@ -84,14 +82,6 @@ class BivCopula(Copula):
             obj.intervals[value] = sympy.Interval(-np.inf, np.inf)
         return obj
 
-    @property
-    def name(self):
-        return self.__class__.__name__
-
-    @property
-    def parameters(self):
-        return self.intervals
-
     def _set_params(self, args, kwargs):
         if args and len(args) <= len(self.params):
             for i in range(len(args)):
@@ -100,33 +90,9 @@ class BivCopula(Copula):
             for k, v in kwargs.items():
                 setattr(self, k, v)
 
-    @property
-    def is_absolutely_continuous(self) -> bool:
-        raise NotImplementedError("This method must be implemented in a subclass")
-
-    @property
-    def is_symmetric(self) -> bool:
-        raise NotImplementedError("This method must be implemented in a subclass")
-
     def rvs(self, n=1):
         """Sample a value from the copula"""
-
-        cond_distr = self.cond_distr_2
-        sig = inspect.signature(cond_distr)
-        params = set(sig.parameters.keys()) & set(self.intervals)
-        if params:
-            func2_ = cond_distr
-        else:
-            func_ = cond_distr().func
-            func2_ = sympy.lambdify([self.u, self.v], func_, ["numpy"])
-        results = self._sample_val(func2_, n)
-        return results
-
-    def _sample_val(self, function, n=1):
-        sampler = CopulaSampler(self)
-        result = np.array([sampler.sample_val(function) for _ in range(n)])
-        log.debug(sampler.err_counter)
-        return result
+        return CopulaSampler(self).rvs(n)
 
     @property
     def pdf(self):

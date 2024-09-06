@@ -11,7 +11,7 @@ class MultivarCheckerboardCopula(Copula):
     def __init__(self, matr):
         self.matr = matr / matr.sum()
         self.dim = matr.shape
-        super().__init__(n=len(self.dim))
+        super().__init__(dimension=len(self.dim))
 
     def __str__(self):
         return f"CheckerboardCopula({self.dim})"
