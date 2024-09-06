@@ -13,8 +13,12 @@ class Copula(ABC):
     _cdf = None
     _free_symbols = {}
 
-    def __init__(self, n):
-        self.u_symbols = sympy.symbols(f"u1:{n+1}")
+    def __str__(self):
+        return self.__class__.__name__
+
+    def __init__(self, dimension):
+        self.u_symbols = sympy.symbols(f"u1:{dimension + 1}")
+        self.dimension = dimension
 
     def __call__(self, *args, **kwargs):
         new_copula = copy.copy(self)
@@ -31,6 +35,18 @@ class Copula(ABC):
             k: v for k, v in self.intervals.items() if str(k) not in kwargs
         }
         return new_copula
+
+    @property
+    def parameters(self):
+        return self.intervals
+
+    @property
+    def is_absolutely_continuous(self) -> bool:
+        raise NotImplementedError("This method must be implemented in a subclass")
+
+    @property
+    def is_symmetric(self) -> bool:
+        raise NotImplementedError("This method must be implemented in a subclass")
 
     def _are_class_vars(self, kwargs):
         class_vars = set(dir(self))
@@ -61,3 +77,10 @@ class Copula(ABC):
         for key, value in self._free_symbols.items():
             expr = expr.subs(value, getattr(self, key))
         return SymPyFuncWrapper(expr)(*args, **kwargs)
+
+    def cond_distr(self, i, u=None):
+        assert i in range(1, self.dimension + 1)
+        result = SymPyFuncWrapper(sympy.diff(self.cdf, self.u_symbols[i - 1]))
+        if u is None:
+            return result
+        return result(*u)
