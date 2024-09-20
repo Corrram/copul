@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import sympy
 
-from copul.families.other.checkerboard_copula import CheckerboardCopula
+from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ class Checkerboarder:
                     - cdf(i / nrow, (j + 1) / ncol)
                     - cdf((i + 1) / nrow, j / ncol)
                 )
-        return CheckerboardCopula(cmatr)
+        return BivCheckPi(cmatr)
 
     def from_data(self, data: pd.DataFrame):
         # transform each column to ranks
@@ -65,4 +65,4 @@ class Checkerboarder:
                     ]
                 )
                 checkerboard_matr[i, j] = n_ij / n_obs
-        return CheckerboardCopula(checkerboard_matr)
+        return BivCheckPi(checkerboard_matr)

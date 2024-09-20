@@ -7,6 +7,7 @@ from copul.families.elliptical.elliptical_copula import EllipticalCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.families.other.upper_frechet import UpperFrechet
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Gaussian(EllipticalCopula):
@@ -46,11 +47,11 @@ class Gaussian(EllipticalCopula):
 
         def gauss_cdf(u, v):
             if u == 0 or v == 0:
-                return 0
+                return sympy.S.Zero
             else:
-                return cop.cdf([u, v])
+                return sympy.S(cop.cdf([u, v]))
 
-        return lambda u, v: gauss_cdf(u, v)
+        return lambda u, v: SymPyFuncWrapper(gauss_cdf(u, v))
 
     def _conditional_distribution(self, u=None, v=None):
         scale = sympy.sqrt(1 - self.rho**2)
@@ -69,17 +70,19 @@ class Gaussian(EllipticalCopula):
 
     def cond_distr_1(self, u=None, v=None):
         if v in [0, 1]:
-            return v
-        return self._conditional_distribution(u, v)
+            return SymPyFuncWrapper(sympy.Number(v))
+        return SymPyFuncWrapper(sympy.Number(self._conditional_distribution(u, v)))
 
     def cond_distr_2(self, u=None, v=None):
         if u in [0, 1]:
-            return u
-        return self._conditional_distribution(v, u)
+            return SymPyFuncWrapper(sympy.Number(u))
+        return SymPyFuncWrapper(sympy.Number(self._conditional_distribution(v, u)))
 
     @property
     def pdf(self):
-        return lambda u, v: GaussianCopula(self.rho).pdf([u, v])
+        return lambda u, v: SymPyFuncWrapper(
+            sympy.Number(GaussianCopula(self.rho).pdf([u, v]))
+        )
 
     def chatterjees_xi(self, *args, **kwargs):
         self._set_params(args, kwargs)

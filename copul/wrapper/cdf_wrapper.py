@@ -12,12 +12,12 @@ class CDFWrapper(SymPyFuncWrapper):
         func = self._func
         if {"u", "v"}.issubset(free_symbols):
             if ("u", 0) in kwargs.items() or ("v", 0) in kwargs.items():
-                return sympy.S.Zero
+                return SymPyFuncWrapper(sympy.S.Zero)
             if ("u", 1) in kwargs.items():
                 func = BivCopula.v
             if ("v", 1) in kwargs.items():
                 func = BivCopula.u
         func = func.subs(vars_)
-        if isinstance(func, sympy.Number):
-            return float(func)
+        # if isinstance(func, sympy.Number):
+        #     return float(func)
         return CDFWrapper(func)

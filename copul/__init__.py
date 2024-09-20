@@ -1,6 +1,6 @@
 from copul.families import archimedean, extreme_value, elliptical
-from copul.families.other.checkerboard_copula import CheckerboardCopula
-from copul.families.other.upper_checkerboard import UpperCheckerboardCopula
+from copul.checkerboard.biv_check_pi import BivCheckPi
+from copul.checkerboard.biv_check_min import BivCheckMin
 from copul.families.other.farlie_gumbel_morgenstern import FarlieGumbelMorgenstern
 from copul.families.other.frechet import Frechet
 from copul.families.other.independence_copula import IndependenceCopula
@@ -63,7 +63,7 @@ from copul.families.elliptical import (
 from copul.families.copula_builder import from_cdf
 
 __all__ = [
-    "CheckerboardCopula",
+    "BivCheckPi",
     "Checkerboarder",
     "CISRearranger",
     "BivCopula",
@@ -121,6 +121,6 @@ __all__ = [
     "Gaussian",
     "Laplace",
     "StudentT",
-    "UpperCheckerboardCopula",
+    "BivCheckMin",
     "from_cdf",
 ]

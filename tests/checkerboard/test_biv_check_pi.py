@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
-from copul import CheckerboardCopula
+from copul import BivCheckPi
 
 matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
 
@@ -13,13 +13,13 @@ matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
     [
         (
             [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
-            (0.5, 0.5),
-            0.25,
+            (0.5, 1),
+            0.5,
         ),
         (
             [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
-            (0.5, 1),
-            0.5,
+            (0.5, 0.5),
+            0.25,
         ),
         (
             [[1, 5, 4], [5, 3, 2], [4, 2, 4]],
@@ -34,15 +34,16 @@ matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
     ],
 )
 def test_ccop_cdf(matr, point, expected):
-    ccop = CheckerboardCopula(matr)
-    assert ccop.cdf(*point) == expected
+    ccop = BivCheckPi(matr)
+    actual = ccop.cdf(*point)
+    assert actual == expected
 
 
 @pytest.fixture
 def setup_checkerboard_copula():
     # Setup code for initializing the CheckerboardCopula instance
     matr = [[0, 9, 1], [1, 0, 9], [9, 1, 0]]
-    return CheckerboardCopula(matr)
+    return BivCheckPi(matr)
 
 
 @pytest.mark.parametrize(
@@ -87,7 +88,7 @@ def test_ccop_plotting(setup_checkerboard_copula, plotting_method):
     ],
 )
 def test_ccop_pdf(matr, point, expected):
-    ccop = CheckerboardCopula(matr)
+    ccop = BivCheckPi(matr)
     result = ccop.pdf(*point)
     assert result == expected
 
@@ -106,8 +107,9 @@ def test_ccop_pdf(matr, point, expected):
     ],
 )
 def test_ccop_cond_distr_1(matr, expected):
-    ccop = CheckerboardCopula(matr)
-    assert ccop.cond_distr_1(0.5, 0.5) == expected
+    ccop = BivCheckPi(matr)
+    actual = ccop.cond_distr_1(0.5, 0.5)
+    assert actual == expected
 
 
 @pytest.mark.parametrize(
@@ -124,7 +126,7 @@ def test_ccop_cond_distr_1(matr, expected):
     ],
 )
 def test_ccop_cond_distr_2(matr, expected):
-    ccop = CheckerboardCopula(matr)
+    ccop = BivCheckPi(matr)
     result = ccop.cond_distr_2(0.5, 0.5)
     assert np.isclose(result, expected)
 
@@ -141,6 +143,18 @@ def test_ccop_cond_distr_2(matr, expected):
 )
 def test_ccop_xi(matr, expected):
     np.random.seed(1)
-    ccop = CheckerboardCopula(matr, 100_000)
+    ccop = BivCheckPi(matr)
     xi_estimate = ccop.chatterjees_xi()
     assert np.abs(xi_estimate - expected) < 0.02
+
+
+def test_check_pi_rvs():
+    np.random.seed(1)
+    ccop = BivCheckPi([[1, 2], [2, 1]])
+    n = 1_000
+    samples = ccop.rvs(n)
+    n_lower_empirical = sum([(sample < (0.5, 0.5)).all() for sample in samples])
+    n_upper_empirical = sum([(sample > (0.5, 0.5)).all() for sample in samples])
+    theoretical_ratio = 1 / 6 * n
+    assert n_lower_empirical < 1.5 * theoretical_ratio
+    assert n_upper_empirical < 1.5 * theoretical_ratio

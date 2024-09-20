@@ -161,6 +161,24 @@ Checkerboard copulas are copulas that have probability density functions, which 
 .. code-block:: python
 
     >>> matr = [[0, 9, 1], [1, 0, 9], [9, 1, 0]]
+            >>> ccop = cp.BivCheckPi(matr)
+            >>> ccop.cdf(0.2, 1)
+            0.2
+            >>> ccop.pdf(0.2, 1)
+            0.03333333333333333
+            >>> ccop.scatter_plot()
+        >>> ccop = cp.CheckerboardCopula(matr)
+        >>> ccop.cdf(0.2, 1)
+        0.2
+        >>> ccop.pdf(0.2, 1)
+        0.03333333333333333
+        >>> ccop.scatter_plot()
+        >>> ccop = cp.CheckPi(matr)
+        >>> ccop.cdf(0.2, 1)
+        0.2
+        >>> ccop.pdf(0.2, 1)
+        0.03333333333333333
+        >>> ccop.scatter_plot()
     >>> ccop = cp.CheckerboardCopula(matr)
     >>> ccop.cdf(0.2, 1)
     0.2

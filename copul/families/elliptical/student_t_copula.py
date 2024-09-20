@@ -5,6 +5,10 @@ from scipy.stats import multivariate_t
 
 from copul.families.other import LowerFrechet, UpperFrechet
 from copul.families.elliptical.elliptical_copula import EllipticalCopula
+from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class StudentT(EllipticalCopula):
@@ -55,11 +59,11 @@ class StudentT(EllipticalCopula):
             # Calculate the bivariate Student's t CDF
             return copula.cdf([z_u, z_v])
 
-        return lambda u, v: student_t_copula_cdf(u, v)
+        return lambda u, v: CDFWrapper(sympy.S(student_t_copula_cdf(u, v)))
 
     def _conditional_distribution(self, u, v):
         def conditional_func(primary, secondary):
-            return student_t.cdf(
+            cdf = student_t.cdf(
                 student_t.ppf(secondary, self.nu),
                 self.nu,
                 loc=self.rho * student_t.ppf(primary, self.nu),
@@ -69,7 +73,10 @@ class StudentT(EllipticalCopula):
                     / (self.nu + student_t.ppf(primary, self.nu) ** 2)
                 )
                 ** 0.5,
-            )(u, v)
+            )
+            if isinstance(cdf, float):
+                return sympy.S(cdf)
+            return sympy.S(cdf(u, v))
 
         if u is None and v is None:
             return conditional_func
@@ -82,14 +89,18 @@ class StudentT(EllipticalCopula):
 
     def cond_distr_1(self, u=None, v=None):
         if v in [0, 1]:
-            return v
-        return self._conditional_distribution(u, v)
+            return CD1Wrapper(sympy.S(v))
+        cd1 = self._conditional_distribution(u, v)
+        return CD1Wrapper(cd1)
 
     def cond_distr_2(self, u=None, v=None):
         if u in [0, 1]:
-            return u
-        return self._conditional_distribution(v, u)
+            return CD2Wrapper(sympy.S(u))
+        cd2 = self._conditional_distribution(v, u)
+        return CD2Wrapper(cd2)
 
     @property
     def pdf(self):
-        return lambda u, v: StudentTCopula(self.rho, df=self.nu).pdf([u, v])
+        return lambda u, v: SymPyFuncWrapper(
+            sympy.S(StudentTCopula(self.rho, df=self.nu).pdf([u, v]))
+        )

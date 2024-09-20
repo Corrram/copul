@@ -20,4 +20,4 @@ def test_nelsen9_plot_cdf():
 def test_gumbel_barnett_cdf():
     nelsen = Nelsen9(0.5)
     result = nelsen.cdf(0.5, 0.5)
-    assert np.isclose(result, 0.19661242613985133)
+    assert np.isclose(result.evalf(), 0.19661242613985133)

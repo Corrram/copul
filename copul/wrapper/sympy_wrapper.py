@@ -1,3 +1,4 @@
+import numpy as np
 import sympy
 
 
@@ -10,6 +11,8 @@ class SymPyFuncWrapper:
         assert isinstance(
             sympy_func, allowed
         ), f"Function must be from sympy, but is {type_}"
+        if type_ == float:
+            sympy_func = sympy.Number(sympy_func)
         self._func = sympy_func
 
     def __str__(self):
@@ -21,8 +24,8 @@ class SymPyFuncWrapper:
     def __call__(self, *args, **kwargs):
         vars_, kwargs = self._prepare_call(args, kwargs)
         func = self._func.subs(vars_)
-        if isinstance(func, sympy.Number):
-            return float(func)
+        # if isinstance(func, sympy.Number):
+        #     return func
         return SymPyFuncWrapper(func)
 
     def _prepare_call(self, args, kwargs):
@@ -55,3 +58,41 @@ class SymPyFuncWrapper:
 
     def evalf(self):
         return self._func.evalf()
+
+    def __eq__(self, other):
+        if not isinstance(other, SymPyFuncWrapper):
+            return self._func == other
+        return self._func == other.func
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __add__(self, other):
+        if isinstance(other, SymPyFuncWrapper):
+            other = other.func
+        return SymPyFuncWrapper(self.func + other)
+
+    def __sub__(self, other):
+        if isinstance(other, SymPyFuncWrapper):
+            other = other.func
+        return SymPyFuncWrapper(self.func - other)
+
+    def __mul__(self, other):
+        if isinstance(other, SymPyFuncWrapper):
+            other = other.func
+        return SymPyFuncWrapper(self.func * other)
+
+    def __truediv__(self, other):
+        if isinstance(other, SymPyFuncWrapper):
+            other = other.func
+        return SymPyFuncWrapper(self.func / other)
+
+    def __pow__(self, other):
+        if isinstance(other, SymPyFuncWrapper):
+            other = other.func
+        return SymPyFuncWrapper(self.func**other)
+
+    def isclose(self, other):
+        if not isinstance(other, SymPyFuncWrapper):
+            return np.isclose(self.evalf(), other)
+        return np.isclose(self.evalf(), other.evalf())

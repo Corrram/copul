@@ -25,11 +25,13 @@ class BivCopula(Copula):
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(2)
         self.u_symbols = [self.u, self.v]
         self.dimension = 2
         self._are_class_vars(kwargs)
+        for i in range(len(args)):
+            kwargs[str(self.params[i])] = args[i]
         for k, v in kwargs.items():
             if isinstance(v, str):
                 v = getattr(self.__class__, v)
@@ -81,14 +83,6 @@ class BivCopula(Copula):
             obj.params.append(value)
             obj.intervals[value] = sympy.Interval(-np.inf, np.inf)
         return obj
-
-    def _set_params(self, args, kwargs):
-        if args and len(args) <= len(self.params):
-            for i in range(len(args)):
-                kwargs[str(self.params[i])] = args[i]
-        if kwargs:
-            for k, v in kwargs.items():
-                setattr(self, k, v)
 
     def rvs(self, n=1):
         """Sample a value from the copula"""
