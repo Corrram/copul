@@ -9,21 +9,24 @@ import numpy as np
 import scipy.optimize as opt
 import sympy
 
+from copul.checkerboard.check_pi import CheckPi
+
 log = logging.getLogger(__name__)
 
 
 class CopulaSampler:
     err_counter = 0
 
-    def __init__(self, copul):
+    def __init__(self, copul, precision=3):
         self._copul = copul
+        self._precision = precision
 
     def rvs(self, n=1):
         """Sample a value from the copula"""
-        cond_distr = self._copul.cond_distr(2)
+        cond_distr = self._copul.cond_distr_2
         sig = inspect.signature(cond_distr)
         params = set(sig.parameters.keys()) & set(self._copul.intervals)
-        if params:
+        if params or isinstance(self._copul, CheckPi):
             func2_ = cond_distr
         else:
             func_ = cond_distr().func
@@ -60,11 +63,9 @@ class CopulaSampler:
                 return self._get_visual_solution(func2), v
         return result.root, v
 
-    @staticmethod
-    def _get_visual_solution(func):
-        x = np.linspace(0.001, 0.999, 1000)
-        try:
-            y = func(x)
-        except ValueError:
-            y = np.array([func(x_i) for x_i in x])
+    def _get_visual_solution(self, func):
+        start = 10 ** (-self._precision)
+        end = 1 - 10 ** (-self._precision)
+        x = np.linspace(start, end, 10**self._precision)
+        y = np.array([func(x_i) for x_i in x])
         return x[y.argmin()]

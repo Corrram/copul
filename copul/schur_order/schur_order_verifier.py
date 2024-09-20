@@ -20,7 +20,7 @@ class SchurOrderVerifier:
         range_max = 10 if range_max is None else range_max
         range_max = float(min(interval.end, range_max)) - 0.01
         checkerboarder = Checkerboarder(self._chess_board_size)
-        ccop = checkerboarder.compute_check_copula(self.copula)
+        ccop = checkerboarder.compute_check_pi(self.copula)
         cond_distributions = []
         thetas = np.linspace(range_min, range_max, self._n_theta)
         for theta in thetas:

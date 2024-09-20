@@ -22,7 +22,7 @@ class CISRearranger:
         if isinstance(copula, BivCheckPi):
             ccop = copula
         else:
-            ccop = checkerboarder.compute_check_copula(copula)
+            ccop = checkerboarder.compute_check_pi(copula)
         return self.rearrange_checkerboard(ccop)
 
     @staticmethod

@@ -61,6 +61,7 @@ from copul.families.elliptical import (
     StudentT,
 )
 from copul.families.copula_builder import from_cdf
+from copul.schur_order.checkerboarder import from_data
 
 __all__ = [
     "BivCheckPi",
@@ -123,4 +124,5 @@ __all__ = [
     "StudentT",
     "BivCheckMin",
     "from_cdf",
+    "from_data",
 ]

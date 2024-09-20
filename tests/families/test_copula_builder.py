@@ -49,8 +49,7 @@ def test_from_cdf_with_gumbel_barnett():
 def test_from_cdf_with_gumbel_barnett_different_var_names():
     np.random.seed(42)
     cdf = "x*y*exp(-0.5*ln(x)*ln(y))"
-    copula_family = from_cdf(cdf)
-    copula = copula_family(0.1)
+    copula = from_cdf(cdf)
     result = copula.cdf(0.5, 0.5).evalf()
     assert np.isclose(result, 0.19661242613985133)
     pdf = copula.pdf(0.5, 0.5).evalf()

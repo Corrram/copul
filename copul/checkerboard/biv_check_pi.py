@@ -1,5 +1,4 @@
 import numpy as np
-import sympy
 
 from copul import basictools
 from copul.checkerboard.check_pi import CheckPi
