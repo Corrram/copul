@@ -8,9 +8,9 @@ import sympy
 from matplotlib import pyplot as plt, rcParams
 
 from copul.families.cis_verifier import CISVerifier
-from copul.families.copula import Copula
 from copul.families.copula_graphs import CopulaGraphs
 from copul.copula_sampler import CopulaSampler
+from copul.families.core_copula import CoreCopula
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.tp2_verifier import TP2Verifier
 from copul.wrapper.cd1_wrapper import CD1Wrapper
@@ -20,7 +20,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 log = logging.getLogger(__name__)
 
 
-class BivCopula(Copula):
+class BivCopula(CoreCopula):
     u, v = sympy.symbols("u v", positive=True)
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent

@@ -4,10 +4,8 @@ import itertools
 import numpy as np
 import sympy
 
-from copul.families.copula import Copula
 
-
-class CheckPi(Copula):
+class CheckPi:
     params = []
     intervals = {}
 
@@ -18,7 +16,6 @@ class CheckPi(Copula):
         self.matr = matr / matr_sum
         self.dim = matr.shape
         self.d = len(self.dim)
-        super().__init__(dimension=len(self.dim))
 
     def __str__(self):
         return f"CheckerboardCopula({self.dim})"
@@ -116,6 +113,12 @@ class CheckPi(Copula):
         result = total_integral * self.dim[i]
 
         return result
+
+    def cond_distr_1(self, u):
+        return self.cond_distr(1, u)
+
+    def cond_distr_2(self, u):
+        return self.cond_distr(2, u)
 
     def pdf(self, *args):
         box = []
