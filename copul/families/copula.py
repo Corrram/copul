@@ -29,12 +29,19 @@ class Copula(ABC):
             if isinstance(v, str):
                 v = getattr(self.__class__, v)
             setattr(new_copula, k, v)
-            # new_copula._cdf = new_copula.cdf.subs(getattr(self, k), v)
         new_copula.params = [param for param in self.params if str(param) not in kwargs]
         new_copula.intervals = {
             k: v for k, v in self.intervals.items() if str(k) not in kwargs
         }
         return new_copula
+
+    def _set_params(self, args, kwargs):
+        if args and len(args) <= len(self.params):
+            for i in range(len(args)):
+                kwargs[str(self.params[i])] = args[i]
+        if kwargs:
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
     @property
     def parameters(self):
@@ -84,3 +91,10 @@ class Copula(ABC):
         if u is None:
             return result
         return result(*u)
+
+    def pdf(self, u=None):
+        term = self.cdf
+        for u_symbol in self.u_symbols:
+            term = sympy.diff(term, u_symbol)
+        pdf = SymPyFuncWrapper(term)
+        return pdf(u)

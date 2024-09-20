@@ -1,13 +1,12 @@
-import os.path
 import pathlib
 
 import numpy as np
 import sympy as sp
-from copul.families import archimedean
 from matplotlib import pyplot as plt
 
 import copul
-from copul import CheckerboardCopula
+from copul import BivCheckMin, BivCheckPi
+from copul.families import archimedean
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
@@ -22,12 +21,12 @@ class SchurVisualizer:
             self._x_vals = np.linspace(0, 1, 500)
 
     def compute(self):
-        if isinstance(self.copula, CheckerboardCopula):
+        if isinstance(self.copula, (BivCheckPi, BivCheckMin)):
             amh1_l = lambda u: self.copula.cond_distr_1(u, self._v)
         else:
-            amh1_cd1 = self.copula.cond_distr_1(v=0.5).func
+            amh1_cd1 = self.copula.cond_distr_1(v=self._v).func
             amh1_l = sp.lambdify(self.copula.u, amh1_cd1, "numpy")
-        y1_vals = amh1_l(self._x_vals)
+        y1_vals = [amh1_l(x_val) for x_val in self._x_vals]
         return y1_vals
 
     def plot_for(self, thetas):
@@ -60,11 +59,12 @@ class SchurVisualizer:
         path = self._get_schur_image_path()
         plt.savefig(f"{path}/{self.copula()}_v{self._v}.png")
         plt.show()
+        plt.close()
 
     @staticmethod
     def _get_schur_image_path():
-        path = os.path.abspath("../../docs/images/schur")
-        pathlib.Path(path).mkdir(exist_ok=True)
+        path = pathlib.Path(__file__).parent.parent / "docs" / "images" / "schur"
+        path.mkdir(exist_ok=True)
         return path
 
     def _finish_rearrangend_plot(self, y_vals):
@@ -82,6 +82,7 @@ class SchurVisualizer:
         path = self._get_schur_image_path()
         plt.savefig(f"{path}/{self.copula()}_v{self._v}_rearranged.png")
         plt.show()
+        plt.close()
 
 
 def visualize_rearranged(nelsen, thetas, v, grid_size=10):
@@ -91,16 +92,18 @@ def visualize_rearranged(nelsen, thetas, v, grid_size=10):
     param = str(nelsen.params[0])
     for theta in thetas:
         schur8 = rearranger.rearrange_copula(nelsen(**{param: theta}))
-        ccop = CheckerboardCopula(schur8)
+        ccop = BivCheckPi(schur8)
         y1 = SchurVisualizer(ccop, v, x).compute()
         ax.plot(x, y1, label=f"{param}={theta}", linewidth=2)
     ax.legend()
     ax.grid()
     plt.xlabel(f"u (with v={v})")
     plt.title(f"Decreasing rearrangement for {nelsen()}")
-    path = os.path.abspath("../../docs/images/schur")
+    path = pathlib.Path(__file__).parent.parent / "docs" / "images" / "schur"
+    path.mkdir(exist_ok=True)
     plt.savefig(f"{path}/{nelsen.__name__}_rearranged_v{v}.png")
     plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":

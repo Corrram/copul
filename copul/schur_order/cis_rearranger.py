@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import sympy
 
-from copul import CheckerboardCopula
+from copul import BivCheckPi
 from copul.schur_order.checkerboarder import Checkerboarder
 
 log = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class CISRearranger:
 
     def rearrange_copula(self, copula):
         checkerboarder = Checkerboarder(self._checkerboard_size)
-        if isinstance(copula, CheckerboardCopula):
+        if isinstance(copula, BivCheckPi):
             ccop = copula
         else:
             ccop = checkerboarder.compute_check_copula(copula)
@@ -34,7 +34,7 @@ class CISRearranger:
         corresponds to the matrix row entries).
         """
         log.info("Rearranging checkerboard...")
-        if isinstance(ccop, CheckerboardCopula):
+        if isinstance(ccop, BivCheckPi):
             matr = ccop.matr
         else:
             matr = ccop

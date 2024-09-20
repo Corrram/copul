@@ -63,7 +63,7 @@ class Families(Enum):
     # LAPLACE = elliptical.Laplace
 
     # B11 = other.B11
-    CHECKERBOARD = other.CheckerboardCopula
+    CHECKERBOARD = other.BivCheckPi
     FARLIE_GUMBEL_MORGENSTERN = other.FarlieGumbelMorgenstern
     FRECHET = other.Frechet
     INDEPENDENCE = other.IndependenceCopula

@@ -12,10 +12,10 @@ copul.families.other.b11 module
    :undoc-members:
    :show-inheritance:
 
-copul.families.other.checkerboard\_copula module
+copul.checkerboard.checkerboard\_copula module
 ------------------------------------------------
 
-.. automodule:: copul.families.other.checkerboard_copula
+.. automodule:: copul.checkerboard.checkerboard_copula
    :members:
    :undoc-members:
    :show-inheritance:

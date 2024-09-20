@@ -24,7 +24,7 @@ def test_cdf_edge_cases(point, expected):
         else:
             cop = cop(param)
         evaluated_cdf = cop.cdf(*point)
-        assert np.isclose(evaluated_cdf, expected)
+        assert np.isclose(evaluated_cdf.evalf(), expected)
 
 
 @pytest.mark.parametrize(
@@ -44,8 +44,8 @@ def test_cond_distr_edge_cases(method_name, point, expected):
         else:
             cop = cop(param)
         method = getattr(cop, method_name)
-        evaluated_cdf = method(*point)
-        assert np.isclose(evaluated_cdf, expected)
+        evaluated_func = method(*point)
+        assert np.isclose(evaluated_func.evalf(), expected)
 
 
 def test_pdfs():
@@ -60,6 +60,6 @@ def test_pdfs():
             pdf = cop.pdf
         except PropertyUnavailableException:
             continue
-        evaluated_cdf = pdf(0.5, 0.5)
+        evaluated_cdf = pdf(0.5, 0.5).evalf()
         log.info(f"{copula} pdf: {evaluated_cdf}")
         assert evaluated_cdf >= 0

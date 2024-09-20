@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from copul import LowerFrechet, StudentT, UpperFrechet
 
@@ -23,3 +24,9 @@ def test_cdf():
         print("Test passed: No exception thrown.")
     except Exception as e:
         print(f"Test failed: Exception thrown - {e}")
+
+
+def test_student_t_cond_distr_1():
+    cop = StudentT()(0.5, 2)
+    result = cop.cond_distr_1(0.3, 0.4)
+    assert np.isclose(result.evalf(), 0.507248278491941)

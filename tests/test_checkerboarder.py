@@ -8,7 +8,7 @@ def test_squared_checkerboard():
     checkerboarder = copul.Checkerboarder(3, 3)
     ccop = checkerboarder.compute_check_copula(clayton)
     assert ccop.matr.shape == (3, 3)
-    assert ccop.matr.sum() == 1.0
+    assert sum(ccop.matr) == 1.0
 
 
 def test_rectangular_checkerboard():
@@ -16,7 +16,8 @@ def test_rectangular_checkerboard():
     checkerboarder = copul.Checkerboarder(3, 10)
     ccop = checkerboarder.compute_check_copula(clayton)
     assert ccop.matr.shape == (3, 10)
-    assert np.isclose(ccop.matr.sum(), 1.0)
+    matr_sum = sum(ccop.matr)
+    assert np.isclose(matr_sum, 1.0)
 
 
 def test_xi_computation():
@@ -25,5 +26,5 @@ def test_xi_computation():
     checkerboarder = copul.Checkerboarder(10)
     ccop = checkerboarder.compute_check_copula(copula)
     orig_xi = copula.chatterjees_xi()
-    xi = ccop.chatterjees_xi()
+    xi = ccop.chatterjees_xi(1_000)
     assert xi <= orig_xi

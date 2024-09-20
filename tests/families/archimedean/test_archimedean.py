@@ -6,26 +6,26 @@ from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 def test_from_generator_with_nelsen2_and_specific_theta():  # theta = 2
     copula = ArchimedeanCopula.from_generator("(1 - t) ** 2")
     assert copula.generator(0.5) == 0.25
-    cdf = copula.cdf(0.5, 0.5)
+    cdf = copula.cdf(0.5, 0.5).evalf()
     assert np.isclose(cdf, 0.2928932188134524)
 
 
 def test_from_generator_with_nelsen2():
     copula = ArchimedeanCopula.from_generator("(1 - t) ** theta")
     assert copula(2).generator(0.5) == 0.25
-    cdf = copula(2).cdf(0.5, 0.5)
-    assert np.isclose(cdf, 0.2928932188134524)
+    cdf = copula(2).cdf(0.5, 0.5).evalf()
+    assert np.isclose(float(cdf), 0.2928932188134524)
 
 
 def test_from_generator_with_nelsen2_diff_params():
     copula = ArchimedeanCopula.from_generator("(1 - x) ** theta", "theta")
     assert copula(2).generator(0.5) == 0.25
-    cdf = copula(2).cdf(0.5, 0.5)
+    cdf = copula(2).cdf(0.5, 0.5).evalf()
     assert np.isclose(cdf, 0.2928932188134524)
 
 
 def test_from_generator_with_nelsen2_specific_theta_and_diff_params():
     copula = ArchimedeanCopula.from_generator("(1 - x) ** 2")
     assert copula(2).generator(0.5) == 0.25
-    cdf = copula(2).cdf(0.5, 0.5)
+    cdf = copula(2).cdf(0.5, 0.5).evalf()
     assert np.isclose(cdf, 0.2928932188134524)

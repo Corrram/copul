@@ -21,7 +21,7 @@ classifiers = [
 
 [tool.poetry]
 name = "copul"
-version = "0.1.0"
+version = "0.1.1"
 description = "Mathematical computation and visualization of bivariate copulas."
 readme = "README.md"
 authors = ["Marcus Rockel <marcus.rockel@finance.uni-freiburg.de>"]
@@ -51,6 +51,7 @@ pytest = "^8.3.2"
 pytest-pycharm = "^0.7.0"
 jupyter = "^1.0.0"
 pytest-cov = "^5.0.0"
+pytest-xdist = "^3.6.1"
 
 [tool.pytest.ini_options]
 #log_cli = true

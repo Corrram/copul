@@ -29,7 +29,14 @@ def test_gaussian_rvs():
 def test_gaussian_cdf():
     gaussian_family = Gaussian()
     cop = gaussian_family(0.5)
-    assert np.isclose(cop.cdf(0.5, 0.5), 1 / 3)
+    assert np.isclose(cop.cdf(0.5, 0.5).evalf(), 1 / 3)
+
+
+def test_gaussian_cd1():
+    gaussian_family = Gaussian()
+    cop = gaussian_family(0.5)
+    cdf = cop.cond_distr_1(0.3, 0.4)
+    assert np.isclose(cdf.evalf(), 0.504078212489690)
 
 
 @pytest.mark.parametrize(

@@ -8,7 +8,7 @@ def test_from_generator_with_galambos():
     copula_family = ExtremeValueCopula.from_pickands(pickands)
     copula = copula_family(2)
     result = copula.pickands(0.5)
-    assert np.isclose(result, 0.6464466094067263)
+    assert np.isclose(result.evalf(), 0.6464466094067263)
 
 
 def test_from_generator_with_galambos_with_different_var_name():
@@ -16,4 +16,4 @@ def test_from_generator_with_galambos_with_different_var_name():
     copula_family = ExtremeValueCopula.from_pickands(pickands, "delta")
     copula = copula_family(2)
     result = copula.pickands(0.5)
-    assert np.isclose(result, 0.6464466094067263)
+    assert np.isclose(result.evalf(), 0.6464466094067263)
