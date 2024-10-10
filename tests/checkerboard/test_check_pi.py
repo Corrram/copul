@@ -5,15 +5,7 @@ from copul.checkerboard.check_pi import CheckPi
 
 def test_multivar_checkerboard():
     # 3-dim matrix
-    matr = np.ndarray((2, 2, 2))
-    matr[0, 0, 0] = 0.5
-    matr[0, 0, 1] = 0.5
-    matr[0, 1, 0] = 0.5
-    matr[0, 1, 1] = 0.5
-    matr[1, 0, 0] = 0.5
-    matr[1, 0, 1] = 0.5
-    matr[1, 1, 0] = 0.5
-    matr[1, 1, 1] = 0.5
+    matr = np.full((2, 2, 2), 0.5)
     copula = CheckPi(matr)
     u = (0.5, 0.5, 0.5)
     assert copula.cdf(*u) == 0.125
