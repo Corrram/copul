@@ -1,8 +1,8 @@
 import numpy as np
 import sympy
 
-from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

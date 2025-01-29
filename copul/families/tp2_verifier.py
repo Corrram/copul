@@ -4,8 +4,8 @@ import warnings
 
 import numpy as np
 import sympy
-from sympy.utilities.exceptions import SymPyDeprecationWarning
 from sympy.logic.boolalg import BooleanFalse, BooleanTrue
+from sympy.utilities.exceptions import SymPyDeprecationWarning
 
 log = logging.getLogger(__name__)
 

@@ -1,16 +1,13 @@
 import numpy as np
 import pytest
+
 from copul import IndependenceCopula, LowerFrechet, UpperFrechet
 from copul.families.elliptical.gaussian import Gaussian
 
 
 @pytest.mark.parametrize(
     "rho, expected_class",
-    [
-        (-1, LowerFrechet),
-        (0, IndependenceCopula),
-        (1, UpperFrechet),
-    ],
+    [(-1, LowerFrechet), (0, IndependenceCopula), (1, UpperFrechet)],
 )
 def test_gaussian_edge_cases(rho, expected_class):
     cop = Gaussian()(rho)
@@ -39,27 +36,13 @@ def test_gaussian_cd1():
     assert np.isclose(cdf.evalf(), 0.504078212489690)
 
 
-@pytest.mark.parametrize(
-    "rho, expected",
-    [
-        (-1, -1),
-        (0, 0),
-        (1, 1),
-    ],
-)
+@pytest.mark.parametrize("rho, expected", [(-1, -1), (0, 0), (1, 1)])
 def test_gaussian_tau(rho, expected):
     cop = Gaussian()(rho)
     assert cop.kendalls_tau() == expected
 
 
-@pytest.mark.parametrize(
-    "rho, expected",
-    [
-        (-1, 1),
-        (0, 0),
-        (1, 1),
-    ],
-)
+@pytest.mark.parametrize("rho, expected", [(-1, 1), (0, 0), (1, 1)])
 def test_gaussian_xi(rho, expected):
     cop = Gaussian()(rho)
     assert cop.chatterjees_xi() == expected

@@ -1,10 +1,10 @@
 import sympy
-from statsmodels.distributions.copula.elliptical import StudentTCopula
-from scipy.stats import t as student_t
 from scipy.stats import multivariate_t
+from scipy.stats import t as student_t
+from statsmodels.distributions.copula.elliptical import StudentTCopula
 
-from copul.families.other import LowerFrechet, UpperFrechet
 from copul.families.elliptical.elliptical_copula import EllipticalCopula
+from copul.families.other import LowerFrechet, UpperFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper

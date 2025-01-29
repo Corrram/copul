@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pytest
 
@@ -7,8 +9,6 @@ from tests.family_representatives import (
     archimedean_representatives,
     family_representatives,
 )
-
-import logging
 
 log = logging.getLogger(__name__)
 

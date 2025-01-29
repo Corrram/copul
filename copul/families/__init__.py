@@ -22,6 +22,7 @@ def round_expression(expr, n=2):
 
 def concrete_expand_log(expr, first_call=True):
     import sympy as sp
+
     if first_call:
         expr = sp.expand_log(expr, force=True)
     func = expr.func

@@ -1,11 +1,9 @@
 import inspect
 import logging
-import warnings
 import random
+import warnings
 
 import numpy as np
-
-
 import scipy.optimize as opt
 import sympy
 
@@ -17,15 +15,18 @@ log = logging.getLogger(__name__)
 class CopulaSampler:
     err_counter = 0
 
-    def __init__(self, copul, precision=3):
+    def __init__(self, copul, precision=3, random_state=None):
         self._copul = copul
         self._precision = precision
+        self._random_state = random_state
 
     def rvs(self, n=1):
         """Sample a value from the copula"""
         cond_distr = self._copul.cond_distr_2
         sig = inspect.signature(cond_distr)
         params = set(sig.parameters.keys()) & set(self._copul.intervals)
+        if self._random_state is not None:
+            random.seed(self._random_state)
         if params or isinstance(self._copul, CheckPi):
             func2_ = cond_distr
         else:

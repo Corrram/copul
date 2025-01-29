@@ -48,8 +48,16 @@ class DerivativesOverviewConstructor:
             gen_der_val = copula.first_deriv_of_inv_gen()
             gen_der2_val = copula.second_deriv_of_inv_gen
             cop_val = copula.cdf
-            conv_func, log_der_val, log_der2_val, local_min_point, local_min_val = copula.log_der()
-            conv2_func, log2_deriv_val, log2_deriv2_val, local2_min_point, local2_min_val = copula.log2_der()
+            conv_func, log_der_val, log_der2_val, local_min_point, local_min_val = (
+                copula.log_der()
+            )
+            (
+                conv2_func,
+                log2_deriv_val,
+                log2_deriv2_val,
+                local2_min_point,
+                local2_min_val,
+            ) = copula.log2_der()
             df.loc[i, cop] = "$" + sympy.latex(cop_val) + "$"
             df.loc[i, "$\\theta$"] = str(copula.theta_interval)
             df.loc[i, inv_gen] = "$" + sympy.latex(copula.generator) + "$"
@@ -59,28 +67,55 @@ class DerivativesOverviewConstructor:
             df.loc[i, mustbeconv] = "$" + sympy.latex(conv_func) + "$"
             df.loc[i, log_der] = "$" + sympy.latex(log_der_val) + "$"
             df.loc[i, log_der2] = "$" + sympy.latex(log_der2_val) + "$"
-            df.loc[i, f"{log_der2}-min"] = f"${sympy.latex((local_min_point, local_min_val))}$"
+            df.loc[i, f"{log_der2}-min"] = (
+                f"${sympy.latex((local_min_point, local_min_val))}$"
+            )
             df.loc[i, gen_der2] = f"${sympy.latex(gen_der2_val)}$"
             df.loc[i, mustbeconv2] = f"${sympy.latex(conv2_func)}$"
             df.loc[i, log2_der] = "$" + sympy.latex(log2_deriv_val) + "$"
             df.loc[i, log2_der2] = "$" + sympy.latex(log2_deriv2_val) + "$"
-            df.loc[i, f"{log2_der2}-min"] = f"${sympy.latex((local2_min_point, local2_min_val))}$"
+            df.loc[i, f"{log2_der2}-min"] = (
+                f"${sympy.latex((local2_min_point, local2_min_val))}$"
+            )
         return df
 
     def construct_extract(self):
         my_range = list(range(16, 17))
         df = self._generate_notes_pdf(my_range)
-        pd.set_option('display.max_colwidth', None)
-        tables = {f"Nelsen{i}": df.T[[i]].reset_index().rename(columns={i: "Value", "index": "Characteristic"}) for
-                  i in my_range}
-        table_strs = [self._cleanse_latex_str(v.to_latex(escape=False)) + "\\caption{" + k + "}\\label{tab:" + k + "}" for
-                      k, v in tables.items()]
+        pd.set_option("display.max_colwidth", None)
+        tables = {
+            f"Nelsen{i}": df.T[[i]]
+            .reset_index()
+            .rename(columns={i: "Value", "index": "Characteristic"})
+            for i in my_range
+        }
+        table_strs = [
+            self._cleanse_latex_str(v.to_latex(escape=False))
+            + "\\caption{"
+            + k
+            + "}\\label{tab:"
+            + k
+            + "}"
+            for k, v in tables.items()
+        ]
 
         def table_to_formula(k, v):
             v = v.drop(v.index[[0, 1, 2, 3, 9, 14]])
-            return "\item " + k + ": \n\\begin{align}\n" + (v["Characteristic"] + " ~=~ & " + self._cleanse_latex_str(
-                v["Value"]) + ", \\nonumber\\\\").str.replace("$", "").str.cat(
-                sep="\n")[:-13] + "\\nonumber" + ".\n\\end{align}\n"
+            return (
+                "\item "
+                + k
+                + ": \n\\begin{align}\n"
+                + (
+                    v["Characteristic"]
+                    + " ~=~ & "
+                    + self._cleanse_latex_str(v["Value"])
+                    + ", \\nonumber\\\\"
+                )
+                .str.replace("$", "")
+                .str.cat(sep="\n")[:-13]
+                + "\\nonumber"
+                + ".\n\\end{align}\n"
+            )
 
         table_strs2 = {k: table_to_formula(k, v) for k, v in tables.items()}
         start_str = "\\begin{table}[H]\\begin{center}"

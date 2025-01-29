@@ -1,7 +1,7 @@
 import matplotlib
 import pytest
 
-from copul import LowerFrechet, UpperFrechet, IndependenceCopula
+from copul import IndependenceCopula, LowerFrechet, UpperFrechet
 
 matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
 

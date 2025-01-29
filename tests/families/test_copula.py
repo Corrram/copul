@@ -1,6 +1,5 @@
 import copul
 
-
 # def test_3d_clayton():
 #     theta = 3
 #     cdf = f"(x**(-{theta}) + y**(-{theta}) + z**(-{theta}) - 2)**(-1/{theta})"

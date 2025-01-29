@@ -1,11 +1,11 @@
-from abc import ABC
-
 import logging
+from abc import ABC
 
 import numpy as np
 import sympy
 from matplotlib import pyplot as plt
 from scipy import optimize
+
 from copul.families import concrete_expand_log, get_simplified_solution
 from copul.families.bivcopula import BivCopula
 from copul.families.copula_graphs import CopulaGraphs

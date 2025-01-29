@@ -1,9 +1,9 @@
 import numpy as np
 import sympy
 
-from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

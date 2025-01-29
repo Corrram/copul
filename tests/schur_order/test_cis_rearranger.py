@@ -10,7 +10,7 @@ from copul.schur_order.cis_rearranger import CISRearranger
         (
             np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]]),
             np.array([[5, 3, 2], [4, 2, 4], [1, 5, 4]]),
-        ),
+        )
     ],
 )
 def test_cis_rearrangement(test_matr, expected):

@@ -1,4 +1,5 @@
 import sympy
+
 from copul.families.other.frechet import Frechet
 
 
