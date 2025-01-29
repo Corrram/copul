@@ -1,6 +1,6 @@
 import itertools
-import warnings
 import logging
+import warnings
 from contextlib import contextmanager
 
 import matplotlib.pyplot as plt
@@ -9,10 +9,9 @@ import scipy
 import sympy as sp
 from sympy import Derivative, Subs, log
 
-from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.families.bivcopula import BivCopula
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
-
 
 plt.rc("text", usetex=True)  # Enable LaTeX rendering
 plt.rc("font", size=12)  # You can adjust this value as needed

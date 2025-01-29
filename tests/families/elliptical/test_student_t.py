@@ -1,15 +1,10 @@
 import numpy as np
 import pytest
+
 from copul import LowerFrechet, StudentT, UpperFrechet
 
 
-@pytest.mark.parametrize(
-    "rho, expected_class",
-    [
-        (-1, LowerFrechet),
-        (1, UpperFrechet),
-    ],
-)
+@pytest.mark.parametrize("rho, expected_class", [(-1, LowerFrechet), (1, UpperFrechet)])
 def test_student_t_edge_cases(rho, expected_class):
     cop = StudentT()(rho)
     assert isinstance(

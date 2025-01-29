@@ -1,8 +1,9 @@
 import itertools
+
 import numpy as np
 import sympy
-from copul.families import archimedean
 
+from copul.families import archimedean
 from copul.schur_order.checkerboarder import Checkerboarder
 from copul.schur_order.cis_rearranger import CISRearranger
 

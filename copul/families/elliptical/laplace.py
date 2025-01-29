@@ -1,23 +1,21 @@
 import numpy as np
 import sympy
-from scipy import stats
-
-from copul.families.other import LowerFrechet, UpperFrechet
-from copul.families.elliptical.elliptical_copula import EllipticalCopula
-
 from numpy.linalg import svd
+from scipy import stats
 from scipy._lib import doccer
 
 # Imports of constants from _multivariate script
 from scipy.stats._multivariate import (
     _LOG_2,
-    _doc_random_state,
-    multi_rv_generic,
     _PSD,
+    _doc_random_state,
     _squeeze_output,
     multi_rv_frozen,
+    multi_rv_generic,
 )
 
+from copul.families.elliptical.elliptical_copula import EllipticalCopula
+from copul.families.other import LowerFrechet, UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 # ==================== START OF THE LOGIC FOR MV LAPLACE =====================

@@ -1,13 +1,14 @@
-import sympy as sp
 import logging
 
-from copul.wrapper.cd1_wrapper import CD1Wrapper
+import sympy as sp
+from sympy import DiracDelta, Heaviside, Min
+
 from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
+from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
-from sympy import Min, Heaviside, DiracDelta
 
 log = logging.getLogger(__name__)
 

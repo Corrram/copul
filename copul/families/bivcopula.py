@@ -5,11 +5,12 @@ import types
 
 import numpy as np
 import sympy
-from matplotlib import pyplot as plt, rcParams
+from matplotlib import pyplot as plt
+from matplotlib import rcParams
 
+from copul.copula_sampler import CopulaSampler
 from copul.families.cis_verifier import CISVerifier
 from copul.families.copula_graphs import CopulaGraphs
-from copul.copula_sampler import CopulaSampler
 from copul.families.core_copula import CoreCopula
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.tp2_verifier import TP2Verifier
@@ -84,9 +85,9 @@ class BivCopula(CoreCopula):
             obj.intervals[value] = sympy.Interval(-np.inf, np.inf)
         return obj
 
-    def rvs(self, n=1):
+    def rvs(self, n=1, random_state=None):
         """Sample a value from the copula"""
-        return CopulaSampler(self).rvs(n)
+        return CopulaSampler(self, random_state=random_state).rvs(n)
 
     @property
     def pdf(self):

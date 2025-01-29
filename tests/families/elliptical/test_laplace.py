@@ -1,15 +1,10 @@
 import pytest
-from copul.families.other import LowerFrechet, UpperFrechet
+
 from copul.families.elliptical.laplace import Laplace
+from copul.families.other import LowerFrechet, UpperFrechet
 
 
-@pytest.mark.parametrize(
-    "rho, expected_class",
-    [
-        (-1, LowerFrechet),
-        (1, UpperFrechet),
-    ],
-)
+@pytest.mark.parametrize("rho, expected_class", [(-1, LowerFrechet), (1, UpperFrechet)])
 def test_laplace_edge_cases(rho, expected_class):
     cop = Laplace()(rho)
     assert isinstance(

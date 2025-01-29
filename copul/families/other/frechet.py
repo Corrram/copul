@@ -2,9 +2,9 @@ import copy
 
 import sympy
 
-from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.exceptions import PropertyUnavailableException
 from copul.families.bivcopula import BivCopula
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

@@ -1,8 +1,8 @@
 import sympy
 
-from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
+from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

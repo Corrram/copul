@@ -1,6 +1,7 @@
-import copul as cp
 import matplotlib.pyplot as plt
 import numpy as np
+
+import copul as cp
 
 
 def main():

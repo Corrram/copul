@@ -2,8 +2,8 @@ import numpy as np
 import sympy
 from scipy.integrate import nquad, quad
 
-from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

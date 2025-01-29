@@ -1,8 +1,7 @@
 import numpy as np
+import sympy as sp
 
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
-
-import sympy as sp
 
 
 def test_persistence_of_orig_func():
