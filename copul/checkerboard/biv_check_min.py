@@ -1,6 +1,6 @@
 import numpy as np
 
-from copul import BivCheckPi
+from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.check_min import CheckMin
 
 

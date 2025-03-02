@@ -1,7 +1,7 @@
 import numpy as np
 import sympy
 
-from copul import BivCopula, Checkerboarder
+from copul.families.bivcopula import BivCopula
 from copul.families.copula import Copula
 
 

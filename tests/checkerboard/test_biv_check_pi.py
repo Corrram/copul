@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
-from copul import BivCheckPi
+from copul.checkerboard.biv_check_pi import BivCheckPi
 
 matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
 

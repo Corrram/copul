@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import sympy
 
-from copul import BivCheckPi
+from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.schur_order.checkerboarder import Checkerboarder
 
 log = logging.getLogger(__name__)
