@@ -58,9 +58,9 @@ class CoreCopula(ABC):
 
     def _are_class_vars(self, kwargs):
         class_vars = set(dir(self))
-        assert set(kwargs).issubset(
-            class_vars
-        ), f"keys: {set(kwargs)}, free symbols: {class_vars}"
+        assert set(kwargs).issubset(class_vars), (
+            f"keys: {set(kwargs)}, free symbols: {class_vars}"
+        )
 
     def slice_interval(self, param, interval_start=None, interval_end=None):
         if not isinstance(param, str):

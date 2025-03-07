@@ -1,5 +1,4 @@
 class CopulaGraphs:
-
     def __init__(self, copula, add_params=True):
         self._copula = copula
         self._add_params = add_params

@@ -30,9 +30,9 @@ class Nelsen17(ArchimedeanCopula):
     def inv_generator(self):
         theta = self.theta
         y = self.y
-        gen = (
-            2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)
-        ) ** (1 / theta) - 1
+        gen = (2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)) ** (
+            1 / theta
+        ) - 1
         return SymPyFuncWrapper(gen)
 
     @property

@@ -30,7 +30,7 @@ class GumbelHougaard(ArchimedeanCopula):
 
     @property
     def inv_generator(self):
-        gen = sympy.exp(-self.y ** (1 / self.theta))
+        gen = sympy.exp(-(self.y ** (1 / self.theta)))
         return SymPyFuncWrapper(gen)
 
     @property

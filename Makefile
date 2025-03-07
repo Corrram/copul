@@ -1,6 +1,6 @@
 # Makefile for copul package using uv as package manager
 
-.PHONY: all clean test lint format install dev-install
+.PHONY: all clean test lint format install dev-install upgrade upgrade-dev
 
 # Python interpreter
 PYTHON := python
@@ -50,7 +50,7 @@ coverage:
 # Format code with isort and black
 format:
 	$(ISORT) .
-	$(BLACK) --line-length 88 --skip-magic-trailing-comma .
+	$(UV) run ruff format .
 
 # Run static type checking
 typecheck:
@@ -73,4 +73,12 @@ dev-deps:
 	$(UV) pip install pytest pytest-cov black isort mypy pylint
 
 # Run all quality checks
-quality: format typecheck lint test 
+quality: format typecheck lint test
+
+upgrade:
+	@echo "Upgrading dev dependencies in root package..."
+	$(UV) sync --upgrade --extra dev
+
+upgrade-dev:
+	@echo "Upgrading dev dependencies in root package..."
+	$(UV) sync --upgrade --extra dev

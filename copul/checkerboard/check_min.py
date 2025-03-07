@@ -8,7 +8,6 @@ from copul.exceptions import PropertyUnavailableException
 
 
 class CheckMin(CheckPi):
-
     def cdf(self, *args):
         if len(args) != len(self.dim):
             raise ValueError(
