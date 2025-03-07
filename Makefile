@@ -77,7 +77,7 @@ quality: format typecheck lint test
 
 upgrade:
 	@echo "Upgrading dev dependencies in root package..."
-	$(UV) sync --upgrade --extra dev
+	$(UV) sync --active --upgrade --extra dev
 
 upgrade-dev:
 	@echo "Upgrading dev dependencies in root package..."
