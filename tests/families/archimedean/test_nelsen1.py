@@ -8,5 +8,5 @@ def test_is_absolutely_continuous(theta, expected):
     copula = Nelsen1(theta)
     result = copula.is_absolutely_continuous
     assert result == expected, (
-        f"Failed for theta={theta}: Expected {expected}, " f"but got {result}"
+        f"Failed for theta={theta}: Expected {expected}, but got {result}"
     )

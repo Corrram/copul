@@ -6,7 +6,6 @@ from copul.families.copula import Copula
 
 
 class CopulaBuilder:
-
     @classmethod
     def from_cdf(cls, cdf):
         sp_cdf = sympy.sympify(cdf)

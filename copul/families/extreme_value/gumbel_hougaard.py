@@ -7,7 +7,6 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GumbelHougaard(ExtremeValueCopula):
-
     def __call__(self, *args, **kwargs):
         if args is not None and len(args) > 0:
             kwargs["theta"] = args[0]

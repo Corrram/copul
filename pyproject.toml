@@ -49,6 +49,11 @@ dev = [
 "Issue Tracker" = "https://github.com/Corrram/copul/issues"
 
 [tool.pytest.ini_options]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9.9",
+]
 #log_cli = true
 #log_cli_level = "INFO"
 #adopts = "-ra -q"

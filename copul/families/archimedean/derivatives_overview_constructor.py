@@ -7,13 +7,11 @@ import copul
 
 
 class DerivativesOverviewConstructor:
-
     def __init__(self):
         pass
 
     @staticmethod
     def _cleanse_latex_str(latex_str):
-
         def cleanse_this(input_str):
             new_str = re.sub("\{(\\d)\}", "\\1", input_str)
             output_str = re.sub("\^\{(.)\}", "^\\1", new_str)

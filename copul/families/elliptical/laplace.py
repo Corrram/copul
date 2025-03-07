@@ -82,7 +82,7 @@ class multivariate_laplace_gen(multi_rv_generic):
                 dim = mean.size
         else:
             if not np.isscalar(dim):
-                raise ValueError("Dimension of random variable must be " "a scalar.")
+                raise ValueError("Dimension of random variable must be a scalar.")
 
         # Check input sizes and return full arrays for mean and cov if
         # necessary
@@ -305,7 +305,6 @@ for name in ["logpdf", "pdf", "logcdf", "cdf", "rvs"]:
 
 
 class Laplace(EllipticalCopula):
-
     def __call__(self, *args, **kwargs):
         if args is not None and len(args) == 1:
             kwargs["rho"] = args[0]

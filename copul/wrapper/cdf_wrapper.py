@@ -4,7 +4,6 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class CDFWrapper(SymPyFuncWrapper):
-
     def __call__(self, *args, **kwargs):
         free_symbols = {str(f): f for f in self._func.free_symbols}
         vars_, kwargs = self._prepare_call(args, kwargs)
