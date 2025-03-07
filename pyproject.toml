@@ -25,7 +25,19 @@ dependencies = [
     "matplotlib>=3.9",
     "sympy-plot-backends>=3.1",
     "statsmodels>=0.14",
+    "numba>=0.61.0",
+    "joblib>=1.4.2",
 ]
+
+[project.urls]
+"Repository" = "https://github.com/Corrram/copul"
+"Documentation" = "https://copul.readthedocs.io"
+"Issue Tracker" = "https://github.com/Corrram/copul/issues"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+adopts = "-ra -q"
 
 [project.optional-dependencies]
 dev = [
@@ -38,22 +50,8 @@ dev = [
     "pytest-cov>=5.0.0",
     "pytest-pycharm>=0.7.0",
     "pytest-xdist>=3.6.1",
-    "pytest>=8.3.2",
     "sphinx-rtd-theme>=2.0",
     "sphinx>=7.4",
-]
-
-[project.urls]
-"Repository" = "https://github.com/Corrram/copul"
-"Documentation" = "https://copul.readthedocs.io"
-"Issue Tracker" = "https://github.com/Corrram/copul/issues"
-
-[tool.pytest.ini_options]
-
-[dependency-groups]
-dev = [
+    "pytest>=8.3.5",
     "ruff>=0.9.9",
 ]
-#log_cli = true
-#log_cli_level = "INFO"
-#adopts = "-ra -q"
