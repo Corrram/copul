@@ -154,3 +154,25 @@ def test_2d_check_min_rvs(point, ratio):
     n_lower_empirical = sum([(sample < point).all() for sample in samples])
     theoretical_ratio = ratio * n
     assert np.isclose(n_lower_empirical, theoretical_ratio, rtol=0.1)
+
+
+def test_3d_check_pi_rvs():
+    np.random.seed(1)
+    ccop = CheckMin([[[1, 2], [2, 1]], [[1, 2], [2, 1]]])
+    n = 20_000
+    samples = ccop.rvs(n)
+    n_lower_empirical = sum([(sample < (0.5, 0.5, 0.5)).all() for sample in samples])
+    n_upper_empirical = sum([(sample > (0.5, 0.5, 0.5)).all() for sample in samples])
+    ratio = 1 / 12 * n
+    assert np.isclose(n_lower_empirical, ratio, rtol=0.1)
+    assert np.isclose(n_upper_empirical, ratio, rtol=0.1)
+
+    n_lower = sum([(sample < (0.25, 0.25, 0.5)).all() for sample in samples])
+    expected = ratio / 2
+    assert np.isclose(n_lower, expected, rtol=0.1)
+    n_lower_quarter = sum([(sample < (0.25, 0.25, 0.25)).all() for sample in samples])
+    assert np.isclose(n_lower_quarter, expected, rtol=0.1)
+
+    n_lower_part = sum([(sample < (0.25, 0.75, 0.5)).all() for sample in samples])
+    expected_part = 3 / 12 * 1 / 2 * n
+    assert np.isclose(n_lower_part, expected_part, rtol=0.1)

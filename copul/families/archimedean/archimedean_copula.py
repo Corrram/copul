@@ -24,8 +24,53 @@ class ArchimedeanCopula(BivCopula, ABC):
     _generator = None
 
     def __init__(self, *args, **kwargs):
+        """Initialize an Archimedean copula with parameter validation.
+        
+        Parameters
+        ----------
+        *args : positional arguments
+            First argument is interpreted as theta parameter.
+        **kwargs : keyword arguments
+            'theta' : Copula parameter.
+            
+        Raises
+        ------
+        ValueError
+            If theta is outside the valid parameter range defined by theta_interval.
+        """
         if args is not None and len(args) > 0:
             kwargs["theta"] = args[0]
+            
+        # Validate theta parameter against theta_interval if defined
+        if "theta" in kwargs and self.theta_interval is not None:
+            theta_val = kwargs["theta"]
+            
+            # Extract bounds from the interval
+            lower_bound = float(self.theta_interval.start)
+            upper_bound = float(self.theta_interval.end)
+            left_open = self.theta_interval.left_open
+            right_open = self.theta_interval.right_open
+            
+            # Check lower bound
+            if left_open and theta_val <= lower_bound:
+                raise ValueError(
+                    f"Parameter theta must be > {lower_bound}, got {theta_val}"
+                )
+            elif not left_open and theta_val < lower_bound:
+                raise ValueError(
+                    f"Parameter theta must be >= {lower_bound}, got {theta_val}"
+                )
+                
+            # Check upper bound
+            if right_open and theta_val >= upper_bound:
+                raise ValueError(
+                    f"Parameter theta must be < {upper_bound}, got {theta_val}"
+                )
+            elif not right_open and theta_val > upper_bound:
+                raise ValueError(
+                    f"Parameter theta must be <= {upper_bound}, got {theta_val}"
+                )
+                
         super().__init__(**kwargs)
 
     def __str__(self):

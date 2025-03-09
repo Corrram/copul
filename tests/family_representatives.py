@@ -1,10 +1,10 @@
 archimedean_representatives = {
     "Clayton": 0.5,
-    "Nelsen2": 0.5,
+    "Nelsen2": 1.5,
     "AliMikhailHaq": 0.5,
     "GumbelHougaard": 2,
     "Frank": 0.5,
-    "Joe": 0.5,
+    "Joe": 1.5,
     "Nelsen7": 0.5,
     "Nelsen8": 2,
     "GumbelBarnett": 0.5,

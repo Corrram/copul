@@ -8,7 +8,7 @@ matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
 
 
 def test_nelsen9_plot_cdf():
-    nelsen = Nelsen9(2)
+    nelsen = Nelsen9(0.5)
 
     # Call plot_cdf and simply ensure it does not raise an exception
     try:

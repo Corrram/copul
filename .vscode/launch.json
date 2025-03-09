@@ -1,0 +1,95 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Current File (debug)",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "pytest: Current File",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-v",
+                "-p",
+                "no:pycharm"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "pytest: Current File (debug)",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${file}",
+                "-v",
+                "--no-cov",
+                "-p",
+                "no:pycharm"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "pytest: Current Directory",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "${fileDirname}",
+                "-v",
+                "-p",
+                "no:pycharm"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "Python: Module",
+            "request": "launch",
+            "module": "",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+         {
+            "name": "Python: cProfile Current File",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "module": "cProfile",
+            "args": [
+                "-o", "${workspaceFolder}/.profile/profile.prof",
+                "${file}"
+            ]
+        },
+        {
+            "name": "Python: Current File with Line Profiler",
+            "request": "launch",
+            "program": "${workspaceFolder}/.vscode/run_with_line_profiler.py",
+            "args": ["${file}"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        }
+    ]
+}
