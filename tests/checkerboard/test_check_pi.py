@@ -10,11 +10,47 @@ def test_multivar_checkerboard():
     matr = np.full((2, 2, 2), 0.5)
     copula = CheckPi(matr)
     u = (0.5, 0.5, 0.5)
+    v = (0.25, 0.25, 0.25)
+    w = (0.75, 0.75, 0.75)
     assert copula.cdf(*u) == 0.125
+    assert copula.cdf(*v) == 0.125 / 8
+    assert copula.cdf(*w) == 0.75**3
     assert copula.pdf(*u) == 0.125
+    assert copula.pdf(*v) == 0.125
     assert copula.cond_distr(1, u) == 0.25
     assert copula.cond_distr(2, u) == 0.25
     assert copula.cond_distr(3, u) == 0.25
+    assert copula.cond_distr(1, v) == 0.25**2
+    assert copula.cond_distr(1, w) == 0.75**2
+
+
+@pytest.mark.parametrize(
+    "u, v, expected",
+    [
+        (0.4, 0.4, 0.8),
+        (0.4, 0.6, 1),
+        (0.6, 0.4, 0),
+    ],
+)
+def test_2d_ccop_cond_distr_1_different_points(u, v, expected):
+    matr = [[1, 0], [0, 1]]
+    ccop = CheckPi(matr)
+    actual = ccop.cond_distr_1((u, v))
+    assert np.isclose(actual, expected)
+
+
+@pytest.mark.parametrize(
+    "matr, expected",
+    [
+        ([[1, 0], [0, 1]], 0),  # 0.5 belongs to the second row, so ~ Unif[0.5, 1]
+        ([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], 0.5),
+        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], 0.65),  # second row -> (1*5+0.5*3+0*2)/10
+    ],
+)
+def test_ccop_cond_distr_1(matr, expected):
+    ccop = CheckPi(matr)
+    actual = ccop.cond_distr_1((0.5, 0.5))
+    assert np.isclose(actual, expected)
 
 
 def test_2d_check_pi_rvs():
@@ -111,38 +147,6 @@ def test_pdf_behavior():
     assert copula.pdf(0.5, -0.1) == 0
     assert copula.pdf(1.1, 0.5) == 0
     assert copula.pdf(0.5, 1.1) == 0
-
-
-def test_cond_distr():
-    """Test conditional distribution computation."""
-    matr = np.array([[0.1, 0.2], [0.3, 0.4]])
-    copula = CheckPi(matr)
-
-    # Test at various grid points
-    # For an equal weight matrix, conditional distribution should match
-    # theoretical expectations
-    equal_matr = np.array([[0.25, 0.25], [0.25, 0.25]])
-    equal_copula = CheckPi(equal_matr)
-
-    # At (0.5, 0.5) with equal weights, conditional should be 0.5
-    u_center = (0.5, 0.5)
-    assert np.isclose(equal_copula.cond_distr(1, u_center), 0.5)
-    assert np.isclose(equal_copula.cond_distr(2, u_center), 0.5)
-
-    # For the asymmetric matrix, test specific points
-    # At (0.25, 0.25), weight in cell is 0.1
-    # Row sum is 0.1 + 0.2 = 0.3, column sum is 0.1 + 0.3 = 0.4
-    u_lower = (0.25, 0.25)
-    assert np.isclose(copula.cond_distr(1, u_lower), 0.1 / 0.4)  # 0.25
-    assert np.isclose(copula.cond_distr(2, u_lower), 0.1 / 0.3)  # 0.33...
-
-    # Test convenience methods
-    assert np.isclose(copula.cond_distr_1(u_lower), 0.1 / 0.4)
-    assert np.isclose(copula.cond_distr_2(u_lower), 0.1 / 0.3)
-
-    # Test invalid dimension
-    with pytest.raises(ValueError):
-        copula.cond_distr(3, u_lower)  # Should raise error for 2D copula
 
 
 def test_higher_dimensional():
@@ -246,46 +250,109 @@ def test_cdf_consistency():
     a1, a2 = 0.2, 0.3
     b1, b2 = 0.7, 0.8
     rectangle_sum = (
-            copula.cdf(b1, b2) -
-            copula.cdf(a1, b2) -
-            copula.cdf(b1, a2) +
-            copula.cdf(a1, a2)
+        copula.cdf(b1, b2)
+        - copula.cdf(a1, b2)
+        - copula.cdf(b1, a2)
+        + copula.cdf(a1, a2)
     )
     assert rectangle_sum >= 0
 
     # Sum of PDF over all cells should equal 1
     # For a 2x2 grid, we can check directly
     total_pdf = (
-            copula.pdf(0.25, 0.25) +
-            copula.pdf(0.25, 0.75) +
-            copula.pdf(0.75, 0.25) +
-            copula.pdf(0.75, 0.75)
+        copula.pdf(0.25, 0.25)
+        + copula.pdf(0.25, 0.75)
+        + copula.pdf(0.75, 0.25)
+        + copula.pdf(0.75, 0.75)
     )
     assert np.isclose(total_pdf, 1.0)
 
 
-def test_cdf_exact_values():
-    """Test exact CDF values for a specific matrix."""
-    # Create a matrix with specific values for testing
-    matr = np.array([[0.1, 0.2], [0.3, 0.4]])
+def test_random_points_cdf_2d():
+    """
+    Sample random points in [0,1]^2 for a small 2x2 matrix.
+    Compare cdf result to a brute force piecewise computation.
+    """
+    matr = np.array(
+        [[4.0, 1.0], [1.0, 2.0]]
+    )  # sum=8 => normalized => top-left=0.5, top-right=0.125, bottom-left=0.125, bottom-right=0.25
     copula = CheckPi(matr)
 
-    # Calculate expected CDF values
-    # F(0.5, 0.5) = sum of all values in the lower-left quadrant
-    assert np.isclose(copula.cdf(0.5, 0.5), 0.1)
+    # We'll generate some random points and compare copula.cdf(...) to a direct piecewise approach
+    rng = np.random.RandomState(123)
+    for _ in range(10):
+        x = rng.rand()
+        y = rng.rand()
+        cdf_val = copula.cdf(x, y)
 
-    # F(1.0, 0.5) = sum of the entire first column
-    assert np.isclose(copula.cdf(1.0, 0.5), 0.4)
+        # We'll compute a direct piecewise approach:
+        # sum_{cell} [ fraction_of_cell_in [0,x]*[0,y] * cell_mass ]
+        direct_sum = 0.0
+        for irow in (0, 1):
+            for icol in (0, 1):
+                cell_mass = copula.matr[irow, icol]
+                # cell is [irow/2, (irow+1)/2)*[icol/2, (icol+1)/2)
+                lower_x, upper_x = irow / 2, (irow + 1) / 2
+                lower_y, upper_y = icol / 2, (icol + 1) / 2
+                overlap_x = max(0.0, min(x, upper_x) - lower_x)
+                overlap_y = max(0.0, min(y, upper_y) - lower_y)
+                # fraction in x => overlap_x / (0.5), fraction in y => overlap_y / (0.5)
+                frac_x = overlap_x / 0.5
+                frac_y = overlap_y / 0.5
+                if frac_x < 0 or frac_y < 0:
+                    frac_x = 0
+                    frac_y = 0
+                if frac_x > 1:
+                    frac_x = 1
+                if frac_y > 1:
+                    frac_y = 1
+                frac_cell = frac_x * frac_y
+                direct_sum += cell_mass * frac_cell
 
-    # F(0.5, 1.0) = sum of the entire first row
-    assert np.isclose(copula.cdf(0.5, 1.0), 0.3)
+        assert np.isclose(cdf_val, direct_sum, atol=1e-14)
 
-    # F(1.0, 1.0) = sum of all values
-    assert np.isclose(copula.cdf(1.0, 1.0), 1.0)
 
-    # Test interpolation at (0.25, 0.75)
-    # This point is 1/4 into the first cell horizontally
-    # and 3/4 into the first cell vertically
-    # With bilinear interpolation:
-    # F(0.25, 0.75) = 0.025
-    assert np.isclose(copula.cdf(0.25, 0.75), 0.025)
+def test_cond_distr_consistency_3d():
+    """
+    Test a 3D checkerboard's cond_distr to ensure that dimension i
+    means 'U_{-i} | U_i' as required.
+    """
+    matr = np.ones((2, 2, 2))
+    copula = CheckPi(matr)
+
+    # Let's pick a point u = (0.3, 0.6, 0.9)
+    # cond_distr(1, u) => F_{(U2,U3)|U1}( (0.6,0.9) | 0.3 )
+    #   = cdf(0.3,0.6,0.9)/cdf(0.3,1,1)
+    cdf_u = copula.cdf(0.3, 0.6, 0.9)
+    denom_1 = copula.cdf(0.3, 1.0, 1.0)
+    ratio_1 = cdf_u / denom_1 if denom_1 > 0 else 0
+    assert np.isclose(copula.cond_distr(1, (0.3, 0.6, 0.9)), ratio_1)
+
+    # cond_distr(2, u) => F_{(U1,U3)|U2}( (0.3,0.9) | 0.6 )
+    #   = cdf(0.3,0.6,0.9)/cdf(1,0.6,1)
+    denom_2 = copula.cdf(1.0, 0.6, 1.0)
+    ratio_2 = cdf_u / denom_2 if denom_2 > 0 else 0
+    assert np.isclose(copula.cond_distr(2, (0.3, 0.6, 0.9)), ratio_2)
+
+    # cond_distr(3, u) => F_{(U1,U2)|U3}( (0.3,0.6) | 0.9 )
+    #   = cdf(0.3,0.6,0.9)/cdf(1,1,0.9)
+    denom_3 = copula.cdf(1.0, 1.0, 0.9)
+    ratio_3 = cdf_u / denom_3 if denom_3 > 0 else 0
+    assert np.isclose(copula.cond_distr(3, (0.3, 0.6, 0.9)), ratio_3)
+
+
+@pytest.mark.parametrize(
+    "matr, point, expected",
+    [
+        ([[1, 1], [1, 1]], (0.2, 0.1), 0.1),
+        ([[1, 1], [1, 1]], (0.1, 0.2), 0.2),
+        ([[1, 1], [1, 1]], (0.7, 0.6), 0.6),
+        ([[1, 1], [1, 1]], (0.6, 0.7), 0.7),
+        ([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], (0.5, 0.5), 0.5),
+        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], (0.5, 0.5), 0.65),
+    ],
+)
+def test_ccop_cond_distr(matr, point, expected):
+    ccop = CheckPi(matr)
+    actual = ccop.cond_distr(1, point)
+    assert np.isclose(actual, expected)

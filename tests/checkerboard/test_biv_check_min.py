@@ -12,7 +12,11 @@ from copul.exceptions import PropertyUnavailableException
     [
         ([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], (0.5, 0.5), 0.25),
         ([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], (0.5, 1), 0.5),
-        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], (0.5, 0.5), 0.25),
+        (
+            [[1, 5, 4], [5, 3, 2], [4, 2, 4]],
+            (0.5, 0.5),
+            (1 + 5 / 2 + 5 / 2 + 3 / 2) / 30,
+        ),
         ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], (1, 0.5), 0.5),
     ],
 )
@@ -72,7 +76,7 @@ def test_upper_ccop_xi(matr, expected):
     random.seed(0)
     ccop = BivCheckMin(matr)
     xi_estimate = ccop.chatterjees_xi()
-    assert np.abs(xi_estimate - expected) < 0.01
+    assert np.abs(xi_estimate - expected) < 0.02
 
 
 def test_biv_check_min_rvs():

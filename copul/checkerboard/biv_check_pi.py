@@ -53,3 +53,9 @@ class BivCheckPi(CheckPi, BivCopula):
 
         result = basictools.monte_carlo_integral(f, n_samples, vectorized_func=False)
         return 6 * result - 2
+
+
+if __name__ == "__main__":
+    matr = [[1, 5, 4], [5, 3, 2], [4, 2, 4]]
+    copul = BivCheckPi(matr)
+    copul.plot_cond_distr_1()
