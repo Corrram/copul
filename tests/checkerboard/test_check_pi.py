@@ -53,16 +53,22 @@ def test_ccop_cond_distr_1(matr, expected):
     assert np.isclose(actual, expected)
 
 
-def test_2d_check_pi_rvs():
+@pytest.mark.parametrize(
+    "point, ratio",
+    [
+        ((0.5, 0.5), 1 / 6),
+        ((0.25, 0.25), 1 / 24),
+        ((0.75, 0.75), 1 / 6 * 1 + 1 / 3 * 1 / 2 + 1 / 3 * 1 / 2 + 1 / 6 * 1 / 4),
+    ],
+)
+def test_2d_check_pi_rvs(point, ratio):
     np.random.seed(1)
     ccop = CheckPi([[1, 2], [2, 1]])
     n = 1_000
     samples = ccop.rvs(n)
-    n_lower_empirical = sum([(sample < (0.5, 0.5)).all() for sample in samples])
-    n_upper_empirical = sum([(sample > (0.5, 0.5)).all() for sample in samples])
-    theoretical_ratio = 1 / 6 * n
-    assert n_lower_empirical < 1.5 * theoretical_ratio
-    assert n_upper_empirical < 1.5 * theoretical_ratio
+    n_lower_empirical = sum([(sample < point).all() for sample in samples])
+    theoretical_ratio = ratio * n
+    assert np.isclose(n_lower_empirical, theoretical_ratio, rtol=0.1)
 
 
 def test_3d_check_pi_rvs():

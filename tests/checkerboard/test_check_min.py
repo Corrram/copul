@@ -136,3 +136,21 @@ def test_ccop_cond_distr(matr, point, expected):
     ccop = CheckMin(matr)
     actual = ccop.cond_distr(1, point)
     assert np.isclose(actual, expected)
+
+
+@pytest.mark.parametrize(
+    "point, ratio",
+    [
+        ((0.25, 0.25), 1 / 6 * 1 / 2),
+        ((0.75, 0.75), 1 / 6 * 1 + 1 / 3 * 1 / 2 + 1 / 3 * 1 / 2 + 1 / 6 * 1 / 2),
+        ((0.5, 0.5), 1 / 6),
+    ],
+)
+def test_2d_check_min_rvs(point, ratio):
+    np.random.seed(1)
+    ccop = CheckMin([[1, 2], [2, 1]])
+    n = 2_000
+    samples = ccop.rvs(n)
+    n_lower_empirical = sum([(sample < point).all() for sample in samples])
+    theoretical_ratio = ratio * n
+    assert np.isclose(n_lower_empirical, theoretical_ratio, rtol=0.1)

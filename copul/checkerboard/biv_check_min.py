@@ -51,3 +51,8 @@ class BivCheckMin(CheckMin, BivCheckPi):
     @property
     def pdf(self):
         raise PropertyUnavailableException("PDF does not exist for BivCheckMin.")
+
+
+if __name__ == "__main__":
+    ccop = BivCheckMin([[1, 2], [2, 1]])
+    ccop.plot_cdf()
