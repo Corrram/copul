@@ -2,9 +2,10 @@ import numpy as np
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.check_min import CheckMin
+from copul.exceptions import PropertyUnavailableException
 
 
-class BivCheckMin(BivCheckPi, CheckMin):
+class BivCheckMin(CheckMin, BivCheckPi):
     """Bivariate Checkerboard Minimum class.
 
     A class that implements bivariate checkerboard minimum operations.
@@ -46,3 +47,7 @@ class BivCheckMin(BivCheckPi, CheckMin):
             bool: Always returns False for checkerboard distributions
         """
         return False
+
+    @property
+    def pdf(self):
+        raise PropertyUnavailableException("PDF does not exist for BivCheckMin.")

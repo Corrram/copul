@@ -20,7 +20,7 @@ matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
 def test_ccop_cdf(matr, point, expected):
     ccop = BivCheckPi(matr)
     actual = ccop.cdf(*point)
-    assert actual == expected
+    assert np.isclose(actual, expected)
 
 
 @pytest.fixture
@@ -68,21 +68,38 @@ def test_ccop_pdf(matr, point, expected):
 @pytest.mark.parametrize(
     "matr, expected",
     [
+        ([[1, 0], [0, 1]], 0),  # 0.5 belongs to the second row, so ~ Unif[0.5, 1]
         ([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], 0.5),
-        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], 0.65),
+        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], 0.65),  # second row -> (1*5+0.5*3+0*2)/10
     ],
 )
 def test_ccop_cond_distr_1(matr, expected):
     ccop = BivCheckPi(matr)
     actual = ccop.cond_distr_1(0.5, 0.5)
-    assert actual == expected
+    assert np.isclose(actual, expected)
+
+
+@pytest.mark.parametrize(
+    "u, v, expected",
+    [
+        (0.4, 0.4, 0.8),
+        (0.4, 0.6, 1),
+        (0.6, 0.4, 0),
+    ],
+)
+def test_ccop_cond_distr_1_different_points(u, v, expected):
+    matr = [[1, 0], [0, 1]]
+    ccop = BivCheckPi(matr)
+    actual = ccop.cond_distr_1(u, v)
+    assert np.isclose(actual, expected)
 
 
 @pytest.mark.parametrize(
     "matr, expected",
     [
         ([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], 0.5),
-        ([[1, 2], [2, 1]], 2 / 3),
+        ([[1, 2], [2, 1]], 2 / 3),  # 0.5 belongs to second column
+        ([[1, 0], [0, 1]], 0),  # 0.5 belongs to second row
     ],
 )
 def test_ccop_cond_distr_2(matr, expected):
@@ -102,7 +119,8 @@ def test_ccop_xi(matr, expected):
     np.random.seed(1)
     ccop = BivCheckPi(matr)
     xi_estimate = ccop.chatterjees_xi()
-    assert np.abs(xi_estimate - expected) < 0.02
+    actual_diff = np.abs(xi_estimate - expected)
+    assert actual_diff < 0.02
 
 
 def test_check_pi_rvs():
