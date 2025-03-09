@@ -8,15 +8,18 @@ class SymPyFuncWrapper:
             sympy_func = sympy_func.func
         type_ = type(sympy_func)
         allowed = (sympy.Expr, float)
-        assert isinstance(sympy_func, allowed), (
-            f"Function must be from sympy, but is {type_}"
-        )
+        assert isinstance(
+            sympy_func, allowed
+        ), f"Function must be from sympy, but is {type_}"
         if type_ == float:
             sympy_func = sympy.Number(sympy_func)
         self._func = sympy_func
 
     def __str__(self):
         return str(self._func)
+
+    def __float__(self):
+        return float(self._func)
 
     def __repr__(self):
         return repr(self._func)
@@ -35,9 +38,9 @@ class SymPyFuncWrapper:
                 raise ValueError("Either args or kwargs, not both currently")
             kwargs = {str(f): arg for f, arg in zip(free_symbols, args)}
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        assert set(kwargs).issubset(free_symbols), (
-            f"keys: {set(kwargs)}, free symbols: {self._func.free_symbols}"
-        )
+        # assert set(kwargs).issubset(
+        #     free_symbols
+        # ), f"keys: {set(kwargs)}, free symbols: {self._func.free_symbols}"
         vars_ = {f: kwargs[str(f)] for f in self._func.free_symbols if str(f) in kwargs}
         return vars_, kwargs
 

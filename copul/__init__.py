@@ -1,6 +1,7 @@
 from copul.chatterjee import xi_ncalculate
 from copul.checkerboard.biv_check_min import BivCheckMin
 from copul.checkerboard.biv_check_pi import BivCheckPi
+from copul.checkerboard.biv_check_w import BivCheckW
 from copul.families import archimedean, elliptical, extreme_value
 from copul.families.archimedean import (
     AliMikhailHaq,
@@ -60,6 +61,8 @@ from copul.schur_order.cis_rearranger import CISRearranger
 
 __all__ = [
     "BivCheckPi",
+    "BivCheckMin",
+    "BivCheckW",
     "Checkerboarder",
     "CISRearranger",
     "BivCopula",

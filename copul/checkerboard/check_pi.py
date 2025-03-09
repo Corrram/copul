@@ -281,9 +281,3 @@ class CheckPi:
     def lambda_U(self):
         """Upper tail dependence (usually 0 for a checkerboard copula)."""
         return 0
-
-
-if __name__ == "__main__":
-    matr = [[1, 5, 4], [5, 3, 2], [4, 2, 4]]
-    copul = CheckPi(matr)
-    copul.plot_cdf()
