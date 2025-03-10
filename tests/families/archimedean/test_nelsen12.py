@@ -174,6 +174,7 @@ def test_special_case_behavior():
         assert np.isclose(direct_result, special_result, rtol=1e-5)
 
 
+@pytest.mark.slow
 def test_large_theta_behavior():
     """Test behavior with a very large theta value."""
     # With large theta, Nelsen12 approaches the minimum copula: C(u,v) = min(u,v)

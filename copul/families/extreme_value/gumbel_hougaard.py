@@ -7,6 +7,23 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GumbelHougaard(ExtremeValueCopula):
+    def __new__(cls, *args, **kwargs):
+        # Check if theta=1 is passed either as a positional arg or keyword arg
+        theta_is_one = False
+
+        if "theta" in kwargs and kwargs["theta"] == 1:
+            theta_is_one = True
+
+        if theta_is_one:
+            # Return an IndependenceCopula instance
+            new_kwargs = kwargs.copy()
+            if "theta" in new_kwargs:
+                del new_kwargs["theta"]
+            return IndependenceCopula(**new_kwargs)
+
+        # If theta is not 1, proceed with normal initialization
+        return super().__new__(cls)
+
     def __call__(self, *args, **kwargs):
         if args is not None and len(args) > 0:
             kwargs["theta"] = args[0]
