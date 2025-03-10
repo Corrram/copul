@@ -1,5 +1,3 @@
-import copy
-
 import sympy
 
 from copul.families import get_simplified_solution

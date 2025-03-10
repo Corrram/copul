@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.other.frechet import Frechet
 from copul.families.other.lower_frechet import LowerFrechet

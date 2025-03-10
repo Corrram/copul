@@ -30,11 +30,11 @@ class SchurOrderVerifier:
             cond_dens = sympy.Matrix.zeros(
                 rearranged_ccop.shape[0], rearranged_ccop.shape[1]
             )
-            for k, l in np.ndindex(rearranged_ccop.shape):
-                cond_dens[k, l] = sum(rearranged_ccop[i, l] for i in range(k + 1))
+            for k, l_ in np.ndindex(rearranged_ccop.shape):
+                cond_dens[k, l_] = sum(rearranged_ccop[i, l_] for i in range(k + 1))
             cond_distr = sympy.Matrix.zeros(cond_dens.shape[0], cond_dens.shape[1])
-            for k, l in np.ndindex(cond_dens.shape):
-                cond_distr[k, l] = sum(cond_dens[k, j] for j in range(l + 1))
+            for k, l_ in np.ndindex(cond_dens.shape):
+                cond_distr[k, l_] = sum(cond_dens[k, j] for j in range(l_ + 1))
             cond_distributions.append(cond_distr)
         positively_ordered = True
         for i in range(len(cond_distributions) - 1):

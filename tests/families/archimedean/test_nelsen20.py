@@ -1,8 +1,7 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.archimedean.nelsen20 import Nelsen20
 from copul.families.other.independence_copula import IndependenceCopula

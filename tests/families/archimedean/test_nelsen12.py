@@ -1,8 +1,5 @@
-from unittest.mock import MagicMock, patch
-
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.archimedean.nelsen12 import Nelsen12
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi

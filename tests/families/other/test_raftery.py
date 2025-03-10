@@ -1,11 +1,8 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.bivcopula import BivCopula
-from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.raftery import Raftery
-from copul.families.other.upper_frechet import UpperFrechet
 
 
 @pytest.fixture
@@ -211,7 +208,7 @@ def test_tail_dependence():
         )
 
         lambda_U = float(copula.lambda_U)
-        assert lambda_U == 0, f"Upper tail dependence should be 0 for all delta values"
+        assert lambda_U == 0, "Upper tail dependence should be 0 for all delta values"
 
 
 def test_helper_methods(copula):

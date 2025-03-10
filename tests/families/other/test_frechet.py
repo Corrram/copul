@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.exceptions import PropertyUnavailableException
 from copul.families.other.frechet import Frechet

@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.exceptions import PropertyUnavailableException
 from copul.families.bivcopula import BivCopula
@@ -93,7 +92,6 @@ def test_is_absolutely_continuous():
 def test_cdf_values(copula):
     """Test specific CDF values."""
     theta = 0.5
-    theta_sq = theta**2
 
     def mardia_cdf(u, v, theta):
         """Compute the Mardia copula CDF value."""

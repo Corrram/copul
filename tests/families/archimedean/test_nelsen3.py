@@ -1,9 +1,7 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.archimedean import AliMikhailHaq, Nelsen3
-from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 
 
 def test_nelsen3():
@@ -152,7 +150,7 @@ def test_nelsen3_conditional_distributions(theta):
 # Special case test for theta=0 conditional distributions
 def test_nelsen3_conditional_distributions_theta_zero():
     """Test conditional distributions for Nelsen3 with theta=0."""
-    copula = Nelsen3(0)
+    Nelsen3(0)
 
     # For theta=0, cond_distr_1(u,v) = v
     test_points = [(0.3, 0.4), (0.5, 0.6), (0.7, 0.8)]

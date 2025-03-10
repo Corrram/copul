@@ -8,7 +8,6 @@ from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Tawn(ExtremeValueCopula):

@@ -7,3 +7,15 @@ from copul.families.other.mardia import Mardia
 from copul.families.other.plackett import Plackett
 from copul.families.other.raftery import Raftery
 from copul.families.other.upper_frechet import UpperFrechet
+
+__all__ = [
+    "BivCheckPi",
+    "FarlieGumbelMorgenstern",
+    "Frechet",
+    "IndependenceCopula",
+    "LowerFrechet",
+    "Mardia",
+    "Plackett",
+    "Raftery",
+    "UpperFrechet",
+]

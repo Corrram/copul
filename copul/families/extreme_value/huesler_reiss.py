@@ -1,12 +1,9 @@
-import copy
-
 import numpy as np
 import sympy
 from sympy import stats
 
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other.independence_copula import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class HueslerReiss(ExtremeValueCopula):

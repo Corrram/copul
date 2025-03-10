@@ -150,4 +150,5 @@ class MarshallOlkin(ExtremeValueCopula):
         return result
 
 
-MarshallOlkinDiag = lambda: MarshallOlkin()(alpha2=MarshallOlkin.alpha_1)
+def MarshallOlkinDiag():
+    return MarshallOlkin()(alpha2=MarshallOlkin.alpha_1)

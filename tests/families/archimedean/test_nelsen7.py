@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 import sympy
 
-from copul import Nelsen7
 from copul.families.archimedean.nelsen7 import Nelsen7
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet

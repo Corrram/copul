@@ -248,7 +248,7 @@ def test_is_absolutely_continuous():
     matr = np.array([[1, 2], [3, 4]])
     copula = CheckPi(matr)
 
-    assert copula.is_absolutely_continuous == True
+    assert copula.is_absolutely_continuous is True
 
 
 def test_cdf_consistency():

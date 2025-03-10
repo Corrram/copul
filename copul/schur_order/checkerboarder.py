@@ -5,7 +5,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from numba import njit, prange
+from numba import njit
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.check_pi import CheckPi
@@ -220,8 +220,8 @@ class Checkerboarder:
         y = data.iloc[:, 1].values
 
         # Efficiently compute bin indices
-        x_bins = np.minimum(np.floor(x * self.n[0]).astype(int), self.n[0] - 1)
-        y_bins = np.minimum(np.floor(y * self.n[1]).astype(int), self.n[1] - 1)
+        np.minimum(np.floor(x * self.n[0]).astype(int), self.n[0] - 1)
+        np.minimum(np.floor(y * self.n[1]).astype(int), self.n[1] - 1)
 
         # Use numpy's histogram2d for fast binning
         hist, _, _ = np.histogram2d(
@@ -247,7 +247,7 @@ def _fast_rank(x):
     """
     n = len(x)
     ranks = np.empty(n, dtype=np.float64)
-    temp = np.empty(n, dtype=np.float64)
+    np.empty(n, dtype=np.float64)
 
     # Sort x and keep track of original indices
     idx = np.argsort(x)

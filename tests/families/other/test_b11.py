@@ -1,11 +1,8 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.bivcopula import BivCopula
 from copul.families.other.b11 import B11
-from copul.families.other.independence_copula import IndependenceCopula
-from copul.families.other.upper_frechet import UpperFrechet
 
 
 @pytest.fixture

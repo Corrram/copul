@@ -1,9 +1,5 @@
 import numpy as np
-import pytest
-import sympy
-from scipy import special
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.nelsen5 import Frank
 from copul.families.other.independence_copula import IndependenceCopula
 

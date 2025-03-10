@@ -45,22 +45,22 @@ class CISRearranger:
 
         # step (1)
         B = sympy.Matrix.zeros(matr.shape[0], matr.shape[1])
-        for k, l in np.ndindex(matr.shape):
-            B[k, l] = sum(matr[k, j] for j in range(l + 1))
+        for k, i in np.ndindex(matr.shape):
+            B[k, i] = sum(matr[k, j] for j in range(i + 1))
         B = B.col_insert(0, sympy.Matrix([0] * matr.shape[0]))
 
         # step (2)
         B_tilde = sympy.Matrix.zeros(B.shape[0], B.shape[1])
-        for l_ in range(B.shape[1]):
-            B_tilde.col_del(l_)
-            sorted_col = sorted(B.col(l_), reverse=True)
+        for i in range(B.shape[1]):
+            B_tilde.col_del(i)
+            sorted_col = sorted(B.col(i), reverse=True)
             insert_val = sympy.Matrix(sorted_col)
-            B_tilde = B_tilde.col_insert(l_, insert_val)
+            B_tilde = B_tilde.col_insert(i, insert_val)
 
         # step (3)
         a_arrow = sympy.Matrix.zeros(matr.shape[0], matr.shape[1])
-        for k, l in np.ndindex(matr.shape):
-            a_arrow[k, l] = B_tilde[k, l + 1] - B_tilde[k, l]
+        for k, i in np.ndindex(matr.shape):
+            a_arrow[k, i] = B_tilde[k, i + 1] - B_tilde[k, i]
         a_arrow_final = copy.copy(a_arrow)
 
         return a_arrow_final / (matr.shape[0] * matr.shape[1])

@@ -30,7 +30,6 @@ class RankCorrelationPlotter:
         else:
             log_scale = False
         if not mixed_params:
-            filename_suffix = ""
             self._plot_correlation_for(
                 n_obs, n_params, self.copul, plot_var, log_scale=log_scale
             )
@@ -48,7 +47,6 @@ class RankCorrelationPlotter:
                 legend_suffix = " (with " + legend_suffix[2:] + ")"
                 legend_suffix = legend_suffix.replace("),", ",")
         else:
-            filename_suffix = "_xi"
             legend_suffix = ""
         for mixed_param in mixed_params:
             new_copula = self.copul(**mixed_param)

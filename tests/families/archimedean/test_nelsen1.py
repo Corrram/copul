@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from copul.families.archimedean import Clayton, Nelsen1
-from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 
 
 @pytest.mark.parametrize("theta, expected", [(2, True), (0, True), (-0.5, False)])
@@ -130,7 +129,7 @@ def test_pdf_integration(theta):
     if theta == -1:  # Special case, returns LowerFrechet
         return
 
-    copula = Clayton(theta)
+    Clayton(theta)
 
     # Define PDF as a numerical function
     def pdf_func(u, v):
@@ -156,7 +155,7 @@ def test_pdf_integration(theta):
 
         # Allow for some numerical error
         assert abs(result - 1.0) < 0.05, f"PDF does not integrate to 1, got {result}"
-    except:
+    except Exception:
         pytest.skip(
             f"Integration failed for theta={theta}, likely due to singularities"
         )
