@@ -1,7 +1,5 @@
 import logging
-
 import sympy as sp
-
 from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other.independence_copula import IndependenceCopula
@@ -17,6 +15,42 @@ class CuadrasAuge(ExtremeValueCopula):
     Cuadras-Auge copula, special case of the Marshall-Olkin copula.
     """
 
+    def __new__(cls, *args, **kwargs):
+        # Handle delta value passed as positional argument
+        if args and len(args) > 0:
+            if args[0] == 0:
+                # Copy kwargs without the delta parameter
+                new_kwargs = kwargs.copy()
+                return IndependenceCopula(**new_kwargs)
+            elif args[0] == 1:
+                # Copy kwargs without the delta parameter
+                new_kwargs = kwargs.copy()
+                return UpperFrechet(**new_kwargs)
+            # Parameter validation for positional args
+            elif args[0] < 0 or args[0] > 1:
+                raise ValueError(f"delta parameter must be in [0,1], got {args[0]}")
+
+        # Handle delta value passed as keyword argument
+        elif "delta" in kwargs:
+            if kwargs["delta"] == 0:
+                # Copy kwargs without the delta parameter
+                new_kwargs = kwargs.copy()
+                del new_kwargs["delta"]
+                return IndependenceCopula(**new_kwargs)
+            elif kwargs["delta"] == 1:
+                # Copy kwargs without the delta parameter
+                new_kwargs = kwargs.copy()
+                del new_kwargs["delta"]
+                return UpperFrechet(**new_kwargs)
+            # Parameter validation for kwargs
+            elif kwargs["delta"] < 0 or kwargs["delta"] > 1:
+                raise ValueError(
+                    f"delta parameter must be in [0,1], got {kwargs['delta']}"
+                )
+
+        # If we get here, continue with normal initialization
+        return super().__new__(cls)
+
     @property
     def is_symmetric(self) -> bool:
         return True
@@ -27,13 +61,23 @@ class CuadrasAuge(ExtremeValueCopula):
 
     def __call__(self, *args, **kwargs):
         if args is not None and len(args) > 0:
-            self.delta = args[0]
-        if "delta" in kwargs and kwargs["delta"] == 0:
-            del kwargs["delta"]
-            return IndependenceCopula()(**kwargs)
-        if "delta" in kwargs and kwargs["delta"] == 1:
-            del kwargs["delta"]
-            return UpperFrechet()(**kwargs)
+            kwargs["delta"] = args[0]
+
+        if "delta" in kwargs:
+            # Parameter validation
+            if kwargs["delta"] < 0 or kwargs["delta"] > 1:
+                raise ValueError(
+                    f"delta parameter must be in [0,1], got {kwargs['delta']}"
+                )
+
+            if kwargs["delta"] == 0:
+                del kwargs["delta"]
+                return IndependenceCopula()(**kwargs)
+
+            if kwargs["delta"] == 1:
+                del kwargs["delta"]
+                return UpperFrechet()(**kwargs)
+
         return super().__call__(**kwargs)
 
     @property
@@ -101,15 +145,21 @@ class CuadrasAuge(ExtremeValueCopula):
 
     def chatterjees_xi(self, *args, **kwargs):
         self._set_params(args, kwargs)
+        # Handle the edge case for delta=0
+        if self.delta == 0:
+            return 0
         return self.delta**2 / (2 - self.delta)
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
+        # Handle the edge case for delta=0
+        if self.delta == 0:
+            return 0
         return 3 * self.delta / (4 - self.delta)
 
     def kendalls_tau(self, *args, **kwargs):
         self._set_params(args, kwargs)
+        # Handle the edge case for delta=0
+        if self.delta == 0:
+            return 0
         return self.delta / (2 - self.delta)
-
-
-# B12 = CuadrasAuge

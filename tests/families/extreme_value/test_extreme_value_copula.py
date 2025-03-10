@@ -3,7 +3,6 @@ import pytest
 import sympy as sp
 
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 # Create a concrete subclass of ExtremeValueCopula for testing
@@ -13,6 +12,7 @@ class ConcreteEVC(ExtremeValueCopula):
     theta = sp.symbols("theta", positive=True)
     params = [theta]
     intervals = {"theta": sp.Interval(0, sp.oo, left_open=False, right_open=True)}
+    _free_symbols = {"theta": theta}  # Add this line to initialize _free_symbols
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -22,11 +22,12 @@ class ConcreteEVC(ExtremeValueCopula):
     def is_symmetric(self) -> bool:
         return True
 
-    @property
-    def _pickands(self):
+    # Change to instance attribute instead of property for consistency
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         t = self.t
         # A simple Pickands dependence function: A(t) = 1 - theta * t * (1-t)
-        return SymPyFuncWrapper(1 - self.theta * t * (1 - t))
+        self._pickands = 1 - self.theta * t * (1 - t)
 
 
 @pytest.fixture

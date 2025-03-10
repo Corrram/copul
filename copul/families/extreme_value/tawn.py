@@ -11,6 +11,48 @@ from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 class Tawn(ExtremeValueCopula):
+    def __new__(cls, *args, **kwargs):
+        # Handle special cases during initialization
+        if len(args) == 3:
+            # Check for GumbelHougaard special case
+            if args[0] == 1 and args[1] == 1:
+                return GumbelHougaard(args[2])
+            # Check for Independence special case
+            if args[2] == 1:
+                return IndependenceCopula()
+            # Check for MarshallOlkin special case
+            if args[2] == sympy.oo:
+                return MarshallOlkin(args[0], args[1])
+
+        # Handle keyword arguments
+        if len(args) == 0:
+            if "alpha_1" in kwargs and "alpha_2" in kwargs:
+                if (
+                    kwargs["alpha_1"] == 1
+                    and kwargs["alpha_2"] == 1
+                    and "theta" in kwargs
+                ):
+                    # GumbelHougaard special case
+                    theta = kwargs.pop("theta")
+                    # Remove alpha params
+                    kwargs.pop("alpha_1")
+                    kwargs.pop("alpha_2")
+                    return GumbelHougaard(theta)(**kwargs)
+
+            if "theta" in kwargs:
+                if kwargs["theta"] == 1:
+                    # Independence special case
+                    return IndependenceCopula()(**kwargs)
+                elif kwargs["theta"] == sympy.oo:
+                    # MarshallOlkin special case
+                    alpha_1 = kwargs.pop("alpha_1", cls.alpha_1)
+                    alpha_2 = kwargs.pop("alpha_2", cls.alpha_2)
+                    kwargs.pop("theta")
+                    return MarshallOlkin(alpha_1, alpha_2)(**kwargs)
+
+        # Default case - proceed with normal initialization
+        return super().__new__(cls)
+
     @property
     def is_symmetric(self) -> bool:
         return self.alpha_1 == self.alpha_2
@@ -25,12 +67,16 @@ class Tawn(ExtremeValueCopula):
     }
 
     def __call__(self, *args, **kwargs):
-        if args is not None and len(args) == 3:
+        # Handle positional arguments
+        if len(args) == 3:
             self.alpha_1 = args[0]
             self.alpha_2 = args[1]
             self.theta = args[2]
-        elif args is not None:
+        # Raise error only if there are some args but not exactly 3
+        elif len(args) > 0:
             raise ValueError("Tawn copula requires three parameters")
+
+        # Handle special cases with keyword arguments
         if (
             "alpha_1" in kwargs
             and kwargs["alpha_1"] == 1

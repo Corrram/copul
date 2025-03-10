@@ -4,7 +4,7 @@ import pathlib
 import types
 
 import numpy as np
-import sympy
+import sympy as sp
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 
 class BivCopula(CoreCopula):
-    u, v = sympy.symbols("u v", positive=True)
+    u, v = sp.symbols("u v", positive=True)
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
 
@@ -45,44 +45,113 @@ class BivCopula(CoreCopula):
     def __str__(self):
         return self.__class__.__name__
 
-    @classmethod
-    def _segregate_symbols(cls, func, func_params, copula_params):
-        free_symbols = {str(x): x for x in func.free_symbols}
-        if isinstance(func_params, str):
-            func_params = [func_params]
-        if len(free_symbols) == len(func_params):
-            if copula_params:
-                msg = "Params must be None if copula has only two free symbols"
-                raise ValueError(msg)
-            copula_vars = sorted([*free_symbols])
-            symbols = sympy.symbols(copula_vars)
-            for func_param, symbol in zip(func_params, symbols):
-                setattr(cls, func_param, symbol)
-            free_symbols = {}
-        else:
-            if isinstance(copula_params, str):
-                copula_params = [copula_params]
-            if copula_params is None and not set(func_params).issubset(free_symbols):
-                msg = "Params must be a list if copula free symbols are not u and v"
-                raise ValueError(msg)
-            elif copula_params is None:
-                copula_params = [x for x in free_symbols if x not in func_params]
-            copula_vars = [str(x) for x in free_symbols if x not in copula_params]
-            copula_vars.sort()
-            for x in copula_vars:
-                del free_symbols[x]
-        return copula_vars, free_symbols
+    @staticmethod
+    def _segregate_symbols(expr, func_var_name=None, params=None):
+        """
+        Separate function variables from parameters in a sympy expression.
+
+        Parameters:
+        -----------
+        expr : sympy expression
+            The expression to analyze
+        func_var_name : str, optional
+            Name of the expected function variable (e.g., 't')
+        params : list or None, optional
+            List of explicitly provided parameter symbols
+
+        Returns:
+        --------
+        tuple
+            (function_variables, parameters)
+        """
+        # Get all symbols from the expression
+        all_symbols = list(expr.free_symbols)
+
+        if not all_symbols:
+            return [], params or []
+
+        # If parameters were explicitly provided
+        if params is not None:
+            # Ensure params is a list
+            if not isinstance(params, list):
+                params = [params]
+
+            # Convert string parameters to sympy symbols if needed
+            param_symbols = []
+            for p in params:
+                if isinstance(p, str):
+                    param_symbols.append(sp.symbols(p, positive=True))
+                else:
+                    param_symbols.append(p)
+
+            # Function variables are all symbols that are not parameters
+            func_vars = [s for s in all_symbols if s not in param_symbols]
+            return func_vars, param_symbols
+
+        # If no parameters provided, try to identify based on function_var_name
+        if func_var_name:
+            # Find the function variable by name
+            func_vars = [s for s in all_symbols if str(s) == func_var_name]
+            if not func_vars and all_symbols:
+                # If no exact match found, try case-insensitive match
+                func_vars = [
+                    s for s in all_symbols if str(s).lower() == func_var_name.lower()
+                ]
+
+            # All other symbols are parameters
+            params = [s for s in all_symbols if s not in func_vars]
+            return func_vars, params
+
+        # If we can't determine, assume first symbol is function variable, rest are parameters
+        return [all_symbols[0]], all_symbols[1:]
 
     @classmethod
-    def _from_string(cls, free_symbols):
+    def _from_string(cls, params=None):
+        """
+        Create a new instance with parameters defined by string names.
+
+        Parameters:
+        -----------
+        params : list of sympy symbols or strings
+            The parameters for the copula
+
+        Returns:
+        --------
+        A new instance with parameters set as symbolic variables
+        """
         obj = cls()
-        obj._free_symbols = free_symbols  # Store free symbols for later use
 
-        for key in free_symbols:
-            setattr(obj, key, sympy.symbols(key, real=True))
-            value = getattr(obj, key)
-            obj.params.append(value)
-            obj.intervals[value] = sympy.Interval(-np.inf, np.inf)
+        # Ensure params is iterable
+        if params is None:
+            return obj
+
+        # Convert params to list if it's a single item
+        if not isinstance(params, list):
+            params = [params]
+
+        # Initialize or reset parameters
+        obj.params = []
+
+        # Process each parameter
+        for param in params:
+            # Convert string to symbol if needed
+            if isinstance(param, str):
+                param = sp.symbols(param, positive=True)
+
+            # Add to params list
+            obj.params.append(param)
+
+            # Add as attribute
+            param_name = str(param)
+            setattr(obj, param_name, param)
+
+            # Initialize _free_symbols if needed
+            if not hasattr(obj, "_free_symbols"):
+                obj._free_symbols = {}
+
+            # Add to free_symbols dictionary
+            obj._free_symbols[param_name] = param
+
         return obj
 
     def rvs(self, n=1, random_state=None):
@@ -91,56 +160,56 @@ class BivCopula(CoreCopula):
 
     @property
     def pdf(self):
-        result = sympy.simplify(sympy.diff(self.cond_distr_2().func, self.u))
+        result = sp.simplify(sp.diff(self.cond_distr_2().func, self.u))
         return SymPyFuncWrapper(result)
 
     def cond_distr_1(self, u=None, v=None):
-        result = CD1Wrapper(sympy.diff(self.cdf, self.u))
+        result = CD1Wrapper(sp.diff(self.cdf, self.u))
         return result(u, v)
 
     def cond_distr_2(self, u=None, v=None):
-        result = CD2Wrapper(sympy.diff(self.cdf, self.v))
+        result = CD2Wrapper(sp.diff(self.cdf, self.v))
         return result(u, v)
 
     def chatterjees_xi(self, *args, **kwargs):
         self._set_params(args, kwargs)
         log.debug("xi")
-        cond_distri_1 = sympy.simplify(self.cond_distr_1())
+        cond_distri_1 = sp.simplify(self.cond_distr_1())
         log.debug("cond_distr_1 sympy: ", cond_distri_1)
-        log.debug("cond_distr_1: ", sympy.latex(cond_distri_1))
+        log.debug("cond_distr_1: ", sp.latex(cond_distri_1))
         squared_cond_distr_1 = self._squared_cond_distr_1(self.u, self.v)
         log.debug("squared_cond_distr_1 sympy: ", squared_cond_distr_1)
-        log.debug("squared_cond_distr_1: ", sympy.latex(squared_cond_distr_1))
+        log.debug("squared_cond_distr_1: ", sp.latex(squared_cond_distr_1))
         int_1 = self._xi_int_1(self.v)
         log.debug("int_1 sympy: ", int_1)
-        log.debug("int_1: ", sympy.latex(int_1))
+        log.debug("int_1: ", sp.latex(int_1))
         int_2 = self._xi_int_2()
         log.debug("int_2 sympy: ", int_2)
-        log.debug("int_2: ", sympy.latex(int_2))
+        log.debug("int_2: ", sp.latex(int_2))
         xi = self._xi()
         log.debug("xi sympy: ", xi)
-        log.debug("xi: ", sympy.latex(xi))
+        log.debug("xi: ", sp.latex(xi))
         return SymPyFuncWrapper(xi)
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
         # log.debug("rho")
         # if isinstance(self.cdf, SymPyFunctionWrapper):
-        #     cdf = sympy.simplify(self.cdf.func)
+        #     cdf = sp.simplify(self.cdf.func)
         # else:
         #     cdf = self.cdf
         # log.debug("cdf sympy: ", cdf)
-        # log.debug("cdf latex: ", sympy.latex(cdf))
+        # log.debug("cdf latex: ", sp.latex(cdf))
         # int_1 = self._rho_int_1()
         # log.debug("int_1 sympy: ", int_1)
-        # log.debug("int_1 latex: ", sympy.latex(int_1))
+        # log.debug("int_1 latex: ", sp.latex(int_1))
         rho = self._rho()
         log.debug("rho sympy: ", rho)
-        log.debug("rho latex: ", sympy.latex(rho))
+        log.debug("rho latex: ", sp.latex(rho))
         return rho
 
     def _rho(self):
-        return sympy.simplify(12 * self._rho_int_2() - 3)
+        return sp.simplify(12 * self._rho_int_2() - 3)
 
     def kendalls_tau(self, *args, **kwargs):
         self._set_params(args, kwargs)
@@ -150,46 +219,46 @@ class BivCopula(CoreCopula):
         # else:
         #     integrand = self.cdf * self.pdf
         # log.debug("integrand sympy: ", integrand)
-        # log.debug("integrand latex: ", sympy.latex(integrand))
+        # log.debug("integrand latex: ", sp.latex(integrand))
         # int_1 = self._tau_int_1()
         # log.debug("int_1 sympy: ", int_1)
-        # log.debug("int_1 latex: ", sympy.latex(int_1))
+        # log.debug("int_1 latex: ", sp.latex(int_1))
         # int_2 = self._tau_int_2()
         # log.debug("int_2 sympy: ", int_2)
-        # log.debug("int_2 latex: ", sympy.latex(int_2))
+        # log.debug("int_2 latex: ", sp.latex(int_2))
         tau = self._tau()
         log.debug("tau sympy: ", tau)
-        log.debug("tau latex: ", sympy.latex(tau))
+        log.debug("tau latex: ", sp.latex(tau))
         return tau
 
     def _tau(self):
         return 4 * self._tau_int_2() - 1
 
     def _xi(self):
-        return sympy.simplify(6 * self._xi_int_2() - 2)
+        return sp.simplify(6 * self._xi_int_2() - 2)
 
     def _xi_int_2(self):
         integrand = self._xi_int_1(self.v)
-        return sympy.simplify(sympy.integrate(integrand, (self.v, 0, 1)))
+        return sp.simplify(sp.integrate(integrand, (self.v, 0, 1)))
 
     def _rho_int_2(self):
-        return sympy.simplify(sympy.integrate(self._rho_int_1(), (self.v, 0, 1)))
+        return sp.simplify(sp.integrate(self._rho_int_1(), (self.v, 0, 1)))
 
     def _tau_int_2(self):
-        return sympy.simplify(sympy.integrate(self._tau_int_1(), (self.v, 0, 1)))
+        return sp.simplify(sp.integrate(self._tau_int_1(), (self.v, 0, 1)))
 
     def _xi_int_1(self, v):
         squared_cond_distr_1 = self._squared_cond_distr_1(self.u, v)
-        return sympy.simplify(sympy.integrate(squared_cond_distr_1, (self.u, 0, 1)))
+        return sp.simplify(sp.integrate(squared_cond_distr_1, (self.u, 0, 1)))
 
     def _rho_int_1(self):
-        return sympy.simplify(sympy.integrate(self.cdf.func, (self.u, 0, 1)))
+        return sp.simplify(sp.integrate(self.cdf.func, (self.u, 0, 1)))
 
     def _tau_int_1(self):
-        return sympy.simplify(sympy.integrate(self.cdf.func * self.pdf, (self.u, 0, 1)))
+        return sp.simplify(sp.integrate(self.cdf.func * self.pdf, (self.u, 0, 1)))
 
     def _squared_cond_distr_1(self, u, v):
-        return sympy.simplify(self.cond_distr_1().func ** 2)
+        return sp.simplify(self.cond_distr_1().func ** 2)
 
     def plot(self, *args, **kwargs):
         if not args and not kwargs:
@@ -336,9 +405,9 @@ class BivCopula(CoreCopula):
             if isinstance(func, types.MethodType) and len(parameters) == 0:
                 func = func()
         if isinstance(func, SymPyFuncWrapper):
-            f = sympy.lambdify((self.u, self.v), func.func)
-        elif isinstance(func, sympy.Expr):
-            f = sympy.lambdify((self.u, self.v), func)
+            f = sp.lambdify((self.u, self.v), func.func)
+        elif isinstance(func, sp.Expr):
+            f = sp.lambdify((self.u, self.v), func)
         else:
             f = func
 
@@ -369,11 +438,11 @@ class BivCopula(CoreCopula):
         plt.show()
 
     def lambda_L(self):
-        return sympy.limit(self.cdf(v=self.u).func / self.u, self.u, 0, dir="+")
+        return sp.limit(self.cdf(v=self.u).func / self.u, self.u, 0, dir="+")
 
     def lambda_U(self):
         expr = (1 - self.cdf(v=self.u).func) / (1 - self.u)
-        return sympy.simplify(2 - sympy.limit(expr, self.u, 1, dir="-"))
+        return sp.simplify(2 - sp.limit(expr, self.u, 1, dir="-"))
 
     def is_tp2(self, range_min=None, range_max=None):
         return TP2Verifier(range_min, range_max).is_tp2(self)

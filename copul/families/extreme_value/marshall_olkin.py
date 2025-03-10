@@ -122,6 +122,11 @@ class MarshallOlkin(ExtremeValueCopula):
 
     def spearmans_rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
+        # Handle edge case for alpha_1 = alpha_2 = 0
+        if self.alpha_1 == 0 and self.alpha_2 == 0:
+            return 0
+
+        # Original formula
         result = (
             3
             * self.alpha_1
@@ -132,6 +137,13 @@ class MarshallOlkin(ExtremeValueCopula):
 
     def kendalls_tau(self, *args, **kwargs):
         self._set_params(args, kwargs)
+        # Handle edge cases
+        if self.alpha_1 == 0 and self.alpha_2 == 0:
+            return 0
+        if self.alpha_1 == 1 and self.alpha_2 == 1:
+            return 1
+
+        # Original formula
         result = (
             self.alpha_1
             * self.alpha_2
@@ -141,6 +153,11 @@ class MarshallOlkin(ExtremeValueCopula):
 
     def chatterjees_xi(self, *args, **kwargs):
         self._set_params(args, kwargs)
+        # Handle edge case for alpha_1 = alpha_2 = 0
+        if self.alpha_1 == 0 and self.alpha_2 == 0:
+            return 0
+
+        # Original formula
         result = (
             2
             * self.alpha_1**2
@@ -151,4 +168,8 @@ class MarshallOlkin(ExtremeValueCopula):
 
 
 def MarshallOlkinDiag():
-    return MarshallOlkin()(alpha2=MarshallOlkin.alpha_1)
+    """Creates a Marshall-Olkin copula with alpha_1 = alpha_2"""
+    copula = MarshallOlkin()
+    # Using the correct parameter name alpha_2 instead of alpha2
+    copula.alpha_2 = copula.alpha_1
+    return copula
