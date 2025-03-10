@@ -48,10 +48,25 @@ class Plackett(BivCopula):
         return SymPyFuncWrapper(get_simplified_solution(pdf))
 
     def spearmans_rho(self, *args, **kwargs):
+        """
+        Calculate Spearman's rho for the Plackett copula.
+
+        For the Plackett copula, the formula is:
+        rho = (theta + 1) / (theta - 1) - 4 * theta * log(theta) / (theta - 1)^2
+
+        Special case: when theta = 1, rho = 0 (independence)
+        """
         self._set_params(args, kwargs)
-        return (self.theta + 1) / (self.theta - 1) - 4 * self.theta * sympy.log(
-            self.theta
-        ) / (self.theta - 1) ** 2
+        theta = self.theta
+
+        # Special case: independence (theta = 1)
+        if theta == 1:
+            return 0
+
+        # Regular formula for theta != 1
+        return (theta + 1) / (theta - 1) - 2 * theta * sympy.log(theta) / (
+            theta - 1
+        ) ** 2
 
     def get_density_of_density(self):
         # D_vu(pdf)
