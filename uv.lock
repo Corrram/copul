@@ -470,7 +470,6 @@ dependencies = [
 dev = [
     { name = "black" },
     { name = "build" },
-    { name = "isort" },
     { name = "jupyter" },
     { name = "mypy" },
     { name = "pylint" },
@@ -488,7 +487,6 @@ dev = [
 requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=24.8" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=0.10.0" },
-    { name = "isort", marker = "extra == 'dev'", specifier = ">=6.0.0" },
     { name = "joblib", specifier = ">=1.4.2" },
     { name = "jupyter", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "matplotlib", specifier = ">=3.9" },

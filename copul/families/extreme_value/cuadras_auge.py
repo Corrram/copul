@@ -1,7 +1,6 @@
 import logging
 
 import sympy as sp
-from sympy import DiracDelta, Heaviside, Min
 
 from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula

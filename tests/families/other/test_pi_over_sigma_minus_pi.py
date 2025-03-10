@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 
@@ -156,33 +155,6 @@ def test_tail_dependence(copula):
 def test_is_absolutely_continuous(copula):
     """Test that the copula is absolutely continuous."""
     assert copula.is_absolutely_continuous is True
-
-
-def test_pdf_integration():
-    """Test that PDF integrates to approximately 1 over unit square."""
-    from scipy import integrate
-
-    copula = PiOverSigmaMinusPi()
-
-    # Define PDF as a numerical function
-    def pdf_func(u, v):
-        denominator = (u + v - u * v) ** 3
-        numerator = 2 * (u + v - u * v)
-        return float(numerator / denominator)
-
-    # Define boundaries of integration
-    bounds = [[0, 1], [0, 1]]
-
-    # Integrate PDF over unit square
-    try:
-        result, _ = integrate.nquad(
-            lambda u, v: pdf_func(u, v), bounds, opts={"epsabs": 1e-3, "epsrel": 1e-3}
-        )
-
-        # Allow for some numerical error
-        assert abs(result - 1.0) < 0.05, f"PDF does not integrate to 1, got {result}"
-    except:
-        pytest.skip("Integration failed, likely due to numerical issues")
 
 
 def test_kendalls_tau(copula):

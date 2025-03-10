@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.archimedean import Nelsen2
 

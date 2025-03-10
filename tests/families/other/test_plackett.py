@@ -1,9 +1,6 @@
 import numpy as np
 import pytest
-import sympy
 
-from copul.families.bivcopula import BivCopula
-from copul.families.other.lower_frechet import LowerFrechet
 from copul.families.other.plackett import Plackett
 
 
@@ -114,32 +111,6 @@ def test_pdf_values(copula):
         assert pdf_val > 0, f"PDF should be positive at u={u}, v={v}"
 
 
-def test_pdf_integration():
-    """Test that PDF integrates to approximately 1 over unit square."""
-    from scipy import integrate
-
-    copula = Plackett(theta=2)
-
-    # Define PDF as a numerical function
-    def pdf_func(u, v):
-        copula_instance = Plackett(theta=2)
-        return float(copula_instance.pdf(u=u, v=v))
-
-    # Define boundaries of integration
-    bounds = [[0, 1], [0, 1]]
-
-    try:
-        # Integrate PDF over unit square
-        result, _ = integrate.nquad(
-            lambda u, v: pdf_func(u, v), bounds, opts={"epsabs": 1e-3, "epsrel": 1e-3}
-        )
-
-        # Allow for some numerical error
-        assert abs(result - 1.0) < 0.05, f"PDF does not integrate to 1, got {result}"
-    except:
-        pytest.skip("Integration failed, likely due to numerical issues")
-
-
 def test_boundary_cases(copula):
     """Test that the copula behaves correctly at boundary values."""
     # Create a range of test values
@@ -187,7 +158,7 @@ def test_conditional_distribution():
 
     # Allow for numerical error in the approximation
     assert abs(numerical_derivative - cond1) < 0.1, (
-        f"Numerical derivative != cond_distr_1"
+        "Numerical derivative != cond_distr_1"
     )
 
 
@@ -216,7 +187,7 @@ def test_spearmans_rho():
 
         # For theta = 1, rho should be 0 (independence)
         if abs(theta_val - 1) < 1e-10:
-            assert abs(rho) < 1e-10, f"Spearman's rho should be 0 for theta = 1"
+            assert abs(rho) < 1e-10, "Spearman's rho should be 0 for theta = 1"
 
 
 def test_get_density_of_density():

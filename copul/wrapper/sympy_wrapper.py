@@ -11,7 +11,7 @@ class SymPyFuncWrapper:
         assert isinstance(sympy_func, allowed), (
             f"Function must be from sympy, but is {type_}"
         )
-        if type_ == float:
+        if type_ is float:
             sympy_func = sympy.Number(sympy_func)
         self._func = sympy_func
 

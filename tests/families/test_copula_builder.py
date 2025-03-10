@@ -1,5 +1,3 @@
-import random
-
 import matplotlib
 import numpy as np
 import sympy

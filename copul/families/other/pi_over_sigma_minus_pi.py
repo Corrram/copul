@@ -1,5 +1,3 @@
-import sympy
-
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper

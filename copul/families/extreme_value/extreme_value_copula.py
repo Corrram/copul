@@ -224,10 +224,8 @@ class ExtremeValueCopula(BivCopula):
         defined_params = {
             k: v for k, v in params.items() if not isinstance(v, sp.Symbol)
         }
-        dict_str = ", ".join(
-            f"\\{key}={value}" for key, value in defined_params.items()
-        )
-        x_label = f"$t$"
+        ", ".join(f"\\{key}={value}" for key, value in defined_params.items())
+        x_label = "$t$"
         plt.xlabel(x_label)
 
         plt.grid(True)

@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul import Nelsen4
 from copul.families.archimedean import GumbelHougaard

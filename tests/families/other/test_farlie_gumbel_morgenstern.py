@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.bivcopula import BivCopula
 from copul.families.other.farlie_gumbel_morgenstern import FarlieGumbelMorgenstern

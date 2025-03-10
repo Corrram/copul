@@ -87,7 +87,7 @@ class DerivativesOverviewConstructor:
             .rename(columns={i: "Value", "index": "Characteristic"})
             for i in my_range
         }
-        table_strs = [
+        [
             self._cleanse_latex_str(v.to_latex(escape=False))
             + "\\caption{"
             + k
@@ -115,9 +115,7 @@ class DerivativesOverviewConstructor:
                 + ".\n\\end{align}\n"
             )
 
-        table_strs2 = {k: table_to_formula(k, v) for k, v in tables.items()}
-        start_str = "\\begin{table}[H]\\begin{center}"
-        end_str = "\\end{center}\\end{table}"
+        {k: table_to_formula(k, v) for k, v in tables.items()}
         # full_table = "\n\n".join([start_str + tab + end_str for tab in table_strs])
         # full_table2 = "\\begin{itemize}\n" + "\n\n".join([table_strs2[tab] for tab in table_strs2]) + "\\end{itemize}"
 

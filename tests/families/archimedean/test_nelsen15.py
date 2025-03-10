@@ -1,8 +1,5 @@
-from unittest.mock import MagicMock, patch
-
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.archimedean.nelsen15 import GenestGhoudi, Nelsen15
 from copul.families.other.lower_frechet import LowerFrechet

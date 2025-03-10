@@ -49,7 +49,6 @@ coverage:
 
 # Format code with isort and black
 format:
-	$(ISORT) .
 	$(UV) run ruff check --fix .
 	$(UV) run ruff format .
 

@@ -22,7 +22,9 @@ class SchurVisualizer:
 
     def compute(self):
         if isinstance(self.copula, (BivCheckPi, BivCheckMin)):
-            amh1_l = lambda u: self.copula.cond_distr_1(u, self._v)
+
+            def amh1_l(u):
+                return self.copula.cond_distr_1(u, self._v)
         else:
             amh1_cd1 = self.copula.cond_distr_1(v=self._v).func
             amh1_l = sp.lambdify(self.copula.u, amh1_cd1, "numpy")

@@ -20,3 +20,35 @@ from copul.families.archimedean.nelsen19 import Nelsen19
 from copul.families.archimedean.nelsen20 import Nelsen20
 from copul.families.archimedean.nelsen21 import Nelsen21
 from copul.families.archimedean.nelsen22 import Nelsen22
+
+__all__ = [
+    "Clayton",
+    "Nelsen1",
+    "Nelsen2",
+    "AliMikhailHaq",
+    "Nelsen3",
+    "GumbelHougaard",
+    "Nelsen4",
+    "Frank",
+    "Nelsen5",
+    "Joe",
+    "Nelsen6",
+    "Nelsen7",
+    "Nelsen8",
+    "GumbelBarnett",
+    "Nelsen9",
+    "Nelsen10",
+    "Nelsen11",
+    "Nelsen12",
+    "Nelsen13",
+    "Nelsen14",
+    "GenestGhoudi",
+    "Nelsen15",
+    "Nelsen16",
+    "Nelsen17",
+    "Nelsen18",
+    "Nelsen19",
+    "Nelsen20",
+    "Nelsen21",
+    "Nelsen22",
+]
