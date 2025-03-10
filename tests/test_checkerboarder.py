@@ -26,7 +26,9 @@ def test_xi_computation():
     np.random.seed(121)
     copula = copul.Families.NELSEN7.value(0.5)
     checkerboarder = copul.Checkerboarder(10)
-    ccop = checkerboarder.compute_check_pi(copula)  # Fixed: was using 'clayton' which is undefined
+    ccop = checkerboarder.compute_check_pi(
+        copula
+    )  # Fixed: was using 'clayton' which is undefined
     orig_xi = copula.chatterjees_xi()
     xi = ccop.chatterjees_xi(1_000)
     assert 0.5 * orig_xi <= xi <= orig_xi
@@ -57,8 +59,7 @@ def test_different_copula_families():
     """Test Checkerboarder with different copula families."""
     # Test with available copula families in your implementation
     # Fixed: using the families that actually exist in your package
-    for family_param in [(copul.Families.CLAYTON, 2),
-                         (copul.Families.NELSEN7, 0.5)]:
+    for family_param in [(copul.Families.CLAYTON, 2), (copul.Families.NELSEN7, 0.5)]:
         family, param = family_param
         copula = family.value(param)
         checkerboarder = copul.Checkerboarder(5)
@@ -79,7 +80,7 @@ def test_from_data_bivariate():
     rho = 0.7
     cov_matrix = np.array([[1, rho], [rho, 1]])
     data = np.random.multivariate_normal(mean=[0, 0], cov=cov_matrix, size=n_samples)
-    df = pd.DataFrame(data, columns=['X', 'Y'])
+    df = pd.DataFrame(data, columns=["X", "Y"])
 
     # Create checkerboard from data
     checkerboarder = copul.Checkerboarder(10)
@@ -121,6 +122,7 @@ def test_direct_from_data():
 
     # Use the function directly from the module where it's defined
     from copul.schur_order.checkerboarder import from_data
+
     ccop = from_data(data, checkerboard_size=5)
 
     assert ccop.matr.shape == (5, 5)

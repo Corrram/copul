@@ -2,6 +2,7 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
+from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -11,7 +12,11 @@ class AliMikhailHaq(ArchimedeanCopula):
     """
 
     ac = ArchimedeanCopula
-    theta_interval = sympy.Interval(-1, 1, left_open=False, right_open=True)
+    theta_interval = sympy.Interval(-1, 1, left_open=False, right_open=False)
+    special_cases = {
+        0: IndependenceCopula,
+        1: PiOverSigmaMinusPi,
+    }
 
     def __str__(self):
         return super().__str__()
@@ -23,12 +28,6 @@ class AliMikhailHaq(ArchimedeanCopula):
     @property
     def _generator(self):
         return sympy.log((1 - self.theta * (1 - self.t)) / self.t)
-
-    def __call__(self, **kwargs):
-        if "theta" in kwargs and kwargs["theta"] == 1:
-            new_copula = PiOverSigmaMinusPi()
-            return new_copula(**kwargs)
-        return super().__call__(**kwargs)
 
     @property
     def inv_generator(self):

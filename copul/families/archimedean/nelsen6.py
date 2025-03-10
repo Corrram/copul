@@ -3,6 +3,7 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
+from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -10,6 +11,7 @@ class Joe(HeavyComputeArch):
     ac = ArchimedeanCopula
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(1, np.inf, left_open=False, right_open=True)
+    special_cases = {1: IndependenceCopula}
 
     @property
     def is_absolutely_continuous(self) -> bool:

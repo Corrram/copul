@@ -22,35 +22,87 @@ class ArchimedeanCopula(BivCopula, ABC):
     theta_interval = None
     params = [theta]
     _generator = None
+    # Dictionary mapping parameter values to special case classes
+    special_cases = {}  # To be overridden by subclasses
+    # Set of parameter values that are invalid (will raise ValueError)
+    invalid_params = set()  # To be overridden by subclasses
 
-    def __init__(self, *args, **kwargs):
-        """Initialize an Archimedean copula with parameter validation.
-        
-        Parameters
-        ----------
-        *args : positional arguments
-            First argument is interpreted as theta parameter.
-        **kwargs : keyword arguments
-            'theta' : Copula parameter.
-            
-        Raises
-        ------
-        ValueError
-            If theta is outside the valid parameter range defined by theta_interval.
-        """
+    @classmethod
+    def create(cls, *args, **kwargs):
+        """Factory method to create the appropriate copula instance based on parameters."""
+        # Handle positional arguments
         if args is not None and len(args) > 0:
             kwargs["theta"] = args[0]
-            
+
+        # Check for invalid parameters
+        if "theta" in kwargs and kwargs["theta"] in cls.invalid_params:
+            raise ValueError(f"Parameter theta cannot be {kwargs['theta']}")
+
+        # Check for special cases
+        if "theta" in kwargs and kwargs["theta"] in cls.special_cases:
+            special_case_cls = cls.special_cases[kwargs["theta"]]
+            del kwargs["theta"]  # Remove theta before creating special case
+            return special_case_cls()
+
+        # Otherwise create a normal instance
+        return cls(**kwargs)
+
+    def __new__(cls, *args, **kwargs):
+        """Override __new__ to handle special cases."""
+        # Handle positional arguments
+        if args is not None and len(args) > 0:
+            kwargs["theta"] = args[0]
+
+        # Check for invalid parameters
+        if "theta" in kwargs and kwargs["theta"] in cls.invalid_params:
+            raise ValueError(f"Parameter theta cannot be {kwargs['theta']}")
+
+        # Check for special cases
+        if "theta" in kwargs and kwargs["theta"] in cls.special_cases:
+            special_case_cls = cls.special_cases[kwargs["theta"]]
+            del kwargs["theta"]  # Remove theta before creating special case
+            return special_case_cls()
+
+        # Standard creation for normal cases
+        return super().__new__(cls)
+
+    def __call__(self, *args, **kwargs):
+        """Handle special cases when calling the instance."""
+        if args is not None and len(args) > 0:
+            kwargs["theta"] = args[0]
+
+        # Check for invalid parameters
+        if "theta" in kwargs and kwargs["theta"] in self.__class__.invalid_params:
+            raise ValueError(f"Parameter theta cannot be {kwargs['theta']}")
+
+        # Check for special cases
+        if "theta" in kwargs and kwargs["theta"] in self.__class__.special_cases:
+            special_case_cls = self.__class__.special_cases[kwargs["theta"]]
+            del kwargs["theta"]  # Remove theta before creating special case
+            return special_case_cls()
+
+        # Create a new instance with updated parameters
+        # Merge existing parameters with new ones
+        new_kwargs = {**self._free_symbols}
+        new_kwargs.update(kwargs)
+        return self.__class__(**new_kwargs)
+
+    # Rest of the class implementation remains the same...
+    def __init__(self, *args, **kwargs):
+        """Initialize an Archimedean copula with parameter validation."""
+        if args is not None and len(args) > 0:
+            kwargs["theta"] = args[0]
+
         # Validate theta parameter against theta_interval if defined
         if "theta" in kwargs and self.theta_interval is not None:
             theta_val = kwargs["theta"]
-            
+
             # Extract bounds from the interval
             lower_bound = float(self.theta_interval.start)
             upper_bound = float(self.theta_interval.end)
             left_open = self.theta_interval.left_open
             right_open = self.theta_interval.right_open
-            
+
             # Check lower bound
             if left_open and theta_val <= lower_bound:
                 raise ValueError(
@@ -60,7 +112,7 @@ class ArchimedeanCopula(BivCopula, ABC):
                 raise ValueError(
                     f"Parameter theta must be >= {lower_bound}, got {theta_val}"
                 )
-                
+
             # Check upper bound
             if right_open and theta_val >= upper_bound:
                 raise ValueError(
@@ -70,7 +122,7 @@ class ArchimedeanCopula(BivCopula, ABC):
                 raise ValueError(
                     f"Parameter theta must be <= {upper_bound}, got {theta_val}"
                 )
-                
+
         super().__init__(**kwargs)
 
     def __str__(self):

@@ -2,19 +2,15 @@ import numpy as np
 import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen17(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta_interval = sympy.Interval(-np.inf, np.inf, left_open=True, right_open=True)
-
-    def __call__(self, *args, **kwargs):
-        if args is not None and len(args) > 0:
-            kwargs["theta"] = args[0]
-        if "theta" in kwargs and kwargs["theta"] == 0:
-            raise ValueError("theta cannot be 0")
-        return super().__call__(**kwargs)
+    special_cases = {-1: IndependenceCopula}
+    invalid_params = {0}
 
     @property
     def is_absolutely_continuous(self) -> bool:

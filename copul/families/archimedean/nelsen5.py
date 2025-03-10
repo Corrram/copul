@@ -1,5 +1,6 @@
 import numpy as np
 import sympy
+from scipy import integrate
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
@@ -9,6 +10,8 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 class Frank(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta_interval = sympy.Interval(-np.inf, np.inf, left_open=True, right_open=True)
+    # Define special cases
+    special_cases = {0: IndependenceCopula}
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -19,14 +22,6 @@ class Frank(ArchimedeanCopula):
         return -sympy.log(
             (sympy.exp(-self.theta * self.t) - 1) / (sympy.exp(-self.theta) - 1)
         )
-
-    def __call__(self, *args, **kwargs):
-        if args is not None and len(args) > 0:
-            kwargs["theta"] = args[0]
-        if "theta" in kwargs and kwargs["theta"] == 0:
-            del kwargs["theta"]
-            return IndependenceCopula()(**kwargs)
-        return super().__call__(**kwargs)
 
     @property
     def inv_generator(self):
@@ -39,6 +34,7 @@ class Frank(ArchimedeanCopula):
 
     @property
     def cdf(self):
+        """Cumulative distribution function of the copula"""
         theta = self.theta
         u = self.u
         v = self.v
@@ -106,30 +102,93 @@ class Frank(ArchimedeanCopula):
         )
 
     def spearmans_rho(self, *args, **kwargs):
+        """
+        Calculate Spearman's rho for the Frank copula using numerical integration.
+
+        For theta = 0, returns 0 (independence).
+        """
         self._set_params(args, kwargs)
-        theta = self.theta
-        func = 1 - 12 / theta * (self._d_1() - self._d_2())
-        return sympy.Piecewise((func, theta != 0), (0, True))
+        theta = abs(float(self.theta))
+
+        if theta == 0:
+            return 0
+
+        # Use numerical integration for calculating Debye functions
+        d1 = self._debye_function(1, theta)
+        d2 = self._debye_function(2, theta)
+
+        # For Frank copula, rho = 1 - 12(D₁ - D₂)/θ
+        rho = 1 - 12 * (d1 - d2) / theta
+        return rho * np.sign(self.theta)
 
     def kendalls_tau(self, *args, **kwargs):
+        """
+        Calculate Kendall's tau for the Frank copula using numerical integration.
+
+        For theta = 0, returns 0 (independence).
+        """
         self._set_params(args, kwargs)
-        theta = self.theta
-        func = 1 - 4 / theta * (1 - self._d_1())
-        return sympy.Piecewise((func, theta != 0), (0, True))
+        theta = abs(float(self.theta))
+
+        if theta == 0:
+            return 0
+
+        # Use numerical integration for calculating Debye function
+        d1 = self._debye_function(1, theta)
+
+        # For Frank copula, tau = 1 + 4(D₁ - 1)/θ
+        tau = 1 + 4 * (d1 - 1) / theta
+        return tau * np.sign(self.theta)
+
+    def _debye_function(self, n, x):
+        """
+        Calculate the Debye function of order n for parameter x.
+
+        Uses numerical integration for accurate results.
+
+        Args:
+            n (int): Order of the Debye function
+            x (float): Parameter value
+
+        Returns:
+            float: Value of the Debye function
+        """
+        if x == 0:
+            return 1.0  # Limit value
+
+        # Make sure we're working with the right sign
+        x_abs = abs(x)
+
+        # Define the integrand for the Debye function
+        def integrand(t):
+            return t**n / (np.exp(t) - 1)
+
+        # Calculate the integral
+        result, _ = integrate.quad(integrand, 0, x_abs)
+
+        # Apply the normalization factor
+        debye_value = n / x_abs**n * result
+        return debye_value
 
     def _d_1(self):
-        t = sympy.Symbol("t")
-        polylog = t * sympy.log(1 - sympy.exp(-t)) - sympy.polylog(2, sympy.exp(-t))
-        return 1 / self.theta * polylog.subs(t, self.theta)  # todo fix integral
+        """
+        Helper function for Debye function of first order.
+        Used in Kendall's tau calculation.
+        """
+        theta = float(self.theta)
+        if theta == 0:
+            return 1.0
+        return self._debye_function(1, theta)
 
     def _d_2(self):
-        t = sympy.Symbol("t")
-        polylog = (
-            -2 * t * sympy.polylog(2, sympy.exp(-t))
-            - 2 * sympy.polylog(3, sympy.exp(-t))
-            + t**2 * sympy.log(1 - sympy.exp(-t))
-        )
-        return 2 / self.theta**2 * polylog.subs(t, self.theta)  # todo fix integral
+        """
+        Helper function for Debye function of second order.
+        Used in Spearman's rho calculation.
+        """
+        theta = float(self.theta)
+        if theta == 0:
+            return 1.0
+        return self._debye_function(2, theta)
 
     def lambda_L(self):
         return 0

@@ -11,6 +11,6 @@ def test_nelsen10():
 
     # Call plot_cdf and simply ensure it does not raise an exception
     try:
-        nelsen.plot_pdf()
+        nelsen.plot_cdf()
     except Exception as e:
         pytest.fail(f"plot_cdf() raised an exception: {e}")

@@ -10,14 +10,9 @@ class GenestGhoudi(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(1, np.inf, left_open=False, right_open=True)
-
-    def __call__(self, *args, **kwargs):
-        if args is not None and len(args) > 0:
-            kwargs["theta"] = args[0]
-        if "theta" in kwargs and kwargs["theta"] == 1:
-            del kwargs["theta"]
-            return LowerFrechet()(**kwargs)
-        return super().__call__(**kwargs)
+    special_cases = {
+        1: LowerFrechet,
+    }
 
     @property
     def is_absolutely_continuous(self) -> bool:

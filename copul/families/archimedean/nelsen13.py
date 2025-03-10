@@ -11,14 +11,7 @@ class Nelsen13(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, np.inf, left_open=False, right_open=True)
-
-    def __call__(self, *args, **kwargs):
-        if args is not None and len(args) > 0:
-            kwargs["theta"] = args[0]
-        if "theta" in kwargs and kwargs["theta"] == 0:
-            del kwargs["theta"]
-            return IndependenceCopula()(**kwargs)
-        return super().__call__(**kwargs)
+    special_cases = {0: IndependenceCopula}
 
     @property
     def is_absolutely_continuous(self) -> bool:

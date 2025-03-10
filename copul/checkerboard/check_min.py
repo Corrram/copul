@@ -7,7 +7,6 @@ import sympy
 
 from copul.exceptions import PropertyUnavailableException
 
-
 log = logging.getLogger(__name__)
 
 

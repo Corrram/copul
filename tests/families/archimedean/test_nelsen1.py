@@ -1,8 +1,8 @@
-import pytest
 import numpy as np
+import pytest
 import sympy
 
-from copul.families.archimedean import Nelsen1, Clayton
+from copul.families.archimedean import Clayton, Nelsen1
 from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
 
 
@@ -10,9 +10,9 @@ from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
 def test_is_absolutely_continuous(theta, expected):
     copula = Nelsen1(theta)
     result = copula.is_absolutely_continuous
-    assert (
-        result == expected
-    ), f"Failed for theta={theta}: Expected {expected}, but got {result}"
+    assert result == expected, (
+        f"Failed for theta={theta}: Expected {expected}, but got {result}"
+    )
 
 
 @pytest.mark.parametrize("theta", [1, 5, -0.5])
@@ -40,13 +40,13 @@ def test_generator_properties(theta):
 def test_generator_properties_theta_zero():
     """Test generator properties specifically for theta=0 case."""
     copula = Clayton(0)
-    
+
     # Create test values
     t_vals = np.linspace(0.1, 0.9, 5)
-    
+
     # Get the generator function
     gen = copula._generator
-    
+
     # Test generator at specific points
     for t in t_vals:
         generator_val = -np.log(t)  # Logarithmic generator for theta=0
@@ -98,23 +98,24 @@ def test_tail_dependence(theta):
 def test_special_case_independence():
     """Test independence copula special case (theta=0)."""
     copula = Clayton(0)
-    
+
     # Check instance
     from copul.families.other.independence_copula import IndependenceCopula
+
     # Since we're now returning the instance directly instead of calling it
     assert isinstance(copula, IndependenceCopula)
-    
+
     # Check CDF property
     u, v = 0.3, 0.7
     cdf_val = float(copula.cdf(u=u, v=v))
-    assert abs(cdf_val - (u * v)) < 1e-10, f"C({u},{v}) should be {u*v}"
+    assert abs(cdf_val - (u * v)) < 1e-10, f"C({u},{v}) should be {u * v}"
 
 
 @pytest.mark.parametrize("theta", [0.5, 1, 3])
 def test_special_cases(theta):
     """Test special cases of the Clayton copula."""
     copula = Clayton(theta)
-    
+
     # When theta approaches infinity, approaches comonotonicity
     if theta == 3:  # Large value to approximate
         u, v = 0.3, 0.7
@@ -197,52 +198,67 @@ def test_conditional_distributions(theta):
 @pytest.mark.parametrize(
     "theta, u, v, expected_cdf",
     [
-        (1, 0.5, 0.5, 1/(0.5**(-1) + 0.5**(-1) - 1)),  # theta=1, symmetric point
-        (2, 0.3, 0.7, ((0.3**(-2) + 0.7**(-2) - 1)**(-1/2))),  # theta=2, asymmetric point
-        (-0.5, 0.4, 0.6, ((0.4**(0.5) + 0.6**(0.5) - 1)**2)),  # negative theta
+        (1, 0.5, 0.5, 1 / (0.5 ** (-1) + 0.5 ** (-1) - 1)),  # theta=1, symmetric point
+        (
+            2,
+            0.3,
+            0.7,
+            ((0.3 ** (-2) + 0.7 ** (-2) - 1) ** (-1 / 2)),
+        ),  # theta=2, asymmetric point
+        (-0.5, 0.4, 0.6, ((0.4 ** (0.5) + 0.6 ** (0.5) - 1) ** 2)),  # negative theta
     ],
 )
 def test_specific_cdf_values(theta, u, v, expected_cdf):
     """Test specific numerical values of the CDF with correct formula."""
     copula = Clayton(theta)
     cdf_val = float(copula.cdf(u=u, v=v))
-    
+
     # Calculate expected CDF value based on the formula
     if theta == 1:
-        expected = 1/(u**(-1) + v**(-1) - 1)
+        expected = 1 / (u ** (-1) + v ** (-1) - 1)
     elif theta == 2:
-        expected = (u**(-2) + v**(-2) - 1)**(-1/2)
+        expected = (u ** (-2) + v ** (-2) - 1) ** (-1 / 2)
     elif theta == -0.5:
-        expected = max((u**(0.5) + v**(0.5) - 1)**2, 0)
-        
-    assert abs(cdf_val - expected) < 1e-6, f"CDF value incorrect for theta={theta}, u={u}, v={v}"
+        expected = max((u ** (0.5) + v ** (0.5) - 1) ** 2, 0)
+
+    assert abs(cdf_val - expected) < 1e-6, (
+        f"CDF value incorrect for theta={theta}, u={u}, v={v}"
+    )
 
 
 def test_theta_boundary_values():
     """Test that the copula correctly changes to special cases at boundary values."""
     # When theta = -1, should return LowerFrechet
     from copul.families.other.lower_frechet import LowerFrechet
-    
+
     # Make sure we get a LowerFrechet instance directly
     copula = Clayton(-1)
-    assert isinstance(copula, LowerFrechet), "Clayton(-1) should return a LowerFrechet instance"
-    
+    assert isinstance(copula, LowerFrechet), (
+        "Clayton(-1) should return a LowerFrechet instance"
+    )
+
     # Also test with __call__
     clayton_instance = Clayton(1)  # Create with non-boundary theta
     lower_frechet_instance = clayton_instance(-1)  # Call with boundary theta
-    assert isinstance(lower_frechet_instance, LowerFrechet), "Clayton.__call__(-1) should return a LowerFrechet instance"
-    
+    assert isinstance(lower_frechet_instance, LowerFrechet), (
+        "Clayton.__call__(-1) should return a LowerFrechet instance"
+    )
+
     # When theta = 0, should return IndependenceCopula
     from copul.families.other.independence_copula import IndependenceCopula
-    
+
     # Make sure we get an IndependenceCopula instance directly
     copula = Clayton(0)
-    assert isinstance(copula, IndependenceCopula), "Clayton(0) should return an IndependenceCopula instance"
-    
+    assert isinstance(copula, IndependenceCopula), (
+        "Clayton(0) should return an IndependenceCopula instance"
+    )
+
     # Also test with __call__
     clayton_instance = Clayton(1)  # Create with non-boundary theta
     independence_instance = clayton_instance(0)  # Call with boundary theta
-    assert isinstance(independence_instance, IndependenceCopula), "Clayton.__call__(0) should return an IndependenceCopula instance"
+    assert isinstance(independence_instance, IndependenceCopula), (
+        "Clayton.__call__(0) should return an IndependenceCopula instance"
+    )
 
 
 def test_special_instance():

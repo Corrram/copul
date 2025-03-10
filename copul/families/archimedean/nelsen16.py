@@ -2,6 +2,7 @@ import numpy as np
 import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.other.lower_frechet import LowerFrechet
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
@@ -10,6 +11,7 @@ class Nelsen16(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, np.inf, left_open=False, right_open=True)
+    special_cases = {0: LowerFrechet}
 
     @property
     def is_absolutely_continuous(self) -> bool:
