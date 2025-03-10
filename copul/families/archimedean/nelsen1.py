@@ -13,63 +13,8 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 class Clayton(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta_interval = sympy.Interval(-1, np.inf, left_open=False, right_open=True)
-
-    @classmethod
-    def create(cls, *args, **kwargs):
-        """Factory method to create the appropriate copula instance."""
-        # ToDo - this create, __new__, and __call__ methods should be implemented in the base class
-        # this can be achieved by in the subclass having a class attribute mentioning the special cases
-        # and then the base class can handle the special cases
-        # Handle positional arguments
-        if args is not None and len(args) > 0:
-            kwargs["theta"] = args[0]
-            
-        # Check for special case: theta = -1 (Lower Fréchet)
-        if "theta" in kwargs and kwargs["theta"] == -1:
-            del kwargs["theta"]
-            return LowerFrechet()
-            
-        # Check for special case: theta = 0 (Independence)
-        if "theta" in kwargs and kwargs["theta"] == 0:
-            del kwargs["theta"]
-            return IndependenceCopula()
-            
-        # Otherwise create a Clayton copula
-        return cls(**kwargs)
-
-    def __new__(cls, *args, **kwargs):
-        """Override __new__ to handle special cases."""
-        # Handle positional arguments
-        if args is not None and len(args) > 0:
-            kwargs["theta"] = args[0]
-            
-        # Check for special cases
-        if "theta" in kwargs:
-            if kwargs["theta"] == -1:
-                del kwargs["theta"]
-                return LowerFrechet()
-            if kwargs["theta"] == 0:
-                del kwargs["theta"]
-                return IndependenceCopula()
-                
-        # Standard creation for normal cases
-        return super().__new__(cls)
-    
-    def __call__(self, *args, **kwargs):
-        """Handle special cases when calling the instance."""
-        if args is not None and len(args) > 0:
-            kwargs["theta"] = args[0]
-            
-        # Check for special cases
-        if "theta" in kwargs:
-            if kwargs["theta"] == -1:
-                del kwargs["theta"]
-                return LowerFrechet()
-            if kwargs["theta"] == 0:
-                del kwargs["theta"]
-                return IndependenceCopula()
-                
-        return super().__call__(**kwargs)
+    # Define special cases as a dictionary mapping parameter values to classes
+    special_cases = {-1: LowerFrechet, 0: IndependenceCopula}
 
     @property
     def _generator(self):
@@ -93,21 +38,21 @@ class Clayton(ArchimedeanCopula):
         u = self.u
         theta = self.theta
         v = self.v
-        
+
         # Special case for theta = 0 (Independence Copula)
         if theta == 0:
             return CDFWrapper(u * v)
-            
+
         cdf = sympy.Max((u ** (-theta) + v ** (-theta) - 1), 0) ** (-1 / theta)
         return CDFWrapper(cdf)
 
     def cond_distr_1(self, u=None, v=None):
         theta = self.theta
-        
+
         # Handle special case for theta = 0
         if theta == 0:
             return v  # For independence copula, conditional distribution is just v
-            
+
         cond_distr = sympy.Heaviside(-1 + self.u ** (-theta) + self.v ** (-theta)) / (
             self.u
             * self.u**theta
@@ -120,11 +65,11 @@ class Clayton(ArchimedeanCopula):
 
     def cond_distr_2(self, u=None, v=None):
         theta = self.theta
-        
+
         # Handle special case for theta = 0
         if theta == 0:
             return u  # For independence copula, conditional distribution is just u
-            
+
         cond_distr = sympy.Heaviside(
             (-1 + self.v ** (-theta) + self.u ** (-theta)) ** (-1 / theta)
         ) / (
@@ -137,11 +82,11 @@ class Clayton(ArchimedeanCopula):
 
     def _squared_cond_distr_1(self, u, v):
         theta = self.theta
-        
+
         # Handle special case for theta = 0
         if theta == 0:
             return 0  # For independence copula, second derivative is 0
-            
+
         return sympy.Heaviside((-1 + v ** (-theta) + u ** (-theta)) ** (-1 / theta)) / (
             u**2
             * u ** (2 * theta)
@@ -152,11 +97,11 @@ class Clayton(ArchimedeanCopula):
     @property
     def pdf(self):
         theta = self.theta
-        
+
         # Handle special case for theta = 0
         if theta == 0:
             return SymPyFuncWrapper(1)  # Uniform density for independence copula
-            
+
         result = (
             (self.u ** (-theta) + self.v ** (-theta) - 1) ** (-2 - 1 / theta)
             * self.u ** (-theta - 1)

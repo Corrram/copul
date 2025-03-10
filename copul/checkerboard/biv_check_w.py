@@ -1,12 +1,13 @@
-import logging
-import numpy as np
 import itertools
+import logging
+
+import numpy as np
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.exceptions import PropertyUnavailableException
 
-
 log = logging.getLogger(__name__)
+
 
 class BivCheckW(BivCheckPi):
     """
@@ -23,6 +24,7 @@ class BivCheckW(BivCheckPi):
        - Numerator: sum of slice cells that lie fully below the threshold
        - cond_distr = numerator / denominator
     """
+
     def __init__(self, matr):
         """
         Initialize the 2D W-copula with a matrix of nonnegative weights.
@@ -215,7 +217,7 @@ class BivCheckW(BivCheckPi):
 
             # Compute the interpolated point
             out[i, 0] = lower_x + u * range_x
-            out[i, 1] = lower_y + (1-u) * range_y
+            out[i, 1] = lower_y + (1 - u) * range_y
 
         return out
 
@@ -229,4 +231,6 @@ class BivCheckW(BivCheckPi):
 
     @property
     def pdf(self):
-        raise PropertyUnavailableException("No continuous PDF for discrete W-checkerboard.")
+        raise PropertyUnavailableException(
+            "No continuous PDF for discrete W-checkerboard."
+        )

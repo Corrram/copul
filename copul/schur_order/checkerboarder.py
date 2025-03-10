@@ -1,11 +1,11 @@
 import logging
-from typing import Union
 import warnings
+from typing import Union
 
 import numpy as np
 import pandas as pd
-from numba import njit, prange
 from joblib import Parallel, delayed
+from numba import njit, prange
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.check_pi import CheckPi
@@ -43,7 +43,7 @@ class Checkerboarder:
         log.debug("Computing checkerboard copula with grid sizes: %s", self.n)
 
         # Try to vectorize CDF computation if supported by the copula
-        if hasattr(copula, 'cdf_vectorized') and self.d <= 2:
+        if hasattr(copula, "cdf_vectorized") and self.d <= 2:
             return self._compute_check_pi_vectorized(copula)
 
         # For higher dimensions or when vectorization is not supported
@@ -76,10 +76,10 @@ class Checkerboarder:
             for j in range(self.n[1]):
                 # Apply inclusion-exclusion principle for the rectangle
                 cmatr[i, j] = (
-                        copula.cdf(x_upper[i], y_upper[j])
-                        - copula.cdf(x_upper[i], y_lower[j])
-                        - copula.cdf(x_lower[i], y_upper[j])
-                        + copula.cdf(x_lower[i], y_lower[j])
+                    copula.cdf(x_upper[i], y_upper[j])
+                    - copula.cdf(x_upper[i], y_lower[j])
+                    - copula.cdf(x_lower[i], y_upper[j])
+                    + copula.cdf(x_lower[i], y_lower[j])
                 )
 
         return BivCheckPi(cmatr)
@@ -137,12 +137,16 @@ class Checkerboarder:
             inclusion_exclusion_sum = 0
 
             # Compute the CDF for all corners of the hypercube using the inclusion-exclusion principle
-            for corner in range(1 << self.d):  # Iterate over 2^d corners of the hypercube
+            for corner in range(
+                1 << self.d
+            ):  # Iterate over 2^d corners of the hypercube
                 corner_indices = [
                     (u_upper[k] if corner & (1 << k) else u_lower[k])
                     for k in range(self.d)
                 ]
-                sign = (-1) ** (bin(corner).count("1") + 2)  # Use inclusion-exclusion principle
+                sign = (-1) ** (
+                    bin(corner).count("1") + 2
+                )  # Use inclusion-exclusion principle
                 cdf_value = get_cached_cdf(corner_indices)
                 inclusion_exclusion_sum += sign * cdf_value
 
@@ -162,8 +166,7 @@ class Checkerboarder:
         # Compute the CDF for all corners of the hypercube
         for corner in range(1 << self.d):  # Iterate over 2^d corners
             corner_indices = [
-                (u_upper[k] if corner & (1 << k) else u_lower[k])
-                for k in range(self.d)
+                (u_upper[k] if corner & (1 << k) else u_lower[k]) for k in range(self.d)
             ]
             sign = (-1) ** (bin(corner).count("1") + 2)
             try:
@@ -222,8 +225,7 @@ class Checkerboarder:
 
         # Use numpy's histogram2d for fast binning
         hist, _, _ = np.histogram2d(
-            x, y, bins=[self.n[0], self.n[1]],
-            range=[[0, 1], [0, 1]]
+            x, y, bins=[self.n[0], self.n[1]], range=[[0, 1], [0, 1]]
         )
 
         # Normalize the histogram
@@ -274,5 +276,5 @@ def from_data(data, checkerboard_size=None):
         n_samples = len(data)
         checkerboard_size = min(max(10, int(np.sqrt(n_samples) / 5)), 50)
 
-    dimensions = data.shape[1] if hasattr(data, 'shape') else len(data[0])
+    dimensions = data.shape[1] if hasattr(data, "shape") else len(data[0])
     return Checkerboarder(checkerboard_size, dimensions).from_data(data)

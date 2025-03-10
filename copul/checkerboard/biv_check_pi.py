@@ -28,7 +28,6 @@ class BivCheckPi(CheckPi, BivCopula):
     def is_absolutely_continuous(self) -> bool:
         return True
 
-
     def cond_distr_1(self, u=None, v=None):
         """F(U1 ≤ u | U2 = v)."""
         return self.cond_distr(1, (u, v))
@@ -36,7 +35,7 @@ class BivCheckPi(CheckPi, BivCopula):
     def cond_distr_2(self, u=None, v=None):
         """F(U2 ≤ v | U1 = u)."""
         return self.cond_distr(2, (u, v))
-    
+
     def tau(self):
         result = basictools.monte_carlo_integral(
             lambda x, y: self.cdf(x, y) * self.pdf(x, y)

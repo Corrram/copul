@@ -83,7 +83,7 @@ def test_lower_ccop_xi(matr, expected):
     xi_estimate = ccop.chatterjees_xi()
     assert np.isclose(xi_estimate, expected, atol=0.02)
 
- 
+
 @pytest.mark.parametrize("matr", [[[1, 0], [0, 1]], [[1]]])
 def test_biv_check_min_rvs(matr):
     ccop = BivCheckW(matr)

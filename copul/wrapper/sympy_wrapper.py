@@ -8,9 +8,9 @@ class SymPyFuncWrapper:
             sympy_func = sympy_func.func
         type_ = type(sympy_func)
         allowed = (sympy.Expr, float)
-        assert isinstance(
-            sympy_func, allowed
-        ), f"Function must be from sympy, but is {type_}"
+        assert isinstance(sympy_func, allowed), (
+            f"Function must be from sympy, but is {type_}"
+        )
         if type_ == float:
             sympy_func = sympy.Number(sympy_func)
         self._func = sympy_func
