@@ -1,9 +1,8 @@
 import numpy as np
 import pytest
-import sympy
 
 from copul.families.archimedean import Clayton, Nelsen1
-from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
+from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 
 
 @pytest.mark.parametrize("theta, expected", [(2, True), (0, True), (-0.5, False)])
@@ -41,7 +40,7 @@ def test_generator_properties_theta_zero():
     """Test generator properties specifically for theta=0 case."""
     copula = Clayton(0)
 
-    # Create test values
+    # Create test val
     t_vals = np.linspace(0.1, 0.9, 5)
 
     # Get the generator function
@@ -259,14 +258,3 @@ def test_theta_boundary_values():
     assert isinstance(independence_instance, IndependenceCopula), (
         "Clayton.__call__(0) should return an IndependenceCopula instance"
     )
-
-
-def test_special_instance():
-    """Test the specific instance PiOverSigmaMinusPi."""
-    assert PiOverSigmaMinusPi.theta == 1
-
-    # Test a few values
-    u, v = 0.4, 0.7
-    cdf_val = float(PiOverSigmaMinusPi.cdf(u=u, v=v))
-    expected = (u ** (-1) + v ** (-1) - 1) ** (-1)
-    assert abs(cdf_val - expected) < 1e-6

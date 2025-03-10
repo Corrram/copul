@@ -8,8 +8,8 @@ import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
-from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
 from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper

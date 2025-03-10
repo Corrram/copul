@@ -3,7 +3,7 @@ import pytest
 import sympy
 
 from copul.families.archimedean import AliMikhailHaq, Nelsen3
-from copul.families.archimedean.nelsen1 import PiOverSigmaMinusPi
+from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 
 
 def test_nelsen3():
