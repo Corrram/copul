@@ -24,7 +24,8 @@ def test_cdf_edge_cases(point, expected):
         else:
             cop = cop(param)
         evaluated_cdf = cop.cdf(*point)
-        assert np.isclose(evaluated_cdf.evalf(), expected)
+        actual = evaluated_cdf.evalf()
+        assert np.isclose(actual, expected)
 
 
 @pytest.mark.parametrize(

@@ -22,7 +22,8 @@ from copul.exceptions import PropertyUnavailableException
 )
 def test_ccop_cdf(matr, point, expected):
     ccop = BivCheckMin(matr)
-    assert np.isclose(ccop.cdf(*point), expected)
+    actual = ccop.cdf(*point)
+    assert np.isclose(actual, expected)
 
 
 def test_ccop_pdf():

@@ -56,7 +56,7 @@ from copul.families.other.plackett import Plackett
 from copul.families.other.raftery import Raftery
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.family_list import Families, families
-from copul.schur_order.checkerboarder import Checkerboarder, from_data
+from copul.checkerboard.checkerboarder import Checkerboarder, from_data
 from copul.schur_order.cis_rearranger import CISRearranger
 
 __all__ = [

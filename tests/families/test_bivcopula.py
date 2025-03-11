@@ -58,7 +58,7 @@ class TestBivCopula:
         # Get the actual symbols as they appear in free_symbols (order depends on SymPy internals)
         all_symbols = list(expr.free_symbols)
         func_vars, params = BivCopula._segregate_symbols(expr)
-        
+
         # Verify that we get the first symbol as function variable and the rest as parameters
         assert func_vars == [all_symbols[0]]
         assert set(params) == set(all_symbols[1:])  # Use a set to ignore order
@@ -107,7 +107,7 @@ class TestBivCopula:
         # Call rvs - use a with statement to patch the import path
         with patch("copul.families.bivcopula.CopulaSampler", mock_sampler):
             result = simple_biv_copula.rvs(1)
-            
+
             # Verify
             mock_sampler.assert_called_once_with(simple_biv_copula, random_state=None)
             mock_instance.rvs.assert_called_once_with(1)
@@ -116,14 +116,14 @@ class TestBivCopula:
     def test_rank_correlations(self, simple_biv_copula):
         """Test rank correlation calculations"""
         # These methods can be complex to test directly, so just mock them
-        
+
         # Mock the _tau method to return a simple value
-        with patch.object(BivCopula, '_tau', return_value=0.3):
+        with patch.object(BivCopula, "_tau", return_value=0.3):
             tau = simple_biv_copula.kendalls_tau()
             assert tau == 0.3
 
         # Mock the _rho method
-        with patch.object(BivCopula, '_rho', return_value=0.5):
+        with patch.object(BivCopula, "_rho", return_value=0.5):
             rho = simple_biv_copula.spearmans_rho()
             assert rho == 0.5
 

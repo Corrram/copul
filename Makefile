@@ -47,7 +47,7 @@ test:
 coverage:
 	$(PYTEST) --cov=$(SRC_DIR) $(TEST_DIR) --cov-report=term-missing
 
-# Format code with isort and black
+# Format code with ruff
 format:
 	$(UV) run ruff check --fix .
 	$(UV) run ruff format .

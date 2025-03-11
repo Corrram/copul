@@ -49,12 +49,12 @@ class CISVerifier:
             param = str(copul.params[0])
         except IndexError:
             is_ci, is_cd = self._is_copula_cis(copul, linspace)
-            if is_ci:
-                print("CI True for param: None")
+            if not is_ci and not is_cd:
+                print("False for param: None")
             elif is_cd:
                 print("CD True for param: None")
-            else:
-                print("False for param: None")
+            elif is_ci:
+                print("CI True for param: None")
             return is_ci, is_cd
 
         # Handle parameters and their ranges
@@ -71,8 +71,8 @@ class CISVerifier:
         points = linspace
 
         # Initialize result variables
-        final_is_ci = None
-        final_is_cd = None
+        final_is_ci = False  # Default to False
+        final_is_cd = False  # Default to False
 
         for param_value in param_range:
             param_dict = {param: param_value}
@@ -82,12 +82,12 @@ class CISVerifier:
             # Store the latest result
             final_is_ci, final_is_cd = is_ci, is_cd
 
-            if is_ci:
-                print(f"CI True for param: {param_value}")
+            if not is_ci and not is_cd:
+                print(f"False for param: {param_value}")
             elif is_cd:
                 print(f"CD True for param: {param_value}")
-            else:
-                print(f"False for param: {param_value}")
+            elif is_ci:
+                print(f"CI True for param: {param_value}")
 
         # Return the last result
         return final_is_ci, final_is_cd
@@ -108,8 +108,12 @@ class CISVerifier:
         tuple
             (is_ci, is_cd) - whether the copula is CI/CD
         """
-        is_ci = True
-        is_cd = True
+        # Check CIS property
+        # CI: Conditionally decreasing in first argument
+        # CD: Conditionally increasing in first argument
+
+        is_ci = True  # Decreasing in u (higher u → lower value)
+        is_cd = True  # Increasing in u (higher u → higher value)
 
         # Get the right conditional distribution method
         if self.cond_distr == 1:
@@ -122,29 +126,7 @@ class CISVerifier:
         try:
             # Try to get the symbolic function
             cond_method = cond_method().func
-        except TypeError:
-            # Method-based approach
-            for v in points:
-                for u, next_u in zip(points[:-1], points[1:]):
-                    if self.cond_distr == 1:
-                        val1 = cond_method(u, v)
-                        val2 = cond_method(next_u, v)
-                    else:
-                        val1 = cond_method(v, u)
-                        val2 = cond_method(v, next_u)
 
-                    # CI: decreasing in u, CD: increasing in u
-                    if val1 < val2:
-                        is_ci = False
-                    if val1 > val2:
-                        is_cd = False
-
-                    if not is_ci and not is_cd:
-                        break
-
-                if not is_ci and not is_cd:
-                    break
-        else:
             # Symbolic function approach
             for v in points:
                 cond_distr_eval_u = cond_method.subs(my_copul.v, v)
@@ -152,10 +134,38 @@ class CISVerifier:
                     eval_u = cond_distr_eval_u.subs(my_copul.u, u)
                     eval_next_u = cond_distr_eval_u.subs(my_copul.u, next_u)
 
-                    # CI: decreasing in u, CD: increasing in u
-                    if eval_u < eval_next_u:
+                    # CI: decreasing in u (u1 < u2 => F(u1) > F(u2))
+                    # u↑ value↓
+                    if eval_u <= eval_next_u:  # Not strictly decreasing
                         is_ci = False
-                    if eval_u > eval_next_u:
+
+                    # CD: increasing in u (u1 < u2 => F(u1) < F(u2))
+                    # u↑ value↑
+                    if eval_u >= eval_next_u:  # Not strictly increasing
+                        is_cd = False
+
+                    if not is_ci and not is_cd:
+                        break
+
+                if not is_ci and not is_cd:
+                    break
+        except TypeError:
+            # Method-based approach
+            for v in points:
+                for u, next_u in zip(points[:-1], points[1:]):
+                    if self.cond_distr == 1:
+                        val_u = cond_method(u, v)
+                        val_next_u = cond_method(next_u, v)
+                    else:  # self.cond_distr == 2
+                        val_u = cond_method(v, u)
+                        val_next_u = cond_method(v, next_u)
+
+                    # CI: decreasing in u (u1 < u2 => F(u1) > F(u2))
+                    if val_u <= val_next_u:  # Not strictly decreasing
+                        is_ci = False
+
+                    # CD: increasing in u (u1 < u2 => F(u1) < F(u2))
+                    if val_u >= val_next_u:  # Not strictly increasing
                         is_cd = False
 
                     if not is_ci and not is_cd:

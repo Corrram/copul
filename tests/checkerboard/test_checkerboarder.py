@@ -121,7 +121,7 @@ def test_direct_from_data():
     data = np.random.rand(100, 2)  # Uniform random data
 
     # Use the function directly from the module where it's defined
-    from copul.schur_order.checkerboarder import from_data
+    from copul.checkerboard.checkerboarder import from_data
 
     ccop = from_data(data, checkerboard_size=5)
 
