@@ -1,18 +1,38 @@
+"""
+SchurVisualizer module for visualizing properties of copulas.
+"""
+
 import pathlib
 
 import numpy as np
 import sympy as sp
 from matplotlib import pyplot as plt
 
-import copul
 from copul import BivCheckMin, BivCheckPi
-from copul.families import archimedean
+from copul.families import archimedean, elliptical
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class SchurVisualizer:
+    """
+    Class for visualizing Schur-related properties of copulas.
+
+    Attributes:
+        copula: Copula object to visualize
+        _v: Conditional value for visualization
+        _x_vals: Array of x values for evaluation
+    """
+
     def __init__(self, copula, v=0.5, x_vals=None):
+        """
+        Initialize SchurVisualizer.
+
+        Args:
+            copula: Copula object to visualize
+            v: Conditional value (default: 0.5)
+            x_vals: Array of x values for evaluation (default: 500 points in [0, 1])
+        """
         self.copula = copula
         self._v = v
         if x_vals is not None:
@@ -21,6 +41,12 @@ class SchurVisualizer:
             self._x_vals = np.linspace(0, 1, 500)
 
     def compute(self):
+        """
+        Compute conditional distribution values.
+
+        Returns:
+            Array of conditional distribution values
+        """
         if isinstance(self.copula, (BivCheckPi, BivCheckMin)):
 
             def amh1_l(u):
@@ -32,6 +58,15 @@ class SchurVisualizer:
         return y1_vals
 
     def plot_for(self, thetas):
+        """
+        Plot conditional distributions for specified parameter values.
+
+        Args:
+            thetas: Parameter value or list of parameter values
+
+        Returns:
+            Dictionary mapping parameter values to computed y values
+        """
         if isinstance(thetas, float):
             thetas = [thetas]
         param = self.copula.params[0]
@@ -53,6 +88,9 @@ class SchurVisualizer:
         return y_vals
 
     def _finish_plot(self):
+        """
+        Helper method to finalize and save plots.
+        """
         plt.legend()
         plt.grid()
         plt.xlabel(f"u (v={self._v})")
@@ -65,11 +103,23 @@ class SchurVisualizer:
 
     @staticmethod
     def _get_schur_image_path():
+        """
+        Get path for saving images.
+
+        Returns:
+            Path object for saving images
+        """
         path = pathlib.Path(__file__).parent.parent / "docs" / "images" / "schur"
         path.mkdir(exist_ok=True)
         return path
 
     def _finish_rearrangend_plot(self, y_vals):
+        """
+        Helper method to plot rearranged data.
+
+        Args:
+            y_vals: Dictionary mapping parameter values to computed y values
+        """
         param = self.copula.params[0]
         for theta, y1_vals in y_vals.items():
             # order y1_vals in decreasing order
@@ -88,6 +138,15 @@ class SchurVisualizer:
 
 
 def visualize_rearranged(nelsen, thetas, v, grid_size=10):
+    """
+    Visualize rearranged copula.
+
+    Args:
+        nelsen: Copula class or factory
+        thetas: Parameter values for the copula
+        v: Conditional value
+        grid_size: Size of grid for rearrangement (default: 10)
+    """
     rearranger = CISRearranger(grid_size)
     x = np.linspace(0, 1, 100)
     ax = plt.gca()
@@ -118,8 +177,8 @@ if __name__ == "__main__":
     for nelsen, nelsen_thetas in thetas.items():
         for v in v_seq:
             SchurVisualizer(archimedean.__dict__[nelsen], v=v).plot_for(nelsen_thetas)
-    gaussian = copul.elliptical.Gaussian()
-    t = copul.elliptical.StudentT(nu=1)
+    gaussian = elliptical.Gaussian()
+    t = elliptical.StudentT(nu=1)
     if "Gaussian" in ell_thetas:
         gauss_y_vals = SchurVisualizer(gaussian, v=0.6).plot_for(ell_thetas["Gaussian"])
     if "StudentT" in ell_thetas:

@@ -4,7 +4,7 @@
 *.pyc
 /copul/expirements*
 /copul/images/
-__pycache__
+*__pycache__*
 /notes/examples/experiments*
 /docs/images/schur/
 /notes/examples/*.png

@@ -1,8 +1,10 @@
+import numpy as np
 import pytest
 import sympy as sp
 
 from copul.families.extreme_value.huesler_reiss import HueslerReiss
 from copul.families.other.independence_copula import IndependenceCopula
+from tests.family_representatives import family_representatives
 
 
 @pytest.fixture
@@ -135,6 +137,22 @@ def test_hr_call_method():
     # Test independence special case
     ind_copula = copula(0)
     assert isinstance(ind_copula, IndependenceCopula)
+
+
+@pytest.mark.parametrize(
+    "point, expected",
+    [
+        ((1, 0.5), 0.5),
+        ((1, 1), 1),
+        ((0, 0), 0),
+        ((0, 0.5), 0),
+    ],
+)
+def test_cdf_edge_cases(point, expected):
+    params = family_representatives["HueslerReiss"]
+    cop = HueslerReiss(params)
+    evaluated_cdf = cop.cdf(*point)
+    assert np.isclose(float(evaluated_cdf), expected, atol=0)
 
 
 def test_hr_edge_cases():

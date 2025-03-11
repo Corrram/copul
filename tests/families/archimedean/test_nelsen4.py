@@ -111,7 +111,8 @@ def test_nelsen4_boundary_conditions(theta):
 
     # C(u,0) = 0
     for u in u_values:
-        assert np.isclose(float(copula.cdf(u=u, v=0)), 0, atol=1e-10)
+        cdf_value = float(copula.cdf(u=u, v=0))
+        assert np.isclose(cdf_value, 0, atol=1e-10)
 
     # C(0,v) = 0
     for v in u_values:

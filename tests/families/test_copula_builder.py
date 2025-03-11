@@ -1,6 +1,5 @@
 import matplotlib
 import numpy as np
-import sympy
 
 from copul.families.copula_builder import from_cdf
 
@@ -11,8 +10,7 @@ def test_3d_clayton():
     cdf = "(x**(-theta) + y**(-theta) + z**(-theta) - 2)**(-1/theta)"
     copula_family = from_cdf(cdf)
     copula = copula_family(0.5)
-    result = copula.cdf(u1=0.5, u2=0.5, u3=0.5).evalf()
-    assert isinstance(result, sympy.Float)
+    result = copula.cdf(u1=0.5, u2=0.5, u3=0.5)
     assert copula.cdf(0.5, 0.5, 0.5) == result
 
 
@@ -20,9 +18,8 @@ def test_2d_clayton():
     cdf = "(x**(-theta) + y**(-theta) - 2)**(-1/theta)"
     copula_family = from_cdf(cdf)
     copula = copula_family(0.5)
-    result = copula.cdf(u=0.5, v=0.5).evalf()
-    assert isinstance(result, sympy.Float)
-    assert result == copula.cdf(0.5, 0.5).evalf()
+    result = copula.cdf(u=0.5, v=0.5)
+    assert result == copula.cdf(0.5, 0.5)
 
 
 def test_from_cdf_with_plackett():

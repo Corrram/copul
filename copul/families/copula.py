@@ -1,5 +1,5 @@
 from copul.families.core_copula import CoreCopula
-from copul.schur_order.checkerboarder import Checkerboarder
+from copul.checkerboard.checkerboarder import Checkerboarder
 
 
 class Copula(CoreCopula):
