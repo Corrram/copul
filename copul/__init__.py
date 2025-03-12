@@ -1,4 +1,6 @@
 from copul.chatterjee import xi_ncalculate
+from copul.checkerboard.check_min import CheckMin
+from copul.checkerboard.check_pi import CheckPi
 from copul.checkerboard.biv_check_min import BivCheckMin
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.biv_check_w import BivCheckW
@@ -63,6 +65,8 @@ __all__ = [
     "BivCheckPi",
     "BivCheckMin",
     "BivCheckW",
+    "CheckMin",
+    "CheckPi",
     "Checkerboarder",
     "CISRearranger",
     "BivCopula",

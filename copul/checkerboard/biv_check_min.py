@@ -11,18 +11,15 @@ class BivCheckMin(CheckMin, BivCheckPi):
     A class that implements bivariate checkerboard minimum operations.
     """
 
-    def __init__(self, matr: np.ndarray, mc_size: int = 200_000, **kwargs) -> None:
+    def __init__(self, matr: np.ndarray, **kwargs) -> None:
         """Initialize the BivCheckMin instance.
 
         Args:
             matr: Input matrix
-            mc_size: Monte Carlo simulation size
             **kwargs: Additional keyword arguments
         """
-        super().__init__(matr, **kwargs)
-        self.m: int = self.matr.shape[0]
-        self.n: int = self.matr.shape[1]
-        self.n_samples: int = mc_size
+        CheckMin.__init__(self, matr, **kwargs)
+        BivCheckPi.__init__(self, matr, **kwargs)
 
     def __str__(self) -> str:
         """Return string representation of the instance."""

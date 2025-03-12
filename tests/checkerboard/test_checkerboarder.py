@@ -26,11 +26,9 @@ def test_xi_computation():
     np.random.seed(121)
     copula = copul.Families.NELSEN7.value(0.5)
     checkerboarder = copul.Checkerboarder(10)
-    ccop = checkerboarder.compute_check_pi(
-        copula
-    )  # Fixed: was using 'clayton' which is undefined
+    ccop = checkerboarder.compute_check_pi(copula)
     orig_xi = copula.chatterjees_xi()
-    xi = ccop.chatterjees_xi(1_000)
+    xi = ccop.chatterjees_xi()
     assert 0.5 * orig_xi <= xi <= orig_xi
 
 

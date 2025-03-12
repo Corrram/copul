@@ -28,7 +28,7 @@ class TestMonteCarloIntegral(unittest.TestCase):
         self.assertAlmostEqual(result_custom, 12, places=1)
 
     def test_linear_function(self):
-        """Test with a linear function f(x,y) = x + y, which should integrate to x^2/2 + y^2/2 over [0,x]×[0,y]"""
+        """Test with a linear function f(x,y) = x + y, which should integrate to 1 over [0,1]×[0,1]"""
 
         def linear_func(x, y):
             return x + y
@@ -52,7 +52,7 @@ class TestMonteCarloIntegral(unittest.TestCase):
         self.assertAlmostEqual(result_custom, 15, places=1)
 
     def test_polynomial_function(self):
-        """Test with a polynomial function f(x,y) = x^2 + y^2, which should integrate to x^3/3 + xy^2/2 over [0,x]×[0,y]"""
+        """Test with a polynomial function f(x,y) = x^2 + y^2"""
 
         def poly_func(x, y):
             return x**2 + y**2
