@@ -2,14 +2,14 @@ import itertools
 import logging
 
 import numpy as np
-import sympy
 
+from copul.checkerboard.check import Check
 from copul.exceptions import PropertyUnavailableException
 
 log = logging.getLogger(__name__)
 
 
-class CheckMin:
+class CheckMin(Check):
     """
     Checkerboard 'Min' copula:
 
@@ -27,20 +27,8 @@ class CheckMin:
     has c[1]=0,c[2]=0 => 1 out of 4 => 0.25.
     """
 
-    params = []
-    intervals = {}
-
-    def __init__(self, matr):
-        if isinstance(matr, list):
-            matr = np.array(matr)
-        matr_sum = sum(matr) if isinstance(matr, sympy.Matrix) else matr.sum()
-        self.matr = matr / matr_sum
-
-        self.dim = self.matr.shape
-        self.d = len(self.dim)
-
     def __str__(self):
-        return f"CheckerboardMinCopula({self.dim})"
+        return f"CheckMinCopula({self.dim})"
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -226,10 +214,12 @@ class CheckMin:
     def pdf(self):
         raise PropertyUnavailableException("PDF does not exist for CheckMin.")
 
-    def rvs(self, n=1):
+    def rvs(self, n=1, random_state=None):
         """
         More efficient implementation of random variate sampling.
         """
+        if random_state is not None:
+            np.random.seed(random_state)
         log.info(f"Generating {n} random variates for {self}...")
         # Get cell indices according to their probability weights
         _, idxs = self._weighted_random_selection(self.matr, n)
@@ -268,12 +258,6 @@ class CheckMin:
         multi_idx = [np.unravel_index(ix, shape) for ix in flat_indices]
         selected_elements = matrix[tuple(np.array(multi_idx).T)]
         return selected_elements, multi_idx
-
-    def lambda_L(self):
-        return 1
-
-    def lambda_U(self):
-        return 1
 
 
 if __name__ == "__main__":

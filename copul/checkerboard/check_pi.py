@@ -1,36 +1,13 @@
 import itertools
 
 import numpy as np
-import sympy
+
+from copul.checkerboard.check import Check
 
 
-class CheckPi:
-    params = []
-    intervals = {}
-
-    def __init__(self, matr):
-        """
-        Initialize a checkerboard (piecewise-uniform) copula with the given weight matrix.
-
-        Parameters
-        ----------
-        matr : array-like
-            d-dimensional array of nonnegative weights (one per cell).
-            They will be normalized so that the total sum is 1.
-        """
-        if isinstance(matr, list):
-            matr = np.array(matr)
-
-        # Normalize the matrix so it sums to 1
-        matr_sum = sum(matr) if isinstance(matr, sympy.Matrix) else matr.sum()
-        self.matr = matr / matr_sum
-
-        # Store shape and dimension
-        self.dim = self.matr.shape
-        self.d = len(self.dim)
-
+class CheckPi(Check):
     def __str__(self):
-        return f"CheckerboardCopula({self.dim})"
+        return f"CheckPiCopula({self.dim})"
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -238,27 +215,48 @@ class CheckPi:
         # Return just the cell's mass (not dividing by cell volume)
         return float(self.matr[tuple(cell_idx)])
 
-    def rvs(self, n=1):
+    def rvs(self, n=1, random_state=None):
         """
-        Draw random variates from the checkerboard copula.
-        1) Choose a cell index by probabilities in self.matr.
-        2) Uniformly pick a point within that cell.
+        Draw random variates from the d-dimensional checkerboard copula efficiently.
+
+        Parameters
+        ----------
+        n : int
+            Number of samples to generate.
+        random_state : int, optional
+            Seed for random number generator.
+
+        Returns
+        -------
+        np.ndarray
+            Array of shape (n, d) containing n samples in d dimensions.
         """
-        sel_ele, sel_idx = self._weighted_random_selection(self.matr, n)
+        if random_state is not None:
+            np.random.seed(random_state)
 
-        # offsets for each dimension (uniform in [0,1/dim[k]])
-        offsets = np.random.rand(n, self.d)
-        for k in range(self.d):
-            offsets[:, k] /= self.dim[k]
+        # Flatten the matrix and create probability distribution
+        flat_matrix = np.asarray(self.matr, dtype=float).ravel()
+        total = flat_matrix.sum()
 
-        # Convert cell indices to their lower corners in [0,1]
-        base_points = []
-        for idx_tuple in sel_idx:
-            base_points.append([idx_tuple[k] / self.dim[k] for k in range(self.d)])
-        base_points = np.array(base_points)
+        if total <= 0:
+            raise ValueError("Matrix contains no positive values, cannot sample")
 
-        # Final = lower corner + uniform offset
-        return base_points + offsets
+        probs = flat_matrix / total
+
+        # Sample flat indices according to cell probabilities
+        flat_indices = np.random.choice(np.arange(len(probs)), size=n, p=probs)
+
+        # Convert flat indices to multi-indices as a (d, n) array
+        indices_arrays = np.unravel_index(flat_indices, self.dim)
+
+        # Transform indices to a (n, d) array
+        indices = np.column_stack(indices_arrays)
+
+        # Generate uniform jitter for each dimension
+        jitter = np.random.rand(n, self.d)
+
+        # Combine indices and jitter to get final coordinates
+        return (indices + jitter) / np.array(self.dim)
 
     @staticmethod
     def _weighted_random_selection(matrix, num_samples):
@@ -274,11 +272,3 @@ class CheckPi:
         multi_idx = [np.unravel_index(ix, shape) for ix in flat_indices]
         selected_elements = matrix[tuple(np.array(multi_idx).T)]
         return selected_elements, multi_idx
-
-    def lambda_L(self):
-        """Lower tail dependence (usually 0 for a checkerboard copula)."""
-        return 0
-
-    def lambda_U(self):
-        """Upper tail dependence (usually 0 for a checkerboard copula)."""
-        return 0

@@ -9,7 +9,6 @@ import numpy as np
 from typing import Union, List, Optional, Any
 import warnings
 
-from copul import basictools
 from copul.checkerboard.check_pi import CheckPi
 from copul.families.bivcopula import BivCopula
 
@@ -140,102 +139,194 @@ class BivCheckPi(CheckPi, BivCopula):
         """
         return self.cond_distr(2, (u, v))
 
-    def tau(self) -> float:
+    def tau(self, n_samples=2_000_000, grid_size=500) -> float:
         """
-        Compute Kendall's tau for the checkerboard copula.
+        Compute Kendall's tau using optimized Monte Carlo integration.
 
-        Kendall's tau is a measure of ordinal association between two random variables.
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples for Monte Carlo integration.
+        grid_size : int
+            Size of grid for precomputing conditional distributions.
 
-        Returns:
-            float: Kendall's tau value.
+        Returns
+        -------
+        float
+            Kendall's tau value.
         """
-        result = basictools.monte_carlo_integral(
-            lambda x, y: self.cdf(x, y) * self.pdf(x, y),
-            n_samples=10_000,  # Using a reasonable default
-        )
-        return 4 * result - 1
+        # For bivariate case only (2D)
+        if len(self.dim) != 2:
+            raise ValueError(
+                "This optimized tau2 implementation is for bivariate copulas only"
+            )
 
-    def rho(self) -> float:
+        # Generate a grid of points for precomputation
+        grid_points = (
+            np.linspace(0, 1, grid_size + 1)[:-1] + 0.5 / grid_size
+        )  # Midpoints
+
+        # Precompute conditional distributions on the grid
+        cd1_grid = np.zeros((grid_size, grid_size))
+        cd2_grid = np.zeros((grid_size, grid_size))
+
+        for i, x in enumerate(grid_points):
+            for j, y in enumerate(grid_points):
+                cd1_grid[i, j] = self.cond_distr(1, (x, y))
+                cd2_grid[i, j] = self.cond_distr(2, (x, y))
+
+        # Define a fast interpolation function for the grids
+        def fast_interp2d(grid, x, y):
+            """Fast 2D interpolation on a regular grid."""
+            ix = np.clip(np.floor(x * grid_size).astype(int), 0, grid_size - 1)
+            iy = np.clip(np.floor(y * grid_size).astype(int), 0, grid_size - 1)
+            return grid[ix, iy]
+
+        # Vectorized Monte Carlo integration
+        rng = np.random.default_rng()
+        xs = rng.random(n_samples)
+        ys = rng.random(n_samples)
+
+        # Use the interpolated conditional distributions
+        cd1_values = fast_interp2d(cd1_grid, xs, ys)
+        cd2_values = fast_interp2d(cd2_grid, xs, ys)
+
+        # Compute the product and take the mean (equivalent to the double integral)
+        result = np.mean(cd1_values * cd2_values)
+
+        # Apply the formula for Kendall's tau
+        return 1 - 4 * result
+
+    def rho(self, n_samples=1_000_000, grid_size=50) -> float:
         """
-        Compute Spearman's rho for the checkerboard copula.
+        Compute Spearman's rho using optimized Monte Carlo integration.
 
-        Spearman's rho is a measure of rank correlation between two random variables.
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples for Monte Carlo integration.
+        grid_size : int
+            Size of grid for precomputing CDF values.
 
-        Returns:
-            float: Spearman's rho value.
+        Returns
+        -------
+        float
+            Spearman's rho value.
         """
-        result = basictools.monte_carlo_integral(
-            lambda x, y: self.cdf(x, y),
-            n_samples=10_000,  # Using a reasonable default
-        )
+        # For bivariate case only (2D)
+        if len(self.dim) != 2:
+            raise ValueError(
+                "This optimized rho implementation is for bivariate copulas only"
+            )
+
+        # Generate a grid of points for precomputation
+        grid_points = (
+            np.linspace(0, 1, grid_size + 1)[:-1] + 0.5 / grid_size
+        )  # Midpoints
+
+        # Precompute CDF values on the grid
+        cdf_grid = np.zeros((grid_size, grid_size))
+
+        for i, x in enumerate(grid_points):
+            for j, y in enumerate(grid_points):
+                cdf_grid[i, j] = self.cdf(x, y)
+
+        # Define a fast interpolation function for the grid
+        def fast_interp2d(grid, x, y):
+            """Fast 2D interpolation on a regular grid."""
+            ix = np.clip(np.floor(x * grid_size).astype(int), 0, grid_size - 1)
+            iy = np.clip(np.floor(y * grid_size).astype(int), 0, grid_size - 1)
+            return grid[ix, iy]
+
+        # Vectorized Monte Carlo integration
+        rng = np.random.default_rng()
+        xs = rng.random(n_samples)
+        ys = rng.random(n_samples)
+
+        # Use the interpolated CDF values
+        cdf_values = fast_interp2d(cdf_grid, xs, ys)
+
+        # Compute the mean (equivalent to the double integral)
+        result = np.mean(cdf_values)
+
+        # Apply the formula for Spearman's rho
         return 12 * result - 3
 
     def chatterjees_xi(
         self,
-        n_samples: int = 100_000,
+        n_samples: int = 1_000_000,
         condition_on_y: bool = False,
+        grid_size: int = 50,
         *args: Any,
         **kwargs: Any,
     ) -> float:
         """
-        Compute Chatterjee's xi correlation measure.
+        Compute Chatterjee's xi correlation measure using optimized Monte Carlo integration.
 
-        Args:
-            n_samples: Number of samples for Monte Carlo integration.
-            condition_on_y: If True, condition on Y (U2) instead of X (U1).
-            *args: Additional positional arguments passed to _set_params.
-            **kwargs: Additional keyword arguments passed to _set_params.
+        Parameters
+        ----------
+        n_samples : int
+            Number of samples for Monte Carlo integration.
+        condition_on_y : bool
+            If True, condition on Y (U2) instead of X (U1).
+        grid_size : int
+            Size of grid for precomputing conditional distributions.
+        *args, **kwargs:
+            Additional arguments passed to _set_params.
 
-        Returns:
-            float: Chatterjee's xi correlation value.
+        Returns
+        -------
+        float
+            Chatterjee's xi correlation value in the range [0, 1].
         """
         self._set_params(args, kwargs)
+
+        # For bivariate case only (2D)
+        if len(self.dim) != 2:
+            raise ValueError(
+                "This optimized implementation is for bivariate copulas only"
+            )
+
+        # Determine which dimension to condition on
         i = 2 if condition_on_y else 1
 
-        def f(x: float, y: float) -> float:
-            return self.cond_distr(i, (x, y)) ** 2
+        # Generate a grid of points for precomputation
+        grid_points = (
+            np.linspace(0, 1, grid_size + 1)[:-1] + 0.5 / grid_size
+        )  # Midpoints
 
-        result = basictools.monte_carlo_integral(
-            f, n_samples=n_samples, vectorized=False
-        )
-        return 6 * result - 2
+        # Precompute squared conditional distributions on the grid
+        cond_distr_grid = np.zeros((grid_size, grid_size))
 
-    def sample(self, n: int = 1, random_state: Optional[int] = None) -> np.ndarray:
-        """
-        Generate random samples from the checkerboard copula.
+        for ii, x in enumerate(grid_points):
+            for jj, y in enumerate(grid_points):
+                # Compute the squared conditional distribution directly
+                cond_val = self.cond_distr(i, (x, y))
+                cond_distr_grid[ii, jj] = cond_val * cond_val
 
-        Args:
-            n: Number of samples to generate.
-            random_state: Seed for random number generator.
+        # Define a fast interpolation function for the grid
+        def fast_interp2d(grid, x, y):
+            """Fast 2D interpolation on a regular grid."""
+            ix = np.clip(np.floor(x * grid_size).astype(int), 0, grid_size - 1)
+            iy = np.clip(np.floor(y * grid_size).astype(int), 0, grid_size - 1)
+            return grid[ix, iy]
 
-        Returns:
-            np.ndarray: Array of shape (n, 2) containing the sampled (u, v) pairs.
-        """
-        if random_state is not None:
-            np.random.seed(random_state)
+        # Vectorized Monte Carlo integration
+        rng = np.random.default_rng()
+        xs = rng.random(n_samples)
+        ys = rng.random(n_samples)
 
-        # Generate uniformly distributed samples
-        u_samples = np.random.uniform(0, 1, n)
-        v_samples = np.zeros(n)
+        # Use the interpolated values
+        values = fast_interp2d(cond_distr_grid, xs, ys)
 
-        # For each u, sample v from the conditional distribution
-        for i, u in enumerate(u_samples):
-            # Find the corresponding bin for u
-            u_bin = int(np.floor(u * self.m))
-            if u_bin == self.m:  # Handle edge case
-                u_bin = self.m - 1
+        # Compute the mean (equivalent to the integral)
+        result = np.mean(values)
 
-            # Calculate the conditional distribution for this u
-            cond_probs = self.matr[u_bin, :] / np.sum(self.matr[u_bin, :])
+        # Apply the formula for Chatterjee's xi
+        xi_value = 6 * result - 2
 
-            # Sample from the conditional distribution
-            v_bin = np.random.choice(self.n, p=cond_probs)
-
-            # Convert bin index to uniform value (add some jitter within the bin)
-            v_samples[i] = (v_bin + np.random.uniform(0, 1)) / self.n
-
-        # Combine u and v samples
-        return np.column_stack((u_samples, v_samples))
+        # Ensure the result is in [0, 1]
+        return max(0, min(1, xi_value))
 
 
 if __name__ == "__main__":

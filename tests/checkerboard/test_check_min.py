@@ -176,3 +176,13 @@ def test_3d_check_pi_rvs():
     n_lower_part = sum([(sample < (0.25, 0.75, 0.5)).all() for sample in samples])
     expected_part = 3 / 12 * 1 / 2 * n
     assert np.isclose(n_lower_part, expected_part, rtol=0.1)
+
+
+def test_chatterjees_xi_for_upper_frechet():
+    """Test the Chatterjee's xi estimator."""
+    matr = np.array([[[1, 0], [0, 0]], [[0, 0], [0, 1]]])
+    copula = CheckMin(matr)
+
+    # Chatterjee's xi for this copula should be 0
+    xi = copula.chatterjees_xi()
+    assert np.isclose(xi, 1, atol=1e-2)

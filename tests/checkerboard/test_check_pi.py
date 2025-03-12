@@ -240,7 +240,7 @@ def test_str_representation():
     matr = np.array([[1, 2], [3, 4]])
     copula = CheckPi(matr)
 
-    assert str(copula) == "CheckerboardCopula((2, 2))"
+    assert str(copula) == "CheckPiCopula((2, 2))"
 
 
 def test_is_absolutely_continuous():
@@ -372,3 +372,13 @@ def test_ccop_cond_distr(matr, point, expected):
     ccop = CheckPi(matr)
     actual = ccop.cond_distr(1, point)
     assert np.isclose(actual, expected)
+
+
+def test_chatterjees_xi_for_independence_copula():
+    """Test the Chatterjee's xi estimator."""
+    matr = np.array([[[1, 1], [1, 1]], [[1, 1], [1, 1]]])
+    copula = CheckPi(matr)
+
+    # Chatterjee's xi for this copula should be 0
+    xi = copula.chatterjees_xi(seed=42)
+    assert np.isclose(xi, 0, atol=1e-2)

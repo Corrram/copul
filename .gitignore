@@ -9,3 +9,4 @@
 /docs/images/schur/
 /notes/examples/*.png
 .venv/
+/.coverage

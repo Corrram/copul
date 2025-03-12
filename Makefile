@@ -41,7 +41,7 @@ install:
 
 # Run tests with pytest
 test:
-	$(PYTEST) $(TEST_DIR) -v
+	$(PYTEST) $(TEST_DIR) -v -n 4
 
 # Run tests with coverage
 coverage:
@@ -78,6 +78,7 @@ quality: format typecheck lint test
 upgrade:
 	@echo "Upgrading dev dependencies in root package..."
 	$(UV) sync --active --upgrade --extra dev
+	$(UV) export --format requirements-txt --extra dev --no-hashes --output-file requirements.txt > $(if $(filter $(OS),Windows_NT),NUL,/dev/null) 2>&1
 
 upgrade-dev:
 	@echo "Upgrading dev dependencies in root package..."

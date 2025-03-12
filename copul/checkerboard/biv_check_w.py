@@ -30,16 +30,7 @@ class BivCheckW(BivCheckPi):
 
         :param matr: 2D array/list of nonnegative weights. Will be normalized to sum=1.
         """
-        matr = np.asarray(matr, dtype=float)
-        if matr.ndim != 2:
-            raise ValueError("BivCheckW requires a 2D matrix.")
-        total = matr.sum()
-        if total <= 0:
-            raise ValueError("Weight matrix must have positive total sum.")
-        self.matr = matr / total
-
-        # Dimensions
-        self.m, self.n = self.matr.shape
+        super().__init__(matr)
 
     def __str__(self):
         return f"BivCheckW(m={self.m}, n={self.n})"
