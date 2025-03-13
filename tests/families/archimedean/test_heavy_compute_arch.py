@@ -8,7 +8,7 @@ from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 
 
 # Create a minimal concrete implementation for testing
-class TestHeavyCopula(HeavyComputeArch):
+class SampleHeavyCopula(HeavyComputeArch):
     theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
 
     @property
@@ -29,7 +29,7 @@ class TestHeavyCopula(HeavyComputeArch):
 @pytest.fixture
 def copula():
     """Fixture to create a test copula instance."""
-    return TestHeavyCopula(1)
+    return SampleHeavyCopula(1)
 
 
 def test_rvs_basic(copula):

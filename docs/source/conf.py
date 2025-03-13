@@ -23,6 +23,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    # "autoapi.extension",
 ]
 templates_path = ["_templates"]
 exclude_patterns = []

@@ -6,7 +6,7 @@ import copul
 
 
 def test_squared_checkerboard():
-    clayton = copul.Families.CLAYTON.value(2)
+    clayton = copul.Families.CLAYTON.cls(2)
     checkerboarder = copul.Checkerboarder(3)
     ccop = checkerboarder.compute_check_pi(clayton)
     assert ccop.matr.shape == (3, 3)
@@ -14,7 +14,7 @@ def test_squared_checkerboard():
 
 
 def test_rectangular_checkerboard():
-    clayton = copul.Families.CLAYTON.value(2)
+    clayton = copul.Families.CLAYTON.cls(2)
     checkerboarder = copul.Checkerboarder([3, 10])
     ccop = checkerboarder.compute_check_pi(clayton)
     assert ccop.matr.shape == (3, 10)
@@ -24,7 +24,7 @@ def test_rectangular_checkerboard():
 
 def test_xi_computation():
     np.random.seed(121)
-    copula = copul.Families.NELSEN7.value(0.5)
+    copula = copul.Families.NELSEN7.cls(0.5)
     checkerboarder = copul.Checkerboarder(10)
     ccop = checkerboarder.compute_check_pi(copula)
     orig_xi = copula.chatterjees_xi()
@@ -59,7 +59,7 @@ def test_different_copula_families():
     # Fixed: using the families that actually exist in your package
     for family_param in [(copul.Families.CLAYTON, 2), (copul.Families.NELSEN7, 0.5)]:
         family, param = family_param
-        copula = family.value(param)
+        copula = family.cls(param)
         checkerboarder = copul.Checkerboarder(5)
         ccop = checkerboarder.compute_check_pi(copula)
 
@@ -138,7 +138,7 @@ def test_higher_dimensions():
 def test_boundary_conditions():
     """Test boundary conditions for the checkerboard approximation."""
     # Test with independence (using Clayton with parameter close to 0)
-    independent = copul.Families.CLAYTON.value(0.01)  # Almost independent
+    independent = copul.Families.CLAYTON.cls(0.01)  # Almost independent
     checkerboarder = copul.Checkerboarder(5)
     ccop = checkerboarder.compute_check_pi(independent)
 

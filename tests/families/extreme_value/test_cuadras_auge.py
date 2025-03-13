@@ -3,7 +3,7 @@ import pytest
 import sympy as sp
 from unittest.mock import patch
 
-from copul import CuadrasAuge
+from copul.families.extreme_value import CuadrasAuge
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.exceptions import PropertyUnavailableException

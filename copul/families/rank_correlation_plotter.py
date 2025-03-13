@@ -17,7 +17,7 @@ import sympy
 from matplotlib import pyplot as plt
 from scipy.interpolate import CubicSpline
 
-from copul import chatterjee
+from copul.chatterjee import xi_ncalculate, xi_nvarcalculate
 from copul.families.copula_graphs import CopulaGraphs
 
 # Set up logger
@@ -288,12 +288,12 @@ class RankCorrelationPlotter:
                 data = specific_copula.rvs(n_obs)
 
                 # Calculate Chatterjee's xi
-                xi = chatterjee.xi_ncalculate(data[:, 0], data[:, 1])
+                xi = xi_ncalculate(data[:, 0], data[:, 1])
                 xi_values[i] = xi
 
                 # Calculate variance if requested
                 if compute_var and xi_var_values is not None:
-                    xi_var = chatterjee.xi_nvarcalculate(data[:, 0], data[:, 1])
+                    xi_var = xi_nvarcalculate(data[:, 0], data[:, 1])
                     xi_var_values[i] = xi_var
             except Exception as e:
                 log.warning(f"Error computing xi for parameter {param}: {e}")
@@ -421,7 +421,7 @@ class RankCorrelationPlotter:
                 data = specific_copula.rvs(n_obs)
 
                 # Calculate Chatterjee's xi
-                xi_values[i] = chatterjee.xi_ncalculate(data[:, 0], data[:, 1])
+                xi_values[i] = xi_ncalculate(data[:, 0], data[:, 1])
 
                 # Calculate Spearman's rho
                 rho_values[i] = scipy.stats.spearmanr(data[:, 0], data[:, 1])[0]
@@ -431,9 +431,7 @@ class RankCorrelationPlotter:
 
                 # Calculate variance if requested
                 if plot_var and xi_var_values is not None:
-                    xi_var_values[i] = chatterjee.xi_nvarcalculate(
-                        data[:, 0], data[:, 1]
-                    )
+                    xi_var_values[i] = xi_nvarcalculate(data[:, 0], data[:, 1])
             except Exception as e:
                 log.warning(f"Error computing correlations for parameter {param}: {e}")
                 xi_values[i] = np.nan

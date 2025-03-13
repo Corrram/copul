@@ -11,20 +11,33 @@ log = logging.getLogger(__name__)
 
 class CheckMin(Check):
     """
-    Checkerboard 'Min' copula:
+    Checkerboard "Min" Copula
 
-      - The CDF uses 'min-fraction' partial coverage across all dimensions.
-      - The cond_distr(i,u) uses a purely discrete approach in *all* dimensions:
-          * pick the single integer cell index in dim i = floor(u[i]*dim[i]),
-            that entire slice is the conditioning event (denominator).
-          * For j != i, we only include cells c where c[j] < floor(u[j]*dim[j])
-            (no partial coverage).
-          * ratio = numerator/denominator.
+    This copula implements a "min-fraction" approach for computing the cumulative
+    distribution function (CDF) across all dimensions, and a fully discrete method for
+    calculating conditional distributions.
 
-    This matches your test examples, e.g. in 2x2x2 with (0.5,0.5,0.5),
-    cond_distr(1,(0.5,0.5,0.5))=1/4=0.25, because we pick c[0]=1
-    (the 'second layer'), and among c[0]=1, only one of those four cells
-    has c[1]=0,c[2]=0 => 1 out of 4 => 0.25.
+    Key features:
+      - CDF Calculation:
+          Uses a min-fraction partial coverage over all dimensions to aggregate the CDF.
+
+      - Conditional Distribution (cond_distr):
+          For any given dimension i and input vector u:
+            1. In dimension i, determine the cell index as floor(u[i] * dim[i]). The entire
+               slice corresponding to this index constitutes the conditioning event (denominator).
+            2. In every other dimension j ≠ i, only include cells where the cell index c[j] is
+               strictly less than floor(u[j] * dim[j]); this avoids any partial coverage in these dimensions.
+            3. Compute the conditional distribution as the ratio of the count of cells meeting the
+               numerator condition (cells matching the target criteria) to the total count of cells
+               in the conditioning event (denominator).
+
+    Example:
+      For a 2x2x2 grid and u = (0.5, 0.5, 0.5):
+        - In dimension 0, we use floor(0.5 * 2) = 1, selecting the second layer.
+        - Within that layer, for dimensions 1 and 2, only cells with indices less than floor(0.5 * 2) = 1
+          are considered (i.e., only cells with index 0).
+        - This results in 1 favorable cell out of 4 in the conditioning event, so:
+              cond_distr(1, (0.5, 0.5, 0.5)) = 1 / 4 = 0.25.
     """
 
     def __str__(self):
@@ -37,13 +50,15 @@ class CheckMin(Check):
 
     # --------------------------------------------------------------------------
     # 1) CDF with 'min fraction' partial coverage
-    # --------------------------------------------------------------------------
+    # ------------------------------------------>--------------------------------
     def cdf(self, *args):
         """
         Evaluate the CDF at (u1,...,ud).  For each cell c:
           fraction = min_k( overlap_len(k) / cell_width(k) ),
+
         then sum cell_mass * fraction.
         """
+
         if len(args) != self.d:
             raise ValueError(f"cdf expects {self.d} coordinates, got {len(args)}.")
 

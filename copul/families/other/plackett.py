@@ -1,6 +1,6 @@
 import sympy
 
-from copul.families import get_simplified_solution
+from copul.families.helpers import get_simplified_solution
 from copul.families.bivcopula import BivCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper

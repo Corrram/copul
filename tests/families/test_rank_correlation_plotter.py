@@ -116,7 +116,7 @@ class TestRankCorrelationPlotter:
             mock_plt.legend.assert_called_once()
             mock_plt.ylim.assert_called_once_with(0, 1)
 
-    @patch("copul.families.rank_correlation_plotter.chatterjee.xi_ncalculate")
+    @patch("copul.families.rank_correlation_plotter.xi_ncalculate")
     @patch("copul.families.rank_correlation_plotter.plt")
     def test_construct_xi_graph_for(self, mock_plt, mock_xi_calculate):
         """Test _construct_xi_graph_for method."""
@@ -132,7 +132,9 @@ class TestRankCorrelationPlotter:
             self.plotter._construct_xi_graph_for(100, 5, mock_copula, False)
 
             # Verify xi_ncalculate was called
-            assert mock_xi_calculate.call_count == 5
+            assert (
+                mock_xi_calculate.call_count == 5
+            ), "xi_ncalculate was not called 5 times"
 
             # Verify scatter and plot were called
             mock_plt.scatter.assert_called_once()
@@ -141,8 +143,8 @@ class TestRankCorrelationPlotter:
             # Verify _save_data_and_splines was called
             mock_save.assert_called_once()
 
-    @patch("copul.families.rank_correlation_plotter.chatterjee.xi_ncalculate")
-    @patch("copul.families.rank_correlation_plotter.chatterjee.xi_nvarcalculate")
+    @patch("copul.families.rank_correlation_plotter.xi_ncalculate")
+    @patch("copul.families.rank_correlation_plotter.xi_nvarcalculate")
     @patch("copul.families.rank_correlation_plotter.plt")
     def test_construct_xi_graph_with_var(self, mock_plt, mock_xi_var, mock_xi):
         """Test _construct_xi_graph_for with plot_var=True."""
@@ -164,7 +166,7 @@ class TestRankCorrelationPlotter:
             # Verify fill_between was called for error bands
             mock_plt.fill_between.assert_called_once()
 
-    @patch("copul.families.rank_correlation_plotter.chatterjee.xi_ncalculate")
+    @patch("copul.families.rank_correlation_plotter.xi_ncalculate")
     @patch("copul.families.rank_correlation_plotter.scipy.stats.spearmanr")
     @patch("copul.families.rank_correlation_plotter.scipy.stats.kendalltau")
     @patch("copul.families.rank_correlation_plotter.plt")
