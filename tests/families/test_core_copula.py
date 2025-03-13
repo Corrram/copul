@@ -8,7 +8,7 @@ from copul.families.core_copula import CoreCopula
 # Add additional test cases from the original file
 
 
-class TestCopula(CoreCopula):
+class SampleCopula(CoreCopula):
     """Concrete implementation of CoreCopula for testing purposes"""
 
     # Define parameters
@@ -39,17 +39,17 @@ class TestCoreCopula:
     @pytest.fixture
     def copula(self):
         """Create a test copula instance"""
-        return TestCopula(dimension=2, theta=0.5)
+        return SampleCopula(dimension=2, theta=0.5)
 
     def test_init(self):
         """Test initialization of CoreCopula"""
-        copula = TestCopula(dimension=3)
+        copula = SampleCopula(dimension=3)
         assert copula.dimension == 3
         assert len(copula.u_symbols) == 3  # u1, u2, u3
 
     def test_str(self, copula):
         """Test string representation"""
-        assert str(copula) == "TestCopula"
+        assert str(copula) == "SampleCopula"
 
     def test_call(self, copula):
         """Test the __call__ method for creating a new instance with updated parameters"""
@@ -70,12 +70,12 @@ class TestCoreCopula:
     def test_set_params(self, copula):
         """Test _set_params method"""
         # Test with positional args
-        test_copula = TestCopula(dimension=2)
+        test_copula = SampleCopula(dimension=2)
         test_copula._set_params([0.8], {})
         assert test_copula.theta == 0.8
 
         # Test with kwargs
-        test_copula = TestCopula(dimension=2)
+        test_copula = SampleCopula(dimension=2)
         test_copula._set_params([], {"theta": 1.2})
         assert test_copula.theta == 1.2
 
@@ -132,7 +132,7 @@ class TestCoreCopula:
             mock_cdf_wrapper.return_value = mock_instance
 
             # Create a minimal subclass with a controlled _cdf attribute
-            class TestCopulaForCDF(TestCopula):
+            class TestCopulaForCDF(SampleCopula):
                 def __init__(self):
                     super().__init__()
                     # Simple _cdf expression for testing
@@ -167,12 +167,12 @@ class TestCoreCopula:
                 # Test specific methods instead of cond_distr
                 # Patch cond_distr_1 directly
                 with patch.object(
-                    TestCopula, "cond_distr_1", autospec=True
+                    SampleCopula, "cond_distr_1", autospec=True
                 ) as mock_cond_distr_1:
                     mock_cond_distr_1.return_value = expected_value
 
                     # Create a new copula to use the patched method
-                    test_copula = TestCopula()
+                    test_copula = SampleCopula()
                     result = test_copula.cond_distr_1([0.5, 0.5])
 
                     # Verify the result
@@ -181,12 +181,12 @@ class TestCoreCopula:
 
                 # Test cond_distr_2
                 with patch.object(
-                    TestCopula, "cond_distr_2", autospec=True
+                    SampleCopula, "cond_distr_2", autospec=True
                 ) as mock_cond_distr_2:
                     mock_cond_distr_2.return_value = mock_func_wrapper
 
                     # Create a new copula to use the patched method
-                    test_copula = TestCopula()
+                    test_copula = SampleCopula()
                     result = test_copula.cond_distr_2()
 
                     # Verify the result
@@ -196,12 +196,12 @@ class TestCoreCopula:
     def test_pdf(self, copula):
         """Test pdf method"""
         # Patch at the class level instead of the instance level
-        with patch.object(TestCopula, "pdf", autospec=True) as mock_pdf:
+        with patch.object(SampleCopula, "pdf", autospec=True) as mock_pdf:
             expected_value = 1.0
             mock_pdf.return_value = expected_value
 
             # Create a new instance to use the patched class method
-            test_copula = TestCopula()
+            test_copula = SampleCopula()
             pdf_value = test_copula.pdf([0.5, 0.5])
 
             # Verify the result

@@ -3,7 +3,7 @@ import pytest
 import sympy
 from unittest.mock import patch
 
-from copul import IndependenceCopula, LowerFrechet, UpperFrechet
+from copul.families.other import IndependenceCopula, LowerFrechet, UpperFrechet
 from copul.families.elliptical.gaussian import Gaussian
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 

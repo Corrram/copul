@@ -1,10 +1,10 @@
 from copul.chatterjee import xi_ncalculate
+from copul.checkerboard.biv_check_pi import BivCheckPi
+from copul.checkerboard.biv_check_min import BivCheckMin
+from copul.checkerboard.biv_check_w import BivCheckW
 from copul.checkerboard.check_min import CheckMin
 from copul.checkerboard.check_pi import CheckPi
-from copul.checkerboard.biv_check_min import BivCheckMin
-from copul.checkerboard.biv_check_pi import BivCheckPi
-from copul.checkerboard.biv_check_w import BivCheckW
-from copul.families import archimedean, elliptical, extreme_value
+from copul.checkerboard.checkerboarder import Checkerboarder, from_data
 from copul.families.archimedean import (
     AliMikhailHaq,
     Clayton,
@@ -57,39 +57,31 @@ from copul.families.other.mardia import Mardia
 from copul.families.other.plackett import Plackett
 from copul.families.other.raftery import Raftery
 from copul.families.other.upper_frechet import UpperFrechet
-from copul.family_list import Families, families
-from copul.checkerboard.checkerboarder import Checkerboarder, from_data
+
+from copul.family_list import Families
 from copul.schur_order.cis_rearranger import CISRearranger
 
 __all__ = [
+    "xi_ncalculate",
+    # Checkerboard related objects
     "BivCheckPi",
     "BivCheckMin",
     "BivCheckW",
     "CheckMin",
     "CheckPi",
     "Checkerboarder",
-    "CISRearranger",
+    "from_data",
+    # Families & Builders
     "BivCopula",
-    "FarlieGumbelMorgenstern",
-    "Frechet",
-    "LowerFrechet",
-    "UpperFrechet",
-    "IndependenceCopula",
-    "Mardia",
-    "Plackett",
-    "Raftery",
-    "archimedean",
-    "elliptical",
-    "extreme_value",
-    "xi_ncalculate",
+    "from_cdf",
     "Families",
-    "families",
+    # Archimedean copulas
     "AliMikhailHaq",
     "Clayton",
     "Frank",
+    "GenestGhoudi",
     "GumbelHougaard",
     "GumbelBarnett",
-    "GenestGhoudi",
     "Joe",
     "Nelsen1",
     "Nelsen2",
@@ -113,18 +105,28 @@ __all__ = [
     "Nelsen20",
     "Nelsen21",
     "Nelsen22",
-    "HueslerReiss",
-    "Galambos",
-    "Tawn",
+    # Extreme Value copulas
     "BB5",
     "CuadrasAuge",
+    "Galambos",
+    "HueslerReiss",
     "JoeEV",
     "MarshallOlkin",
+    "Tawn",
     "tEV",
+    # Elliptical copulas
     "Gaussian",
     "Laplace",
     "StudentT",
-    "BivCheckMin",
-    "from_cdf",
-    "from_data",
+    # Other copulas
+    "FarlieGumbelMorgenstern",
+    "Frechet",
+    "IndependenceCopula",
+    "LowerFrechet",
+    "Mardia",
+    "Plackett",
+    "Raftery",
+    "UpperFrechet",
+    # Miscellaneous
+    "CISRearranger",
 ]

@@ -130,11 +130,11 @@ wheels = [
 
 [[package]]
 name = "attrs"
-version = "25.2.0"
+version = "25.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/69/82/3c4e1d44f3cbaa2a578127d641fe385ba3bff6c38b789447ae11a21fa413/attrs-25.2.0.tar.gz", hash = "sha256:18a06db706db43ac232cce80443fcd9f2500702059ecf53489e3c5a3f417acaf", size = 812038 }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/b0/1367933a8532ee6ff8d63537de4f1177af4bff9f3e829baf7331f595bb24/attrs-25.3.0.tar.gz", hash = "sha256:75d7cefc7fb576747b2c81b4442d4d4a1ce0900973527c011d1030fd3bf4af1b", size = 812032 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/03/33/7a7388b9ef94aab40539939d94461ec682afbd895458945ed25be07f03f6/attrs-25.2.0-py3-none-any.whl", hash = "sha256:611344ff0a5fed735d86d7784610c84f8126b95e549bcad9ff61b4242f2d386b", size = 64016 },
+    { url = "https://files.pythonhosted.org/packages/77/06/bb80f5f86020c4551da315d78b3ab75e8228f89f0162f2c3a819e407941a/attrs-25.3.0-py3-none-any.whl", hash = "sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3", size = 63815 },
 ]
 
 [[package]]
@@ -1646,7 +1646,7 @@ wheels = [
 
 [[package]]
 name = "mfoci"
-version = "0.2.0"
+version = "0.2.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
@@ -1659,9 +1659,9 @@ dependencies = [
     { name = "twine" },
     { name = "yfinance" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fa/34/d2ad048a43b1dcdce64a8673cf5e238e87f0fc97191616c543e6f1e4995f/mfoci-0.2.0.tar.gz", hash = "sha256:08a29e5e850a73851d4606e26b8dd162496c0b5833272890f600604cad2899eb", size = 13117 }
+sdist = { url = "https://files.pythonhosted.org/packages/6d/bd/14c92fd9dc0bb5109ed633297d72a1d0dd2737762811d3185ad84f934fdf/mfoci-0.2.3.tar.gz", hash = "sha256:53a7c3d465cce7d697760f1b1d6aca940ce5a4b7a4f67fbbe833dabd4293547b", size = 14444 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/0a/5669bea7bbdfc8ab48fab57ebc6281211e3c26dc2ac5155952ea95ec4de1/mfoci-0.2.0-py3-none-any.whl", hash = "sha256:89791cac515559beb7e1a421bd24cff0bf2249b6c39f7fb889ec596ac51f3014", size = 15316 },
+    { url = "https://files.pythonhosted.org/packages/28/74/7310987e64210af5ecb18c4bbe09695df8bb469e018122ef205a2b210389/mfoci-0.2.3-py3-none-any.whl", hash = "sha256:631872e4afcbfd4f330c49671dde145f3582eb7d30cc50c9aa41c7e7274ae260", size = 16525 },
 ]
 
 [[package]]
@@ -3149,11 +3149,11 @@ wheels = [
 
 [[package]]
 name = "threadpoolctl"
-version = "3.5.0"
+version = "3.6.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bd/55/b5148dcbf72f5cde221f8bfe3b6a540da7aa1842f6b491ad979a6c8b84af/threadpoolctl-3.5.0.tar.gz", hash = "sha256:082433502dd922bf738de0d8bcc4fdcbf0979ff44c42bd40f5af8a282f6fa107", size = 41936 }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/4d/08c89e34946fce2aec4fbb45c9016efd5f4d7f24af8e5d93296e935631d8/threadpoolctl-3.6.0.tar.gz", hash = "sha256:8ab8b4aa3491d812b623328249fab5302a68d2d71745c8a4c719a2fcaba9f44e", size = 21274 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/2c/ffbf7a134b9ab11a67b0cf0726453cedd9c5043a4fe7a35d1cefa9a1bcfb/threadpoolctl-3.5.0-py3-none-any.whl", hash = "sha256:56c1e26c150397e58c4926da8eeee87533b1e32bef131bd4bf6a2f45f3185467", size = 18414 },
+    { url = "https://files.pythonhosted.org/packages/32/d5/f9a850d79b0851d1d4ef6456097579a9005b31fea68726a4ae5f2d82ddd9/threadpoolctl-3.6.0-py3-none-any.whl", hash = "sha256:43a0b8fd5a2928500110039e43a5eed8480b918967083ea48dc3ab9f13c4a7fb", size = 18638 },
 ]
 
 [[package]]

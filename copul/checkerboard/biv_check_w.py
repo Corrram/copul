@@ -12,16 +12,22 @@ class BivCheckW(BivCheckPi):
     """
     Bivariate checkerboard W-copula (2D only).
 
-    1) The CDF uses a piecewise 'W-fraction':
-         frac_ij = max(0, frac_x + frac_y - 1),
-       where frac_x, frac_y in [0,1] are the proportions of cell (i,j)
+    The copula is defined as follows:
+
+    1) **CDF**: Uses a piecewise 'W-fraction':
+
+       ``frac_ij = max(0, frac_x + frac_y - 1)``
+
+       where ``frac_x`` and ``frac_y`` (both in [0,1]) are the proportions of cell (i,j)
        that lie below (u,v).
 
-    2) The conditional distribution uses a discrete approach:
-       - Finds the cell-slice in the conditioning dimension
-       - Denominator: sum of masses in that slice
-       - Numerator: sum of slice cells that lie fully below the threshold
-       - cond_distr = numerator / denominator
+    2) **Conditional Distribution**: Uses a discrete approach:
+
+       - Finds the cell-slice in the conditioning dimension.
+       - **Denominator**: Sum of masses in that slice.
+       - **Numerator**: Sum of slice cells that lie fully below the threshold.
+       - ``cond_distr = numerator / denominator``
+
     """
 
     def __init__(self, matr):
@@ -221,6 +227,9 @@ class BivCheckW(BivCheckPi):
 
     @property
     def pdf(self):
-        raise PropertyUnavailableException(
-            "No continuous PDF for discrete W-checkerboard."
-        )
+        """PDF is not available for BivCheckW.
+
+        Raises:
+            PropertyUnavailableException: Always raised, since PDF does not exist for BivCheckMin.
+        """
+        raise PropertyUnavailableException("PDF does not exist for BivCheckW.")

@@ -10,3 +10,4 @@
 /notes/examples/*.png
 .venv/
 /.coverage
+/tests/families/images/

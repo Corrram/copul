@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from copul import Nelsen4
-from copul.families.archimedean import GumbelHougaard
+from copul.families.archimedean import GumbelHougaard, Nelsen4
 from copul.families.other.independence_copula import IndependenceCopula
 
 

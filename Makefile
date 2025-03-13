@@ -1,6 +1,4 @@
-# Makefile for copul package using uv as package manager
-
-.PHONY: all clean test lint format install dev-install upgrade upgrade-dev
+.PHONY: clean test coverage format build publish upgrade docs
 
 # Python interpreter
 PYTHON := python
@@ -21,25 +19,19 @@ BLACK := black
 ISORT := isort
 MYPY := mypy
 
-all: clean install test
+all: clean format upgrade docs build test
 
-# Clean build artifacts
+# Clean build artifacts and cache files
 clean:
-	if exist $(BUILD_DIR) rd /s /q $(BUILD_DIR)
-	if exist $(DIST_DIR) rd /s /q $(DIST_DIR)
-	if exist *.egg-info rd /s /q *.egg-info
-	powershell -Command "Get-ChildItem -Path . -Include __pycache__ -Recurse -Directory | Remove-Item -Recurse -Force"
-	powershell -Command "Get-ChildItem -Path . -Include *.pyc,*.pyo,*.pyd -Recurse -File | Remove-Item -Force"
+	python -c "import shutil; [shutil.rmtree(p, ignore_errors=True) for p in ['build', 'dist', '$(PACKAGE).egg-info', '.pytest_cache', 'htmlcov', 'docs/_build', '.coverage']]"
+	python -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('.').rglob('__pycache__')]"
+	python -c "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.pyc')]"
 
-# Install package in development mode
-dev-install:
-	$(UV) pip install -e ".[dev]"
+docs:
+	$(PYTHON) -c "import pathlib; [p.unlink() for p in pathlib.Path('docs/source').rglob('*.rst') if p.name == 'modules.rst' or p.name.startswith('copul.') or p.read_text(encoding='utf-8').startswith('.. automodule::')]"
+	cd docs && sphinx-apidoc -o ./source ../copul __init__.py
+	cd docs && $(PYTHON) -m sphinx -b html ./source build/html
 
-# Install package
-install:
-	$(UV) pip install .
-
-# Run tests with pytest
 test:
 	$(PYTEST) $(TEST_DIR) -v -n 4
 
@@ -52,34 +44,15 @@ format:
 	$(UV) run ruff check --fix .
 	$(UV) run ruff format .
 
-# Run static type checking
-typecheck:
-	$(MYPY) $(SRC_DIR)
-
-# Run linting
-lint:
-	$(PYLINT) $(SRC_DIR)
-
 # Build package
 build:
-	$(UV) pip build
+	$(UV) build
 
-# Create virtual environment
-venv:
-	$(UV) venv
-
-# Install development dependencies
-dev-deps:
-	$(UV) pip install pytest pytest-cov black isort mypy pylint
-
-# Run all quality checks
-quality: format typecheck lint test
+publish: clean build
+	twine upload dist/*
 
 upgrade:
 	@echo "Upgrading dev dependencies in root package..."
 	$(UV) sync --active --upgrade --extra dev
 	$(UV) export --format requirements-txt --extra dev --no-hashes --output-file requirements.txt > $(if $(filter $(OS),Windows_NT),NUL,/dev/null) 2>&1
 
-upgrade-dev:
-	@echo "Upgrading dev dependencies in root package..."
-	$(UV) sync --upgrade --extra dev

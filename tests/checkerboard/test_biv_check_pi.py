@@ -224,6 +224,7 @@ def test_rho_perfect_dependence():
 
 def test_rho_2x2_exact():
     """Test exact values for 2x2 checkerboard copulas."""
+    np.random.seed(42)
     # For a 2x2 checkerboard with perfect positive dependence
     matr_pos = np.array([[1, 0], [0, 1]])
     ccop_pos = BivCheckPi(matr_pos)

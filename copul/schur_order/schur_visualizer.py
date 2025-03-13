@@ -8,7 +8,8 @@ import numpy as np
 import sympy as sp
 from matplotlib import pyplot as plt
 
-from copul import BivCheckMin, BivCheckPi
+from copul.checkerboard.biv_check_min import BivCheckMin
+from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.families import archimedean, elliptical
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -51,6 +52,7 @@ class SchurVisualizer:
 
             def amh1_l(u):
                 return self.copula.cond_distr_1(u, self._v)
+
         else:
             amh1_cd1 = self.copula.cond_distr_1(v=self._v).func
             amh1_l = sp.lambdify(self.copula.u, amh1_cd1, "numpy")

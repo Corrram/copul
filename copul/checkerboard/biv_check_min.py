@@ -47,6 +47,11 @@ class BivCheckMin(CheckMin, BivCheckPi):
 
     @property
     def pdf(self):
+        """PDF is not available for BivCheckMin.
+
+        Raises:
+            PropertyUnavailableException: Always raised, since PDF does not exist for BivCheckMin.
+        """
         raise PropertyUnavailableException("PDF does not exist for BivCheckMin.")
 
 

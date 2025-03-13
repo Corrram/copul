@@ -193,8 +193,11 @@ class CheckPi(Check):
     def pdf(self, *args):
         """
         Evaluate the piecewise "PDF" at the point (args).
+
         In a piecewise-uniform sense, the *true* PDF would be:
+
             self.matr[idx_cell] / volume_of_that_cell
+
         but some tests want just the cell's probability mass.
         """
         if len(args) != self.d:

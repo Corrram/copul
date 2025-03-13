@@ -6,7 +6,7 @@ import sympy
 from matplotlib import pyplot as plt
 from scipy import optimize
 
-from copul.families import concrete_expand_log, get_simplified_solution
+from copul.families.helpers import concrete_expand_log, get_simplified_solution
 from copul.families.bivcopula import BivCopula
 from copul.families.copula_graphs import CopulaGraphs
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -146,6 +146,16 @@ class ArchimedeanCopula(BivCopula, ABC):
 
     @property
     def intervals(self):
+        """
+        Return the parameter intervals for the copula.
+
+        Returns
+        -------
+        dict
+            A dictionary mapping parameter names to their corresponding intervals.
+            For example, if ``self.theta_interval`` is defined, returns
+            ``{"theta": self.theta_interval}``; otherwise, returns an empty dictionary.
+        """
         return {"theta": self.theta_interval} if self.theta_interval is not None else {}
 
     @intervals.setter
@@ -345,7 +355,7 @@ class ArchimedeanCopula(BivCopula, ABC):
         y = [generator(i) for i in x]
         z = [inv_generator(i) for i in x]
         plt.plot(x, y, label="Generator $\\varphi$")
-        plt.plot(x, z, label="Inverse generator $\psi$")
+        plt.plot(x, z, label="Inverse generator $\\psi$")
         title = CopulaGraphs(self).get_copula_title()
         plt.title(title)
         plt.legend()

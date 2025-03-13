@@ -61,7 +61,9 @@ class TestSchurVisualizer:
     def test_compute_with_biv_check(self):
         """Test compute method with BivCheck copulas."""
         # Mock BivCheckPi copula
-        with patch("copul.BivCheckPi", autospec=True) as MockBivCheckPi:
+        with patch(
+            "copul.checkerboard.biv_check_pi.BivCheckPi", autospec=True
+        ) as MockBivCheckPi:
             # Create a properly mocked copula
             mock_pi_copula = MockBivCheckPi.return_value
             mock_pi_copula.cond_distr_1.return_value = lambda u: u
@@ -73,7 +75,9 @@ class TestSchurVisualizer:
             mock_pi_copula.cond_distr_1.assert_called()
 
         # Mock BivCheckMin copula
-        with patch("copul.BivCheckMin", autospec=True) as MockBivCheckMin:
+        with patch(
+            "copul.checkerboard.biv_check_min.BivCheckMin", autospec=True
+        ) as MockBivCheckMin:
             # Create a properly mocked copula
             mock_min_copula = MockBivCheckMin.return_value
             mock_min_copula.cond_distr_1.return_value = lambda u: u
