@@ -62,7 +62,7 @@ class TestCopulaSampler:
         with patch.object(
             self.sampler_with_params, "_sample_val", return_value=np.array([[0.5, 0.5]])
         ):
-            self.sampler_with_params.rvs(1)
+            self.sampler_with_params.rvs(1, False)
 
         # Verify random.seed was called with the correct random_state
         mock_seed.assert_called_once_with(42)
@@ -302,7 +302,7 @@ def test_with_check_pi_copula(mock_sample_val):
     sampler = CopulaSampler(mock_check_pi)
 
     # Sample from the copula
-    result = sampler.rvs(1)
+    result = sampler.rvs(1, False)
 
     # Verify the result
     assert result.shape == (1, 2)
@@ -335,7 +335,7 @@ def test_rvs_sample_count(mock_sample_val, n_samples):
     sampler = CopulaSampler(mock_copula)
 
     # Sample from the copula
-    result = sampler.rvs(n_samples)
+    result = sampler.rvs(n_samples, False)
 
     # Verify the result shape
     assert result.shape == (n_samples, 2)
@@ -345,7 +345,7 @@ def test_rvs_sample_count(mock_sample_val, n_samples):
 def test_rvs_from_upper_frechet():
     copula = UpperFrechet()
     sampler = CopulaSampler(copula)
-    results = sampler.rvs(3)
+    results = sampler.rvs(3, False)
     assert len(results) == 3
     for result in results:
         assert len(result) == 2
@@ -355,7 +355,7 @@ def test_rvs_from_upper_frechet():
 def test_rvs_from_lower_frechet():
     copula = LowerFrechet()
     sampler = CopulaSampler(copula)
-    results = sampler.rvs(3)
+    results = sampler.rvs(3, False)
     assert len(results) == 3
     for result in results:
         assert len(result) == 2
@@ -365,6 +365,6 @@ def test_rvs_from_lower_frechet():
 def test_rvs_from_independence_copula():
     copula = IndependenceCopula()
     sampler = CopulaSampler(copula)
-    results = sampler.rvs(200)
+    results = sampler.rvs(200, False)
     corr = np.corrcoef(results[:, 0], results[:, 1])[0, 1]
     assert np.abs(corr) < 0.1

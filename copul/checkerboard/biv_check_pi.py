@@ -9,6 +9,7 @@ import numpy as np
 from typing import Union, List, Optional, Any
 import warnings
 
+import sympy
 from copul.checkerboard.check_pi import CheckPi
 from copul.families.bivcopula import BivCopula
 
@@ -44,8 +45,12 @@ class BivCheckPi(CheckPi, BivCopula):
         # Convert input to numpy array if it's a list
         if isinstance(matr, list):
             matr = np.array(matr, dtype=float)
+        if isinstance(matr, sympy.Matrix):
+            matr = np.array(matr).astype(float)
 
         # Input validation
+        if not hasattr(matr, "ndim"):
+            raise ValueError("Input matrix must be a 2D array or list")
         if matr.ndim != 2:
             raise ValueError(
                 f"Input matrix must be 2-dimensional, got {matr.ndim} dimensions"

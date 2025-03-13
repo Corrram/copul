@@ -6,6 +6,48 @@ from copul.checkerboard.check import Check
 
 
 class CheckPi(Check):
+    def __new__(cls, matr, *args, **kwargs):
+        """
+        Create a new CheckPi instance or a BivCheckPi instance if dimension is 2.
+
+        Parameters
+        ----------
+        matr : array-like
+            Matrix of values that determine the copula's distribution.
+        *args, **kwargs
+            Additional arguments passed to the constructor.
+
+        Returns
+        -------
+        CheckPi or BivCheckPi
+            A CheckPi instance, or a BivCheckPi instance if dimension is 2.
+        """
+        # If this is the CheckPi class itself (not a subclass)
+        if cls is CheckPi:
+            # Convert matrix to numpy array to get its dimensionality
+            matr_arr = np.asarray(matr)
+
+            # Check if it's a 2D matrix (bivariate copula)
+            if matr_arr.ndim == 2:
+                # Import the BivCheckPi class here to avoid circular imports
+                try:
+                    # Use importlib approach for better testability
+                    import importlib
+
+                    bcp_module = importlib.import_module(
+                        "copul.checkerboard.bivcheckpi"
+                    )
+                    BivCheckPi = getattr(bcp_module, "BivCheckPi")
+                    # Return a new BivCheckPi instance with the same arguments
+                    return BivCheckPi(matr, *args, **kwargs)
+                except (ImportError, ModuleNotFoundError, AttributeError):
+                    # If the import fails, just continue with normal instantiation
+                    pass
+
+        # Otherwise, create a normal instance of the class
+        instance = super().__new__(cls)
+        return instance
+
     def __str__(self):
         return f"CheckPiCopula({self.dim})"
 
@@ -54,7 +96,7 @@ class CheckPi(Check):
                     fraction = 0.0
                     break
                 if frac_k > 1.0:
-                    frac_k = 1.0  # clamp to the cell’s boundary
+                    frac_k = 1.0  # clamp to the cell's boundary
 
                 fraction *= frac_k
                 if fraction == 0.0:
