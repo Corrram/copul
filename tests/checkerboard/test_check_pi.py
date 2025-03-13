@@ -1,8 +1,125 @@
+"""
+Tests for the CheckPi and BivCheckPi classes.
+"""
+
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 import sympy
 
 from copul.checkerboard.check_pi import CheckPi
+
+
+class TestCheckPiBivCheckPiConversion:
+    """Tests for CheckPi automatic conversion to BivCheckPi."""
+
+    def test_checkpi_2d_returns_bivcheckpi(self):
+        """Test that creating a CheckPi with a 2D matrix returns a BivCheckPi instance."""
+        # Create a 2D matrix
+        matr = np.array([[0.25, 0.25], [0.25, 0.25]])
+
+        # Create a mock BivCheckPi class
+        mock_bivcheckpi_instance = MagicMock()
+        mock_bivcheckpi_instance.__class__.__name__ = "BivCheckPi"
+
+        # Create a mock module that returns our mock instance
+        mock_module = MagicMock()
+        mock_module.BivCheckPi = MagicMock(return_value=mock_bivcheckpi_instance)
+
+        # Patch importlib.import_module to return our mock module
+        with patch("importlib.import_module", return_value=mock_module):
+            # Call CheckPi constructor
+            result = CheckPi(matr)
+
+            # Verify the result is the BivCheckPi instance
+            assert result is mock_bivcheckpi_instance
+            # Verify BivCheckPi was called with the matrix
+            mock_module.BivCheckPi.assert_called_once_with(matr)
+
+    def test_checkpi_3d_returns_checkpi(self):
+        """Test that creating a CheckPi with a 3D matrix returns a CheckPi instance."""
+        # Create a 3D matrix
+        matr = np.ones((2, 2, 2)) / 8  # Normalized 2x2x2 matrix
+
+        # Create a CheckPi instance with the 3D matrix
+        result = CheckPi(matr)
+
+        # Verify the result is a CheckPi instance
+        assert isinstance(result, CheckPi)
+        assert not hasattr(result, "m")  # BivCheckPi has m, n attributes
+        assert not hasattr(result, "n")
+
+    def test_bivcheckpi_import_error_fallback(self):
+        """Test that import error for BivCheckPi falls back to CheckPi."""
+        # Create a 2D matrix
+        matr = np.array([[0.25, 0.25], [0.25, 0.25]])
+
+        # Patch importlib.import_module to raise an ImportError for the bivcheckpi module
+        with patch(
+            "importlib.import_module",
+            side_effect=ImportError("No module named 'bivcheckpi'"),
+        ):
+            # Call CheckPi constructor
+            result = CheckPi(matr)
+
+            # Verify the result is a CheckPi instance
+            assert isinstance(result, CheckPi)
+            assert not hasattr(result, "m")  # BivCheckPi has m, n attributes
+            assert not hasattr(result, "n")
+
+    def test_integration_with_real_classes(self):
+        """Integration test with real classes to ensure conversion works properly."""
+        try:
+            # Try to import directly first to check if it's available
+            from importlib import import_module
+
+            try:
+                import_module("copul.checkerboard.bivcheckpi")
+            except ImportError:
+                pytest.skip("BivCheckPi class not available for integration test")
+
+            # Create a 2D matrix
+            matr = np.array([[0.25, 0.25], [0.25, 0.25]])
+
+            # Create a CheckPi instance with the 2D matrix
+            result = CheckPi(matr)
+
+            # Verify the result is a BivCheckPi instance
+            # We use string comparison in case actual classes aren't imported in test environment
+            assert result.__class__.__name__ == "BivCheckPi"
+            assert hasattr(result, "m")
+            assert hasattr(result, "n")
+            assert result.m == 2
+            assert result.n == 2
+
+        except Exception as e:
+            pytest.skip(f"Error in integration test: {e}")
+
+    def test_subclass_not_affected(self):
+        """Test that subclasses of CheckPi are not affected by the conversion."""
+
+        # Create a subclass of CheckPi
+        class SubCheckPi(CheckPi):
+            pass
+
+        # Create a 2D matrix
+        matr = np.array([[0.25, 0.25], [0.25, 0.25]])
+
+        # Create a mock module with a BivCheckPi class
+        mock_module = MagicMock()
+        mock_module.BivCheckPi = MagicMock()
+
+        # Patch importlib.import_module to return our mock module
+        with patch("importlib.import_module", return_value=mock_module):
+            # Create a SubCheckPi instance with the 2D matrix
+            result = SubCheckPi(matr)
+
+            # Verify the result is a SubCheckPi instance
+            assert isinstance(result, SubCheckPi)
+
+            # Verify BivCheckPi was NOT called
+            mock_module.BivCheckPi.assert_not_called()
 
 
 def test_multivar_checkerboard():

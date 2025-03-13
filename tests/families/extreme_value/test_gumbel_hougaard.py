@@ -147,7 +147,7 @@ class TestGumbelHougaard:
 
             # Verify result
             assert np.array_equal(samples, mock_data)
-            mock_rvs.assert_called_once_with(3)
+            mock_rvs.assert_called_once_with(3, False)
 
     def test_tail_dependence(self):
         """Test tail dependence properties"""

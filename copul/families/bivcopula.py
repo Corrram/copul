@@ -5,13 +5,12 @@ import types
 
 import numpy as np
 import sympy as sp
+from copul.families.copula import Copula
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 
-from copul.copula_sampler import CopulaSampler
 from copul.families.cis_verifier import CISVerifier
 from copul.families.copula_graphs import CopulaGraphs
-from copul.families.core_copula import CoreCopula
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.tp2_verifier import TP2Verifier
 from copul.wrapper.cd1_wrapper import CD1Wrapper
@@ -21,7 +20,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 log = logging.getLogger(__name__)
 
 
-class BivCopula(CoreCopula):
+class BivCopula(Copula):
     """
     Base class for bivariate copulas using symbolic expressions.
 
@@ -169,24 +168,6 @@ class BivCopula(CoreCopula):
                 obj._free_symbols = {}
             obj._free_symbols[param_name] = param
         return obj
-
-    def rvs(self, n=1, random_state=None):
-        """
-        Generate random variates from the copula.
-
-        Parameters
-        ----------
-        n : int, optional
-            Number of samples to generate (default is 1).
-        random_state : int or None, optional
-            Seed for the random number generator.
-
-        Returns
-        -------
-        np.ndarray
-            An array of shape (n, 2) containing samples from the copula.
-        """
-        return CopulaSampler(self, random_state=random_state).rvs(n)
 
     @property
     def pdf(self):
@@ -640,7 +621,10 @@ class BivCopula(CoreCopula):
             The figure containing the 3D plot of the PDF.
         """
         free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
-        pdf = self(**free_symbol_dict).pdf
+        if free_symbol_dict:
+            pdf = self(**free_symbol_dict).pdf
+        else:
+            pdf = self.pdf
         title = CopulaGraphs(self).get_copula_title()
         return self._plot3d(pdf, title=title, zlabel="PDF")
 

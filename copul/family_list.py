@@ -1,12 +1,12 @@
 """
 Copula Families Module
-=====================
+======================
 
 This module provides a comprehensive enumeration of all copula families available in the package,
 organized by their mathematical categories.
 
 Categories
----------
+----------
 - Archimedean: Copulas derived from a generator function (e.g., Clayton, Gumbel, Frank)
 - Elliptical: Copulas derived from elliptical distributions (e.g., Gaussian, Student's t)
 - Extreme Value: Copulas suitable for modeling extreme events (e.g., Galambos, Hüsler-Reiss)

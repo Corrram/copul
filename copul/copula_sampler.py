@@ -14,6 +14,7 @@ from typing import Any, Callable, Tuple, Optional
 import numpy as np
 import scipy.optimize as opt
 import sympy
+from copul.checkerboard.checkerboarder import Checkerboarder
 from copul.checkerboard.check_pi import CheckPi
 
 # Set up module logger
@@ -49,16 +50,22 @@ class CopulaSampler:
         self._precision = precision
         self._random_state = random_state
 
-    def rvs(self, n: int = 1) -> np.ndarray:
+    def rvs(self, n: int = 1, approximate=False) -> np.ndarray:
         """
         Sample n random variates from the copula.
 
         Args:
             n: Number of samples to generate (default: 1).
+            approximate: Use approximate sampling method (default: True).
 
         Returns:
             np.ndarray: Array of shape (n, 2) containing the sampled (u, v) pairs.
         """
+        if approximate:
+            grid_partitions = np.ceil(np.sqrt(n)).astype(int)
+            checkerboarder = Checkerboarder(grid_partitions, dim=2)
+            ccop = checkerboarder.compute_check_pi(self._copul)
+            return ccop.rvs(n)
         # Set random seed if specified
         if self._random_state is not None:
             random.seed(self._random_state)

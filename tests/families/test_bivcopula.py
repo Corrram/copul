@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import sympy as sp
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from copul.families.bivcopula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -96,22 +96,11 @@ class TestBivCopula:
         cd2 = simple_biv_copula.cond_distr_2(u=0.5, v=0.5)
         assert cd2 is not None
 
-    @patch("copul.copula_sampler.CopulaSampler")
-    def test_rvs(self, mock_sampler, simple_biv_copula):
+    def test_rvs(self, simple_biv_copula):
         """Test random variable sampling"""
-        # Setup mock
-        mock_instance = MagicMock()
-        mock_sampler.return_value = mock_instance
-        mock_instance.rvs.return_value = np.array([[0.5, 0.5]])
-
-        # Call rvs - use a with statement to patch the import path
-        with patch("copul.families.bivcopula.CopulaSampler", mock_sampler):
-            result = simple_biv_copula.rvs(1)
-
-            # Verify
-            mock_sampler.assert_called_once_with(simple_biv_copula, random_state=None)
-            mock_instance.rvs.assert_called_once_with(1)
-            assert np.array_equal(result, np.array([[0.5, 0.5]]))
+        result = simple_biv_copula.rvs(1)
+        assert isinstance(result, np.ndarray)
+        assert result.shape == (1, 2)
 
     def test_rank_correlations(self, simple_biv_copula):
         """Test rank correlation calculations"""
