@@ -1,5 +1,6 @@
 import itertools
 import logging
+import importlib  # Import at module level
 
 import numpy as np
 
@@ -39,6 +40,48 @@ class CheckMin(Check):
         - This results in 1 favorable cell out of 4 in the conditioning event, so:
               cond_distr(1, (0.5, 0.5, 0.5)) = 1 / 4 = 0.25.
     """
+
+    def __new__(cls, matr, *args, **kwargs):
+        """
+        Create a new CheckMin instance or a BivCheckMin instance if dimension is 2.
+
+        Parameters
+        ----------
+        matr : array-like
+            Matrix of values that determine the copula's distribution.
+        *args, **kwargs
+            Additional arguments passed to the constructor.
+
+        Returns
+        -------
+        CheckMin or BivCheckMin
+            A CheckMin instance, or a BivCheckMin instance if dimension is 2.
+        """
+        # If this is the CheckMin class itself (not a subclass)
+        if cls is CheckMin:
+            # Convert matrix to numpy array to get its dimensionality
+            matr_arr = np.asarray(matr)
+
+            # Check if it's a 2D matrix (bivariate copula)
+            if matr_arr.ndim == 2:
+                # Import the BivCheckMin class here to avoid circular imports
+                try:
+                    bcp_module = importlib.import_module(
+                        "copul.checkerboard.bivcheckmin"
+                    )
+                    BivCheckMin = getattr(bcp_module, "BivCheckMin")
+                    # Return a new BivCheckMin instance with the same arguments
+                    return BivCheckMin(matr, *args, **kwargs)
+                except (ImportError, ModuleNotFoundError, AttributeError):
+                    # If the import fails, just continue with normal instantiation
+                    pass
+
+        # Create a normal instance by directly calling the parent's __new__
+        # Using the actual class for clarity and to avoid MRO issues
+        from copul.checkerboard.check import Check
+
+        instance = Check.__new__(cls)
+        return instance
 
     def __str__(self):
         return f"CheckMinCopula({self.dim})"

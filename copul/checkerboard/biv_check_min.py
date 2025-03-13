@@ -11,6 +11,29 @@ class BivCheckMin(CheckMin, BivCheckPi):
     A class that implements bivariate checkerboard minimum operations.
     """
 
+    def __new__(cls, matr, *args, **kwargs):
+        """
+        Create a new BivCheckMin instance.
+
+        Parameters
+        ----------
+        matr : array-like
+            Matrix of values that determine the copula's distribution.
+        *args, **kwargs
+            Additional arguments passed to the constructor.
+
+        Returns
+        -------
+        BivCheckMin
+            A BivCheckMin instance.
+        """
+        # Skip intermediate classes and directly use Check.__new__
+        # This avoids Method Resolution Order (MRO) issues with multiple inheritance
+        from copul.checkerboard.check import Check
+
+        instance = Check.__new__(cls)
+        return instance
+
     def __init__(self, matr: np.ndarray, **kwargs) -> None:
         """Initialize the BivCheckMin instance.
 

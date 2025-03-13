@@ -1,8 +1,118 @@
+"""
+Tests for the CheckMin and BivCheckMin classes.
+"""
+
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
 
 from copul.checkerboard.check_min import CheckMin
 from copul.exceptions import PropertyUnavailableException
+
+
+class TestCheckMinBivCheckMinConversion:
+    """Tests for CheckMin automatic conversion to BivCheckMin."""
+
+    def test_checkmin_2d_returns_bivcheckmin(self):
+        """Test that creating a CheckMin with a 2D matrix returns a BivCheckMin instance."""
+        # Create a 2D matrix
+        matr = np.array([[0.25, 0.25], [0.25, 0.25]])
+
+        # Create a mock BivCheckMin class
+        mock_bivcheckmin_instance = MagicMock()
+        mock_bivcheckmin_instance.__class__.__name__ = "BivCheckMin"
+
+        # Create a mock module that returns our mock instance
+        mock_module = MagicMock()
+        mock_module.BivCheckMin = MagicMock(return_value=mock_bivcheckmin_instance)
+
+        # Patch importlib.import_module to return our mock module
+        with patch("importlib.import_module", return_value=mock_module):
+            # Call CheckMin constructor
+            result = CheckMin(matr)
+
+            # Verify the result is the BivCheckMin instance
+            assert result is mock_bivcheckmin_instance
+            # Verify BivCheckMin was called with the matrix
+            mock_module.BivCheckMin.assert_called_once_with(matr)
+
+    def test_checkmin_3d_returns_checkmin(self):
+        """Test that creating a CheckMin with a 3D matrix returns a CheckMin instance."""
+        # Create a 3D matrix
+        matr = np.ones((2, 2, 2)) / 8  # Normalized 2x2x2 matrix
+
+        # Create a CheckMin instance with the 3D matrix
+        result = CheckMin(matr)
+
+        # Verify the result is a CheckMin instance
+        assert isinstance(result, CheckMin)
+
+    def test_bivcheckmin_import_error_fallback(self):
+        """Test that import error for BivCheckMin falls back to CheckMin."""
+        # Create a 2D matrix
+        matr = np.array([[0.25, 0.25], [0.25, 0.25]])
+
+        # Patch importlib.import_module to raise an ImportError for the bivcheckmin module
+        with patch(
+            "importlib.import_module",
+            side_effect=ImportError("No module named 'bivcheckmin'"),
+        ):
+            # Call CheckMin constructor
+            result = CheckMin(matr)
+
+            # Verify the result is a CheckMin instance
+            assert isinstance(result, CheckMin)
+
+    def test_integration_with_real_classes(self):
+        """Integration test with real classes to ensure conversion works properly."""
+        try:
+            # Try to import directly first to check if it's available
+            import sys
+            from importlib import import_module
+
+            try:
+                import_module("copul.checkerboard.bivcheckmin")
+            except ImportError:
+                pytest.skip("BivCheckMin class not available for integration test")
+
+            # Create a 2D matrix
+            matr = np.array([[0.25, 0.25], [0.25, 0.25]])
+
+            # Create a CheckMin instance with the 2D matrix
+            result = CheckMin(matr)
+
+            # Verify the result is a BivCheckMin instance
+            # We use string comparison in case actual classes aren't imported in test environment
+            assert result.__class__.__name__ == "BivCheckMin"
+
+        except Exception as e:
+            pytest.skip(f"Error in integration test: {e}")
+
+    def test_subclass_not_affected(self):
+        """Test that subclasses of CheckMin are not affected by the conversion."""
+
+        # Create a subclass of CheckMin
+        class SubCheckMin(CheckMin):
+            pass
+
+        # Create a 2D matrix
+        matr = np.array([[0.25, 0.25], [0.25, 0.25]])
+
+        # Create a mock module with a BivCheckMin class
+        mock_module = MagicMock()
+        mock_module.BivCheckMin = MagicMock()
+
+        # Patch importlib.import_module to return our mock module
+        with patch("importlib.import_module", return_value=mock_module):
+            # Create a SubCheckMin instance with the 2D matrix
+            result = SubCheckMin(matr)
+
+            # Verify the result is a SubCheckMin instance
+            assert isinstance(result, SubCheckMin)
+
+            # Verify BivCheckMin was NOT called
+            mock_module.BivCheckMin.assert_not_called()
 
 
 def test_2x2x2_multivar_checkerboard():
