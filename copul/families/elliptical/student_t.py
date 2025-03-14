@@ -70,7 +70,7 @@ class StudentT(EllipticalCopula):
     def is_absolutely_continuous(self) -> bool:
         return True
 
-    def rvs(self, n=1):
+    def rvs(self, n=1, **kwargs):
         """
         Generate random samples from the Student's t copula.
 

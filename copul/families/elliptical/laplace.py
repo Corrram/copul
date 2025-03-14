@@ -13,13 +13,15 @@ class multivariate_laplace:
     """
 
     @staticmethod
-    def rvs(mean=None, cov=1, size=1, random_state=None):
+    def rvs(mean=None, cov=1, size=1, random_state=None, **kwargs):
         """Generate random samples from multivariate Laplace distribution"""
         # Simple implementation just for the copula's rvs method
         dim = len(mean)
         final_shape = [size, dim] if isinstance(size, int) else size + [dim]
 
         # Generate standard Laplace random variables
+        if random_state is not None:
+            np.random.seed(random_state)
         x = np.random.laplace(loc=0.0, scale=1.0, size=final_shape).reshape(-1, dim)
 
         # Apply covariance structure

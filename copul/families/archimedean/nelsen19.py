@@ -19,13 +19,28 @@ class Nelsen19(ArchimedeanCopula):
 
     @property
     def _generator(self):
-        return sympy.exp(self.theta / self.t) - sympy.exp(self.theta)
+        expr = sympy.exp(self.theta / self.t) - sympy.exp(self.theta)
+        return sympy.Piecewise(
+            (expr, self.t > 0),
+            (sympy.oo, True)
+        )
 
     @property
     def inv_generator(self):
-        gen = self.theta / sympy.log(self.y + sympy.exp(self.theta))
-        return SymPyFuncWrapper(gen)
+        theta = self.theta
+        y = self.y
 
+        # Regular case expression
+        regular_expr = theta / sympy.log(y + sympy.exp(theta))
+
+        # Define piecewise function to handle edge cases
+        inv_gen = sympy.Piecewise(
+            (0, y == sympy.oo),  # When y is infinity
+            (1, y == 0),  # When y is 0
+            (regular_expr, True)  # Regular case
+        )
+
+        return SymPyFuncWrapper(inv_gen)
     @property
     def cdf(self):
         cdf = self.theta / sympy.log(

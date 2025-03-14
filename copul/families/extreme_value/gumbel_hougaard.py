@@ -7,6 +7,10 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GumbelHougaard(ExtremeValueCopula):
+    delta = sympy.symbols("theta", positive=True)
+    params = [delta]
+    intervals = {"theta": sympy.Interval(1, np.inf, left_open=False, right_open=True)}
+
     def __new__(cls, *args, **kwargs):
         # Check if theta=1 is passed either as a positional arg or keyword arg
         theta_is_one = False
@@ -50,16 +54,18 @@ class GumbelHougaard(ExtremeValueCopula):
 
     @property
     def cdf(self):
-        cdf = sympy.exp(
+        base_expr = sympy.exp(
             -(
-                (
-                    sympy.log(1 / self.v) ** self.theta
-                    + sympy.log(1 / self.u) ** self.theta
-                )
-                ** (1 / self.theta)
+                (sympy.log(1/self.v)**self.theta + sympy.log(1/self.u)**self.theta)
+                ** (1/self.theta)
             )
         )
-        return SymPyFuncWrapper(cdf)
+        # When u==0 or v==0, return 0; otherwise, use the base expression.
+        cdf_expr = sympy.Piecewise(
+            (0, sympy.Or(sympy.Eq(self.u, 0), sympy.Eq(self.v, 0))),
+            (base_expr, True)
+        )
+        return SymPyFuncWrapper(cdf_expr)
 
     def _rho(self):
         t = self.t

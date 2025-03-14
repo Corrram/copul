@@ -22,6 +22,15 @@ def test_rectangular_checkerboard():
     assert np.isclose(matr_sum, 1.0)
 
 
+def test_rectangular_checkerboard_with_n16():
+    n16 = copul.Families.NELSEN16.cls(2)
+    checkerboarder = copul.Checkerboarder([3, 10])
+    ccop = checkerboarder.compute_check_pi(n16)
+    assert ccop.matr.shape == (3, 10)
+    matr_sum = ccop.matr.sum()
+    assert np.isclose(matr_sum, 1.0)
+
+
 def test_xi_computation():
     np.random.seed(121)
     copula = copul.Families.NELSEN7.cls(0.5)

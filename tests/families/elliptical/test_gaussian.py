@@ -216,3 +216,213 @@ def test_gaussian_characteristic_function():
     expected = float(sympy.exp(-arg_value / 2).evalf())
 
     assert np.isclose(result, expected)
+
+
+def test_gaussian_cdf_vectorized_basic(gaussian_copula):
+    """Test that cdf_vectorized gives same results as scalar evaluation."""
+    import numpy as np
+
+    # Define test points
+    u_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v_values = np.array([0.2, 0.4, 0.6, 0.8, 0.7])
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array(
+        [
+            float(gaussian_copula.cdf(u=u_values[i], v=v_values[i]).evalf())
+            for i in range(len(u_values))
+        ]
+    )
+
+    # Calculate results using vectorized CDF
+    actual_results = gaussian_copula.cdf_vectorized(u_values, v_values)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_gaussian_cdf_vectorized_broadcasting(gaussian_copula):
+    """Test that cdf_vectorized correctly handles broadcasting."""
+    import numpy as np
+
+    # Test broadcasting: u is scalar, v is array
+    u_scalar = 0.5
+    v_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array(
+        [float(gaussian_copula.cdf(u=u_scalar, v=v).evalf()) for v in v_array]
+    )
+
+    # Calculate results using vectorized CDF
+    actual_results = gaussian_copula.cdf_vectorized(u_scalar, v_array)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+    # Test broadcasting: u is array, v is scalar
+    u_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v_scalar = 0.5
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array(
+        [float(gaussian_copula.cdf(u=u, v=v_scalar).evalf()) for u in u_array]
+    )
+
+    # Calculate results using vectorized CDF
+    actual_results = gaussian_copula.cdf_vectorized(u_array, v_scalar)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_gaussian_cdf_vectorized_grid(gaussian_copula):
+    """Test cdf_vectorized with grid inputs."""
+    import numpy as np
+
+    # Create grid of values
+    u_grid = np.linspace(0.1, 0.9, 5)
+    v_grid = np.linspace(0.1, 0.9, 5)
+    U, V = np.meshgrid(u_grid, v_grid)
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.zeros_like(U)
+    for i in range(U.shape[0]):
+        for j in range(U.shape[1]):
+            expected_results[i, j] = float(
+                gaussian_copula.cdf(u=U[i, j], v=V[i, j]).evalf()
+            )
+
+    # Calculate results using vectorized CDF
+    actual_results = gaussian_copula.cdf_vectorized(U, V)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_gaussian_cdf_vectorized_boundary_values(gaussian_copula):
+    """Test cdf_vectorized with boundary values (0 and 1)."""
+    import numpy as np
+
+    # Test boundary values
+    u_values = np.array([0, 0, 1, 1, 0.5])
+    v_values = np.array([0, 1, 0, 1, 0.5])
+
+    # Calculate results using vectorized CDF
+    results = gaussian_copula.cdf_vectorized(u_values, v_values)
+
+    # Expected results for boundary cases:
+    # C(0,v) = 0 for all v
+    # C(u,0) = 0 for all u
+    # C(1,v) = v for all v
+    # C(u,1) = u for all u
+    # For the (0.5, 0.5) case, we use the actual CDF value
+    expected = np.array([0, 0, 0, 1, float(gaussian_copula.cdf(u=0.5, v=0.5).evalf())])
+
+    # Check that results match
+    np.testing.assert_allclose(results, expected, rtol=1e-10)
+
+
+def test_gaussian_cdf_vectorized_input_validation(gaussian_copula):
+    """Test that cdf_vectorized properly validates inputs."""
+    import numpy as np
+
+    # Test with invalid values (outside [0,1])
+    with pytest.raises(ValueError, match="Marginals must be in"):
+        gaussian_copula.cdf_vectorized(np.array([-0.1, 0.5]), np.array([0.2, 0.3]))
+
+    with pytest.raises(ValueError, match="Marginals must be in"):
+        gaussian_copula.cdf_vectorized(np.array([0.2, 0.5]), np.array([0.2, 1.1]))
+
+
+def test_gaussian_cdf_vectorized_performance(gaussian_copula):
+    """Test that cdf_vectorized is faster than scalar evaluation for large inputs."""
+    import numpy as np
+    import time
+
+    # Create large test arrays (1000 points)
+    np.random.seed(42)  # For reproducibility
+    u_large = np.random.random(1000)
+    v_large = np.random.random(1000)
+
+    # Time scalar evaluation
+    start_scalar = time.time()
+    scalar_results = np.array(
+        [
+            float(gaussian_copula.cdf(u=u_large[i], v=v_large[i]).evalf())
+            for i in range(len(u_large))
+        ]
+    )
+    scalar_time = time.time() - start_scalar
+
+    # Time vectorized evaluation
+    start_vector = time.time()
+    vector_results = gaussian_copula.cdf_vectorized(u_large, v_large)
+    vector_time = time.time() - start_vector
+
+    # Check that results match
+    np.testing.assert_allclose(vector_results, scalar_results, rtol=1e-6)
+
+    # Check that vectorized is faster (should be at least 5x faster)
+    assert vector_time < scalar_time * 0.2, (
+        f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
+    )
+
+
+@pytest.mark.parametrize(
+    "rho, expected_function",
+    [
+        (-1, lambda u, v: np.maximum(u + v - 1, 0)),  # Lower Fréchet bound
+        (0, lambda u, v: u * v),  # Independence
+        (1, lambda u, v: np.minimum(u, v)),  # Upper Fréchet bound
+    ],
+)
+def test_gaussian_cdf_vectorized_special_cases(rho, expected_function):
+    """Test cdf_vectorized with special correlation values."""
+    import numpy as np
+
+    # Create a Gaussian copula with the special rho value
+    # Need to create directly instead of using fixtures to get different rho values
+    copula = Gaussian()(rho)  # This should handle the special cases internally
+
+    # Create test points
+    u_values = np.array([0.2, 0.4, 0.6, 0.8])
+    v_values = np.array([0.3, 0.5, 0.7, 0.9])
+
+    # Calculate expected results using the known formulas for special cases
+    expected_results = expected_function(u_values, v_values)
+
+    # Calculate results using vectorized CDF
+    # Even though copula might be a special case class, it should have the cdf_vectorized method
+    actual_results = copula.cdf_vectorized(u_values, v_values)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_gaussian_cdf_vectorized_against_theoretical():
+    """Test cdf_vectorized against theoretical properties of Gaussian copulas."""
+    import numpy as np
+
+    # Create a copula instance with rho = 0.5
+    copula = Gaussian(0.5)
+
+    # Property: Gaussian copula values should satisfy Fréchet bounds
+    u_grid = np.linspace(0.1, 0.9, 9)
+    v_grid = np.linspace(0.1, 0.9, 9)
+    U, V = np.meshgrid(u_grid, v_grid)
+
+    # Calculate results using vectorized CDF
+    cdf_values = copula.cdf_vectorized(U, V)
+
+    # Check against Fréchet lower bound: C(u,v) ≥ max(u+v-1, 0)
+    lower_bound = np.maximum(U + V - 1, 0)
+    assert np.all(cdf_values >= lower_bound - 1e-10)
+
+    # Check against Fréchet upper bound: C(u,v) ≤ min(u,v)
+    upper_bound = np.minimum(U, V)
+    assert np.all(cdf_values <= upper_bound + 1e-10)
+
+    # Check symmetry property: C(u,v) = C(v,u)
+    cdf_transpose = copula.cdf_vectorized(V, U)
+    np.testing.assert_allclose(cdf_values, cdf_transpose, rtol=1e-10)

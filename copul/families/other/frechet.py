@@ -103,6 +103,66 @@ class Frechet(BivCopula):
         )
         return CDFWrapper(cdf)
 
+    def cdf_vectorized(self, u, v):
+        """
+        Vectorized implementation of the cumulative distribution function for Frechet copula.
+
+        This method evaluates the CDF at multiple points simultaneously, which is more efficient
+        than calling the scalar CDF function repeatedly.
+
+        Parameters
+        ----------
+        u : array_like
+            First uniform marginal, should be in [0, 1].
+        v : array_like
+            Second uniform marginal, should be in [0, 1].
+
+        Returns
+        -------
+        numpy.ndarray
+            The CDF values at the specified points.
+
+        Notes
+        -----
+        This implementation uses numpy for vectorized operations, providing significant
+        performance improvements for large inputs. The formula used is:
+            C(u,v) = α·min(u,v) + (1-α-β)·u·v + β·max(u+v-1,0)
+        where α and β are the parameters of the Frechet copula.
+        """
+        import numpy as np
+
+        # Convert inputs to numpy arrays if they aren't already
+        u = np.asarray(u)
+        v = np.asarray(v)
+
+        # Ensure inputs are within [0, 1]
+        if np.any((u < 0) | (u > 1)) or np.any((v < 0) | (v > 1)):
+            raise ValueError("Marginals must be in [0, 1]")
+
+        # Handle scalar inputs by broadcasting to the same shape
+        if u.ndim == 0 and v.ndim > 0:
+            u = np.full_like(v, u.item())
+        elif v.ndim == 0 and u.ndim > 0:
+            v = np.full_like(u, v.item())
+
+        # Get parameter values as floats
+        alpha = float(self.alpha)
+        beta = float(self.beta)
+
+        # Compute the three components of the Frechet copula using vectorized operations
+        frechet_upper = np.minimum(u, v)
+        frechet_lower = np.maximum(u + v - 1, 0)
+        independence = u * v
+
+        # Combine the components with the weights
+        cdf_values = (
+            alpha * frechet_upper
+            + (1 - alpha - beta) * independence
+            + beta * frechet_lower
+        )
+
+        return cdf_values
+
     def cond_distr_2(self, u=None, v=None):
         cond_distr = (
             self._alpha * sympy.Heaviside(self.u - self.v)

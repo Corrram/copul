@@ -260,7 +260,7 @@ class CheckPi(Check):
         # Return just the cell's mass (not dividing by cell volume)
         return float(self.matr[tuple(cell_idx)])
 
-    def rvs(self, n=1, random_state=None):
+    def rvs(self, n=1, random_state=None, **kwargs):
         """
         Draw random variates from the d-dimensional checkerboard copula efficiently.
 

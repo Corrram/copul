@@ -94,41 +94,44 @@ class Checkerboarder:
 
     def _compute_check_pi_vectorized(self, copula):
         """
-        Compute the checkerboard representation using vectorized operations (2D only).
+        Compute the checkerboard representation using fully vectorized operations (2D only).
 
-        If the instance is not 2D, a warning is issued and the serial computation is used.
+        Uses the copula's cdf_vectorized method to compute all grid cell values in a single
+        operation, significantly improving performance compared to cell-by-cell evaluation.
 
         Parameters
         ----------
         copula : object
-            A copula object providing a 'cdf' method.
+            A copula object providing a 'cdf_vectorized' method.
 
         Returns
         -------
-        BivCheckPi
+        CheckPi
             The checkerboard representation computed via vectorized operations.
         """
         if self.d != 2:
             warnings.warn("Vectorized computation only supported for 2D case")
             return self._compute_check_pi_serial(copula)
 
-        cmatr = np.zeros(self.n)
-
-        # Define grid edges for both dimensions.
+        # Define grid edges for both dimensions
         x_lower = self.grid_points[0][:-1]
         x_upper = self.grid_points[0][1:]
         y_lower = self.grid_points[1][:-1]
         y_upper = self.grid_points[1][1:]
 
-        # Apply inclusion-exclusion principle for each cell.
-        for i in range(self.n[0]):
-            for j in range(self.n[1]):
-                cmatr[i, j] = (
-                    copula.cdf(x_upper[i], y_upper[j])
-                    - copula.cdf(x_upper[i], y_lower[j])
-                    - copula.cdf(x_lower[i], y_upper[j])
-                    + copula.cdf(x_lower[i], y_lower[j])
-                )
+        # Create meshgrids for all corner combinations
+        X_lower, Y_lower = np.meshgrid(x_lower, y_lower, indexing="ij")
+        X_upper, Y_upper = np.meshgrid(x_upper, y_upper, indexing="ij")
+
+        # Apply inclusion-exclusion principle using vectorized CDF evaluation
+        # C(u_upper, v_upper) - C(u_upper, v_lower) - C(u_lower, v_upper) + C(u_lower, v_lower)
+        cdf_upper_upper = copula.cdf_vectorized(X_upper, Y_upper)
+        cdf_lower_lower = copula.cdf_vectorized(X_lower, Y_lower)
+        cdf_upper_lower = copula.cdf_vectorized(X_upper, Y_lower)
+        cdf_lower_upper = copula.cdf_vectorized(X_lower, Y_upper)
+
+        # Compute cell probabilities using the inclusion-exclusion principle
+        cmatr = cdf_upper_upper - cdf_upper_lower - cdf_lower_upper + cdf_lower_lower
 
         return CheckPi(cmatr)
 

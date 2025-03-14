@@ -19,21 +19,34 @@ class Nelsen16(ArchimedeanCopula):
 
     @property
     def _generator(self):
-        return (self.theta / self.t + 1) * (1 - self.t)
+        expr = (self.theta / self.t + 1) * (1 - self.t)
+        return sympy.Piecewise((expr, self.t > 0), (1,self.theta==0), (sympy.oo, True))
 
     @property
     def inv_generator(self):
         theta = self.theta
         y = self.y
-        gen = (1 - theta - y + sympy.sqrt((theta + y - 1) ** 2 + 4 * theta)) / 2
-        return SymPyFuncWrapper(gen)
+
+        # Regular case expression
+        regular_expr = (1 - theta - y + sympy.sqrt((theta + y - 1) ** 2 + 4 * theta)) / 2
+
+        # Define piecewise function to handle edge cases
+        inv_gen = sympy.Piecewise(
+            (regular_expr, sympy.And(y > 0, y < sympy.oo)),  # Regular case
+            (0, y == sympy.oo),  # When y is infinity
+            (1, y == 0),  # When y is 0
+        )
+
+        return SymPyFuncWrapper(inv_gen)
 
     @property
     def cdf(self):
         th = self.theta
         v = self.v
         u = self.u
-        cdf = (
+        
+        # Define the original calculation for non-zero u and v
+        regular_case = (
             u * v * (1 - th)
             + u * (th + v) * (v - 1)
             + v * (th + u) * (u - 1)
@@ -43,8 +56,14 @@ class Nelsen16(ArchimedeanCopula):
                 ** 2
             )
         ) / (2 * u * v)
+        
+        # Use Piecewise to handle the edge cases
+        cdf = sympy.Piecewise(
+            (regular_case, sympy.And(u > 0, v > 0)),
+            (0, True)
+        )
         return CDFWrapper(cdf)
-
+    
     def first_deriv_of_ci_char(self):
         theta = self.theta
         y = self.y

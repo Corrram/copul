@@ -484,7 +484,7 @@ class BivCopula(Copula):
             plt.draw()
             plt.close()
 
-    def scatter_plot(self, n=1_000):
+    def scatter_plot(self, n=1_000, approximate=False):
         """
         Create a scatter plot of random variates from the copula.
 
@@ -492,12 +492,15 @@ class BivCopula(Copula):
         ----------
         n : int, optional
             The number of samples to generate (default is 1,000).
+        approximate : bool, optional
+            Whether to use explicit sampling from the conditional distributions or
+            approximate sampling with a checkerboard copula
 
         Returns
         -------
         None
         """
-        data_ = self.rvs(n)
+        data_ = self.rvs(n, approximate=approximate)
         plt.scatter(data_[:, 0], data_[:, 1], s=rcParams["lines.markersize"] ** 2)
         title = CopulaGraphs(self).get_copula_title()
         plt.title(title)

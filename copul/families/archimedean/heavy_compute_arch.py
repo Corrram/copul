@@ -7,6 +7,7 @@ import numpy as np
 import sympy
 from scipy import optimize
 
+from copul.copula_sampler import CopulaSampler
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 
 log = logging.getLogger(__name__)
@@ -15,8 +16,11 @@ log = logging.getLogger(__name__)
 class HeavyComputeArch(ArchimedeanCopula, ABC):
     err_counter = 0
 
-    def rvs(self, n=1):
+    def rvs(self, n=1, random_state=None, approximate=False):
         """Sample a value from the copula"""
+        if approximate:
+            sampler = CopulaSampler(self, random_state=random_state)
+            return sampler.rvs(n, approximate)
         results = []
         for _ in range(n):
             v = random.uniform(0, 1)

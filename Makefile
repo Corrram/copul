@@ -53,6 +53,6 @@ publish: clean build
 
 upgrade:
 	@echo "Upgrading dev dependencies in root package..."
-	$(UV) sync --active --upgrade --extra dev
+	$(UV) sync --upgrade --extra dev
 	$(UV) export --format requirements-txt --extra dev --no-hashes --output-file requirements.txt > $(if $(filter $(OS),Windows_NT),NUL,/dev/null) 2>&1
 

@@ -68,7 +68,6 @@ class TestCheckMinBivCheckMinConversion:
         """Integration test with real classes to ensure conversion works properly."""
         try:
             # Try to import directly first to check if it's available
-            import sys
             from importlib import import_module
 
             try:
