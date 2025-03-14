@@ -107,6 +107,139 @@ class Raftery(BivCopula):
 
         return SymPyFuncWrapper(cdf_expr)
 
+    def cdf_vectorized(self, u, v):
+        """
+        Vectorized implementation of the cumulative distribution function for Raftery copula.
+
+        This method evaluates the CDF at multiple points simultaneously, which is more efficient
+        than calling the scalar CDF function repeatedly.
+
+        Parameters
+        ----------
+        u : array_like
+            First uniform marginal, should be in [0, 1].
+        v : array_like
+            Second uniform marginal, should be in [0, 1].
+
+        Returns
+        -------
+        numpy.ndarray
+            The CDF values at the specified points.
+
+        Notes
+        -----
+        The Raftery copula CDF is:
+        C(u,v) = min(u, v) + (1 - delta) / (1 + delta) * (u * v)^(1/(1-delta)) * (1 - max(u, v)^(-(1+delta)/(1-delta)))
+
+        Special cases:
+        - When delta = 0, it's the Independence copula (u * v)
+        - When delta = 1, it's the Upper Fréchet bound (min(u, v))
+        """
+        import numpy as np
+
+        # Convert inputs to numpy arrays if they aren't already
+        u = np.asarray(u)
+        v = np.asarray(v)
+
+        # Ensure inputs are within [0, 1]
+        if np.any((u < 0) | (u > 1)) or np.any((v < 0) | (v > 1)):
+            raise ValueError("Marginals must be in [0, 1]")
+
+        # Handle scalar inputs by broadcasting to the same shape
+        if u.ndim == 0 and v.ndim > 0:
+            u = np.full_like(v, u.item())
+        elif v.ndim == 0 and u.ndim > 0:
+            v = np.full_like(u, v.item())
+
+        # Get delta parameter as a float
+        delta_val = float(self.delta)
+
+        # Special case for delta = 0 (Independence copula)
+        if delta_val == 0 or (hasattr(self, "_independence") and self._independence):
+            return u * v
+
+        # Special case for delta = 1 (Upper Fréchet bound)
+        if delta_val == 1 or (hasattr(self, "_upper_frechet") and self._upper_frechet):
+            return np.minimum(u, v)
+
+        # Regular case: 0 < delta < 1
+        # Calculate min(u, v) and max(u, v)
+        u_min_v = np.minimum(u, v)
+        u_max_v = np.maximum(u, v)
+
+        # Constant terms
+        factor = (1 - delta_val) / (1 + delta_val)
+        power1 = 1 / (1 - delta_val)
+        power2 = -(1 + delta_val) / (1 - delta_val)
+
+        try:
+            # Calculate the full expression for all points
+            uv_product = u * v
+            term1 = np.power(uv_product, power1, where=(uv_product > 0))
+
+            # Handle potential division by zero or negative inputs in max term
+            max_term = np.zeros_like(u_max_v)
+            valid_max = (u_max_v > 0) & (u_max_v < 1)
+            if np.any(valid_max):
+                max_term[valid_max] = np.power(u_max_v[valid_max], power2)
+
+            term2 = 1 - max_term
+
+            # Calculate full CDF
+            result = u_min_v + factor * term1 * term2
+
+            # Handle edge cases (where u or v is 0 or 1)
+            # When u or v is 0, the CDF is 0
+            result = np.where((u == 0) | (v == 0), 0, result)
+
+            # When u or v is 1, special case
+            # If u = 1, C(u,v) = v
+            # If v = 1, C(u,v) = u
+            result = np.where(u == 1, v, result)
+            result = np.where(v == 1, u, result)
+
+            # Numerical safety: ensure results are in [0, 1]
+            result = np.maximum(0, np.minimum(1, result))
+
+            return result
+
+        except Exception as e:
+            # Fallback to element-by-element calculation
+            import warnings
+
+            warnings.warn(
+                f"Error in vectorized CDF calculation: {e}. Using scalar fallback."
+            )
+
+            # Initialize result array
+            result = np.zeros_like(u)
+
+            for idx in np.ndindex(u.shape):
+                try:
+                    u_val, v_val = u[idx], v[idx]
+
+                    # Try to calculate exact match to original CDF implementation
+                    if u_val == 0 or v_val == 0:
+                        result[idx] = 0
+                    elif u_val == 1:
+                        result[idx] = v_val
+                    elif v_val == 1:
+                        result[idx] = u_val
+                    else:
+                        min_val = min(u_val, v_val)
+                        max_val = max(u_val, v_val)
+
+                        term1 = (u_val * v_val) ** power1
+                        term2 = 1 - max_val**power2
+
+                        result[idx] = min_val + factor * term1 * term2
+
+                except Exception:
+                    # If calculation fails, use min(u,v) as safe fallback
+                    result[idx] = min(u[idx], v[idx])
+
+            return result
+
     @property
     def pdf(self):
         """

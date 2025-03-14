@@ -345,3 +345,300 @@ def test_both_special_and_invalid_params():
 
     with pytest.raises(ValueError, match="Parameter theta cannot be 2"):
         copula(2)
+
+
+def test_cdf_vectorized_basic():
+    """Test that cdf_vectorized gives same results as scalar evaluation."""
+
+    # Define a simple test copula for testing vectorized CDF
+    class TestCopula(ArchimedeanCopula):
+        theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
+
+        @property
+        def is_absolutely_continuous(self) -> bool:
+            return True
+
+        @property
+        def _generator(self):
+            # Using Clayton generator with theta=2 for testing
+            return (self.t ** (-self.theta) - 1) / self.theta
+
+    # Create a test instance with theta=2
+    copula = TestCopula(2)
+
+    # Define test points
+    u_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v_values = np.array([0.2, 0.4, 0.6, 0.8, 0.7])
+
+    # Get the CDF as a callable function
+    cdf_func = copula.cdf.numpy_func
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array(
+        [cdf_func(u_values[i], v_values[i]) for i in range(len(u_values))]
+    )
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(u_values, v_values)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_cdf_vectorized_broadcasting():
+    """Test that cdf_vectorized correctly handles broadcasting."""
+
+    class TestCopula(ArchimedeanCopula):
+        theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
+
+        @property
+        def is_absolutely_continuous(self) -> bool:
+            return True
+
+        @property
+        def _generator(self):
+            # Using Gumbel generator with theta=1.5 for testing
+            return (-sympy.log(self.t)) ** self.theta
+
+    # Create test instance
+    copula = TestCopula(1.5)
+
+    # Test broadcasting: u is scalar, v is array
+    u_scalar = 0.5
+    v_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+
+    # Get the CDF as a callable function
+    cdf_func = copula.cdf.numpy_func
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array([cdf_func(u_scalar, v) for v in v_array])
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(u_scalar, v_array)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+    # Test broadcasting: u is array, v is scalar
+    u_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v_scalar = 0.5
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array([cdf_func(u, v_scalar) for u in u_array])
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(u_array, v_scalar)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_cdf_vectorized_grid():
+    """Test cdf_vectorized with grid inputs."""
+
+    class TestCopula(ArchimedeanCopula):
+        theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
+
+        @property
+        def is_absolutely_continuous(self) -> bool:
+            return True
+
+        @property
+        def _generator(self):
+            # Using Frank generator with theta=3 for testing
+            return -sympy.log(
+                (sympy.exp(-self.theta * self.t) - 1) / (sympy.exp(-self.theta) - 1)
+            )
+
+    # Create test instance
+    copula = TestCopula(3)
+
+    # Create grid of values
+    u_grid = np.linspace(0.1, 0.9, 5)
+    v_grid = np.linspace(0.1, 0.9, 5)
+    U, V = np.meshgrid(u_grid, v_grid)
+
+    # Get the CDF as a callable function
+    cdf_func = copula.cdf.numpy_func
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.zeros_like(U)
+    for i in range(U.shape[0]):
+        for j in range(U.shape[1]):
+            expected_results[i, j] = cdf_func(U[i, j], V[i, j])
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(U, V)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_cdf_vectorized_boundary_values():
+    """Test cdf_vectorized with boundary values (0 and 1)."""
+
+    class TestCopula(ArchimedeanCopula):
+        theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
+
+        @property
+        def is_absolutely_continuous(self) -> bool:
+            return True
+
+        @property
+        def _generator(self):
+            # Using Clayton generator with theta=1 for testing
+            return (self.t ** (-self.theta) - 1) / self.theta
+
+    # Create test instance
+    copula = TestCopula(1)
+
+    # Test boundary values
+    u_values = np.array([0, 0, 1, 1, 0.5])
+    v_values = np.array([0, 1, 0, 1, 0.5])
+
+    # Calculate results using vectorized CDF
+    results = copula.cdf_vectorized(u_values, v_values)
+
+    # Create a function for evaluating the CDF at scalar points
+    def scalar_cdf(u, v):
+        # Create lambdified versions of generator and inverse generator
+        from sympy.utilities.lambdify import lambdify
+
+        generator_func = lambdify(copula.t, copula.generator.func, "numpy")
+        inv_generator_func = lambdify(copula.y, copula.inv_generator.func, "numpy")
+
+        # Apply the Archimedean copula formula
+        return inv_generator_func(generator_func(u) + generator_func(v))
+
+    # Expected results for a copula CDF:
+    # C(0,v) = 0 for all v
+    # C(u,0) = 0 for all u
+    # C(1,v) = v for all v
+    # C(u,1) = u for all u
+    expected = np.array([0, 0, 0, 1, scalar_cdf(0.5, 0.5)])
+
+    # Check that results match
+    np.testing.assert_allclose(results, expected, rtol=1e-10)
+
+
+def test_cdf_vectorized_input_validation():
+    """Test that cdf_vectorized properly validates inputs."""
+
+    class TestCopula(ArchimedeanCopula):
+        theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
+
+        @property
+        def is_absolutely_continuous(self) -> bool:
+            return True
+
+        @property
+        def _generator(self):
+            return -sympy.log(self.t)  # Independence copula generator
+
+    # Create test instance
+    copula = TestCopula(1)
+
+    # Test with invalid values (outside [0,1])
+    with pytest.raises(ValueError, match="Marginals must be in"):
+        copula.cdf_vectorized(np.array([-0.1, 0.5]), np.array([0.2, 0.3]))
+
+    with pytest.raises(ValueError, match="Marginals must be in"):
+        copula.cdf_vectorized(np.array([0.2, 0.5]), np.array([0.2, 1.1]))
+
+
+def test_cdf_vectorized_special_cases():
+    """Test cdf_vectorized with special case copulas."""
+
+    # Define a test copula with special cases
+    class TestCopula(ArchimedeanCopula):
+        theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
+        special_cases = {0: IndependenceCopula}
+
+        @property
+        def is_absolutely_continuous(self) -> bool:
+            return True
+
+        @property
+        def _generator(self):
+            # Simple generator that becomes Independence when theta=0
+            if self.theta == 0:
+                return -sympy.log(self.t)
+            return -sympy.log(self.t) * (1 + self.theta * (1 - self.t))
+
+    # Create special case instance
+    independence = TestCopula(0)
+    assert isinstance(independence, IndependenceCopula)
+
+    # Test with regular values
+    u_values = np.array([0.2, 0.4, 0.6, 0.8])
+    v_values = np.array([0.3, 0.5, 0.7, 0.9])
+
+    # For Independence copula, C(u,v) = u*v
+    expected_results = u_values * v_values
+
+    # Calculate using vectorized CDF
+    actual_results = independence.cdf_vectorized(u_values, v_values)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+@pytest.mark.slow
+def test_cdf_vectorized_performance():
+    """Test that cdf_vectorized is faster than scalar evaluation for large inputs."""
+
+    class TestCopula(ArchimedeanCopula):
+        theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
+
+        @property
+        def is_absolutely_continuous(self) -> bool:
+            return True
+
+        @property
+        def _generator(self):
+            # Using Clayton generator
+            return (self.t ** (-self.theta) - 1) / self.theta
+
+        # Override numpy_func to make generator functions available
+        def numpy_func(self):
+            # This is just for testing - in reality, this would be provided by SymPyFuncWrapper
+            return lambda t: (t ** (-self.theta) - 1) / self.theta
+
+    # Create test instance with wrapper methods for testing
+    copula = TestCopula(2)
+    copula.generator.numpy_func = lambda t: (t ** (-2) - 1) / 2
+    copula.inv_generator.numpy_func = lambda y: (1 + 2 * y) ** (-1 / 2)
+
+    # Create large test arrays (1000 points)
+    np.random.seed(42)  # For reproducibility
+    u_large = np.random.random(1000)
+    v_large = np.random.random(1000)
+
+    # Time scalar evaluation
+    import time
+
+    def cdf_func(u, v):
+        return copula.inv_generator.numpy_func(
+            copula.generator.numpy_func(u) + copula.generator.numpy_func(v)
+        )
+
+    start_scalar = time.time()
+    scalar_results = np.array(
+        [cdf_func(u_large[i], v_large[i]) for i in range(len(u_large))]
+    )
+    scalar_time = time.time() - start_scalar
+
+    # Time vectorized evaluation
+    start_vector = time.time()
+    vector_results = copula.cdf_vectorized(u_large, v_large)
+    vector_time = time.time() - start_vector
+
+    # Check that results match
+    np.testing.assert_allclose(vector_results, scalar_results, rtol=1e-10)
+
+    # Check that vectorized is faster
+    # We don't use an exact assertion here because timing can vary between runs
+    # but vectorized should be significantly faster
+    assert vector_time < scalar_time, (
+        f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
+    )

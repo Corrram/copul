@@ -249,3 +249,209 @@ def test_chatterjees_xi(copula):
     xi = float(copula.chatterjees_xi())
     expected = (0.3 - 0.2) ** 2 + 0.3 * 0.2
     assert abs(xi - expected) < 1e-10
+
+
+def test_cdf_vectorized_basic(copula):
+    """Test that cdf_vectorized gives same results as scalar evaluation."""
+    import numpy as np
+
+    # Define test points
+    u_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v_values = np.array([0.2, 0.4, 0.6, 0.8, 0.7])
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array(
+        [float(copula.cdf(u=u_values[i], v=v_values[i])) for i in range(len(u_values))]
+    )
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(u_values, v_values)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_cdf_vectorized_broadcasting(copula):
+    """Test that cdf_vectorized correctly handles broadcasting."""
+    import numpy as np
+
+    # Test broadcasting: u is scalar, v is array
+    u_scalar = 0.5
+    v_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array([float(copula.cdf(u=u_scalar, v=v)) for v in v_array])
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(u_scalar, v_array)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+    # Test broadcasting: u is array, v is scalar
+    u_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v_scalar = 0.5
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.array([float(copula.cdf(u=u, v=v_scalar)) for u in u_array])
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(u_array, v_scalar)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_cdf_vectorized_special_cases():
+    """Test cdf_vectorized for special cases of the Frechet copula."""
+    import numpy as np
+
+    # Test points
+    u_values = np.array([0.2, 0.4, 0.6, 0.8])
+    v_values = np.array([0.3, 0.5, 0.7, 0.9])
+
+    # Independence copula (alpha=beta=0)
+    indep = Frechet(alpha=0, beta=0)
+    indep_results = indep.cdf_vectorized(u_values, v_values)
+    expected_indep = u_values * v_values
+    np.testing.assert_allclose(indep_results, expected_indep, rtol=1e-10)
+
+    # Upper Frechet bound (alpha=1, beta=0)
+    upper = Frechet(alpha=1, beta=0)
+    upper_results = upper.cdf_vectorized(u_values, v_values)
+    expected_upper = np.minimum(u_values, v_values)
+    np.testing.assert_allclose(upper_results, expected_upper, rtol=1e-10)
+
+    # Lower Frechet bound (alpha=0, beta=1)
+    lower = Frechet(alpha=0, beta=1)
+    lower_results = lower.cdf_vectorized(u_values, v_values)
+    expected_lower = np.maximum(u_values + v_values - 1, 0)
+    np.testing.assert_allclose(lower_results, expected_lower, rtol=1e-10)
+
+
+def test_cdf_vectorized_boundary_values(copula):
+    """Test cdf_vectorized with boundary values (0 and 1)."""
+    import numpy as np
+
+    # Test boundary values
+    u_values = np.array([0, 0, 1, 1, 0.5])
+    v_values = np.array([0, 1, 0, 1, 0.5])
+
+    # Calculate expected results using formula
+    alpha = float(copula.alpha)
+    beta = float(copula.beta)
+
+    def frechet_cdf_at_point(u, v):
+        min_term = min(u, v)
+        max_term = max(u + v - 1, 0)
+        return alpha * min_term + (1 - alpha - beta) * u * v + beta * max_term
+
+    expected = np.array(
+        [frechet_cdf_at_point(u_values[i], v_values[i]) for i in range(len(u_values))]
+    )
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(u_values, v_values)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected, rtol=1e-10)
+
+
+def test_cdf_vectorized_input_validation(copula):
+    """Test that cdf_vectorized properly validates inputs."""
+    import numpy as np
+
+    # Test with invalid values (outside [0,1])
+    with pytest.raises(ValueError, match="Marginals must be in"):
+        copula.cdf_vectorized(np.array([-0.1, 0.5]), np.array([0.2, 0.3]))
+
+    with pytest.raises(ValueError, match="Marginals must be in"):
+        copula.cdf_vectorized(np.array([0.2, 0.5]), np.array([0.2, 1.1]))
+
+
+def test_cdf_vectorized_grid(copula):
+    """Test cdf_vectorized with grid inputs."""
+    import numpy as np
+
+    # Create grid of values
+    u_grid = np.linspace(0.1, 0.9, 5)
+    v_grid = np.linspace(0.1, 0.9, 5)
+    U, V = np.meshgrid(u_grid, v_grid)
+
+    # Calculate expected results using scalar CDF
+    expected_results = np.zeros_like(U)
+    for i in range(U.shape[0]):
+        for j in range(U.shape[1]):
+            expected_results[i, j] = float(copula.cdf(u=U[i, j], v=V[i, j]))
+
+    # Calculate results using vectorized CDF
+    actual_results = copula.cdf_vectorized(U, V)
+
+    # Check that results match
+    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
+def test_cdf_vectorized_formula_correctness(copula):
+    """Test that cdf_vectorized follows the Frechet copula formula correctly."""
+    import numpy as np
+
+    # Generate random test points
+    np.random.seed(123)
+    u = np.random.random(100)
+    v = np.random.random(100)
+
+    # Get parameter values
+    alpha = float(copula.alpha)
+    beta = float(copula.beta)
+
+    # Calculate using the formula directly
+    frechet_upper = np.minimum(u, v)
+    frechet_lower = np.maximum(u + v - 1, 0)
+    independence = u * v
+
+    expected = (
+        alpha * frechet_upper + (1 - alpha - beta) * independence + beta * frechet_lower
+    )
+
+    # Calculate using the vectorized method
+    actual = copula.cdf_vectorized(u, v)
+
+    # Check that results match
+    np.testing.assert_allclose(actual, expected, rtol=1e-10)
+
+
+@pytest.mark.slow
+def test_cdf_vectorized_performance(copula):
+    """Test that cdf_vectorized is faster than scalar evaluation for large inputs."""
+    import numpy as np
+    import time
+
+    # Create large test arrays (1000 points)
+    np.random.seed(42)  # For reproducibility
+    u_large = np.random.random(1000)
+    v_large = np.random.random(1000)
+
+    # Define the scalar evaluation function
+    def scalar_evaluation(u, v, copula):
+        results = np.zeros_like(u)
+        for i in range(len(u)):
+            results[i] = float(copula.cdf(u=u[i], v=v[i]))
+        return results
+
+    # Time scalar evaluation
+    start_scalar = time.time()
+    scalar_results = scalar_evaluation(u_large, v_large, copula)
+    scalar_time = time.time() - start_scalar
+
+    # Time vectorized evaluation
+    start_vector = time.time()
+    vector_results = copula.cdf_vectorized(u_large, v_large)
+    vector_time = time.time() - start_vector
+
+    # Check that results match
+    np.testing.assert_allclose(vector_results, scalar_results, rtol=1e-10)
+
+    # Check that vectorized is faster (should be at least 10x faster)
+    assert vector_time < scalar_time * 0.1, (
+        f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
+    )

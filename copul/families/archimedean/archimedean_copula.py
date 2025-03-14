@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class ArchimedeanCopula(BivCopula, ABC):
     _t_min = 0
     _t_max = 1
-    y, t = sympy.symbols("y t", positive=True)
+    y, t = sympy.symbols("y t", nonnegative=True)
     theta = sympy.symbols("theta")
     theta_interval = None
     params = [theta]
@@ -184,11 +184,105 @@ class ArchimedeanCopula(BivCopula, ABC):
     @property
     def cdf(self):
         """Cumulative distribution function of the copula"""
+        # Handle special case for the independence copula
+        if type(self).__name__ == "IndependenceCopula":
+            return SymPyFuncWrapper(self.u * self.v)
+        
+        # Get the generator values at u and v
         inv_gen_at_u = self.generator.subs(self.t, self.u)
         inv_gen_at_v = self.generator.subs(self.t, self.v)
-        sum = inv_gen_at_u.func + inv_gen_at_v.func
-        cdf = self.inv_generator.subs(self.y, sum)
-        return SymPyFuncWrapper(get_simplified_solution(cdf.func))
+        
+        # Sum of generator values
+        sum_gen = inv_gen_at_u.func + inv_gen_at_v.func
+        
+        # Apply inverse generator with proper handling of edge cases
+        # Define special cases using Piecewise
+        cdf = sympy.Piecewise(
+            (0, sympy.Or(self.u == 0, self.v == 0)),  # If either u or v is 0, CDF is 0
+            (sympy.Min(self.u, self.v), sum_gen == 0),  # When sum is 0, take minimum of u and v
+            (self.inv_generator.subs(self.y, sum_gen).func, True)  # Regular case
+        )
+        
+        return SymPyFuncWrapper(get_simplified_solution(cdf))
+
+    def cdf_vectorized(self, u, v):
+        """
+        Vectorized implementation of the cumulative distribution function.
+        This method evaluates the CDF at multiple points simultaneously,
+        which is more efficient than calling the scalar CDF function repeatedly.
+        
+        Parameters
+        ----------
+        u : array_like
+            First uniform marginal, should be in [0, 1].
+        v : array_like
+            Second uniform marginal, should be in [0, 1].
+            
+        Returns
+        -------
+        numpy.ndarray
+            The CDF values at the specified points.
+            
+        Notes
+        -----
+        This implementation uses numpy for vectorized operations, which
+        provides significant performance improvements for large inputs.
+        """
+        # Convert inputs to numpy arrays if they aren't already
+        u = np.asarray(u)
+        v = np.asarray(v)
+        
+        # Ensure inputs are within [0, 1]
+        if np.any((u < 0) | (u > 1)) or np.any((v < 0) | (v > 1)):
+            raise ValueError("Marginals must be in [0, 1]")
+        
+        # Special case for the independence copula
+        if type(self).__name__ == "IndependenceCopula":
+            return u * v
+        
+        # Get vectorized functions for the generator and inverse generator
+        generator_func = self.generator.numpy_func()
+        inv_generator_func = self.inv_generator.numpy_func()
+        
+        # Create a properly patched inverse generator function that handles edge cases
+        def inv_generator_func_patched(x):
+            # Use numpy functions for vectorized operations
+            result = np.zeros_like(x, dtype=float)
+            
+            # Handle edge cases
+            zero_mask = np.isclose(x, 0)
+            inf_mask = np.isinf(x)
+            regular_mask = ~(zero_mask | inf_mask)
+            
+            # Apply appropriate values for each case
+            result[zero_mask] = 1.0  # inv_generator(0) = 1
+            result[inf_mask] = 0.0   # inv_generator(inf) = 0
+            
+            # Only compute the regular case where needed
+            if np.any(regular_mask):
+                result[regular_mask] = inv_generator_func(x[regular_mask])
+            
+            return result
+        
+        # Handle edge cases where u=0 or v=0
+        zero_mask = (u == 0) | (v == 0)
+        result = np.zeros_like(u, dtype=float)
+        
+        # Only compute non-zero cases
+        if not np.all(zero_mask):
+            non_zero_mask = ~zero_mask
+            u_nz = u[non_zero_mask]
+            v_nz = v[non_zero_mask]
+            
+            # Apply the generator to each marginal
+            gen_u = generator_func(u_nz)
+            gen_v = generator_func(v_nz)
+            
+            # Sum the generator values and apply the inverse generator
+            gen_sum = gen_u + gen_v
+            result[non_zero_mask] = inv_generator_func_patched(gen_sum)
+        
+        return result
 
     @property
     def pdf(self):

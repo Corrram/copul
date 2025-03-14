@@ -2,6 +2,7 @@
 Tests for the SymPyFuncWrapper class.
 """
 
+import time
 import pytest
 import numpy as np
 import sympy
@@ -265,3 +266,163 @@ def test_evalf():
     func = x**2
     wrapped_func = SymPyFuncWrapper(func)
     assert np.isclose(float(wrapped_func(2).evalf()), 4)
+
+
+def test_numpy_func():
+    """Test the numpy_func method for vectorized evaluation."""
+    # Create symbolic variables
+    x, y = sympy.symbols("x y")
+
+    # Test with a univariate expression
+    expr1 = x**2 + 3
+    func1 = SymPyFuncWrapper(expr1)
+    numpy_func1 = func1.numpy_func()
+
+    # Test with scalar input
+    result1 = numpy_func1(2.0)
+    assert np.isclose(result1, 7.0)
+
+    # Test with array input
+    x_values = np.array([1.0, 2.0, 3.0, 4.0])
+    expected1 = x_values**2 + 3
+    result1_array = numpy_func1(x_values)
+    np.testing.assert_allclose(result1_array, expected1)
+
+    # Test with a bivariate expression
+    expr2 = x**2 + y**2
+    func2 = SymPyFuncWrapper(expr2)
+    numpy_func2 = func2.numpy_func()
+
+    # Test with scalar inputs
+    result2 = numpy_func2(2.0, 3.0)
+    assert np.isclose(result2, 13.0)
+
+    # Test with array inputs of the same shape
+    x_values = np.array([1.0, 2.0, 3.0, 4.0])
+    y_values = np.array([5.0, 4.0, 3.0, 2.0])
+    expected2 = x_values**2 + y_values**2
+    result2_array = numpy_func2(x_values, y_values)
+    np.testing.assert_allclose(result2_array, expected2)
+
+    # Test with broadcasting
+    x_values = np.array([1.0, 2.0, 3.0, 4.0])
+    y_scalar = 5.0
+    expected2_broadcast = x_values**2 + y_scalar**2
+    result2_broadcast = numpy_func2(x_values, y_scalar)
+    np.testing.assert_allclose(result2_broadcast, expected2_broadcast)
+
+    # Test with a constant expression
+    expr3 = sympy.Number(7.5)
+    func3 = SymPyFuncWrapper(expr3)
+    numpy_func3 = func3.numpy_func()
+
+    # Should return the constant value regardless of input
+    result3_scalar = numpy_func3()
+    assert np.isclose(result3_scalar, 7.5)
+
+    # Should broadcast the constant to match input shape
+    result3_array = numpy_func3(np.ones(5))
+    np.testing.assert_allclose(result3_array, np.full(5, 7.5))
+
+
+def test_numpy_func_with_mathematical_functions():
+    """Test numpy_func with mathematical functions like sin, exp, etc."""
+
+    # Create symbolic variables
+    x = sympy.symbols("x")
+
+    # Test with sin function
+    expr1 = sympy.sin(x)
+    func1 = SymPyFuncWrapper(expr1)
+    numpy_func1 = func1.numpy_func()
+
+    # Test with array input
+    x_values = np.array([0, np.pi / 2, np.pi, 3 * np.pi / 2])
+    expected1 = np.sin(x_values)
+    result1 = numpy_func1(x_values)
+    np.testing.assert_allclose(result1, expected1, rtol=1e-10)
+
+    # Test with exp function
+    expr2 = sympy.exp(x)
+    func2 = SymPyFuncWrapper(expr2)
+    numpy_func2 = func2.numpy_func()
+
+    # Test with array input
+    x_values = np.array([0, 1, 2])
+    expected2 = np.exp(x_values)
+    result2 = numpy_func2(x_values)
+    np.testing.assert_allclose(result2, expected2, rtol=1e-10)
+
+    # Test with more complex expression
+    expr3 = sympy.sin(x) ** 2 + sympy.cos(x) ** 2
+    func3 = SymPyFuncWrapper(expr3)
+    numpy_func3 = func3.numpy_func()
+
+    # This should always be approximately 1 (trigonometric identity)
+    x_values = np.linspace(0, 2 * np.pi, 100)
+    expected3 = np.ones_like(x_values)
+    result3 = numpy_func3(x_values)
+    np.testing.assert_allclose(result3, expected3, rtol=1e-10)
+
+def test_numpy_func_with_piecewise():
+    """Test numpy_func with piecewise expressions."""
+
+    # Create symbolic variables
+    x = sympy.symbols("x")
+
+    # Create a piecewise function
+    expr = sympy.Piecewise(
+        (1/x, x > 0),
+        (1+ x**2, True)
+    )
+    func = SymPyFuncWrapper(expr)
+    numpy_func = func.numpy_func()
+
+    # Test with scalar input
+    result1 = numpy_func(0)
+    assert result1 == 1
+
+    result2 = numpy_func(2)
+    assert result2 == 0.5
+
+    # Test with array input
+    x_values = np.array([-1, 0, 1, 2])
+    expected = np.array([2, 1, 1, 0.5])
+    result = numpy_func(x_values)
+    np.testing.assert_allclose(result, expected)
+
+def test_numpy_func_performance():
+    """Test that numpy_func provides performance benefits for vectorized operations."""
+
+    # Create a moderately complex expression
+    x, y = sympy.symbols("x y")
+    expr = sympy.sin(x) * sympy.exp(y / 2) + sympy.cos(x * y)
+    func = SymPyFuncWrapper(expr)
+
+    # Create large arrays of values
+    np.random.seed(42)  # For reproducibility
+    x_values = np.random.random(1000)
+    y_values = np.random.random(1000)
+
+    # Get numpy function
+    numpy_func = func.numpy_func()
+
+    # Measure time for loop-based evaluation
+    start_loop = time.time()
+    loop_results = np.zeros(len(x_values))
+    for i in range(len(x_values)):
+        loop_results[i] = float(func(x_values[i], y_values[i]).evalf())
+    loop_time = time.time() - start_loop
+
+    # Measure time for vectorized evaluation
+    start_vector = time.time()
+    vector_results = numpy_func(x_values, y_values)
+    vector_time = time.time() - start_vector
+
+    # Check that results match
+    np.testing.assert_allclose(vector_results, loop_results, rtol=1e-10)
+
+    # Vectorized operation should be significantly faster
+    assert vector_time < loop_time * 0.5, (
+        f"Vectorized: {vector_time}s, Loop: {loop_time}s"
+    )

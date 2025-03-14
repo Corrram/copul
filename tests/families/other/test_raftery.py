@@ -233,3 +233,201 @@ def test_helper_methods(copula):
             assert result is not None
         except Exception as e:
             pytest.skip(f"_xi_int_1 raised an exception: {e}")
+
+
+def test_raftery_cdf_vectorized_scalar_inputs():
+    """Test that cdf_vectorized works correctly with scalar inputs"""
+    delta = 0.5
+    copula = Raftery(delta)
+
+    # Test at some specific points
+    u, v = 0.7, 0.3
+
+    # Both methods should return the same result for scalar inputs
+    cdf_result = float(copula.cdf(u, v))
+    cdf_vec_result = float(copula.cdf_vectorized(u, v))
+
+    assert np.isclose(cdf_result, cdf_vec_result, rtol=1e-10)
+
+
+def test_raftery_cdf_vectorized_array_inputs():
+    """Test that cdf_vectorized works correctly with array inputs"""
+    delta = 0.5
+    copula = Raftery(delta)
+
+    # Create arrays of u and v values
+    u = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v = np.array([0.2, 0.4, 0.6, 0.8, 0.95])
+
+    # Calculate results with vectorized method
+    vectorized_results = copula.cdf_vectorized(u, v)
+
+    # Calculate results individually with standard cdf
+    standard_results = np.array([float(copula.cdf(u_i, v_i)) for u_i, v_i in zip(u, v)])
+
+    # Compare results
+    assert np.allclose(vectorized_results, standard_results, rtol=1e-10)
+
+
+def test_raftery_cdf_vectorized_special_cases():
+    """Test that cdf_vectorized correctly handles special cases"""
+    # Independence case (delta = 0)
+    copula_ind = Raftery(0)
+    u = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v = np.array([0.2, 0.4, 0.6, 0.8, 0.95])
+
+    ind_results = copula_ind.cdf_vectorized(u, v)
+    expected_ind = u * v
+
+    assert np.allclose(ind_results, expected_ind, rtol=1e-10)
+
+    # Upper Fréchet case (delta = 1)
+    copula_uf = Raftery(1)
+    uf_results = copula_uf.cdf_vectorized(u, v)
+    expected_uf = np.minimum(u, v)
+
+    assert np.allclose(uf_results, expected_uf, rtol=1e-10)
+
+
+def test_raftery_cdf_vectorized_edge_cases():
+    """Test that cdf_vectorized correctly handles edge cases (0s and 1s)"""
+    delta = 0.5
+    copula = Raftery(delta)
+
+    # Test when u or v is 0
+    u_zeros = np.array([0, 0, 0.5, 0.7])
+    v_zeros = np.array([0.2, 0, 0, 0.8])
+
+    zero_results = copula.cdf_vectorized(u_zeros, v_zeros)
+
+    # Calculate expected results individually using standard CDF
+    expected_zeros = np.array(
+        [
+            float(copula.cdf(u_zeros[0], v_zeros[0])),
+            float(copula.cdf(u_zeros[1], v_zeros[1])),
+            float(copula.cdf(u_zeros[2], v_zeros[2])),
+            float(copula.cdf(u_zeros[3], v_zeros[3])),
+        ]
+    )
+
+    assert np.allclose(zero_results, expected_zeros, rtol=1e-10)
+
+    # Specifically check that when u or v is 0, result is 0
+    assert np.all(zero_results[:3] == 0)
+
+    # Test when u or v is 1
+    u_ones = np.array([1, 0.3, 1, 0.7])
+    v_ones = np.array([0.2, 1, 1, 0.8])
+
+    ones_results = copula.cdf_vectorized(u_ones, v_ones)
+
+    # Calculate expected results individually using standard CDF
+    expected_ones = np.array(
+        [
+            float(copula.cdf(u_ones[0], v_ones[0])),
+            float(copula.cdf(u_ones[1], v_ones[1])),
+            float(copula.cdf(u_ones[2], v_ones[2])),
+            float(copula.cdf(u_ones[3], v_ones[3])),
+        ]
+    )
+
+    assert np.allclose(ones_results, expected_ones, rtol=1e-10)
+
+
+def test_raftery_cdf_vectorized_broadcasting():
+    """Test that cdf_vectorized correctly broadcasts scalar and array inputs"""
+    delta = 0.5
+    copula = Raftery(delta)
+
+    # Test broadcasting scalar u with array v
+    u_scalar = 0.5
+    v_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+
+    vec_results1 = copula.cdf_vectorized(u_scalar, v_array)
+    std_results1 = np.array([float(copula.cdf(u_scalar, v_i)) for v_i in v_array])
+
+    assert np.allclose(vec_results1, std_results1, rtol=1e-10)
+
+    # Test broadcasting array u with scalar v
+    u_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
+    v_scalar = 0.5
+
+    vec_results2 = copula.cdf_vectorized(u_array, v_scalar)
+    std_results2 = np.array([float(copula.cdf(u_i, v_scalar)) for u_i in u_array])
+
+    assert np.allclose(vec_results2, std_results2, rtol=1e-10)
+
+
+def test_raftery_cdf_vectorized_2d_array():
+    """Test that cdf_vectorized works with 2D arrays"""
+    delta = 0.5
+    copula = Raftery(delta)
+
+    # Create 2D arrays
+    u = np.array([[0.1, 0.5], [0.7, 0.9]])
+    v = np.array([[0.2, 0.6], [0.8, 0.95]])
+
+    # Calculate with vectorized method
+    vectorized_results = copula.cdf_vectorized(u, v)
+
+    # Expected shape
+    assert vectorized_results.shape == u.shape
+
+    # Calculate expected results
+    expected = np.zeros_like(u)
+    for i in range(u.shape[0]):
+        for j in range(u.shape[1]):
+            expected[i, j] = float(copula.cdf(u[i, j], v[i, j]))
+
+    # Compare
+    assert np.allclose(vectorized_results, expected, rtol=1e-10)
+
+
+def test_raftery_cdf_vectorized_numerical_stability():
+    """Test numerical stability with values near boundaries"""
+    delta = 0.5
+    copula = Raftery(delta)
+
+    # Test with values near boundaries
+    u_near_bounds = np.array([1e-10, 1 - 1e-10])
+    v_near_bounds = np.array([1e-10, 1 - 1e-10])
+
+    # This shouldn't raise any exceptions
+    results = copula.cdf_vectorized(u_near_bounds, v_near_bounds)
+
+    # Values should be finite
+    assert np.all(np.isfinite(results))
+
+    # For small u and v, result should be close to 0
+    assert results[0] < 0.01
+
+    # For u,v close to 1, result should be close to min(u,v)
+    assert np.isclose(results[1], u_near_bounds[1], rtol=1e-5)
+
+
+def test_raftery_cdf_vectorized_large_arrays():
+    """Test performance and stability with large arrays"""
+    delta = 0.5
+    copula = Raftery(delta)
+
+    # Create large arrays (sufficient to test batching)
+    np.random.seed(42)  # For reproducibility
+    size = 10000
+    u_large = np.random.random(size)
+    v_large = np.random.random(size)
+
+    # This should run without memory issues
+    results = copula.cdf_vectorized(u_large, v_large)
+
+    # Basic sanity checks on results
+    assert results.shape == u_large.shape
+    assert np.all(results >= 0) and np.all(results <= 1)
+    assert np.all(np.isfinite(results))
+
+    # Test a few random points for accuracy
+    indices = np.random.choice(size, 5, replace=False)
+    for idx in indices:
+        u_val, v_val = u_large[idx], v_large[idx]
+        std_result = float(copula.cdf(u_val, v_val))
+        vec_result = results[idx]
+        assert np.isclose(vec_result, std_result, rtol=1e-8)

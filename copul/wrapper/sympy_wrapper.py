@@ -1,7 +1,7 @@
 import numpy as np
 import sympy
 from typing import Union, Dict, Any, Optional, Tuple, Set
-
+from sympy.utilities.lambdify import lambdify
 
 class SymPyFuncWrapper:
     """
@@ -383,3 +383,96 @@ class SymPyFuncWrapper:
             return func
         except Exception as e:
             raise ValueError(f"Failed to convert to numpy function: {e}")
+
+    def numpy_func(self, *args):
+        """
+        Create a vectorized numpy function that can be called with array inputs.
+
+        When called without arguments, returns a callable function that can evaluate
+        the expression with numpy arrays. When called with arguments, evaluates the
+        expression directly with those arguments.
+
+        Parameters
+        ----------
+        *args : array_like, optional
+            If provided, input arrays corresponding to the symbols in the expression.
+
+        Returns
+        -------
+        callable or numpy.ndarray
+            If args are provided, returns the result of evaluating the expression.
+            If no args are provided, returns a function that can be called later.
+
+        Examples
+        --------
+        >>> import sympy
+        >>> from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+        >>> x, y = sympy.symbols('x y')
+        >>> expr = SymPyFuncWrapper(x**2 + y)
+        >>> import numpy as np
+        >>>
+        >>> # Get a function and call it later
+        >>> f = expr.numpy_func()
+        >>> f(np.array([1, 2]), np.array([3, 4]))
+        array([4, 8])
+        >>>
+        >>> # Or evaluate directly
+        >>> expr.numpy_func(np.array([1, 2]), np.array([3, 4]))
+        array([4, 8])
+        """
+        # Get all free symbols in the expression, sorted by name.
+        symbols = sorted(self.free_symbols, key=lambda s: str(s))
+    
+        # Handle constant case
+        if not symbols:
+            constant_value = float(self.evalf())
+            return lambda *args: np.full(np.broadcast(*args).shape if args else (1,), constant_value)
+        
+        # For Piecewise functions, use np.select instead of np.vectorize
+        if self.func.is_Piecewise:
+            # Extract conditions and expressions from the piecewise function
+            conditions = []
+            expressions = []
+            
+            for expr, cond in self.func.args:
+                if cond == True:  # Default case
+                    default_expr = expr
+                else:
+                    # Lambdify both the condition and expression
+                    cond_func = lambdify(symbols, cond, "numpy")
+                    expr_func = lambdify(symbols, expr, "numpy")
+                    conditions.append(cond_func)
+                    expressions.append(expr_func)
+            
+            # Include the default case
+            if 'default_expr' in locals():
+                default_func = lambdify(symbols, default_expr, "numpy")
+            else:
+                default_func = lambda *args: np.zeros(np.broadcast(*args).shape)
+            
+            # Return a function that evaluates the piecewise
+            def efficient_piecewise(*values):
+                # Check if all inputs are numpy arrays
+                if not all(isinstance(v, np.ndarray) for v in values):
+                    values = [np.asarray(v) if not isinstance(v, np.ndarray) else v for v in values]
+                
+                # Evaluate all conditions and expressions
+                conds = [c(*values) for c in conditions]
+                exprs = [e(*values) for e in expressions]
+                
+                # Use np.select for efficient vectorized evaluation
+                return np.select(conds, exprs, default_func(*values))
+            
+            if args:
+                if len(symbols) != len(args):
+                    raise ValueError(f"Expected {len(symbols)} arguments, got {len(args)}")
+                return efficient_piecewise(*args)
+            return efficient_piecewise
+        
+        # For non-piecewise functions, use the standard lambdify approach
+        func = lambdify(symbols, self.func, "numpy")
+        if args:
+            if len(symbols) != len(args):
+                raise ValueError(f"Expected {len(symbols)} arguments, got {len(args)}")
+            return func(*args)
+        return func

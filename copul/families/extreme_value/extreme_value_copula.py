@@ -283,6 +283,110 @@ class ExtremeValueCopula(BivCopula):
 
             return CDFWrapper(cdf_func)
 
+    def cdf_vectorized(self, u, v):
+        """
+        Vectorized implementation of the cumulative distribution function for Extreme Value copulas.
+
+        This method evaluates the CDF at multiple points simultaneously, which is more efficient
+        than calling the scalar CDF function repeatedly.
+
+        Parameters
+        ----------
+        u : array_like
+            First uniform marginal, should be in [0, 1].
+        v : array_like
+            Second uniform marginal, should be in [0, 1].
+
+        Returns
+        -------
+        numpy.ndarray
+            The CDF values at the specified points.
+
+        Notes
+        -----
+        This implementation uses numpy for vectorized operations, providing significant
+        performance improvements for large inputs. The formula used is:
+            C(u,v) = (u*v)^A(ln(v)/ln(u*v))
+        where A is the Pickands dependence function.
+        """
+        import numpy as np
+        from sympy.utilities.lambdify import lambdify
+
+        # Convert inputs to numpy arrays if they aren't already
+        u = np.asarray(u)
+        v = np.asarray(v)
+
+        # Ensure inputs are within [0, 1]
+        if np.any((u < 0) | (u > 1)) or np.any((v < 0) | (v > 1)):
+            raise ValueError("Marginals must be in [0, 1]")
+
+        # Handle scalar inputs by broadcasting to the same shape
+        if u.ndim == 0 and v.ndim > 0:
+            u = np.full_like(v, u.item())
+        elif v.ndim == 0 and u.ndim > 0:
+            v = np.full_like(u, v.item())
+
+        # Initialize result array with zeros
+        result = np.zeros_like(u, dtype=float)
+
+        # Handle boundary cases efficiently
+        # Where u=0 or v=0, C(u,v)=0 (already initialized to zero)
+        # Where u=1, C(u,v)=v
+        # Where v=1, C(u,v)=u
+        result = np.where(u == 1, v, result)
+        result = np.where(v == 1, u, result)
+
+        # Find indices where neither u nor v are at the boundaries
+        interior_idx = (u > 0) & (u < 1) & (v > 0) & (v < 1)
+
+        if np.any(interior_idx):
+            u_interior = u[interior_idx]
+            v_interior = v[interior_idx]
+
+            try:
+                # Get the pickands function
+                pickands_func = self.pickands
+
+                # Extract the underlying function if it's a wrapper
+                if hasattr(pickands_func, "func"):
+                    pickands_expr = pickands_func.func
+                else:
+                    pickands_expr = pickands_func
+
+                # Create a vectorized version of the Pickands function
+                pickands_numpy = lambdify(self.t, pickands_expr, "numpy")
+
+                # Compute t values: ln(v)/ln(u*v)
+                uv_product = u_interior * v_interior
+                t_values = np.log(v_interior) / np.log(uv_product)
+
+                # Evaluate the Pickands function at these t values
+                A_t = pickands_numpy(t_values)
+
+                # Compute the CDF values: (u*v)^A(t)
+                interior_values = uv_product**A_t
+
+                # Assign the computed values to the result array
+                result[interior_idx] = interior_values
+
+            except Exception as e:
+                # Fallback implementation for any part that fails
+                import warnings
+
+                warnings.warn(
+                    f"Error in vectorized CDF calculation: {e}. Using scalar fallback."
+                )
+
+                # Get the scalar CDF function
+                cdf_func = self.cdf
+
+                # Apply it element-wise to the interior points
+                for idx in np.ndindex(u.shape):
+                    if interior_idx[idx]:
+                        result[idx] = float(cdf_func(u[idx], v[idx]).evalf())
+
+        return result
+
     @property
     def pdf(self):
         """Probability density function of the copula"""
