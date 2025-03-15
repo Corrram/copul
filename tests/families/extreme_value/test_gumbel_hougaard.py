@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from copul.families.extreme_value.gumbel_hougaard import GumbelHougaard
 from copul.families.other import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 class TestGumbelHougaard:
@@ -63,7 +63,7 @@ class TestGumbelHougaard:
     def test_cdf(self, gumbel_copula):
         """Test CDF computation at specific points"""
         # For GumbelHougaard with theta=2, at u=v=0.5
-        with patch.object(SymPyFuncWrapper, "__call__") as mock_call:
+        with patch.object(CDFWrapper, "__call__") as mock_call:
             mock_call.return_value = 0.25  # Mock return value
 
             # Call CDF

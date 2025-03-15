@@ -96,7 +96,7 @@ class Families(enum.Enum):
     CUADRAS_AUGE = "copul.families.extreme_value.CuadrasAuge"
     GALAMBOS = "copul.families.extreme_value.Galambos"
     GUMBEL_HOUGAARD_EV = "copul.families.extreme_value.GumbelHougaard"
-    HUESSLER_REISS = "copul.families.extreme_value.HueslerReiss"
+    HUESLER_REISS = "copul.families.extreme_value.HueslerReiss"
     TAWN = "copul.families.extreme_value.Tawn"
     T_EV = "copul.families.extreme_value.tEV"
     MARSHALL_OLKIN = "copul.families.extreme_value.MarshallOlkin"

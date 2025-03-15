@@ -5,7 +5,6 @@ This module implements the rearrangement algorithm from:
 Strothmann, Dette, Siburg (2022) - "Rearranged dependence measures"
 """
 
-import copy
 import logging
 from typing import Union, Optional, Any, List
 
@@ -74,7 +73,7 @@ class CISRearranger:
 
     @staticmethod
     def rearrange_checkerboard(
-            ccop: Union[BivCheckPi, List[List[float]], NDArray, sympy.Matrix, Any],
+        ccop: Union[BivCheckPi, List[List[float]], NDArray, sympy.Matrix, Any],
     ) -> sympy.Matrix:
         """
         Rearrange a checkerboard copula to be conditionally increasing in sequence (CIS),

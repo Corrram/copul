@@ -7,7 +7,9 @@ def test_all_generators():
     for copula in arch_copulas:
         cop = getattr(copul.Families, copula).cls()
         if copula in ["CLAYTON", "NELSEN1", "NELSEN7"]:
-            cop = cop(0.5)  # needed because generator value for clayton at 0 depends on theta
+            cop = cop(
+                0.5
+            )  # needed because generator value for clayton at 0 depends on theta
         elif copula == "NELSEN18":
             cop = cop(2.5)
         try:
@@ -24,12 +26,15 @@ def test_all_generators():
             raise AttributeError(f"Generator at 0 for {copula} is not defined")
         assert gen_0_float == expected, f"Generator at 0 for {copula} is not correct"
 
+
 def test_all_inv_generators():
     arch_copulas = copul.Families.list_by_category("Archimedean")
     for copula in arch_copulas:
         cop = getattr(copul.Families, copula).cls()
         if copula in ["CLAYTON", "NELSEN1", "NELSEN7"]:
-            cop = cop(0.5)  # needed because generator value for clayton at 0 depends on theta
+            cop = cop(
+                0.5
+            )  # needed because generator value for clayton at 0 depends on theta
         elif copula == "NELSEN18":
             cop = cop(2.5)
         try:
@@ -47,6 +52,8 @@ def test_all_inv_generators():
         try:
             gen_1_float = float(gen_1)
         except TypeError:
-            raise TypeError(f"Inv Generator at {cop._generator_at_0} for {copula} is not a float but {gen_1}")
+            raise TypeError(
+                f"Inv Generator at {cop._generator_at_0} for {copula} is not a float but {gen_1}"
+            )
         assert np.isclose(gen_0_float, 1), f"Inv Generator at 0 for {copula} is not 1"
         assert np.isclose(gen_1_float, 0), f"Inv Generator at 1 for {copula} is not 0"

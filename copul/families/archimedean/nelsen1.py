@@ -19,7 +19,7 @@ class Clayton(ArchimedeanCopula):
 
     @property
     def _generator_at_0(self):
-        return sympy.Piecewise((sympy.oo, self.theta >= 0), (-1/self.theta, True))
+        return sympy.Piecewise((sympy.oo, self.theta >= 0), (-1 / self.theta, True))
 
     @property
     def generator(self):
@@ -27,12 +27,12 @@ class Clayton(ArchimedeanCopula):
         regular_expr = ((1 / self.t) ** self.theta - 1) / self.theta
         # Logarithmic generator for theta = 0
         log_expr = -sympy.log(self.t)
-        
+
         gen = sympy.Piecewise(
-            (log_expr, self.theta == 0),              # Case: theta = 0
-            (regular_expr, self.t > 0),               # Regular case
-            (sympy.oo, self.theta >= 0),              # Default case for invalid values
-            (-1/self.theta, True)                     # Default case for theta < 0
+            (log_expr, self.theta == 0),  # Case: theta = 0
+            (regular_expr, self.t > 0),  # Regular case
+            (sympy.oo, self.theta >= 0),  # Default case for invalid values
+            (-1 / self.theta, True),  # Default case for theta < 0
         )
         return SymPyFuncWrapper(gen)
 
@@ -42,7 +42,7 @@ class Clayton(ArchimedeanCopula):
         if self.theta == 0:
             return sympy.exp(-self.y)
         return (self.theta * self.y + 1) ** (-1 / self.theta)
-    
+
     @property
     def cdf(self):
         u = self.u

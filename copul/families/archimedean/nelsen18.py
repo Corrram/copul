@@ -10,7 +10,7 @@ class Nelsen18(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(2, np.inf, left_open=False, right_open=True)
-    
+
     @property
     def _generator_at_0(self):
         return sympy.exp(-self.theta)

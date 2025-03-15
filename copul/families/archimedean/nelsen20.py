@@ -8,7 +8,6 @@ from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
 

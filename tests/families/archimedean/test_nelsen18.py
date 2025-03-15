@@ -45,6 +45,7 @@ def test_generator_function(nelsen18_copula):
         actual = float(nelsen18_copula.generator(t))
         assert np.isclose(actual, expected, rtol=1e-5)
 
+
 def test_nelsen18_inverse_generator_at_infinity():
     """Test the inverse generator function of Nelsen3."""
     copula = Nelsen18(2.5)
@@ -52,6 +53,7 @@ def test_nelsen18_inverse_generator_at_infinity():
     inv_gen = copula.inv_generator(y=y)
     actual = float(inv_gen)
     assert np.isclose(actual, 0, rtol=1e-10)
+
 
 def test_cdf_function(nelsen18_copula):
     """Test the CDF function of the Nelsen18 copula."""

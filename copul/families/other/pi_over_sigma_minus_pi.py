@@ -24,14 +24,14 @@ class PiOverSigmaMinusPi(ArchimedeanCopula):
     theta = 1
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         """Generate function: phi(t) = (1/t - 1)"""
         return (1 / self.t) - 1
 
     @property
-    def inv_generator(self):
+    def _raw_inv_generator(self):
         """Inverse generator function: psi(y) = 1/(1+y)"""
-        return SymPyFuncWrapper(1 / (1 + self.y))
+        return 1 / (1 + self.y)
 
     @property
     def cdf(self):

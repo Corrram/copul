@@ -18,16 +18,17 @@ class Nelsen17(ArchimedeanCopula):
 
     @property
     def _raw_generator(self):
-        return -sympy.log(((1 + self.t) ** (-self.theta) - 1) / (2 ** (-self.theta) - 1))
+        return -sympy.log(
+            ((1 + self.t) ** (-self.theta) - 1) / (2 ** (-self.theta) - 1)
+        )
 
     @property
     def _raw_inv_generator(self):
         theta = self.theta
         y = self.y
-        return (2 ** theta * sympy.exp(y) / (
-                    2 ** theta * sympy.exp(y) - 2 ** theta + 1)) ** (
-                               1 / theta
-                       ) - 1
+        return (2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)) ** (
+            1 / theta
+        ) - 1
 
     @property
     def cdf(self):

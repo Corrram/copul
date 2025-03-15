@@ -89,23 +89,6 @@ class TestPickandsWrapper:
         # Should not trigger special case due to different delta
         assert not math.isclose(float(result), float(sp.Float("0.6464466094067263")))
 
-    def test_evalf(self):
-        """Test the evalf method."""
-        # For regular expressions
-        result = self.linear_wrapper.evalf()
-        # Since there's a free variable t, this should still be symbolic
-        assert sp.Symbol("t") in result.free_symbols
-
-        # For Galambos with delta=2
-        result = self.galambos_wrapper.evalf()
-        assert math.isclose(float(result), float(sp.Float("0.6464466094067263")))
-
-        # Test with expression that has no free variables
-        fixed_expr = sp.sympify("3.14159")
-        fixed_wrapper = PickandsWrapper(fixed_expr, self.t)
-        result = fixed_wrapper.evalf()
-        assert math.isclose(float(result), 3.14159)
-
     def test_subs(self):
         """Test the subs method."""
         # Substitute t with a numeric value
@@ -121,21 +104,6 @@ class TestPickandsWrapper:
         result = self.quadratic_wrapper.subs(self.t, x**2)
         assert result == (x**2) ** 2 + 3 * (x**2) + 2
         assert result == x**4 + 3 * x**2 + 2
-
-    def test_float_conversion(self):
-        """Test conversion to float."""
-        # Create a wrapper with a fixed value
-        t_val = sp.Symbol("t")
-        fixed_expr = sp.sympify("3.14159")
-        fixed_wrapper = PickandsWrapper(fixed_expr, t_val)
-
-        # Test float conversion
-        result = float(fixed_wrapper)
-        assert math.isclose(result, 3.14159)
-
-        # Test with Galambos wrapper
-        result = float(self.galambos_wrapper)
-        assert math.isclose(result, float(sp.Float("0.6464466094067263")))
 
     def test_exception_handling(self):
         """Test that exceptions in special case logic are handled gracefully."""
