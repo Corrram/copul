@@ -20,7 +20,9 @@ class Nelsen16(ArchimedeanCopula):
     @property
     def generator(self):
         expr = (self.theta / self.t + 1) * (1 - self.t)
-        gen = sympy.Piecewise((expr, self.t > 0), (1,self.theta==0), (sympy.oo, True))
+        gen = sympy.Piecewise(
+            (expr, self.t > 0), (1, self.theta == 0), (sympy.oo, True)
+        )
         return SymPyFuncWrapper(gen)
 
     @property
@@ -28,13 +30,13 @@ class Nelsen16(ArchimedeanCopula):
         theta = self.theta
         y = self.y
         return (1 - theta - y + sympy.sqrt((theta + y - 1) ** 2 + 4 * theta)) / 2
-    
+
     @property
     def cdf(self):
         th = self.theta
         v = self.v
         u = self.u
-        
+
         # Define the original calculation for non-zero u and v
         regular_case = (
             u * v * (1 - th)
@@ -46,14 +48,11 @@ class Nelsen16(ArchimedeanCopula):
                 ** 2
             )
         ) / (2 * u * v)
-        
+
         # Use Piecewise to handle the edge cases
-        cdf = sympy.Piecewise(
-            (regular_case, sympy.And(u > 0, v > 0)),
-            (0, True)
-        )
+        cdf = sympy.Piecewise((regular_case, sympy.And(u > 0, v > 0)), (0, True))
         return CDFWrapper(cdf)
-    
+
     def first_deriv_of_ci_char(self):
         theta = self.theta
         y = self.y

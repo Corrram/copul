@@ -41,7 +41,7 @@ coverage:
 
 # Format code with ruff
 format:
-	$(UV) run ruff check --fix .
+	$(UV) run ruff check --fix --unsafe-fixes .
 	$(UV) run ruff format .
 
 # Build package

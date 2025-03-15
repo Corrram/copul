@@ -22,7 +22,7 @@ def test_generator_properties(copula):
     y_vals = np.linspace(0.1, 5.0, 5)
 
     # Get the generator function
-    gen = copula._generator
+    gen = copula.generator
     inv_gen = copula.inv_generator.func
 
     # Test generator at specific points

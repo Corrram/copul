@@ -4,7 +4,6 @@ import sympy
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen19(ArchimedeanCopula):
@@ -24,7 +23,7 @@ class Nelsen19(ArchimedeanCopula):
     @property
     def _raw_inv_generator(self):
         return self.theta / sympy.log(self.y + sympy.exp(self.theta))
-    
+
     @property
     def cdf(self):
         cdf = self.theta / sympy.log(

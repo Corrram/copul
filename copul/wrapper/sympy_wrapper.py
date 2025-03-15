@@ -3,6 +3,7 @@ import sympy
 from typing import Union, Dict, Any, Optional, Tuple, Set
 from sympy.utilities.lambdify import lambdify
 
+
 class SymPyFuncWrapper:
     """
     A wrapper class for SymPy expressions that provides additional functionality
@@ -428,20 +429,22 @@ class SymPyFuncWrapper:
         """
         # Get all free symbols in the expression, sorted by name.
         symbols = sorted(self.free_symbols, key=lambda s: str(s))
-    
+
         # Handle constant case
         if not symbols:
             constant_value = float(self.evalf())
-            return lambda *args: np.full(np.broadcast(*args).shape if args else (1,), constant_value)
-        
+            return lambda *args: np.full(
+                np.broadcast(*args).shape if args else (1,), constant_value
+            )
+
         # For Piecewise functions, use np.select instead of np.vectorize
         if self.func.is_Piecewise:
             # Extract conditions and expressions from the piecewise function
             conditions = []
             expressions = []
-            
+
             for expr, cond in self.func.args:
-                if cond == True:  # Default case
+                if cond is True:  # Default case
                     default_expr = expr
                 else:
                     # Lambdify both the condition and expression
@@ -449,32 +452,39 @@ class SymPyFuncWrapper:
                     expr_func = lambdify(symbols, expr, "numpy")
                     conditions.append(cond_func)
                     expressions.append(expr_func)
-            
+
             # Include the default case
-            if 'default_expr' in locals():
+            if "default_expr" in locals():
                 default_func = lambdify(symbols, default_expr, "numpy")
             else:
-                default_func = lambda *args: np.zeros(np.broadcast(*args).shape)
-            
+
+                def default_func(*args):
+                    return np.zeros(np.broadcast(*args).shape)
+
             # Return a function that evaluates the piecewise
             def efficient_piecewise(*values):
                 # Check if all inputs are numpy arrays
                 if not all(isinstance(v, np.ndarray) for v in values):
-                    values = [np.asarray(v) if not isinstance(v, np.ndarray) else v for v in values]
-                
+                    values = [
+                        np.asarray(v) if not isinstance(v, np.ndarray) else v
+                        for v in values
+                    ]
+
                 # Evaluate all conditions and expressions
                 conds = [c(*values) for c in conditions]
                 exprs = [e(*values) for e in expressions]
-                
+
                 # Use np.select for efficient vectorized evaluation
                 return np.select(conds, exprs, default_func(*values))
-            
+
             if args:
                 if len(symbols) != len(args):
-                    raise ValueError(f"Expected {len(symbols)} arguments, got {len(args)}")
+                    raise ValueError(
+                        f"Expected {len(symbols)} arguments, got {len(args)}"
+                    )
                 return efficient_piecewise(*args)
             return efficient_piecewise
-        
+
         # For non-piecewise functions, use the standard lambdify approach
         func = lambdify(symbols, self.func, "numpy")
         if args:

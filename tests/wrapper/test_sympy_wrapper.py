@@ -364,6 +364,7 @@ def test_numpy_func_with_mathematical_functions():
     result3 = numpy_func3(x_values)
     np.testing.assert_allclose(result3, expected3, rtol=1e-10)
 
+
 def test_numpy_func_with_piecewise():
     """Test numpy_func with piecewise expressions."""
 
@@ -371,10 +372,7 @@ def test_numpy_func_with_piecewise():
     x = sympy.symbols("x")
 
     # Create a piecewise function
-    expr = sympy.Piecewise(
-        (1/x, x > 0),
-        (1+ x**2, True)
-    )
+    expr = sympy.Piecewise((1 / x, x > 0), (1 + x**2, True))
     func = SymPyFuncWrapper(expr)
     numpy_func = func.numpy_func()
 
@@ -390,6 +388,7 @@ def test_numpy_func_with_piecewise():
     expected = np.array([2, 1, 1, 0.5])
     result = numpy_func(x_values)
     np.testing.assert_allclose(result, expected)
+
 
 def test_numpy_func_performance():
     """Test that numpy_func provides performance benefits for vectorized operations."""

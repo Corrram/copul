@@ -129,7 +129,7 @@ def test_hr_call_method():
         ((0, 0.5), 0),
     ],
 )
-def test_cdf_edge_cases(point, expected):
+def test_cdf_edge_cases_for_hr(point, expected):
     params = family_representatives["HueslerReiss"]
     cop = HueslerReiss(params)
     evaluated_cdf = cop.cdf(*point)
@@ -381,3 +381,9 @@ def test_cdf_vectorized_large_arrays():
         std_result = float(copula.cdf(u_val, v_val))
         vec_result = results[idx]
         assert np.isclose(vec_result, std_result, rtol=1e-8)
+
+
+def test_pickands_for_hr():
+    hr = HueslerReiss(1)
+    result = hr.pickands(0)
+    assert np.isclose(result, 1)

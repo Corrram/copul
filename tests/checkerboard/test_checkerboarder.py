@@ -156,6 +156,7 @@ def test_boundary_conditions_for_independence():
     # Use a higher tolerance for near-independence
     assert np.all(np.abs(ccop.matr - expected_value) < 0.1)
 
+
 def test_boundary_conditions_for_lower_frechet():
     lower_frechet = copul.Families.LOWER_FRECHET.cls()
     checkerboarder = copul.Checkerboarder(5)
@@ -167,6 +168,7 @@ def test_boundary_conditions_for_lower_frechet():
                 assert np.isclose(matr[i, j], 0.2)
             else:
                 assert np.isclose(matr[i, j], 0.0)
+
 
 def test_boundary_conditions_for_upper_frechet():
     lower_frechet = copul.Families.UPPER_FRECHET.cls()

@@ -60,6 +60,7 @@ def test_generator_function(nelsen16_copula):
         actual = float(nelsen16_copula.generator(t))
         assert np.isclose(actual, expected, rtol=1e-5)
 
+
 def test_inverse_generator_function(nelsen16_copula):
     """Test the inverse generator function of the Nelsen16 copula."""
     # Test inverse generator at specific y values

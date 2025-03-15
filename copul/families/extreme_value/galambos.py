@@ -17,8 +17,12 @@ class Galambos(ExtremeValueCopula):
 
     @property
     def _pickands(self):
-        expr = 1 - (self.t ** (-self.delta) + (1 - self.t) ** (-self.delta)) ** (-1 / self.delta)
-        return sympy.Piecewise((1, sympy.Or(sympy.Eq(self.t, 0), sympy.Eq(self.t, 1))), (expr, True))
+        expr = 1 - (self.t ** (-self.delta) + (1 - self.t) ** (-self.delta)) ** (
+            -1 / self.delta
+        )
+        return sympy.Piecewise(
+            (1, sympy.Or(sympy.Eq(self.t, 0), sympy.Eq(self.t, 1))), (expr, True)
+        )
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -29,13 +33,19 @@ class Galambos(ExtremeValueCopula):
         u = self.u
         v = self.v
         delta = self.delta
-        base_expr = u * v * sympy.exp(
-            (sympy.log(1/u)**(-delta) + sympy.log(1/v)**(-delta)) ** (-1/delta)
+        base_expr = (
+            u
+            * v
+            * sympy.exp(
+                (sympy.log(1 / u) ** (-delta) + sympy.log(1 / v) ** (-delta))
+                ** (-1 / delta)
+            )
         )
         # When u==0 or v==0, return 0; otherwise, use the computed expression.
-        cdf_expr = sympy.Piecewise((0, sympy.Or(sympy.Eq(u, 0), sympy.Eq(v, 0))), (base_expr, True))
+        cdf_expr = sympy.Piecewise(
+            (0, sympy.Or(sympy.Eq(u, 0), sympy.Eq(v, 0))), (base_expr, True)
+        )
         return CDFWrapper(cdf_expr)
-
 
     @property
     def pdf(self):

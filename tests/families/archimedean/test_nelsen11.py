@@ -81,6 +81,7 @@ def test_inverse_generator_function(nelsen11_copula):
     y_greater_than_log2 = 0.7  # Greater than log(2) ≈ 0.693
     assert float(nelsen11_copula.inv_generator(y_greater_than_log2)) == 0
 
+
 def test_nelsen11_inverse_generator_at_infinity():
     """Test the inverse generator function of Nelsen3."""
     copula = Nelsen11()

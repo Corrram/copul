@@ -1,9 +1,11 @@
+from typing import TypeAlias
+
 import numpy as np
 import sympy
 
 from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
 from copul.families.other import IndependenceCopula
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 class GumbelHougaard(ExtremeValueCopula):
@@ -56,16 +58,18 @@ class GumbelHougaard(ExtremeValueCopula):
     def cdf(self):
         base_expr = sympy.exp(
             -(
-                (sympy.log(1/self.v)**self.theta + sympy.log(1/self.u)**self.theta)
-                ** (1/self.theta)
+                (
+                    sympy.log(1 / self.v) ** self.theta
+                    + sympy.log(1 / self.u) ** self.theta
+                )
+                ** (1 / self.theta)
             )
         )
         # When u==0 or v==0, return 0; otherwise, use the base expression.
         cdf_expr = sympy.Piecewise(
-            (0, sympy.Or(sympy.Eq(self.u, 0), sympy.Eq(self.v, 0))),
-            (base_expr, True)
+            (0, sympy.Or(sympy.Eq(self.u, 0), sympy.Eq(self.v, 0))), (base_expr, True)
         )
-        return SymPyFuncWrapper(cdf_expr)
+        return CDFWrapper(cdf_expr)
 
     def _rho(self):
         t = self.t
@@ -84,3 +88,6 @@ class GumbelHougaard(ExtremeValueCopula):
     def kendalls_tau(self, *args, **kwargs):
         self._set_params(args, kwargs)
         return (self.theta - 1) / self.theta
+
+
+GumbelHougaardEV: TypeAlias = GumbelHougaard
