@@ -1,13 +1,13 @@
 import numpy as np
 import sympy
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class Nelsen18(ArchimedeanCopula):
-    ac = ArchimedeanCopula
+class Nelsen18(BivArchimedeanCopula):
+    ac = BivArchimedeanCopula
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(2, np.inf, left_open=False, right_open=True)
 

@@ -8,9 +8,14 @@ from copul.families.archimedean import Clayton, Nelsen1
 def test_is_absolutely_continuous(theta, expected):
     copula = Nelsen1(theta)
     result = copula.is_absolutely_continuous
-    assert result == expected, (
-        f"Failed for theta={theta}: Expected {expected}, but got {result}"
-    )
+    assert (
+        result == expected
+    ), f"Failed for theta={theta}: Expected {expected}, but got {result}"
+
+
+def test_initialization_with_theta():
+    clayton = Nelsen1(theta=3)
+    assert clayton.theta == 3
 
 
 @pytest.mark.parametrize("theta", [1, 5, -0.5])
@@ -217,9 +222,9 @@ def test_specific_cdf_values(theta, u, v, expected_cdf):
     elif theta == -0.5:
         expected = max((u ** (0.5) + v ** (0.5) - 1) ** 2, 0)
 
-    assert abs(cdf_val - expected) < 1e-6, (
-        f"CDF value incorrect for theta={theta}, u={u}, v={v}"
-    )
+    assert (
+        abs(cdf_val - expected) < 1e-6
+    ), f"CDF value incorrect for theta={theta}, u={u}, v={v}"
 
 
 def test_theta_boundary_values():
@@ -229,29 +234,29 @@ def test_theta_boundary_values():
 
     # Make sure we get a LowerFrechet instance directly
     copula = Clayton(-1)
-    assert isinstance(copula, LowerFrechet), (
-        "Clayton(-1) should return a LowerFrechet instance"
-    )
+    assert isinstance(
+        copula, LowerFrechet
+    ), "Clayton(-1) should return a LowerFrechet instance"
 
     # Also test with __call__
     clayton_instance = Clayton(1)  # Create with non-boundary theta
     lower_frechet_instance = clayton_instance(-1)  # Call with boundary theta
-    assert isinstance(lower_frechet_instance, LowerFrechet), (
-        "Clayton.__call__(-1) should return a LowerFrechet instance"
-    )
+    assert isinstance(
+        lower_frechet_instance, LowerFrechet
+    ), "Clayton.__call__(-1) should return a LowerFrechet instance"
 
     # When theta = 0, should return IndependenceCopula
     from copul.families.other.independence_copula import IndependenceCopula
 
     # Make sure we get an IndependenceCopula instance directly
     copula = Clayton(0)
-    assert isinstance(copula, IndependenceCopula), (
-        "Clayton(0) should return an IndependenceCopula instance"
-    )
+    assert isinstance(
+        copula, IndependenceCopula
+    ), "Clayton(0) should return an IndependenceCopula instance"
 
     # Also test with __call__
     clayton_instance = Clayton(1)  # Create with non-boundary theta
     independence_instance = clayton_instance(0)  # Call with boundary theta
-    assert isinstance(independence_instance, IndependenceCopula), (
-        "Clayton.__call__(0) should return an IndependenceCopula instance"
-    )
+    assert isinstance(
+        independence_instance, IndependenceCopula
+    ), "Clayton.__call__(0) should return an IndependenceCopula instance"

@@ -1,14 +1,14 @@
 import numpy as np
 import sympy
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Joe(HeavyComputeArch):
-    ac = ArchimedeanCopula
+    ac = BivArchimedeanCopula
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(1, np.inf, left_open=False, right_open=True)
     special_cases = {1: IndependenceCopula}

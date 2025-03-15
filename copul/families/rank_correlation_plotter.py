@@ -71,6 +71,7 @@ class RankCorrelationPlotter:
         self,
         copula: Any,
         log_cut_off: Optional[Union[float, Tuple[float, float]]] = None,
+        approximate=True,
     ):
         """
         Initialize RankCorrelationPlotter.
@@ -84,6 +85,7 @@ class RankCorrelationPlotter:
         """
         self.copul = copula
         self.log_cut_off = log_cut_off
+        self._approximate = approximate
 
         # Create directory for saving plots
         self.images_dir = pathlib.Path("images")
@@ -224,6 +226,7 @@ class RankCorrelationPlotter:
         title = CopulaGraphs(self.copul, False).get_copula_title()
         plt.title(title)
         plt.grid(True)
+        plt.savefig(self.images_dir / f"{title}_rank_correlations.png")
         plt.show()
         plt.draw()
 
@@ -285,7 +288,7 @@ class RankCorrelationPlotter:
                 specific_copula = copula(**{str(copula.params[0]): param})
 
                 # Generate random sample
-                data = specific_copula.rvs(n_obs)
+                data = specific_copula.rvs(n_obs, approximate=self._approximate)
 
                 # Calculate Chatterjee's xi
                 xi = xi_ncalculate(data[:, 0], data[:, 1])
@@ -413,12 +416,13 @@ class RankCorrelationPlotter:
 
         # Compute correlations for each parameter value
         for i, param in enumerate(param_values):
+            log.info(f"Computing correlations for parameter {param}")
             try:
                 # Create copula instance with the parameter value
                 specific_copula = copula(**{str(copula.params[0]): param})
 
                 # Generate random sample
-                data = specific_copula.rvs(n_obs)
+                data = specific_copula.rvs(n_obs, approximate=self._approximate)
 
                 # Calculate Chatterjee's xi
                 xi_values[i] = xi_ncalculate(data[:, 0], data[:, 1])
@@ -567,7 +571,7 @@ class RankCorrelationPlotter:
             self.functions_dir.mkdir(exist_ok=True, parents=True)
 
             # Determine file name base
-            class_name = self.__class__.__name__
+            class_name = self.copul.__class__.__name__
 
             # Save cubic spline if provided
             if isinstance(cs, CubicSpline) and data_points is not None:
@@ -699,6 +703,7 @@ def plot_rank_correlations(
     plot_var: bool = False,
     ylim: Tuple[float, float] = (-1, 1),
     log_cut_off: Optional[Union[float, Tuple[float, float]]] = None,
+    approximate=False,
 ) -> None:
     """
     Convenience function to plot rank correlations for a copula.
@@ -711,6 +716,14 @@ def plot_rank_correlations(
         plot_var: Whether to plot variance bands
         ylim: Y-axis limits
         log_cut_off: Cut-off value(s) for logarithmic scale
+        approximate: Whether to use approximate sampling via checkerboard copulas
     """
-    plotter = RankCorrelationPlotter(copula, log_cut_off)
+    plotter = RankCorrelationPlotter(copula, log_cut_off, approximate=approximate)
     plotter.plot_rank_correlations(n_obs, n_params, params, plot_var, ylim)
+
+
+if __name__ == "__main__":
+    # Example usage
+    from copul.families.archimedean.nelsen1 import BivClayton
+
+    BivClayton().plot_rank_correlations(n_obs=50_000, n_params=50, approximate=True)

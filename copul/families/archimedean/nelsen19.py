@@ -1,13 +1,13 @@
 import numpy as np
 import sympy
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
-class Nelsen19(ArchimedeanCopula):
-    ac = ArchimedeanCopula
+class Nelsen19(BivArchimedeanCopula):
+    ac = BivArchimedeanCopula
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, np.inf, left_open=False, right_open=True)
     special_cases = {0: PiOverSigmaMinusPi}

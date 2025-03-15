@@ -160,12 +160,6 @@ class BivCheckPi(CheckPi, BivCopula):
         float
             Kendall's tau value.
         """
-        # For bivariate case only (2D)
-        if len(self.dim) != 2:
-            raise ValueError(
-                "This optimized tau2 implementation is for bivariate copulas only"
-            )
-
         # Generate a grid of points for precomputation
         grid_points = (
             np.linspace(0, 1, grid_size + 1)[:-1] + 0.5 / grid_size
@@ -218,12 +212,6 @@ class BivCheckPi(CheckPi, BivCopula):
         float
             Spearman's rho value.
         """
-        # For bivariate case only (2D)
-        if len(self.dim) != 2:
-            raise ValueError(
-                "This optimized rho implementation is for bivariate copulas only"
-            )
-
         # Generate a grid of points for precomputation
         grid_points = (
             np.linspace(0, 1, grid_size + 1)[:-1] + 0.5 / grid_size
@@ -285,13 +273,6 @@ class BivCheckPi(CheckPi, BivCopula):
             Chatterjee's xi correlation value in the range [0, 1].
         """
         self._set_params(args, kwargs)
-
-        # For bivariate case only (2D)
-        if len(self.dim) != 2:
-            raise ValueError(
-                "This optimized implementation is for bivariate copulas only"
-            )
-
         # Determine which dimension to condition on
         i = 2 if condition_on_y else 1
 

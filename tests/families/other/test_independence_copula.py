@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import sympy
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.frechet import Frechet
 from copul.families.other.independence_copula import IndependenceCopula
 
@@ -17,7 +17,7 @@ def test_inheritance():
     """Test that IndependenceCopula inherits from both Frechet and ArchimedeanCopula."""
     copula = IndependenceCopula()
     assert isinstance(copula, Frechet)
-    assert isinstance(copula, ArchimedeanCopula)
+    assert isinstance(copula, BivArchimedeanCopula)
 
 
 def test_alpha_beta_properties(independence_copula):

@@ -1,13 +1,13 @@
 import numpy as np
 import sympy
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class Nelsen17(ArchimedeanCopula):
-    ac = ArchimedeanCopula
+class Nelsen17(BivArchimedeanCopula):
+    ac = BivArchimedeanCopula
     theta_interval = sympy.Interval(-np.inf, np.inf, left_open=True, right_open=True)
     special_cases = {-1: IndependenceCopula}
     invalid_params = {0}
@@ -26,9 +26,9 @@ class Nelsen17(ArchimedeanCopula):
     def _raw_inv_generator(self):
         theta = self.theta
         y = self.y
-        return (2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)) ** (
-            1 / theta
-        ) - 1
+        return (
+            2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)
+        ) ** (1 / theta) - 1
 
     @property
     def cdf(self):

@@ -49,7 +49,7 @@ class CheckPi(Check):
         return instance
 
     def __str__(self):
-        return f"CheckPiCopula({self.dim})"
+        return f"CheckPiCopula({self.matr.shape})"
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -62,8 +62,8 @@ class CheckPi(Check):
         We do a piecewise-uniform construction:
         Sum over all cells the fraction of that cell lying in the hyper-rectangle [0,args[1]] x ... x [0,args[d]].
         """
-        if len(args) != self.d:
-            raise ValueError(f"cdf expects {self.d} coordinates, got {len(args)}.")
+        if len(args) != self.dim:
+            raise ValueError(f"cdf expects {self.dim} coordinates, got {len(args)}.")
 
         # Short-circuit checks (optional, not strictly needed):
         if any(u <= 0 for u in args):
@@ -74,7 +74,7 @@ class CheckPi(Check):
         total = 0.0
 
         # Enumerate all possible cell indices in the grid
-        all_indices = itertools.product(*(range(s) for s in self.dim))
+        all_indices = itertools.product(*(range(s) for s in self.matr.shape))
         for idx in all_indices:
             cell_mass = self.matr[idx]
             if cell_mass <= 0:
@@ -82,15 +82,15 @@ class CheckPi(Check):
 
             # Calculate how much of this cell is below the point 'args'
             fraction = 1.0
-            for k in range(self.d):
+            for k in range(self.dim):
                 # Cell k-th dim covers [lower_k, upper_k)
-                lower_k = idx[k] / self.dim[k]
-                upper_k = (idx[k] + 1) / self.dim[k]
+                lower_k = idx[k] / self.matr.shape[k]
+                upper_k = (idx[k] + 1) / self.matr.shape[k]
                 # Overlap with [0, args[k]]
                 overlap_len = max(0.0, min(args[k], upper_k) - lower_k)
 
                 # Convert overlap length to fraction of cell's width in dim k
-                cell_width = 1.0 / self.dim[k]
+                cell_width = 1.0 / self.matr.shape[k]
                 frac_k = overlap_len / cell_width  # fraction in [0,1]
                 if frac_k <= 0:
                     fraction = 0.0
@@ -114,7 +114,7 @@ class CheckPi(Check):
         Steps for dimension i (1-based):
           1) Find i0 = i - 1 (zero-based).
           2) Identify the cell index along dim i0 where u[i0] lies:
-             i_idx = floor(u[i0] * self.dim[i0])  (clamp if needed).
+             i_idx = floor(u[i0] * self.matr.shape[i0])  (clamp if needed).
           3) The denominator = sum of masses of all cells that have index[i0] = i_idx,
              *without* any partial fraction for that dimension i0.  We treat that entire
              'slice' as the event {U_i is in that cell}.
@@ -125,12 +125,12 @@ class CheckPi(Check):
 
         Optimized but mathematically identical to the original implementation.
         """
-        if i < 1 or i > self.d:
-            raise ValueError(f"Dimension {i} out of range 1..{self.d}")
+        if i < 1 or i > self.dim:
+            raise ValueError(f"Dimension {i} out of range 1..{self.dim}")
 
         i0 = i - 1
-        if len(u) != self.d:
-            raise ValueError(f"Point u must have length {self.d}.")
+        if len(u) != self.dim:
+            raise ValueError(f"Point u must have length {self.dim}.")
 
         # Find which cell index along dim i0 the coordinate u[i0] falls into
         x_i = u[i0]
@@ -138,14 +138,14 @@ class CheckPi(Check):
             return 0.0  # If 'conditioning coordinate' <0, prob is 0
         elif x_i >= 1:
             # If 'conditioning coordinate' >=1, then we pick the last cell index
-            i_idx = self.dim[i0] - 1
+            i_idx = self.matr.shape[i0] - 1
         else:
-            i_idx = int(np.floor(x_i * self.dim[i0]))
+            i_idx = int(np.floor(x_i * self.matr.shape[i0]))
             # clamp (just in case)
             if i_idx < 0:
                 i_idx = 0
-            elif i_idx >= self.dim[i0]:
-                i_idx = self.dim[i0] - 1
+            elif i_idx >= self.matr.shape[i0]:
+                i_idx = self.matr.shape[i0] - 1
 
         # Clear cached results from previous calls to avoid test interference
         # This is important when running multiple tests with the same object
@@ -166,7 +166,7 @@ class CheckPi(Check):
 
             # This is more efficient than using itertools.product for the whole space
             # when we're only interested in a specific slice
-            indices = [range(s) for s in self.dim]
+            indices = [range(s) for s in self.matr.shape]
             indices[i0] = [i_idx]  # Fix the i0 dimension
 
             for c in itertools.product(*indices):
@@ -186,14 +186,14 @@ class CheckPi(Check):
         for c in slice_indices:
             cell_mass = self.matr[c]
             fraction = 1.0
-            for j in range(self.d):
+            for j in range(self.dim):
                 if j == i0:
                     # No partial coverage in the conditioning dimension
                     continue
 
                 # Use exactly the same calculation method as the original
-                lower_j = c[j] / self.dim[j]
-                upper_j = (c[j] + 1) / self.dim[j]
+                lower_j = c[j] / self.matr.shape[j]
+                upper_j = (c[j] + 1) / self.matr.shape[j]
                 val_j = u[j]
 
                 # Overlap with [0, val_j] in this dimension
@@ -206,7 +206,7 @@ class CheckPi(Check):
 
                 # Calculate exactly as in the original implementation
                 overlap_len = max(0.0, min(val_j, upper_j) - lower_j)
-                cell_width = 1.0 / self.dim[j]
+                cell_width = 1.0 / self.matr.shape[j]
                 frac_j = overlap_len / cell_width  # fraction in [0,1]
 
                 if frac_j <= 0:
@@ -242,19 +242,19 @@ class CheckPi(Check):
 
         but some tests want just the cell's probability mass.
         """
-        if len(args) != self.d:
-            raise ValueError(f"pdf expects {self.d} coords, got {len(args)}.")
+        if len(args) != self.dim:
+            raise ValueError(f"pdf expects {self.dim} coords, got {len(args)}.")
         if any(a < 0 or a > 1 for a in args):
             return 0.0
 
         # Identify which cell the point (args) falls into
         cell_idx = []
         for k, val in enumerate(args):
-            ix = int(np.floor(val * self.dim[k]))
+            ix = int(np.floor(val * self.matr.shape[k]))
             if ix < 0:
                 ix = 0
-            if ix >= self.dim[k]:
-                ix = self.dim[k] - 1
+            if ix >= self.matr.shape[k]:
+                ix = self.matr.shape[k] - 1
             cell_idx.append(ix)
 
         # Return just the cell's mass (not dividing by cell volume)
@@ -292,16 +292,16 @@ class CheckPi(Check):
         flat_indices = np.random.choice(np.arange(len(probs)), size=n, p=probs)
 
         # Convert flat indices to multi-indices as a (d, n) array
-        indices_arrays = np.unravel_index(flat_indices, self.dim)
+        indices_arrays = np.unravel_index(flat_indices, self.matr.shape)
 
         # Transform indices to a (n, d) array
         indices = np.column_stack(indices_arrays)
 
         # Generate uniform jitter for each dimension
-        jitter = np.random.rand(n, self.d)
+        jitter = np.random.rand(n, self.dim)
 
         # Combine indices and jitter to get final coordinates
-        return (indices + jitter) / np.array(self.dim)
+        return (indices + jitter) / np.array(self.matr.shape)
 
     @staticmethod
     def _weighted_random_selection(matrix, num_samples):

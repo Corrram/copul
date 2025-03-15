@@ -218,7 +218,10 @@ class Checkerboarder:
         def get_cached_cdf(point):
             point_tuple = tuple(point)
             if point_tuple not in cdf_cache:
-                cdf_cache[point_tuple] = copula.cdf(*point).evalf()
+                cdf_value = copula.cdf(*point)
+                if not isinstance(cdf_value, float):
+                    cdf_value = cdf_value.evalf()
+                cdf_cache[point_tuple] = cdf_value
             return cdf_cache[point_tuple]
 
         for idx in indices:

@@ -7,7 +7,6 @@ import numpy as np
 import sympy as sp
 from copul.families.copula import Copula
 from matplotlib import pyplot as plt
-from matplotlib import rcParams
 
 from copul.families.cis_verifier import CISVerifier
 from copul.families.copula_graphs import CopulaGraphs
@@ -59,20 +58,11 @@ class BivCopula(Copula):
         **kwargs : dict
             Keyword parameters to override default symbolic parameters.
         """
-        super().__init__(2)
-        self.u_symbols = [self.u, self.v]
+        if "dimension" in kwargs:
+            kwargs.pop("dimension")
+        super().__init__(2, *args, **kwargs)
         self.dimension = 2
-        self._are_class_vars(kwargs)
-        for i in range(len(args)):
-            kwargs[str(self.params[i])] = args[i]
-        for k, v in kwargs.items():
-            if isinstance(v, str):
-                v = getattr(self.__class__, v)
-            setattr(self, k, v)
-        self.params = [param for param in self.params if str(param) not in kwargs]
-        self.intervals = {
-            k: v for k, v in self.intervals.items() if str(k) not in kwargs
-        }
+        self.u_symbols = [self.u, self.v]
 
     def __str__(self):
         """
@@ -484,32 +474,6 @@ class BivCopula(Copula):
             plt.draw()
             plt.close()
 
-    def scatter_plot(self, n=1_000, approximate=False):
-        """
-        Create a scatter plot of random variates from the copula.
-
-        Parameters
-        ----------
-        n : int, optional
-            The number of samples to generate (default is 1,000).
-        approximate : bool, optional
-            Whether to use explicit sampling from the conditional distributions or
-            approximate sampling with a checkerboard copula
-
-        Returns
-        -------
-        None
-        """
-        data_ = self.rvs(n, approximate=approximate)
-        plt.scatter(data_[:, 0], data_[:, 1], s=rcParams["lines.markersize"] ** 2)
-        title = CopulaGraphs(self).get_copula_title()
-        plt.title(title)
-        plt.xlabel("u")
-        plt.ylabel("v")
-        plt.grid(True)
-        plt.show()
-        plt.close()
-
     def plot_cdf(self, data=None, title=None, zlabel=None):
         """
         Plot the cumulative distribution function (CDF) of the copula.
@@ -577,6 +541,7 @@ class BivCopula(Copula):
         ylim=(-1, 1),
         params=None,
         log_cut_off=None,
+        approximate=False,
     ):
         """
         Plot rank correlations for the copula.
@@ -601,13 +566,15 @@ class BivCopula(Copula):
         log_cut_off : int, float, tuple, or None, optional
             Cut-off value(s) for applying a logarithmic scale to the x-axis.
             If provided, the plot will use a log scale (default is None).
+        approximate : bool, optional
+            Whether to use approximate sampling via checkerboard copulas.
 
         Returns
         -------
         None
             This method displays the plot using matplotlib.
         """
-        plotter = RankCorrelationPlotter(self, log_cut_off)
+        plotter = RankCorrelationPlotter(self, log_cut_off, approximate)
         plotter.plot_rank_correlations(n_obs, n_params, params, plot_var, ylim)
 
     def plot_pdf(self):
