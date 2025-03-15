@@ -44,7 +44,7 @@ class TestCoreCopula:
     def test_init(self):
         """Test initialization of CoreCopula"""
         copula = SampleCopula(dimension=3)
-        assert copula.dimension == 3
+        assert copula.dim == 3
         assert len(copula.u_symbols) == 3  # u1, u2, u3
 
     def test_str(self, copula):

@@ -26,11 +26,10 @@ class Check:
         self.matr = matr / matr_sum
 
         # Store shape and dimension
-        self.dim = self.matr.shape
-        self.d = len(self.dim)
+        self.dim = len(self.matr.shape)
 
     def __str__(self):
-        return f"CheckerboardCopula({self.dim})"
+        return f"CheckerboardCopula({self.matr.shape})"
 
     def lambda_L(self):
         """Lower tail dependence (usually 0 for a checkerboard copula)."""

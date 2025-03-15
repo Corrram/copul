@@ -2,13 +2,13 @@ import numpy as np
 import sympy
 from scipy import integrate
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class Frank(ArchimedeanCopula):
-    ac = ArchimedeanCopula
+class Frank(BivArchimedeanCopula):
+    ac = BivArchimedeanCopula
     theta_interval = sympy.Interval(-np.inf, np.inf, left_open=True, right_open=True)
     # Define special cases
     special_cases = {0: IndependenceCopula}

@@ -1,6 +1,6 @@
 import sympy
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.frechet import Frechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
@@ -8,7 +8,7 @@ from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class IndependenceCopula(Frechet, ArchimedeanCopula):
+class IndependenceCopula(Frechet, BivArchimedeanCopula):
     """Independence Copula implementation.
 
     The independence copula represents statistical independence between random variables:

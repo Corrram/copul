@@ -28,9 +28,9 @@ class SymPyFuncWrapper:
 
         type_ = type(sympy_func)
         allowed = (sympy.Expr, float, int)
-        assert isinstance(sympy_func, allowed), (
-            f"Function must be from sympy, but is {type_}"
-        )
+        assert isinstance(
+            sympy_func, allowed
+        ), f"Function must be from sympy, but is {type_}"
 
         # Convert numeric types to SymPy Number
         if isinstance(sympy_func, (float, int)):
@@ -117,10 +117,13 @@ class SymPyFuncWrapper:
         if args and len(free_symbols) == len(args):
             kwargs = {free_sym: arg for free_sym, arg in zip(free_symbols, args)}
         elif args:
-            raise ValueError(
-                f"Expected {len(free_symbols)} or 0 positional arguments for "
-                f"expression with {len(free_symbols)} free symbols, got {len(args)}"
-            )
+            # remove None
+            args = tuple(arg for arg in args if arg is not None)
+            if args:
+                raise ValueError(
+                    f"Expected {len(free_symbols)} or 0 positional arguments for "
+                    f"expression with {len(free_symbols)} free symbols, got {len(args)}"
+                )
 
         # Filter out None values
         kwargs = {k: v for k, v in kwargs.items() if v is not None}

@@ -11,3 +11,5 @@
 .venv/
 /.coverage
 /tests/families/images/
+/copul/families/images/
+/images/functions/

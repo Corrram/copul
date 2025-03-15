@@ -17,9 +17,20 @@ class CoreCopula(ABC):
     def __str__(self):
         return self.__class__.__name__
 
-    def __init__(self, dimension):
+    def __init__(self, dimension, *args, **kwargs):
         self.u_symbols = sympy.symbols(f"u1:{dimension + 1}")
-        self.dimension = dimension
+        self.dim = dimension
+        self._are_class_vars(kwargs)
+        for i in range(len(args)):
+            kwargs[str(self.params[i])] = args[i]
+        for k, v in kwargs.items():
+            if isinstance(v, str):
+                v = getattr(self.__class__, v)
+            setattr(self, k, v)
+        self.params = [param for param in self.params if str(param) not in kwargs]
+        self.intervals = {
+            k: v for k, v in self.intervals.items() if str(k) not in kwargs
+        }
 
     def __call__(self, *args, **kwargs):
         new_copula = copy.copy(self)
@@ -58,9 +69,9 @@ class CoreCopula(ABC):
 
     def _are_class_vars(self, kwargs):
         class_vars = set(dir(self))
-        assert set(kwargs).issubset(class_vars), (
-            f"keys: {set(kwargs)}, free symbols: {class_vars}"
-        )
+        assert set(kwargs).issubset(
+            class_vars
+        ), f"keys: {set(kwargs)}, free symbols: {class_vars}"
 
     def slice_interval(self, param, interval_start=None, interval_end=None):
         if not isinstance(param, str):
@@ -87,7 +98,7 @@ class CoreCopula(ABC):
         return CDFWrapper(expr)(*args, **kwargs)
 
     def cond_distr(self, i, u=None):
-        assert i in range(1, self.dimension + 1)
+        assert i in range(1, self.dim + 1)
         result = SymPyFuncWrapper(sympy.diff(self.cdf, self.u_symbols[i - 1]))
         if u is None:
             return result

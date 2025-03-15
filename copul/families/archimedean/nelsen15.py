@@ -1,13 +1,13 @@
 import numpy as np
 import sympy
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class GenestGhoudi(ArchimedeanCopula):
-    ac = ArchimedeanCopula
+class GenestGhoudi(BivArchimedeanCopula):
+    ac = BivArchimedeanCopula
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(1, np.inf, left_open=False, right_open=True)
     special_cases = {

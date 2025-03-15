@@ -6,6 +6,7 @@ import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
 
+from copul import from_cdf
 from copul.families.core_copula import CoreCopula
 from copul.families.copula import Copula
 
@@ -162,3 +163,14 @@ def test_rvs_parameter_combinations(n_samples, random_state, approximate):
             mock_copula, random_state=random_state
         )
         mock_sampler.rvs.assert_called_once_with(n_samples, approximate)
+
+
+def test_3d_copula_sampling():
+    func = "(x**(-theta) + y**(-theta) + z**(-theta) - 2)**(-1/theta)"
+    copulas = from_cdf(func)
+    copula = copulas(theta=3)
+    sample_values = copula.rvs(100, approximate=True)
+    assert sample_values.shape == (100, 3)
+    assert np.all(sample_values >= 0)
+    assert np.all(sample_values <= 1)
+    assert not np.isnan(sample_values).any()

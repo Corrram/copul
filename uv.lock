@@ -482,6 +482,7 @@ dev = [
     { name = "build" },
     { name = "hatchling" },
     { name = "jupyter" },
+    { name = "mpld3" },
     { name = "mypy" },
     { name = "pylint" },
     { name = "pytest" },
@@ -504,6 +505,7 @@ requires-dist = [
     { name = "jupyter", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "matplotlib", specifier = ">=3.9" },
     { name = "mfoci", specifier = ">=0.2.0" },
+    { name = "mpld3", marker = "extra == 'dev'", specifier = ">=0.5.10" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "numba", specifier = ">=0.61.0" },
     { name = "numpy", specifier = ">=2.0" },
@@ -1701,6 +1703,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/88/3b/7fa1fe835e2e93fd6d7b52b2f95ae810cf5ba133e1845f726f5a992d62c2/more-itertools-10.6.0.tar.gz", hash = "sha256:2cd7fad1009c31cc9fb6a035108509e6547547a7a738374f10bd49a09eb3ee3b", size = 125009 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/23/62/0fe302c6d1be1c777cab0616e6302478251dfbf9055ad426f5d0def75c89/more_itertools-10.6.0-py3-none-any.whl", hash = "sha256:6eb054cb4b6db1473f6e15fcc676a08e4732548acd47c708f0e179c2c7c01e89", size = 63038 },
+]
+
+[[package]]
+name = "mpld3"
+version = "0.5.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jinja2" },
+    { name = "matplotlib" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/90/58/19378f4189a034eb3efc17b133426b8551af1d3b2c70d641a63124579629/mpld3-0.5.10.tar.gz", hash = "sha256:a478eb404fa5212505c59133cf272cd9a94105872e605597720e7f84de38fbc7", size = 1027709 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/95/6a/e3691bcc47485f38b09853207c928130571821d187cf174eed5418d45e82/mpld3-0.5.10-py3-none-any.whl", hash = "sha256:80877acce87ea447380fad7374668737505c8c0684aab05238e7c5dc1fab38c1", size = 202561 },
 ]
 
 [[package]]

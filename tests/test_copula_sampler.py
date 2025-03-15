@@ -26,6 +26,7 @@ class TestCopulaSampler:
         # Set up symbols for the mock copula
         u, v = sympy.symbols("u v")
         self.mock_copula.u_symbols = [u, v]
+        self.mock_copula.dim = 2
 
         # Default sampler with mock copula
         self.sampler = CopulaSampler(self.mock_copula)
@@ -72,6 +73,7 @@ class TestCopulaSampler:
         # Setup a mock copula with a parameter in cond_distr_2
         mock_param_copula = MagicMock()
         mock_param_copula.__class__.__name__ = "MockParamCopula"
+        mock_param_copula.dim = 2
 
         # Make cond_distr_2 have a parameter that's in intervals
         def cond_distr_with_param(u, v, theta=1.0):
@@ -291,6 +293,7 @@ def test_with_check_pi_copula(mock_sample_val):
     # Create a mock that identifies as CheckPi
     mock_check_pi = MagicMock(spec=CheckPi)
     mock_check_pi.__class__ = CheckPi
+    mock_check_pi.dim = 2
 
     # Setup a simple conditional distribution
     def cond_distr(u, v):
@@ -323,6 +326,7 @@ def test_rvs_sample_count(mock_sample_val, n_samples):
     # Create a mock copula with parameters
     mock_copula = MagicMock()
     mock_copula.__class__.__name__ = "MockCopula"
+    mock_copula.dim = 2
 
     # Setup a simple cond_distr_2 function with parameter
     def cond_distr(u, v, theta=1.0):
@@ -364,7 +368,7 @@ def test_rvs_from_lower_frechet():
 
 def test_rvs_from_independence_copula():
     copula = IndependenceCopula()
-    sampler = CopulaSampler(copula)
-    results = sampler.rvs(200, False)
+    sampler = CopulaSampler(copula, random_state=42)
+    results = sampler.rvs(300, False)
     corr = np.corrcoef(results[:, 0], results[:, 1])[0, 1]
     assert np.abs(corr) < 0.1

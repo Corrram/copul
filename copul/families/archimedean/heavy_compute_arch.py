@@ -8,12 +8,12 @@ import sympy
 from scipy import optimize
 
 from copul.copula_sampler import CopulaSampler
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 
 log = logging.getLogger(__name__)
 
 
-class HeavyComputeArch(ArchimedeanCopula, ABC):
+class HeavyComputeArch(BivArchimedeanCopula, ABC):
     err_counter = 0
 
     def rvs(self, n=1, random_state=None, approximate=False):

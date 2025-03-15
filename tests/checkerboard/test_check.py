@@ -12,8 +12,8 @@ class TestCheck:
         # Matrix should be normalized to sum to 1
         expected = matr / matr.sum()
         assert np.allclose(check.matr, expected)
-        assert check.dim == (2, 2)
-        assert check.d == 2
+        assert check.matr.shape == (2, 2)
+        assert check.dim == 2
 
     def test_init_list(self):
         """Test initialization with a list."""
@@ -22,8 +22,8 @@ class TestCheck:
         # Check conversion to numpy array and normalization
         expected = np.array(matr) / np.array(matr).sum()
         assert np.allclose(check.matr, expected)
-        assert check.dim == (2, 2)
-        assert check.d == 2
+        assert check.matr.shape == (2, 2)
+        assert check.dim == 2
 
     def test_init_sympy(self):
         """Test initialization with a sympy Matrix."""
@@ -32,8 +32,8 @@ class TestCheck:
         expected = matr / sum(matr)  # Using sum() instead of .sum() for sympy matrices
         # For sympy matrices, equality check should work
         assert check.matr == expected
-        assert check.dim == (2, 2)
-        assert check.d == 2
+        assert check.matr.shape == (2, 2)
+        assert check.dim == 2
 
     def test_normalization(self):
         """Test that the matrix is properly normalized."""
@@ -103,8 +103,8 @@ class TestCheck:
         """Test with a higher dimensional matrix."""
         matr = np.ones((2, 3, 4))  # Sum = 24
         check = Check(matr)
-        assert check.dim == (2, 3, 4)
-        assert check.d == 3
+        assert check.matr.shape == (2, 3, 4)
+        assert check.dim == 3
         assert np.isclose(check.matr.sum(), 1.0)
         # Check normalization
         expected = matr / matr.sum()

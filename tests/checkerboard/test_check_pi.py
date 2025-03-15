@@ -289,8 +289,8 @@ def test_higher_dimensional():
     copula = CheckPi(matr)
 
     # Test dimensions
-    assert copula.d == 3
-    assert copula.dim == (3, 3, 3)
+    assert copula.dim == 3
+    assert copula.matr.shape == (3, 3, 3)
 
     # Test CDF at various points
     assert np.isclose(copula.cdf(1 / 3, 1 / 3, 1 / 3), 1 / 27)

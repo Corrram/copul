@@ -84,7 +84,7 @@ class CheckMin(Check):
         return instance
 
     def __str__(self):
-        return f"CheckMinCopula({self.dim})"
+        return f"CheckMinCopula({self.matr.shape})"
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -102,8 +102,8 @@ class CheckMin(Check):
         then sum cell_mass * fraction.
         """
 
-        if len(args) != self.d:
-            raise ValueError(f"cdf expects {self.d} coordinates, got {len(args)}.")
+        if len(args) != self.dim:
+            raise ValueError(f"cdf expects {self.dim} coordinates, got {len(args)}.")
 
         # Quick boundaries
         if any(u <= 0 for u in args):
@@ -112,21 +112,21 @@ class CheckMin(Check):
             return 1.0
 
         total = 0.0
-        for c in itertools.product(*(range(s) for s in self.dim)):
+        for c in itertools.product(*(range(s) for s in self.matr.shape)):
             cell_mass = self.matr[c]
             if cell_mass <= 0:
                 continue
 
             # min-fraction across dims
             frac_cell = 1.0
-            for k in range(self.d):
-                lower_k = c[k] / self.dim[k]
-                upper_k = (c[k] + 1) / self.dim[k]
+            for k in range(self.dim):
+                lower_k = c[k] / self.matr.shape[k]
+                upper_k = (c[k] + 1) / self.matr.shape[k]
                 overlap_k = max(0.0, min(args[k], upper_k) - lower_k)
                 if overlap_k <= 0:
                     frac_cell = 0.0
                     break
-                width_k = 1.0 / self.dim[k]
+                width_k = 1.0 / self.matr.shape[k]
                 frac_k = overlap_k / width_k
                 if frac_k > 1.0:
                     frac_k = 1.0
@@ -145,7 +145,7 @@ class CheckMin(Check):
         Steps for dimension i (1-based):
               1) Find i0 = i - 1 (zero-based).
               2) Identify the cell index along dim i0 where u[i0] lies:
-                 i_idx = floor(u[i0] * self.dim[i0])  (clamp if needed).
+                 i_idx = floor(u[i0] * self.matr.shape[i0])  (clamp if needed).
               3) The denominator = sum of masses of all cells that have index[i0] = i_idx,
                  *without* any partial fraction for that dimension i0.  We treat that entire
                  'slice' as the event {U_i is in that cell}.
@@ -156,12 +156,12 @@ class CheckMin(Check):
 
         Optimized version for CheckMin copula with improved performance.
         """
-        if i < 1 or i > self.d:
-            raise ValueError(f"Dimension {i} out of range 1..{self.d}")
+        if i < 1 or i > self.dim:
+            raise ValueError(f"Dimension {i} out of range 1..{self.dim}")
 
         i0 = i - 1
-        if len(u) != self.d:
-            raise ValueError(f"Point u must have length {self.d}.")
+        if len(u) != self.dim:
+            raise ValueError(f"Point u must have length {self.dim}.")
 
         # Find which cell index along dim i0 the coordinate u[i0] falls into
         x_i = u[i0]
@@ -169,14 +169,14 @@ class CheckMin(Check):
             return 0.0  # If 'conditioning coordinate' <0, prob is 0
         elif x_i >= 1:
             # If 'conditioning coordinate' >=1, then we pick the last cell index
-            i_idx = self.dim[i0] - 1
+            i_idx = self.matr.shape[i0] - 1
         else:
-            i_idx = int(np.floor(x_i * self.dim[i0]))
+            i_idx = int(np.floor(x_i * self.matr.shape[i0]))
             # clamp (just in case)
             if i_idx < 0:
                 i_idx = 0
-            elif i_idx >= self.dim[i0]:
-                i_idx = self.dim[i0] - 1
+            elif i_idx >= self.matr.shape[i0]:
+                i_idx = self.matr.shape[i0] - 1
 
         # For safety, reset the intervals cache between calls
         self.intervals = {}
@@ -194,7 +194,7 @@ class CheckMin(Check):
                 denom += self.matr[c]
         else:
             # Create more efficient slice iteration by only iterating through relevant dimensions
-            indices = [range(s) for s in self.dim]
+            indices = [range(s) for s in self.matr.shape]
             indices[i0] = [i_idx]  # Fix the i0 dimension
 
             # Collect all cells in the slice
@@ -213,7 +213,7 @@ class CheckMin(Check):
             return 0.0
 
         # Precompute 1/dim values for faster calculations
-        inv_dims = np.array([1.0 / dim for dim in self.dim])
+        inv_dims = np.array([1.0 / dim for dim in self.matr.shape])
         u_array = np.array(u)
 
         # Calculate the conditioning dimension's fraction once
@@ -221,7 +221,9 @@ class CheckMin(Check):
         lower_i0 = i_idx * inv_dims[i0]
         upper_i0 = (i_idx + 1) * inv_dims[i0]
         overlap_len_i0 = max(0.0, min(val_i0, upper_i0) - lower_i0)
-        frac_i = overlap_len_i0 * self.dim[i0]  # Multiply by dim instead of dividing
+        frac_i = (
+            overlap_len_i0 * self.matr.shape[i0]
+        )  # Multiply by dim instead of dividing
 
         # Calculate numerator
         num = 0.0
@@ -232,7 +234,7 @@ class CheckMin(Check):
 
             qualifies = True
 
-            for j in range(self.d):
+            for j in range(self.dim):
                 if j == i0:
                     continue  # Skip conditioning dimension
 
@@ -255,7 +257,7 @@ class CheckMin(Check):
                     val_j - lower_j
                 )  # No need for max() since we know val_j > lower_j
                 frac_j = (
-                    overlap_len * self.dim[j]
+                    overlap_len * self.matr.shape[j]
                 )  # Multiply by dim instead of dividing
 
                 # More efficient fraction comparison with numerical stability
@@ -286,19 +288,19 @@ class CheckMin(Check):
         randoms = np.random.uniform(size=n)
 
         # Pre-allocate the output array for better performance
-        out = np.zeros((n, self.d))
+        out = np.zeros((n, self.dim))
 
         # Pre-compute inverse dimensions (1/dim) for faster division
-        inv_dims = np.array([1.0 / dim for dim in self.dim])
+        inv_dims = np.array([1.0 / dim for dim in self.matr.shape])
 
         # Process each selected cell more efficiently
         for i, (c, u) in enumerate(zip(idxs, randoms)):
             # Vectorized computation of lower bounds
-            lower_bounds = np.array([c[d] * inv_dims[d] for d in range(self.d)])
+            lower_bounds = np.array([c[d] * inv_dims[d] for d in range(self.dim)])
 
             # Vectorized computation of ranges (upper - lower)
             ranges = np.array(
-                [(c[d] + 1) * inv_dims[d] - lower_bounds[d] for d in range(self.d)]
+                [(c[d] + 1) * inv_dims[d] - lower_bounds[d] for d in range(self.dim)]
             )
 
             # Directly compute the interpolated point and store in output array

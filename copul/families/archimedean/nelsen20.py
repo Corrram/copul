@@ -3,7 +3,7 @@ import logging
 import numpy as np
 import sympy
 
-from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.cd2_wrapper import CD2Wrapper
@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class Nelsen20(HeavyComputeArch):
-    ac = ArchimedeanCopula
+    ac = BivArchimedeanCopula
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, np.inf, left_open=False, right_open=True)
     special_cases = {0: IndependenceCopula}

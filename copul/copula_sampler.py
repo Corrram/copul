@@ -61,9 +61,13 @@ class CopulaSampler:
         Returns:
             np.ndarray: Array of shape (n, 2) containing the sampled (u, v) pairs.
         """
+        if not approximate and self._copul.dim > 2:
+            raise ValueError(
+                "Sampling from copula with dimension > 2 requires approximate=True"
+            )
         if approximate:
-            grid_partitions = np.ceil(np.sqrt(n)).astype(int)
-            checkerboarder = Checkerboarder(grid_partitions, dim=2)
+            grid_partitions = np.ceil(n ** (1 / self._copul.dim)).astype(int)
+            checkerboarder = Checkerboarder(grid_partitions, dim=self._copul.dim)
             ccop = checkerboarder.compute_check_pi(self._copul)
             return ccop.rvs(n)
         # Set random seed if specified
