@@ -18,13 +18,12 @@ class GumbelHougaard(ArchimedeanCopula):
         return True
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return (-sympy.log(self.t)) ** self.theta
 
     @property
-    def inv_generator(self):
-        gen = sympy.exp(-(self.y ** (1 / self.theta)))
-        return SymPyFuncWrapper(gen)
+    def _raw_inv_generator(self):
+        return sympy.exp(-(self.y ** (1 / self.theta)))
 
     @property
     def cdf(self):

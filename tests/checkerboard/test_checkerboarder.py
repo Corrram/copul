@@ -144,7 +144,7 @@ def test_higher_dimensions():
     pass
 
 
-def test_boundary_conditions():
+def test_boundary_conditions_for_independence():
     """Test boundary conditions for the checkerboard approximation."""
     # Test with independence (using Clayton with parameter close to 0)
     independent = copul.Families.CLAYTON.cls(0.01)  # Almost independent
@@ -155,3 +155,27 @@ def test_boundary_conditions():
     expected_value = 1.0 / 25  # 5x5 grid
     # Use a higher tolerance for near-independence
     assert np.all(np.abs(ccop.matr - expected_value) < 0.1)
+
+def test_boundary_conditions_for_lower_frechet():
+    lower_frechet = copul.Families.LOWER_FRECHET.cls()
+    checkerboarder = copul.Checkerboarder(5)
+    ccop = checkerboarder.compute_check_pi(lower_frechet)
+    matr = ccop.matr
+    for i in range(5):
+        for j in range(5):
+            if i + j == 4:
+                assert np.isclose(matr[i, j], 0.2)
+            else:
+                assert np.isclose(matr[i, j], 0.0)
+
+def test_boundary_conditions_for_upper_frechet():
+    lower_frechet = copul.Families.UPPER_FRECHET.cls()
+    checkerboarder = copul.Checkerboarder(5)
+    ccop = checkerboarder.compute_check_pi(lower_frechet)
+    matr = ccop.matr
+    for i in range(5):
+        for j in range(5):
+            if i != j:
+                assert np.isclose(matr[i, j], 0.0)
+            else:
+                assert np.isclose(matr[i, j], 0.2)

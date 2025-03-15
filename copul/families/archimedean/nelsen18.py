@@ -10,20 +10,23 @@ class Nelsen18(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(2, np.inf, left_open=False, right_open=True)
+    
+    @property
+    def _generator_at_0(self):
+        return sympy.exp(-self.theta)
 
     @property
     def is_absolutely_continuous(self) -> bool:
         return False
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return sympy.exp(self.theta / (self.t - 1))
 
     @property
-    def inv_generator(self) -> SymPyFuncWrapper:
+    def _raw_inv_generator(self) -> SymPyFuncWrapper:
         ind = sympy.Heaviside(self.y - sympy.exp(-self.theta))
-        gen = ind * self.theta / sympy.log(self.y) + 1
-        return SymPyFuncWrapper(gen)
+        return ind * (self.theta / sympy.log(self.y) + 1)
 
     @property
     def cdf(self) -> SymPyFuncWrapper:

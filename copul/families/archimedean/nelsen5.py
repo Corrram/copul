@@ -18,19 +18,18 @@ class Frank(ArchimedeanCopula):
         return True
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return -sympy.log(
             (sympy.exp(-self.theta * self.t) - 1) / (sympy.exp(-self.theta) - 1)
         )
 
     @property
-    def inv_generator(self):
+    def _raw_inv_generator(self):
         theta = self.theta
         y = self.y
-        gen = (
+        return (
             theta + y - sympy.log(-sympy.exp(theta) + sympy.exp(theta + y) + 1)
         ) / theta
-        return SymPyFuncWrapper(gen)
 
     @property
     def cdf(self):

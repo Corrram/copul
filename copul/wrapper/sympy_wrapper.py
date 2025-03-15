@@ -83,7 +83,8 @@ class SymPyFuncWrapper:
             ValueError: If both args and kwargs are provided.
         """
         vars_, _ = self._prepare_call(args, kwargs)
-        func = self._func.subs(vars_)
+        func_raw = self._func
+        func = func_raw.subs(vars_)
         return SymPyFuncWrapper(func)
 
     def _prepare_call(
@@ -114,6 +115,11 @@ class SymPyFuncWrapper:
         # Map positional args to symbols if appropriate
         if args and len(free_symbols) == len(args):
             kwargs = {free_sym: arg for free_sym, arg in zip(free_symbols, args)}
+        elif args:
+            raise ValueError(
+                f"Expected {len(free_symbols)} or 0 positional arguments for "
+                f"expression with {len(free_symbols)} free symbols, got {len(args)}"
+            )
 
         # Filter out None values
         kwargs = {k: v for k, v in kwargs.items() if v is not None}

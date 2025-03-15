@@ -47,7 +47,7 @@ def test_nelsen2_generator_property(theta):
     for t in t_vals:
         # Compute expected value: (1-t)^θ
         expected = (1 - t) ** theta
-        gen_val = float(copula._generator.subs(copula.t, t))
+        gen_val = float(copula.generator.subs(copula.t, t))
         assert np.isclose(gen_val, expected, rtol=1e-10)
 
 
@@ -192,8 +192,8 @@ def test_nelsen2_archimedean_properties():
 
     for u, v in test_points:
         # Compute using the Archimedean definition
-        gen_u = float(copula._generator.subs(copula.t, u))
-        gen_v = float(copula._generator.subs(copula.t, v))
+        gen_u = float(copula.generator.subs(copula.t, u))
+        gen_v = float(copula.generator.subs(copula.t, v))
         sum_gen = gen_u + gen_v
 
         # If sum_gen > 1, then according to the Nelsen2 definition, C(u,v) = 0

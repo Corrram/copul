@@ -24,29 +24,12 @@ class Nelsen20(HeavyComputeArch):
         return True
 
     @property
-    def _generator(self):
-        expr = sympy.exp(self.t ** (-self.theta)) - sympy.exp(1)
-        return sympy.Piecewise(
-            (expr, self.t > 0),
-            (sympy.oo, True)
-        )
+    def _raw_generator(self):
+        return sympy.exp(self.t ** (-self.theta)) - sympy.exp(1)
 
     @property
-    def inv_generator(self):
-        theta = self.theta
-        y = self.y
-
-        # Regular case expression
-        regular_expr = sympy.log(y + sympy.E) ** (-1 / theta)
-
-        # Define piecewise function to handle edge cases
-        inv_gen = sympy.Piecewise(
-            (0, y == sympy.oo),  # When y is infinity
-            (1, y == 0),  # When y is 0
-            (regular_expr, True)  # Regular case
-        )
-
-        return SymPyFuncWrapper(inv_gen)
+    def _raw_inv_generator(self):
+        return sympy.log(self.y + sympy.E) ** (-1 / self.theta)
 
     @property
     def cdf(self):

@@ -13,20 +13,20 @@ class GenestGhoudi(ArchimedeanCopula):
     special_cases = {
         1: LowerFrechet,
     }
+    _generator_at_0 = 1
 
     @property
     def is_absolutely_continuous(self) -> bool:
         return False
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return (1 - self.t ** (1 / self.theta)) ** self.theta
 
     @property
-    def inv_generator(self):
+    def _raw_inv_generator(self):
         ind = sympy.Piecewise((1, self.y <= 1), (0, True))
-        gen = (1 - self.y ** (1 / self.theta)) ** self.theta * ind
-        return SymPyFuncWrapper(gen)
+        return (1 - self.y ** (1 / self.theta)) ** self.theta * ind
 
     @property
     def cdf(self):

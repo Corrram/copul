@@ -16,13 +16,12 @@ class Nelsen10(ArchimedeanCopula):
         return True
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return sympy.log(2 * self.t ** (-self.theta) - 1)
 
     @property
-    def inv_generator(self):
-        gen = (2 / (sympy.exp(self.y) + 1)) ** (1 / self.theta)
-        return SymPyFuncWrapper(gen)
+    def _raw_inv_generator(self):
+        return (2 / (sympy.exp(self.y) + 1)) ** (1 / self.theta)
 
     @property
     def cdf(self):  # ToDo check why this differs from Nelsen cdf

@@ -10,6 +10,7 @@ from copul.families.helpers import concrete_expand_log, get_simplified_solution
 from copul.families.bivcopula import BivCopula
 from copul.families.copula_graphs import CopulaGraphs
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+from copul.wrapper.inv_gen_wrapper import InvGenWrapper
 
 log = logging.getLogger(__name__)
 
@@ -17,11 +18,13 @@ log = logging.getLogger(__name__)
 class ArchimedeanCopula(BivCopula, ABC):
     _t_min = 0
     _t_max = 1
-    y, t = sympy.symbols("y t", nonnegative=True)
+    t = sympy.symbols("t", nonnegative=True)
+    y = sympy.symbols("y", nonnegative=True)
     theta = sympy.symbols("theta")
     theta_interval = None
     params = [theta]
     _generator = None
+    _generator_at_0 = sympy.oo
     # Dictionary mapping parameter values to special case classes
     special_cases = {}  # To be overridden by subclasses
     # Set of parameter values that are invalid (will raise ValueError)
@@ -161,18 +164,64 @@ class ArchimedeanCopula(BivCopula, ABC):
     @intervals.setter
     def intervals(self, value):
         self.theta_interval = value["theta"] if "theta" in value else None
-
+    
     @property
     def generator(self):
-        expr = self._generator
+        """
+        The generator function with proper edge case handling.
+        Subclasses should implement _raw_generator instead of _generator.
+        """
+        # Get the raw generator from the subclass
+        raw_generator = self._raw_generator
+        
+        # Create a piecewise function to handle edge cases properly
+        expr = sympy.Piecewise(
+            (raw_generator, self.t > 0),         # Regular case for valid t
+            (self._generator_at_0, True)                     # Default case for invalid values
+        )
+        
+        # Substitute parameter values
         for key, value in self._free_symbols.items():
             expr = expr.subs(value, getattr(self, key))
+            
         return SymPyFuncWrapper(expr)
-
+    
     @generator.setter
     def generator(self, value):
-        self._generator = value
-
+        self._raw_generator = value
+    
+    @property
+    def _raw_generator(self):
+        """
+        Raw generator function without edge case handling.
+        This should be implemented by subclasses.
+        """
+        raise NotImplementedError("Subclasses must implement _raw_generator")
+    
+    @property
+    def inv_generator(self):
+        """
+        The inverse generator function with proper edge case handling.
+        Uses _raw_inv_generator from subclasses.
+        """
+        # Get the raw inverse generator or compute it if not provided
+        if hasattr(self, '_raw_inv_generator'):
+            raw_inv = self._raw_inv_generator
+        else:
+            # Default implementation: compute inverse from equation
+            equation = sympy.Eq(self.y, self._raw_generator)
+            solutions = sympy.solve(equation, self.t)
+            
+            # Extract solution
+            if isinstance(solutions, dict):
+                raw_inv = solutions[self.t]
+            elif isinstance(solutions, list):
+                raw_inv = solutions[0]
+            else:
+                raw_inv = solutions
+        
+        # Return the wrapper with properly handled edge cases
+        return InvGenWrapper(raw_inv, self.y, self)
     @property
     def theta_max(self):
         return self.theta_interval.closure.end
@@ -205,6 +254,7 @@ class ArchimedeanCopula(BivCopula, ABC):
         
         return SymPyFuncWrapper(get_simplified_solution(cdf))
 
+    # Fix 1: Update cdf_vectorized method to handle scalar inputs properly
     def cdf_vectorized(self, u, v):
         """
         Vectorized implementation of the cumulative distribution function.
@@ -264,61 +314,80 @@ class ArchimedeanCopula(BivCopula, ABC):
             
             return result
         
-        # Handle edge cases where u=0 or v=0
-        zero_mask = (u == 0) | (v == 0)
-        result = np.zeros_like(u, dtype=float)
+        # Handle scalar inputs differently from array inputs
+        if u.ndim == 0 and v.ndim == 0:
+            # Both are scalars
+            if u == 0 or v == 0:
+                return np.array(0.0)
+            else:
+                gen_u = generator_func(u)
+                gen_v = generator_func(v)
+                return inv_generator_func_patched(np.array(gen_u + gen_v))
         
-        # Only compute non-zero cases
-        if not np.all(zero_mask):
-            non_zero_mask = ~zero_mask
-            u_nz = u[non_zero_mask]
-            v_nz = v[non_zero_mask]
+        elif u.ndim == 0:
+            # u is scalar, v is array
+            result = np.zeros_like(v, dtype=float)
             
-            # Apply the generator to each marginal
-            gen_u = generator_func(u_nz)
-            gen_v = generator_func(v_nz)
+            if u == 0:
+                return result  # All zeros if u is zero
             
-            # Sum the generator values and apply the inverse generator
-            gen_sum = gen_u + gen_v
-            result[non_zero_mask] = inv_generator_func_patched(gen_sum)
+            # Non-zero scalar u
+            gen_u = generator_func(u)
+            
+            # Process non-zero v values
+            non_zero_v = v != 0
+            if np.any(non_zero_v):
+                gen_v = generator_func(v[non_zero_v])
+                gen_sum = gen_u + gen_v
+                result[non_zero_v] = inv_generator_func_patched(gen_sum)
+            
+            return result
         
-        return result
+        elif v.ndim == 0:
+            # v is scalar, u is array
+            result = np.zeros_like(u, dtype=float)
+            
+            if v == 0:
+                return result  # All zeros if v is zero
+            
+            # Non-zero scalar v
+            gen_v = generator_func(v)
+            
+            # Process non-zero u values
+            non_zero_u = u != 0
+            if np.any(non_zero_u):
+                gen_u = generator_func(u[non_zero_u])
+                gen_sum = gen_u + gen_v
+                result[non_zero_u] = inv_generator_func_patched(gen_sum)
+            
+            return result
+        
+        else:
+            # Both are arrays
+            zero_mask = (u == 0) | (v == 0)
+            result = np.zeros_like(u, dtype=float)
+            
+            # Only compute non-zero cases
+            if not np.all(zero_mask):
+                non_zero_mask = ~zero_mask
+                u_nz = u[non_zero_mask]
+                v_nz = v[non_zero_mask]
+                
+                # Apply the generator to each marginal
+                gen_u = generator_func(u_nz)
+                gen_v = generator_func(v_nz)
+                
+                # Sum the generator values and apply the inverse generator
+                gen_sum = gen_u + gen_v
+                result[non_zero_mask] = inv_generator_func_patched(gen_sum)
+            
+            return result
 
     @property
     def pdf(self):
         """Probability density function of the copula"""
         first_diff = sympy.diff(self.cdf, self.u)
         return sympy.diff(first_diff, self.v)
-
-    @property
-    def inv_generator(self) -> SymPyFuncWrapper:
-        """
-        Finds the inverse of the generator function for a given value of y,
-        considering the condition that y > 0.
-
-        Returns:
-            The inverse value(s) of t that satisfy the condition.
-        """
-        # Create the equation y = generator
-        equation = sympy.Eq(self.y, self.generator.func)
-
-        # Define the conditions: the equation and y > 0
-        conditions = [equation, self.y >= 0]
-
-        # Solve the equation under the given conditions for t
-        solutions = sympy.solve(conditions, self.t)
-
-        # If the solution is a dictionary, extract the value for t
-        if isinstance(solutions, dict):
-            my_sol = solutions[self.t]
-        elif isinstance(solutions, list):
-            my_sol = solutions[0]
-        else:
-            my_sol = solutions
-
-        my_simplified_sol = get_simplified_solution(my_sol)
-
-        return SymPyFuncWrapper(my_simplified_sol)
 
     @property
     def first_deriv_of_inv_gen(self):

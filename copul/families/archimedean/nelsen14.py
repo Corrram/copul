@@ -17,13 +17,12 @@ class Nelsen14(ArchimedeanCopula):
         return True
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return (self.t ** (-1 / self.theta) - 1) ** self.theta
 
     @property
-    def inv_generator(self):
-        gen = (self.y ** (1 / self.theta) + 1) ** (-self.theta)
-        return SymPyFuncWrapper(gen)
+    def _raw_inv_generator(self):
+        return (self.y ** (1 / self.theta) + 1) ** (-self.theta)
 
     @property
     def cdf(self):

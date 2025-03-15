@@ -13,20 +13,20 @@ class Nelsen21(ArchimedeanCopula):
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(1, np.inf, left_open=False, right_open=True)
     special_cases = {1: LowerFrechet}
+    _generator_at_0 = 1
 
     @property
     def is_absolutely_continuous(self) -> bool:
         return False
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return 1 - (1 - (1 - self.t) ** self.theta) ** (1 / self.theta)
 
     @property
-    def inv_generator(self) -> SymPyFuncWrapper:
+    def _raw_inv_generator(self) -> SymPyFuncWrapper:
         indicator = sympy.Piecewise((1, self.y <= sympy.pi / 2), (0, True))
-        gen = (1 - (1 - (1 - self.y) ** self.theta) ** (1 / self.theta)) * indicator
-        return SymPyFuncWrapper(gen)
+        return (1 - (1 - (1 - self.y) ** self.theta) ** (1 / self.theta)) * indicator
 
     @property
     def cdf(self) -> SymPyFuncWrapper:

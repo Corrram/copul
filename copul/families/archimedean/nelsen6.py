@@ -18,13 +18,12 @@ class Joe(HeavyComputeArch):
         return True
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return -sympy.log(1 - (1 - self.t) ** self.theta)
 
     @property
-    def inv_generator(self):
-        gen = 1 - (1 - sympy.exp(-self.y)) ** (1 / self.theta)
-        return SymPyFuncWrapper(gen)
+    def _raw_inv_generator(self):
+        return 1 - (1 - sympy.exp(-self.y)) ** (1 / self.theta)
 
     @property
     def cdf(self):

@@ -1,6 +1,7 @@
 import numpy as np
 import sympy
 
+from typing import TypeAlias
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
@@ -17,22 +18,31 @@ class Clayton(ArchimedeanCopula):
     special_cases = {-1: LowerFrechet, 0: IndependenceCopula}
 
     @property
-    def _generator(self):
-        # Fix for theta = 0: use logarithmic generator
-        if self.theta == 0:
-            return -sympy.log(self.t)
-        return ((1 / self.t) ** self.theta - 1) / self.theta
+    def _generator_at_0(self):
+        return sympy.Piecewise((sympy.oo, self.theta >= 0), (-1/self.theta, True))
 
     @property
-    def inv_generator(self):
-        if self.theta == 0:
-            return SymPyFuncWrapper(sympy.exp(-self.y))
-        ind = sympy.Piecewise(
-            (1, (self.y < -1 / self.theta) | (self.theta > 0)), (0, True)
+    def generator(self):
+        # Regular case expression for theta != 0
+        regular_expr = ((1 / self.t) ** self.theta - 1) / self.theta
+        # Logarithmic generator for theta = 0
+        log_expr = -sympy.log(self.t)
+        
+        gen = sympy.Piecewise(
+            (log_expr, self.theta == 0),              # Case: theta = 0
+            (regular_expr, self.t > 0),               # Regular case
+            (sympy.oo, self.theta >= 0),              # Default case for invalid values
+            (-1/self.theta, True)                     # Default case for theta < 0
         )
-        cdf = ind * (self.theta * self.y + 1) ** (-1 / self.theta)
-        return SymPyFuncWrapper(cdf)
+        return SymPyFuncWrapper(gen)
 
+    @property
+    def _raw_inv_generator(self):
+        # Optional optimization - provide direct formula instead of solving
+        if self.theta == 0:
+            return sympy.exp(-self.y)
+        return (self.theta * self.y + 1) ** (-1 / self.theta)
+    
     @property
     def cdf(self):
         u = self.u
@@ -124,6 +134,6 @@ class Clayton(ArchimedeanCopula):
         return 0
 
 
-Nelsen1 = Clayton
+Nelsen1: TypeAlias = Clayton
 
 # B4 = Clayton

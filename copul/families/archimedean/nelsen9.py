@@ -16,13 +16,12 @@ class GumbelBarnett(ArchimedeanCopula):
         return True
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return sympy.log(1 - self.theta * sympy.log(self.t))
 
     @property
-    def inv_generator(self):
-        gen = sympy.exp((1 - sympy.exp(self.y)) / self.theta)
-        return SymPyFuncWrapper(gen)
+    def _raw_inv_generator(self):
+        return sympy.exp((1 - sympy.exp(self.y)) / self.theta)
 
     @property
     def cdf(self):

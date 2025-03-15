@@ -16,8 +16,6 @@ def test_is_absolutely_continuous(theta, expected):
 @pytest.mark.parametrize("theta", [1, 5, -0.5])
 def test_generator_properties(theta):
     """Test that the generator and inverse generator are properly defined."""
-    if theta == -1:  # Special case, returns LowerFrechet
-        return
 
     copula = Clayton(theta)
 
@@ -25,7 +23,7 @@ def test_generator_properties(theta):
     t_vals = np.linspace(0.1, 0.9, 5)
 
     # Get the generator function
-    gen = copula._generator
+    gen = copula.generator
 
     # Test generator at specific points
     for t in t_vals:
@@ -43,7 +41,7 @@ def test_generator_properties_theta_zero():
     t_vals = np.linspace(0.1, 0.9, 5)
 
     # Get the generator function
-    gen = copula._generator
+    gen = copula._raw_generator
 
     # Test generator at specific points
     for t in t_vals:

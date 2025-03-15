@@ -1,5 +1,7 @@
 import sympy
 
+from typing import TypeAlias
+
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.families.other.independence_copula import IndependenceCopula
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
@@ -26,14 +28,13 @@ class AliMikhailHaq(ArchimedeanCopula):
         return True
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return sympy.log((1 - self.theta * (1 - self.t)) / self.t)
 
     @property
-    def inv_generator(self):
+    def _raw_inv_generator(self):
         theta = self.theta
-        gen = (theta - 1) / (theta - sympy.exp(self.y))
-        return SymPyFuncWrapper(gen)
+        return (theta - 1) / (theta - sympy.exp(self.y))
 
     @property
     def cdf(self):
@@ -82,4 +83,4 @@ class AliMikhailHaq(ArchimedeanCopula):
         )
 
 
-Nelsen3 = AliMikhailHaq
+Nelsen3: TypeAlias = AliMikhailHaq
