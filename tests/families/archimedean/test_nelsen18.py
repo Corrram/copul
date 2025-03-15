@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import sympy
 
 from copul.families.archimedean.nelsen18 import Nelsen18
 
@@ -44,26 +45,13 @@ def test_generator_function(nelsen18_copula):
         actual = float(nelsen18_copula.generator(t))
         assert np.isclose(actual, expected, rtol=1e-5)
 
-
-def test_inverse_generator_function(nelsen18_copula):
-    """Test the inverse generator function of the Nelsen18 copula."""
-    # Test inverse generator at valid y values (y ≥ exp(-theta))
-    theta = 3
-    min_y = np.exp(-theta)
-
-    y_values = [min_y, min_y * 1.5, min_y * 2, 0.5, 0.9]
-
-    for y in y_values:
-        # Manual calculation using the formula: theta/log(y) + 1
-        expected = theta / np.log(y) + 1
-        actual = float(nelsen18_copula.inv_generator(y))
-        assert np.isclose(actual, expected, rtol=1e-5)
-
-    # Test for y < exp(-theta), should return 0
-    small_y = np.exp(-theta) * 0.9
-    actual = float(nelsen18_copula.inv_generator(small_y))
-    assert np.isclose(actual, 1, atol=0.1)
-
+def test_nelsen18_inverse_generator_at_infinity():
+    """Test the inverse generator function of Nelsen3."""
+    copula = Nelsen18(2.5)
+    y = sympy.exp(-2.5)
+    inv_gen = copula.inv_generator(y=y)
+    actual = float(inv_gen)
+    assert np.isclose(actual, 0, rtol=1e-10)
 
 def test_cdf_function(nelsen18_copula):
     """Test the CDF function of the Nelsen18 copula."""

@@ -18,27 +18,17 @@ class Nelsen16(ArchimedeanCopula):
         return True
 
     @property
-    def _generator(self):
+    def generator(self):
         expr = (self.theta / self.t + 1) * (1 - self.t)
-        return sympy.Piecewise((expr, self.t > 0), (1,self.theta==0), (sympy.oo, True))
+        gen = sympy.Piecewise((expr, self.t > 0), (1,self.theta==0), (sympy.oo, True))
+        return SymPyFuncWrapper(gen)
 
     @property
-    def inv_generator(self):
+    def _raw_inv_generator(self):
         theta = self.theta
         y = self.y
-
-        # Regular case expression
-        regular_expr = (1 - theta - y + sympy.sqrt((theta + y - 1) ** 2 + 4 * theta)) / 2
-
-        # Define piecewise function to handle edge cases
-        inv_gen = sympy.Piecewise(
-            (regular_expr, sympy.And(y > 0, y < sympy.oo)),  # Regular case
-            (0, y == sympy.oo),  # When y is infinity
-            (1, y == 0),  # When y is 0
-        )
-
-        return SymPyFuncWrapper(inv_gen)
-
+        return (1 - theta - y + sympy.sqrt((theta + y - 1) ** 2 + 4 * theta)) / 2
+    
     @property
     def cdf(self):
         th = self.theta

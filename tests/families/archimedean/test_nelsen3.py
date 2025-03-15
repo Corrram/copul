@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import sympy
 
 from copul.families.archimedean import AliMikhailHaq, Nelsen3
 
@@ -83,6 +84,11 @@ def test_nelsen3_inverse_generator(theta):
             actual = float(copula.inv_generator(y))
             assert np.isclose(actual, expected, rtol=1e-10)
 
+def test_nelsen3_inverse_generator_at_infinity():
+    """Test the inverse generator function of Nelsen3."""
+    copula = Nelsen3()
+    actual = float(copula.inv_generator(y=sympy.oo))
+    assert np.isclose(actual, 0, rtol=1e-10)
 
 @pytest.mark.parametrize("theta", [-1, -0.5, 0, 0.5, 0.9])
 def test_nelsen3_cdf(theta):

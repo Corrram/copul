@@ -34,13 +34,13 @@ class IndependenceCopula(Frechet, ArchimedeanCopula):
         return sympy.Max(1)
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         # independence copula is a special case of an Archimedean copula
         return -sympy.log(self.t)
 
     @property
-    def inv_generator(self):
-        return SymPyFuncWrapper(sympy.exp(-self.y))
+    def _raw_inv_generator(self):
+        return sympy.exp(-self.y)
 
     @property
     def cdf(self):

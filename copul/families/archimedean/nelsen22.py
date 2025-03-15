@@ -11,20 +11,20 @@ class Nelsen22(ArchimedeanCopula):
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, 1, left_open=False, right_open=False)
     special_cases = {0: IndependenceCopula}
+    _generator_at_0 = sympy.pi / 2
 
     @property
     def is_absolutely_continuous(self) -> bool:
         return True
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return sympy.asin(1 - self.t**self.theta)
 
     @property
-    def inv_generator(self) -> SymPyFuncWrapper:
+    def _raw_inv_generator(self) -> SymPyFuncWrapper:
         indicator = sympy.Piecewise((1, self.y <= sympy.pi / 2), (0, True))
-        gen = (1 - sympy.sin(self.y)) ** (1 / self.theta) * indicator
-        return SymPyFuncWrapper(gen)
+        return (1 - sympy.sin(self.y)) ** (1 / self.theta) * indicator
 
     @property
     def cdf(self) -> SymPyFuncWrapper:

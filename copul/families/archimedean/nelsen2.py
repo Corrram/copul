@@ -11,6 +11,7 @@ class Nelsen2(ArchimedeanCopula):
     ac = ArchimedeanCopula
     theta = sympy.symbols("theta", positive=True)
     theta_interval = sympy.Interval(1, np.inf, left_open=False, right_open=True)
+    _generator_at_0 = 1
 
     def __str__(self):
         return super().__str__()
@@ -20,13 +21,12 @@ class Nelsen2(ArchimedeanCopula):
         return False
 
     @property
-    def _generator(self):
+    def _raw_generator(self):
         return (1 - self.t) ** self.theta
 
     @property
-    def inv_generator(self):
-        gen = sympy.Max(1 - self.y ** (1 / self.theta), 0)
-        return SymPyFuncWrapper(gen)
+    def _raw_inv_generator(self):
+        return sympy.Max(1 - self.y ** (1 / self.theta), 0)
 
     @property
     def cdf(self):

@@ -41,7 +41,7 @@ def test_pickands_property(independence_copula):
 
 def test_generator(independence_copula):
     """Test that the generator is -log(t)."""
-    generator = independence_copula._generator
+    generator = independence_copula.generator
     t_vals = np.linspace(0.1, 0.9, 5)  # Avoid t=0 which would make log(t) undefined
 
     for t in t_vals:
@@ -182,7 +182,7 @@ def test_archimedean_properties():
 
     # Test that the generator is -log(t)
     t_val = 0.5
-    gen_val = float(copula._generator.subs(copula.t, t_val))
+    gen_val = float(copula.generator.subs(copula.t, t_val))
     expected = -np.log(t_val)
     assert abs(gen_val - expected) < 1e-10
 
