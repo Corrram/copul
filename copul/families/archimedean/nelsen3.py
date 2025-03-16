@@ -3,7 +3,7 @@ import sympy
 from typing import TypeAlias
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
@@ -16,7 +16,7 @@ class AliMikhailHaq(BivArchimedeanCopula):
     ac = BivArchimedeanCopula
     theta_interval = sympy.Interval(-1, 1, left_open=False, right_open=False)
     special_cases = {
-        0: IndependenceCopula,
+        0: BivIndependenceCopula,
         1: PiOverSigmaMinusPi,
     }
 

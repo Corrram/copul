@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -24,7 +24,7 @@ class MultivariateClayton(ArchimedeanCopula):
     """
 
     theta_interval = sympy.Interval(0, np.inf, left_open=False, right_open=True)
-    special_cases = {0: IndependenceCopula}
+    special_cases = {0: BivIndependenceCopula}
 
     def __init__(self, dimension=2, **kwargs):
         """

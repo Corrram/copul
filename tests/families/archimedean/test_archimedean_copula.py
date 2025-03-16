@@ -8,8 +8,8 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 from copul.wrapper.inv_gen_wrapper import InvGenWrapper
 
 
-# Mock for CoreCopula that will be used by our test class
-class MockCoreCopula:
+# Mock for Copula that will be used by our test class
+class MockCopula:
     def __init__(self, dimension, **kwargs):
         self.dim = dimension
         for k, v in kwargs.items():
@@ -71,18 +71,18 @@ class TestArchimedeanCopula:
 
     @pytest.fixture
     def copula(self, monkeypatch):
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
         # Setup a test copula with theta=2
         return ConcreteArchimedeanCopula(theta=2)
 
     def test_initialization(self, monkeypatch):
         """Test initialization with different parameter types."""
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
 
         # Test with positional argument
@@ -95,9 +95,9 @@ class TestArchimedeanCopula:
 
     def test_parameter_validation(self, monkeypatch):
         """Test parameter validation against theta_interval."""
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
 
         # Valid parameter within interval
@@ -128,9 +128,9 @@ class TestArchimedeanCopula:
 
     def test_special_cases(self, monkeypatch):
         """Test special case handling in __new__."""
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
 
         # Create test mocks
@@ -158,9 +158,9 @@ class TestArchimedeanCopula:
 
     def test_invalid_params(self, monkeypatch):
         """Test invalid parameter handling."""
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
 
         # Mock the __init__ method to handle invalid params
@@ -183,9 +183,9 @@ class TestArchimedeanCopula:
 
     def test_create_factory_method(self, monkeypatch):
         """Test the static factory method create()."""
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
 
         # Create a results tracker
@@ -228,9 +228,9 @@ class TestArchimedeanCopula:
 
     def test_call_method(self, monkeypatch):
         """Test __call__ method for parameterization."""
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
 
         # Create a test copula
@@ -361,9 +361,9 @@ class TestArchimedeanCopula:
 
     def test_from_generator(self, monkeypatch):
         """Test from_generator class method."""
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
 
         # Mock the from_generator method
@@ -402,9 +402,9 @@ class TestEdgeCases:
 
     def test_no_raw_inv_generator(self, monkeypatch):
         """Test behavior when _raw_inv_generator is not defined."""
-        # Patch CoreCopula.__init__ to avoid dimension parameter issue
+        # Patch Copula.__init__ to avoid dimension parameter issue
         monkeypatch.setattr(
-            "copul.families.core_copula.CoreCopula.__init__", MockCoreCopula.__init__
+            "copul.families.copula.Copula.__init__", MockCopula.__init__
         )
 
         # Create a class without _raw_inv_generator

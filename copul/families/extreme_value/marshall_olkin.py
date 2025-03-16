@@ -3,7 +3,7 @@ import logging
 import sympy
 
 from copul.exceptions import PropertyUnavailableException
-from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
+from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -11,7 +11,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 log = logging.getLogger(__name__)
 
 
-class MarshallOlkin(ExtremeValueCopula):
+class MarshallOlkin(BivExtremeValueCopula):
     @property
     def is_symmetric(self) -> bool:
         return self.alpha_1 == self.alpha_2

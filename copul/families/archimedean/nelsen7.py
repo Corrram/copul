@@ -1,7 +1,7 @@
 import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.families.other import IndependenceCopula, LowerFrechet
+from copul.families.other import BivIndependenceCopula, LowerFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -11,7 +11,7 @@ class Nelsen7(BivArchimedeanCopula):
     ac = BivArchimedeanCopula
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, 1, left_open=False, right_open=False)
-    special_cases = {0: LowerFrechet, 1: IndependenceCopula}
+    special_cases = {0: LowerFrechet, 1: BivIndependenceCopula}
 
     @property
     def _generator_at_0(self):

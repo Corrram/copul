@@ -113,7 +113,7 @@ class TestGalambos:
         # Since Galambos has _pickands as a property without a setter,
         # we need to patch the from_pickands method
         with patch(
-            "copul.families.extreme_value.extreme_value_copula.ExtremeValueCopula.from_pickands"
+            "copul.families.extreme_value.biv_extreme_value_copula.BivExtremeValueCopula.from_pickands"
         ) as mock_from_pickands:
             # Create a mock copula to return
             mock_copula = Galambos(delta=2.0)
@@ -192,3 +192,19 @@ class TestGalambos:
         with patch.object(Galambos, "lambda_L", return_value=0.0):
             # Lower tail dependence should be zero
             assert galambos.lambda_L() == 0
+
+    def test_cdf_vectorized(self, galambos_copula):
+        """Test vectorized CDF computation"""
+        # Generate some random data
+        n = 100
+        u = np.random.rand(n)
+        v = np.random.rand(n)
+
+        # Compute CDF
+        result = galambos_copula.cdf_vectorized(u, v)
+
+        # Verify result is a NumPy array
+        assert isinstance(result, np.ndarray)
+
+        # Verify the result has the correct shape
+        assert result.shape == (n,)

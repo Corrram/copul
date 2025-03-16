@@ -1,20 +1,20 @@
 import numpy as np
 import sympy as sp
-from sympy import exp, log
 
-from copul.families.copula import Copula
-from copul.wrapper.cdf_wrapper import CDFWrapper
+from copul.families.extreme_value.multivariate_extreme_value_copula import MultivariateExtremeValueCopula, CallableCDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class IndependenceCopula(Copula):
+class MultivariateExtremeIndependenceCopula(MultivariateExtremeValueCopula):
     """
-    Multivariate Independence Copula implementation.
+    Multivariate Independence Copula as an Extreme Value Copula.
     
-    The independence copula represents statistical independence between random variables:
-    C(u₁, u₂, ..., uₙ) = u₁ × u₂ × ... × uₙ
+    This class represents the independence copula C(u₁, u₂, ..., uₙ) = u₁ × u₂ × ... × uₙ
+    as a special case of an extreme value copula.
     
-    This is also a special case of an Archimedean copula with generator φ(t) = -log(t).
+    The independence copula is the only copula that is both an extreme value copula
+    and an Archimedean copula. In the extreme value context, it corresponds to
+    having complete tail independence between variables.
     
     Parameters
     ----------
@@ -22,7 +22,7 @@ class IndependenceCopula(Copula):
         Dimension of the copula (number of variables). Default is 2.
     """
     
-    params = []  # No parameters needed for independence copula
+    params = []  # No parameters for independence copula
     intervals = {}  # No parameter intervals
     
     def __init__(self, dimension=2, **kwargs):
@@ -50,10 +50,10 @@ class IndependenceCopula(Copula):
             
         Returns
         -------
-        IndependenceCopula
+        MultivariateExtremeIndependenceCopula
             A new instance with the same dimension.
         """
-        return IndependenceCopula(dimension=self.dim)
+        return MultivariateExtremeIndependenceCopula(dimension=self.dim)
     
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -83,6 +83,26 @@ class IndependenceCopula(Copula):
         """
         return True
     
+    def _compute_extreme_value_function(self, u_values):
+        """
+        Compute the extreme value function for the independence copula.
+        
+        For the independence copula, the extreme value function is simply the product
+        of all arguments.
+        
+        Parameters
+        ----------
+        u_values : list
+            List of u values (marginals) for evaluation.
+            
+        Returns
+        -------
+        float
+            The product of all u values.
+        """
+        # The independence copula CDF is the product of all arguments
+        return np.prod(u_values)
+    
     @property
     def cdf(self):
         """
@@ -93,12 +113,10 @@ class IndependenceCopula(Copula):
         
         Returns
         -------
-        CDFWrapper
+        CallableCDFWrapper
             A wrapper around the CDF function.
         """
-        # Product of all u symbols
-        product = sp.prod(self.u_symbols)
-        return CDFWrapper(product)
+        return CallableCDFWrapper(lambda *args: np.prod(args))
     
     def cdf_vectorized(self, *args):
         """
@@ -168,39 +186,6 @@ class IndependenceCopula(Copula):
             
         # Return array of ones with appropriate shape
         return np.ones(np.broadcast(*arrays).shape)
-    
-    def cond_distr(self, i, u=None):
-        """
-        Compute the conditional distribution of the i-th variable.
-        
-        For the independence copula, the conditional distribution is just the original variable.
-        
-        Parameters
-        ----------
-        i : int
-            Index of the variable (1-based).
-        u : array_like, optional
-            Values at which to evaluate the conditional distribution.
-            
-        Returns
-        -------
-        SymPyFuncWrapper or float
-            The conditional distribution function or its value at u.
-        """
-        if i < 1 or i > self.dim:
-            raise ValueError(f"Index {i} out of bounds for dimension {self.dim}")
-        
-        # For independence, conditional distribution of ui given ui is just u-i
-        product = 1
-        for j in range(1, self.dim+1):
-            if j != i:
-                product *= self.u_symbols[j-1]
-        
-        if u is not None:
-            for j in range(1, self.dim+1):
-                if j != i:
-                    product = product.subs(self.u_symbols[j-1], u[j-1])
-        return SymPyFuncWrapper(product)
     
     def kendalls_tau(self):
         """

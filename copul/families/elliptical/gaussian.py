@@ -5,7 +5,7 @@ from statsmodels.distributions.copula.elliptical import (
     GaussianCopula as StatsGaussianCopula,
 )
 from copul.families.elliptical.elliptical_copula import EllipticalCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -39,7 +39,7 @@ class Gaussian(EllipticalCopula):
             if args[0] == -1:
                 return LowerFrechet()
             elif args[0] == 0:
-                return IndependenceCopula()
+                return BivIndependenceCopula()
             elif args[0] == 1:
                 return UpperFrechet()
 
@@ -55,7 +55,7 @@ class Gaussian(EllipticalCopula):
                 return LowerFrechet()(**kwargs)
             elif kwargs["rho"] == 0:
                 del kwargs["rho"]
-                return IndependenceCopula()(**kwargs)
+                return BivIndependenceCopula()(**kwargs)
             elif kwargs["rho"] == 1:
                 del kwargs["rho"]
                 return UpperFrechet()(**kwargs)

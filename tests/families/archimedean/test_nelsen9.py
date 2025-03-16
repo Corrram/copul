@@ -9,7 +9,7 @@ import pytest
 import sympy
 
 from copul.families.archimedean.nelsen9 import GumbelBarnett, Nelsen9
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 
 
 @pytest.fixture
@@ -22,16 +22,16 @@ def test_special_cases():
     """Test that special cases return appropriate copula instances."""
     # Test theta = 0 returns IndependenceCopula
     independence = GumbelBarnett(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test via create factory method
     independence_create = GumbelBarnett.create(0)
-    assert isinstance(independence_create, IndependenceCopula)
+    assert isinstance(independence_create, BivIndependenceCopula)
 
     # Test via call method
     base_copula = GumbelBarnett(0.5)
     independence_call = base_copula(0)
-    assert isinstance(independence_call, IndependenceCopula)
+    assert isinstance(independence_call, BivIndependenceCopula)
 
 
 def test_parameter_validation():

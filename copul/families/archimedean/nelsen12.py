@@ -3,7 +3,7 @@ import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 class Nelsen12(BivArchimedeanCopula):
@@ -31,7 +31,7 @@ class Nelsen12(BivArchimedeanCopula):
             + ((self.u ** (-1) - 1) ** self.theta + (self.v ** (-1) - 1) ** self.theta)
             ** (1 / self.theta)
         ) ** (-1)
-        return SymPyFuncWrapper(cdf)
+        return CDFWrapper(cdf)
 
     def lambda_L(self):
         return 2 ** (-1 / self.theta)

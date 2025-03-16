@@ -1,13 +1,285 @@
+import copy
+import sympy
+import numpy as np
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
-import numpy as np
 
 from copul.copula_sampler import CopulaSampler
 from copul.families.copula_graphs import CopulaGraphs
-from copul.families.core_copula import CoreCopula
+from copul.wrapper.cdf_wrapper import CDFWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class Copula(CoreCopula):
+class Copula:
+    """
+    A unified Copula class that combines functionality previously split between
+    CoreCopula and Copula classes.
+    """
+    params = []
+    intervals = {}
+    log_cut_off = 4
+    _cdf = None
+    _free_symbols = {}
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    def __init__(self, dimension, *args, **kwargs):
+        """
+        Initialize a Copula.
+
+        Parameters
+        ----------
+        dimension : int
+            Dimension of the copula.
+        *args : tuple
+            Positional arguments for parameters.
+        **kwargs : dict
+            Keyword arguments for parameters.
+        """
+        self.u_symbols = sympy.symbols(f"u1:{dimension + 1}")
+        self.dim = dimension
+        self._are_class_vars(kwargs)
+        for i in range(len(args)):
+            kwargs[str(self.params[i])] = args[i]
+        for k, v in kwargs.items():
+            if isinstance(v, str):
+                v = getattr(self.__class__, v)
+            setattr(self, k, v)
+        self.params = [param for param in self.params if str(param) not in kwargs]
+        self.intervals = {
+            k: v for k, v in self.intervals.items() if str(k) not in kwargs
+        }
+
+    def __call__(self, *args, **kwargs):
+        """
+        Create a new Copula instance with updated parameters.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments for parameters.
+        **kwargs : dict
+            Keyword arguments for parameters.
+
+        Returns
+        -------
+        Copula
+            A new Copula instance with the updated parameters.
+        """
+        new_copula = copy.copy(self)
+        self._are_class_vars(kwargs)
+        for i in range(len(args)):
+            kwargs[str(self.params[i])] = args[i]
+        for k, v in kwargs.items():
+            if isinstance(v, str):
+                v = getattr(self.__class__, v)
+            setattr(new_copula, k, v)
+        new_copula.params = [param for param in self.params if str(param) not in kwargs]
+        new_copula.intervals = {
+            k: v for k, v in self.intervals.items() if str(k) not in kwargs
+        }
+        return new_copula
+
+    def _set_params(self, args, kwargs):
+        """
+        Set parameters from args and kwargs.
+
+        Parameters
+        ----------
+        args : tuple
+            Positional arguments for parameters.
+        kwargs : dict
+            Keyword arguments for parameters.
+        """
+        if args and len(args) <= len(self.params):
+            for i in range(len(args)):
+                kwargs[str(self.params[i])] = args[i]
+        if kwargs:
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+
+    @property
+    def parameters(self):
+        """
+        Get the parameters of the copula.
+
+        Returns
+        -------
+        dict
+            Dictionary of parameter intervals.
+        """
+        return self.intervals
+
+    @property
+    def is_absolutely_continuous(self) -> bool:
+        """
+        Check if the copula is absolutely continuous.
+
+        Returns
+        -------
+        bool
+            True if the copula is absolutely continuous, False otherwise.
+        """
+        # Implementations should override this method
+        raise NotImplementedError("This method must be implemented in a subclass")
+
+    @property
+    def is_symmetric(self) -> bool:
+        """
+        Check if the copula is symmetric.
+
+        Returns
+        -------
+        bool
+            True if the copula is symmetric, False otherwise.
+        """
+        # Implementations should override this method
+        raise NotImplementedError("This method must be implemented in a subclass")
+
+    def _are_class_vars(self, kwargs):
+        """
+        Check if keys in kwargs are class variables.
+
+        Parameters
+        ----------
+        kwargs : dict
+            Keyword arguments to check.
+
+        Raises
+        ------
+        AssertionError
+            If any key in kwargs is not a class variable.
+        """
+        class_vars = set(dir(self))
+        assert set(kwargs).issubset(
+            class_vars
+        ), f"keys: {set(kwargs)}, free symbols: {class_vars}"
+
+    def slice_interval(self, param, interval_start=None, interval_end=None):
+        """
+        Slice the interval of a parameter.
+
+        Parameters
+        ----------
+        param : str or sympy.Symbol
+            The parameter to slice.
+        interval_start : float, optional
+            Start of the interval.
+        interval_end : float, optional
+            End of the interval.
+        """
+        if not isinstance(param, str):
+            param = str(param)
+        left_open = self.intervals[param].left_open
+        right_open = self.intervals[param].right_open
+        if interval_start is None:
+            interval_start = self.intervals[param].inf
+        else:
+            left_open = False
+        if interval_end is None:
+            interval_end = self.intervals[param].sup
+        else:
+            right_open = False
+        self.intervals[param] = sympy.Interval(
+            interval_start, interval_end, left_open, right_open
+        )
+
+    @property
+    def cdf(self, *args, **kwargs):
+        """
+        Get the cumulative distribution function of the copula.
+
+        Returns
+        -------
+        CDFWrapper
+            Wrapper for the CDF.
+        """
+        expr = self._cdf
+        for key, value in self._free_symbols.items():
+            expr = expr.subs(value, getattr(self, key))
+        return CDFWrapper(expr)(*args, **kwargs)
+
+    def cond_distr(self, i, u=None):
+        """
+        Get the conditional distribution of the i-th variable.
+
+        Parameters
+        ----------
+        i : int
+            Index of the variable (1-based).
+        u : array_like, optional
+            Values at which to evaluate the conditional distribution.
+
+        Returns
+        -------
+        SymPyFuncWrapper or float
+            The conditional distribution function or its value at u.
+        """
+        assert i in range(1, self.dim + 1)
+        result = SymPyFuncWrapper(sympy.diff(self.cdf, self.u_symbols[i - 1]))
+        if u is None:
+            return result
+        return result(*u)
+
+    def cond_distr_1(self, u=None):
+        """
+        Get the conditional distribution of the first variable.
+
+        Parameters
+        ----------
+        u : array_like, optional
+            Values at which to evaluate the conditional distribution.
+
+        Returns
+        -------
+        SymPyFuncWrapper or float
+            The conditional distribution function or its value at u.
+        """
+        result = SymPyFuncWrapper(sympy.diff(self.cdf, self.u_symbols[0]))
+        if u is None:
+            return result
+        return result(*u)
+
+    def cond_distr_2(self, u=None):
+        """
+        Get the conditional distribution of the second variable.
+
+        Parameters
+        ----------
+        u : array_like, optional
+            Values at which to evaluate the conditional distribution.
+
+        Returns
+        -------
+        SymPyFuncWrapper or float
+            The conditional distribution function or its value at u.
+        """
+        result = SymPyFuncWrapper(sympy.diff(self.cdf, self.u_symbols[1]))
+        if u is None:
+            return result
+        return result(*u)
+
+    def pdf(self, u=None):
+        """
+        Get the probability density function of the copula.
+
+        Parameters
+        ----------
+        u : array_like, optional
+            Values at which to evaluate the PDF.
+
+        Returns
+        -------
+        SymPyFuncWrapper or float
+            The PDF function or its value at u.
+        """
+        term = self.cdf
+        for u_symbol in self.u_symbols:
+            term = sympy.diff(term, u_symbol)
+        pdf = SymPyFuncWrapper(term)
+        return pdf(u) if u is not None else pdf
+
     def rvs(self, n=1, random_state=None, approximate=False):
         """
         Generate random variates from the copula.
@@ -19,11 +291,12 @@ class Copula(CoreCopula):
         random_state : int or None, optional
             Seed for the random number generator.
         approximate : bool, optional
+            Whether to use approximate sampling.
 
         Returns
         -------
         np.ndarray
-            An array of shape (n, 2) containing samples from the copula.
+            An array of shape (n, dim) containing samples from the copula.
         """
         sampler = CopulaSampler(self, random_state=random_state)
         return sampler.rvs(n, approximate)

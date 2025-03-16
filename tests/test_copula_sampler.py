@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 from copul.copula_sampler import CopulaSampler
 from copul.checkerboard.check_pi import CheckPi
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.families.other.upper_frechet import UpperFrechet
 
@@ -367,7 +367,7 @@ def test_rvs_from_lower_frechet():
 
 
 def test_rvs_from_independence_copula():
-    copula = IndependenceCopula()
+    copula = BivIndependenceCopula()
     sampler = CopulaSampler(copula, random_state=42)
     results = sampler.rvs(300, False)
     corr = np.corrcoef(results[:, 0], results[:, 1])[0, 1]

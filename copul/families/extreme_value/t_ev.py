@@ -1,12 +1,12 @@
 import numpy as np
 import sympy
 from sympy import stats, Float, re
-from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
+from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 # noinspection PyPep8Naming
-class tEV(ExtremeValueCopula):
+class tEV(BivExtremeValueCopula):
     """
     Student-t Extreme Value Copula.
 

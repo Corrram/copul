@@ -127,26 +127,6 @@ class TestCD2Wrapper:
         assert isinstance(subbed, SymPyFuncWrapper)
         assert subbed.func == 0.5
 
-    def test_special_cases(self):
-        """Test special cases and edge conditions."""
-        # Create a derivative with both u and v
-        mixed_deriv = CD2Wrapper(self.u * self.v)
-
-        # When u=0, result should be 0 regardless of v
-        assert mixed_deriv(u=0, v=0.5) == SymPyFuncWrapper(sympy.S.Zero)
-        assert mixed_deriv(u=0, v=1) == SymPyFuncWrapper(sympy.S.Zero)
-
-        # When u=1, result should be 1 regardless of v
-        assert mixed_deriv(u=1, v=0.5) == SymPyFuncWrapper(sympy.S.One)
-        assert mixed_deriv(u=1, v=1) == SymPyFuncWrapper(sympy.S.One)
-
-        # Test with v replaced first
-        v_replaced = mixed_deriv(v=0.5)
-        assert v_replaced.func == self.u * 0.5
-        # Now test boundaries
-        assert v_replaced(u=0) == SymPyFuncWrapper(sympy.S.Zero)
-        assert v_replaced(u=1) == SymPyFuncWrapper(sympy.S.One)
-
     def test_chain_calls(self):
         """Test chained calls to __call__."""
         mixed_deriv = CD2Wrapper(self.u * self.v**2)

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from copul.families.archimedean.nelsen6 import Joe
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 
 
 @pytest.fixture
@@ -17,16 +17,16 @@ def test_special_case_independence():
     """Test that theta=1 creates an IndependenceCopula."""
     # Test direct instantiation
     copula = Joe(1)
-    assert isinstance(copula, IndependenceCopula)
+    assert isinstance(copula, BivIndependenceCopula)
 
     # Test via create factory method
     copula_via_create = Joe.create(1)
-    assert isinstance(copula_via_create, IndependenceCopula)
+    assert isinstance(copula_via_create, BivIndependenceCopula)
 
     # Test via call method
     base_copula = Joe(2)
     new_copula = base_copula(1)
-    assert isinstance(new_copula, IndependenceCopula)
+    assert isinstance(new_copula, BivIndependenceCopula)
 
 
 def test_parameter_validation():
@@ -113,7 +113,7 @@ def test_conditional_distribution_1(joe_copula):
         assert 0 <= result <= 1
 
         # Additional test for theta=1 (independence case)
-        independence = IndependenceCopula()
+        independence = BivIndependenceCopula()
         # For IndependenceCopula, the conditional distribution should equal v
         assert np.isclose(float(independence.cond_distr_1(u, v)), v, rtol=1e-5)
 
@@ -129,7 +129,7 @@ def test_conditional_distribution_2(joe_copula):
         assert 0 <= result <= 1
 
         # Additional test for theta=1 (independence case)
-        independence = IndependenceCopula()
+        independence = BivIndependenceCopula()
         # For IndependenceCopula, the conditional distribution should equal u
         assert np.isclose(float(independence.cond_distr_2(u, v)), u, rtol=1e-5)
 
