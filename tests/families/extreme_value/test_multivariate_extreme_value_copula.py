@@ -7,7 +7,7 @@ from copul.families.extreme_value.multivariate_extreme_value_copula import Multi
 
 
 # Create a concrete subclass for testing
-class TestMultivariateEVCopula(MultivariateExtremeValueCopula):
+class SampleMultivariateEVCopula(MultivariateExtremeValueCopula):
     """Concrete implementation of MultivariateExtremeValueCopula for testing"""
     
     # Define parameters
@@ -47,11 +47,11 @@ class TestMultivariateExtremeValueCopula:
     @pytest.fixture
     def copula(self):
         """Create a test copula instance"""
-        return TestMultivariateEVCopula(dimension=3, theta=2.0)
+        return SampleMultivariateEVCopula(dimension=3, theta=2.0)
     
     def test_init(self):
         """Test initialization"""
-        copula = TestMultivariateEVCopula(dimension=4, theta=2.5)
+        copula = SampleMultivariateEVCopula(dimension=4, theta=2.5)
         assert copula.dim == 4
         assert copula.theta == 2.5
         assert len(copula.u_symbols) == 4
@@ -145,7 +145,7 @@ class TestMultivariateExtremeValueCopula:
         """Test copulas with different dimensions"""
         # Test various dimensions
         for dim in [2, 3]:
-            copula = TestMultivariateEVCopula(dimension=dim)
+            copula = SampleMultivariateEVCopula(dimension=dim)
             assert copula.dim == dim
             assert len(copula.u_symbols) == dim
             
@@ -169,7 +169,7 @@ class TestMultivariateExtremeValueCopula:
 def test_compute_extreme_value_function():
     """Test the _compute_extreme_value_function method"""
     # Create test copula
-    copula = TestMultivariateEVCopula(dimension=3, theta=2.0)
+    copula = SampleMultivariateEVCopula(dimension=3, theta=2.0)
     
     # Test boundary cases
     assert copula._compute_extreme_value_function([0, 0.5, 0.8]) == 0
@@ -188,7 +188,7 @@ def test_context_manager():
     import warnings
     
     # Create test copula
-    copula = TestMultivariateEVCopula()
+    copula = SampleMultivariateEVCopula()
     
     # Test that warnings are suppressed
     with copula.suppress_warnings():

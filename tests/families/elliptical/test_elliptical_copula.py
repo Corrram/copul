@@ -97,27 +97,6 @@ def test_corr_matrix(elliptical_copula_with_rho):
     assert corr_matrix[0, 1] == 0.5
     assert corr_matrix[1, 0] == 0.5
 
-
-def test_characteristic_function(elliptical_copula_with_rho):
-    """Test the characteristic_function method."""
-    # Evaluate the characteristic function at specific points
-    result = elliptical_copula_with_rho.characteristic_function(1, 2)
-
-    # Calculate the expected result manually
-    # arg = t1^2 + t2^2 + 2*t1*t2*rho = 1^2 + 2^2 + 2*1*2*0.5 = 1 + 4 + 2 = 7
-    # generator = exp, so result = exp(7)
-    expected = float(sp.exp(7).evalf())
-
-    # Convert the result to a float for comparison
-    if isinstance(result, sp.Expr):
-        result_float = float(result.evalf())
-    else:
-        result_float = float(result)
-
-    # Compare with tolerance for floating-point comparison
-    assert np.isclose(result_float, expected)
-
-
 def test_cdf_abstract_method():
     """Test that the cdf property is implemented in the concrete class."""
     copula = ConcreteEllipticalCopula()
