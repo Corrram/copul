@@ -1,39 +1,47 @@
 import numpy as np
-import sympy
-from scipy.stats import norm
-from statsmodels.distributions.copula.elliptical import (
-    GaussianCopula as StatsGaussianCopula,
-)
+import sympy as sp
+from scipy.stats import norm, multivariate_normal
+
+from copul.copula_sampler import CopulaSampler
+from copul.families.elliptical.multivar_gaussian import MultivariateGaussian
 from copul.families.elliptical.elliptical_copula import EllipticalCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
-
-class Gaussian(EllipticalCopula):
+class Gaussian(MultivariateGaussian, EllipticalCopula):
     """
-    Gaussian copula implementation.
-
+    Bivariate Gaussian copula implementation.
+    
+    This class extends MultivariateGaussian for the bivariate (2-dimensional) case.
     The Gaussian copula is an elliptical copula based on the multivariate normal distribution.
     It is characterized by a correlation parameter rho in [-1, 1].
-
+    
     Special cases:
     - rho = -1: Lower Fréchet bound (countermonotonicity)
     - rho = 0: Independence copula
     - rho = 1: Upper Fréchet bound (comonotonicity)
     """
-
-    @property
-    def is_symmetric(self) -> bool:
-        return True
-
-    rho = sympy.symbols("rho")
+    
     # Define generator as a symbolic expression with 't' as the variable
-    t = sympy.symbols("t", positive=True)
-    generator = sympy.exp(-t / 2)
-
+    t = sp.symbols("t", positive=True)
+    generator = sp.exp(-t / 2)
+    
     def __new__(cls, *args, **kwargs):
+        """
+        Factory method to handle special cases during initialization.
+        
+        Parameters
+        ----------
+        *args, **kwargs
+            Arguments passed to the constructor.
+            
+        Returns
+        -------
+        Copula
+            An instance of the appropriate copula class.
+        """
         # Handle special cases during initialization with positional args
         if len(args) == 1:
             if args[0] == -1:
@@ -42,13 +50,48 @@ class Gaussian(EllipticalCopula):
                 return BivIndependenceCopula()
             elif args[0] == 1:
                 return UpperFrechet()
-
+                
         # Default case - proceed with normal initialization
         return super().__new__(cls)
-
+    
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize a bivariate Gaussian copula.
+        
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments corresponding to copula parameters.
+        **kwargs : dict
+            Keyword arguments to override default symbolic parameters.
+        """
+        # Handle special cases from __new__
+        if len(args) == 1 and isinstance(args[0], (int, float)):
+            kwargs['rho'] = args[0]
+            args = ()
+        
+        # Call parent initializer
+        super().__init__(*args, **kwargs)
+    
     def __call__(self, *args, **kwargs):
+        """
+        Create a new instance with updated parameters.
+        
+        Special case handling for boundary rho values.
+        
+        Parameters
+        ----------
+        *args, **kwargs
+            Updated parameter values.
+            
+        Returns
+        -------
+        Copula
+            A new instance with the updated parameters.
+        """
         if args is not None and len(args) == 1:
             kwargs["rho"] = args[0]
+            
         if "rho" in kwargs:
             if kwargs["rho"] == -1:
                 del kwargs["rho"]
@@ -59,61 +102,89 @@ class Gaussian(EllipticalCopula):
             elif kwargs["rho"] == 1:
                 del kwargs["rho"]
                 return UpperFrechet()(**kwargs)
+                
         return super().__call__(**kwargs)
-
-    @property
-    def is_absolutely_continuous(self) -> bool:
-        return True
-
-    def rvs(self, n=1, **kwargs):
+    
+    def rvs(self, n=1, approximate=False, random_state=None, **kwargs):
         """
         Generate random samples from the Gaussian copula.
-
-        Args:
-            n (int): Number of samples to generate
-
-        Returns:
-            numpy.ndarray: Array of shape (n, 2) containing the samples
+        
+        For the bivariate case, this can use the statsmodels implementation
+        for efficiency.
+        
+        Parameters
+        ----------
+        n : int
+            Number of samples to generate
+        **kwargs
+            Additional keyword arguments
+            
+        Returns
+        -------
+        numpy.ndarray
+            Array of shape (n, 2) containing the samples
         """
-        return StatsGaussianCopula(self.rho).rvs(n)
-
+        if approximate:
+            sampler = CopulaSampler(self, random_state=random_state)
+            return sampler.rvs(n, approximate)
+        from statsmodels.distributions.copula.elliptical import GaussianCopula as StatsGaussianCopula
+        
+        # For bivariate case, we can use the statsmodels implementation
+        if self.dim == 2:
+            return StatsGaussianCopula(float(self.rho)).rvs(n)
+        else:
+            # Otherwise use the multivariate implementation
+            return super().rvs(n, **kwargs)
+    
     @property
     def cdf(self):
         """
         Compute the cumulative distribution function of the Gaussian copula.
-
-        Returns:
-            callable: Function that computes the CDF at given points
+        
+        For the bivariate case, this can use the statsmodels implementation
+        for efficiency.
+        
+        Returns
+        -------
+        callable
+            Function that computes the CDF at given points
         """
-        cop = StatsGaussianCopula(self.rho)
-
-        def gauss_cdf(u, v):
-            if u == 0 or v == 0:
-                return sympy.S.Zero
-            else:
-                return sympy.S(cop.cdf([u, v]))
-
-        return lambda u, v: SymPyFuncWrapper(gauss_cdf(u, v))
-
+        from statsmodels.distributions.copula.elliptical import GaussianCopula as StatsGaussianCopula
+        
+        # For bivariate case, we can use the statsmodels implementation
+        if self.dim == 2:
+            cop = StatsGaussianCopula(float(self.rho))
+            
+            def gauss_cdf(u, v):
+                if u == 0 or v == 0:
+                    return sp.S.Zero
+                else:
+                    return float(cop.cdf([u, v]))
+                    
+            return lambda u, v: SymPyFuncWrapper(gauss_cdf(u, v))
+        else:
+            # Otherwise use the multivariate implementation
+            return super().cdf
+    
     def cdf_vectorized(self, u, v):
         """
-        Vectorized implementation of the cumulative distribution function for Gaussian copula.
-
+        Vectorized implementation of the cumulative distribution function for bivariate Gaussian copula.
+        
         This method evaluates the CDF at multiple points simultaneously, which is more efficient
         than calling the scalar CDF function repeatedly.
-
+        
         Parameters
         ----------
         u : array_like
             First uniform marginal, should be in [0, 1].
         v : array_like
             Second uniform marginal, should be in [0, 1].
-
+            
         Returns
         -------
         numpy.ndarray
             The CDF values at the specified points.
-
+            
         Notes
         -----
         This implementation uses scipy's norm functions for vectorized operations, providing
@@ -121,9 +192,6 @@ class Gaussian(EllipticalCopula):
             C(u,v) = Φ_ρ(Φ^(-1)(u), Φ^(-1)(v))
         where Φ is the standard normal CDF and Φ_ρ is the bivariate normal CDF with correlation ρ.
         """
-        import numpy as np
-        from scipy.stats import norm, multivariate_normal
-
         # Convert inputs to numpy arrays if they aren't already
         u = np.asarray(u)
         v = np.asarray(v)
@@ -198,6 +266,7 @@ class Gaussian(EllipticalCopula):
             except Exception as e:
                 # Fallback to using the statsmodels implementation for any failures
                 import warnings
+                from statsmodels.distributions.copula.elliptical import GaussianCopula as StatsGaussianCopula
 
                 warnings.warn(
                     f"Error in vectorized CDF calculation: {e}. Using statsmodels fallback."
@@ -224,23 +293,28 @@ class Gaussian(EllipticalCopula):
                 result[interior_idx] = result_interior.reshape(u_interior.shape)
 
         return result
-
+    
     def _conditional_distribution(self, u=None, v=None):
         """
-        Compute the conditional distribution function of the Gaussian copula.
-
-        Args:
-            u (float, optional): First marginal value
-            v (float, optional): Second marginal value
-
-        Returns:
-            callable or float: Conditional distribution function or value
+        Compute the conditional distribution function of the bivariate Gaussian copula.
+        
+        Parameters
+        ----------
+        u : float, optional
+            First marginal value
+        v : float, optional
+            Second marginal value
+            
+        Returns
+        -------
+        callable or float
+            Conditional distribution function or value
         """
-        scale = sympy.sqrt(1 - self.rho**2)
-
+        scale = float(np.sqrt(1 - float(self.rho)**2))
+        
         def conditional_func(u_, v_):
-            return norm.cdf(norm.ppf(v_), loc=self.rho * norm.ppf(u_), scale=scale)
-
+            return norm.cdf(norm.ppf(v_), loc=float(self.rho) * norm.ppf(u_), scale=scale)
+            
         if u is None and v is None:
             return conditional_func
         elif u is not None and v is not None:
@@ -249,99 +323,103 @@ class Gaussian(EllipticalCopula):
             return lambda v_: conditional_func(u, v_)
         else:
             return lambda u_: conditional_func(u_, v)
-
+    
     def cond_distr_1(self, u=None, v=None):
         """
         Compute the first conditional distribution C(v|u).
-
-        Args:
-            u (float, optional): Conditioning value
-            v (float, optional): Value at which to evaluate
-
-        Returns:
-            SymPyFuncWrapper: Wrapped conditional distribution function or value
+        
+        Parameters
+        ----------
+        u : float, optional
+            Conditioning value
+        v : float, optional
+            Value at which to evaluate
+            
+        Returns
+        -------
+        SymPyFuncWrapper
+            Wrapped conditional distribution function or value
         """
         if v in [0, 1]:
-            return SymPyFuncWrapper(sympy.Number(v))
-        return SymPyFuncWrapper(sympy.Number(self._conditional_distribution(u, v)))
-
+            return SymPyFuncWrapper(sp.Number(v))
+        return SymPyFuncWrapper(sp.Number(self._conditional_distribution(u, v)))
+    
     def cond_distr_2(self, u=None, v=None):
         """
         Compute the second conditional distribution C(u|v).
-
-        Args:
-            u (float, optional): Value at which to evaluate
-            v (float, optional): Conditioning value
-
-        Returns:
-            SymPyFuncWrapper: Wrapped conditional distribution function or value
+        
+        Parameters
+        ----------
+        u : float, optional
+            Value at which to evaluate
+        v : float, optional
+            Conditioning value
+            
+        Returns
+        -------
+        SymPyFuncWrapper
+            Wrapped conditional distribution function or value
         """
         if u in [0, 1]:
-            return SymPyFuncWrapper(sympy.Number(u))
-        return SymPyFuncWrapper(sympy.Number(self._conditional_distribution(v, u)))
-
+            return SymPyFuncWrapper(sp.Number(u))
+        return SymPyFuncWrapper(sp.Number(self._conditional_distribution(v, u)))
+    
     @property
     def pdf(self):
         """
         Compute the probability density function of the Gaussian copula.
-
-        Returns:
-            callable: Function that computes the PDF at given points
+        
+        For the bivariate case, this can use the statsmodels implementation
+        for efficiency.
+        
+        Returns
+        -------
+        callable
+            Function that computes the PDF at given points
         """
-        return lambda u, v: SymPyFuncWrapper(
-            sympy.Number(StatsGaussianCopula(self.rho).pdf([u, v]))
-        )
-
-    def characteristic_function(self, t1, t2):
-        """
-        Compute the characteristic function of the Gaussian copula.
-
-        For the Gaussian copula, this evaluates the generator expression
-        at the appropriate argument value.
-
-        Args:
-            t1 (float or sympy.Symbol): First argument
-            t2 (float or sympy.Symbol): Second argument
-
-        Returns:
-            sympy.Expr: Value of the characteristic function
-        """
-        # Calculate the argument for the generator
-        arg = (
-            t1**2 * self.corr_matrix[0, 0]
-            + t2**2 * self.corr_matrix[1, 1]
-            + 2 * t1 * t2 * self.corr_matrix[0, 1]
-        )
-
-        # Substitute the argument into the generator expression
-        return self.generator.subs(self.t, arg)
-
+        from statsmodels.distributions.copula.elliptical import GaussianCopula as StatsGaussianCopula
+        
+        # For bivariate case, we can use the statsmodels implementation
+        if self.dim == 2:
+            return lambda u, v: SymPyFuncWrapper(
+                sp.Number(StatsGaussianCopula(float(self.rho)).pdf([u, v]))
+            )
+        else:
+            # Otherwise use the multivariate implementation
+            return super().pdf
+    
     def chatterjees_xi(self, *args, **kwargs):
         """
         Compute Chatterjee's xi measure of dependence.
-
-        Returns:
-            float: Chatterjee's xi value
+        
+        Returns
+        -------
+        float
+            Chatterjee's xi value
         """
         self._set_params(args, kwargs)
-        return 3 / np.pi * np.arcsin(1 / 2 + self.rho**2 / 2) - 0.5
-
+        return 3 / np.pi * np.arcsin(1 / 2 + float(self.rho)**2 / 2) - 0.5
+    
     def spearmans_rho(self, *args, **kwargs):
         """
         Compute Spearman's rho rank correlation.
-
-        Returns:
-            float: Spearman's rho value
+        
+        Returns
+        -------
+        float
+            Spearman's rho value
         """
         self._set_params(args, kwargs)
-        return 6 / np.pi * np.arcsin(self.rho / 2)
-
+        return 6 / np.pi * np.arcsin(float(self.rho) / 2)
+    
     def kendalls_tau(self, *args, **kwargs):
         """
         Compute Kendall's tau rank correlation.
-
-        Returns:
-            float: Kendall's tau value
+        
+        Returns
+        -------
+        float
+            Kendall's tau value
         """
         self._set_params(args, kwargs)
-        return 2 / np.pi * np.arcsin(self.rho)
+        return 2 / np.pi * np.arcsin(float(self.rho))
