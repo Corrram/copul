@@ -203,6 +203,14 @@ def test_conditional_distribution():
             f"Numerical derivative ({numerical_derivative}) too far from cond_distr_2 ({cond2}) at u={u}, v={v}"
         )
 
+@pytest.mark.parametrize(
+    "point, expected", [((0, 0), 0), ((0.5, 0), 0.65), ((1, 0), 1)]
+)
+def test_cond_distr_edge_cases(point, expected):
+    frechet = Frechet(0.5, 0.2)
+    evaluated_func = float(frechet.cond_distr_2(*point))
+    assert np.isclose(evaluated_func, expected)
+
 
 def test_pdf_not_available(copula):
     """Test that PDF is not available for Frechet copula."""

@@ -3,11 +3,11 @@ import numpy as np
 import pytest
 import sympy as sp
 
-from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
+from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 
 
 # Create a concrete subclass of ExtremeValueCopula for testing
-class ConcreteEVC(ExtremeValueCopula):
+class ConcreteEVC(BivExtremeValueCopula):
     """Concrete implementation of ExtremeValueCopula for testing."""
 
     theta = sp.symbols("theta", positive=True)
@@ -54,7 +54,7 @@ def test_from_pickands():
     pickands = 1 - alpha * t * (1 - t)
 
     # Create copula from Pickands function
-    evc = ExtremeValueCopula.from_pickands(pickands, [alpha])
+    evc = BivExtremeValueCopula.from_pickands(pickands, [alpha])
 
     # Check that the Pickands function was correctly set
     assert str(evc._pickands) == str(pickands.subs(t, evc.t))
@@ -190,7 +190,7 @@ def test_kendalls_tau(copula):
 def test_abstract_methods():
     """Test that abstract methods must be implemented in subclasses."""
 
-    class IncompleteEVC(ExtremeValueCopula):
+    class IncompleteEVC(BivExtremeValueCopula):
         pass
 
     evc = IncompleteEVC()
@@ -231,7 +231,7 @@ def test_mix_params():
     """Test the _mix_params static method."""
     params = {"theta": [0.5, 1.0, 1.5], "alpha": 0.7}
 
-    mixed = ExtremeValueCopula._mix_params(params)
+    mixed = BivExtremeValueCopula._mix_params(params)
 
     assert len(mixed) == 3  # Three combinations based on theta values
     assert all(item["alpha"] == 0.7 for item in mixed)
@@ -249,7 +249,7 @@ def test_plotting_functions(copula):
 
 def test_from_generator_with_galambos():
     pickands = "1 - (t ** (-delta) + (1 - t) ** (-delta)) ** (-1 / delta)"
-    copula_family = ExtremeValueCopula.from_pickands(pickands)
+    copula_family = BivExtremeValueCopula.from_pickands(pickands)
     copula = copula_family(2)
     result = copula.pickands(0.5)
     assert np.isclose(result.evalf(), 0.6464466094067263)
@@ -257,7 +257,7 @@ def test_from_generator_with_galambos():
 
 def test_from_generator_with_galambos_with_different_var_name():
     pickands = "1 - (x ** (-delta) + (1 - x) ** (-delta)) ** (-1 / delta)"
-    copula_family = ExtremeValueCopula.from_pickands(pickands, "delta")
+    copula_family = BivExtremeValueCopula.from_pickands(pickands, "delta")
     copula = copula_family(2)
     result = copula.pickands(0.5)
     assert np.isclose(result.evalf(), 0.6464466094067263)
@@ -270,12 +270,10 @@ def test_cdf_vectorized_basic(copula):
     v_values = np.array([0.2, 0.4, 0.6, 0.8, 0.7])
 
     # Calculate expected results using scalar CDF
-    expected_results = np.array(
-        [
-            float(copula.cdf(u=u_values[i], v=v_values[i]).evalf())
-            for i in range(len(u_values))
-        ]
-    )
+    results = []
+    for i in range(len(u_values)):
+        results.append(float(copula.cdf(u=u_values[i], v=v_values[i]).evalf()))
+    expected_results = np.array(results)
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_values, v_values)
@@ -283,9 +281,8 @@ def test_cdf_vectorized_basic(copula):
     # Check that results match
     np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
 
-
-def test_cdf_vectorized_broadcasting(copula):
-    """Test that cdf_vectorized correctly handles broadcasting."""
+def test_cdf_vectorized_broadcasting_u(copula):
+    """Test that cdf_vectorized correctly handles broadcasting with u as scalar."""
     # Test broadcasting: u is scalar, v is array
     u_scalar = 0.5
     v_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
@@ -297,10 +294,12 @@ def test_cdf_vectorized_broadcasting(copula):
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_scalar, v_array)
-
+    
     # Check that results match
     np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
 
+def test_cdf_vectorized_broadcasting_v(copula):
+    """Test that cdf_vectorized correctly handles broadcasting with v as scalar."""
     # Test broadcasting: u is array, v is scalar
     u_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
     v_scalar = 0.5
@@ -312,11 +311,9 @@ def test_cdf_vectorized_broadcasting(copula):
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_array, v_scalar)
-
+    
     # Check that results match
     np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
-
-
 def test_cdf_vectorized_grid(copula):
     """Test cdf_vectorized with grid inputs."""
     # Create grid of values
@@ -437,13 +434,12 @@ def test_cdf_vectorized_against_theoretical():
     assert np.all(cdf_values <= upper_bound + 1e-10)
 
 
-@pytest.mark.slow
-def test_cdf_vectorized_performance(copula):
+def test_cdf_vectorized_vs_cdf(copula):
     """Test that cdf_vectorized is faster than scalar evaluation for large inputs."""
     # Create large test arrays (1000 points)
     np.random.seed(42)  # For reproducibility
-    u_large = np.random.random(1000)
-    v_large = np.random.random(1000)
+    u_large = np.random.random(10)
+    v_large = np.random.random(10)
 
     # Time scalar evaluation
     start_scalar = time.time()

@@ -4,13 +4,13 @@ import numpy as np
 import sympy
 
 from copul.families.extreme_value import GumbelHougaard
-from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
+from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
-class Tawn(ExtremeValueCopula):
+class Tawn(BivExtremeValueCopula):
     def __new__(cls, *args, **kwargs):
         # Handle special cases during initialization
         if len(args) == 3:
@@ -19,7 +19,7 @@ class Tawn(ExtremeValueCopula):
                 return GumbelHougaard(args[2])
             # Check for Independence special case
             if args[2] == 1:
-                return IndependenceCopula()
+                return BivIndependenceCopula()
             # Check for MarshallOlkin special case
             if args[2] == sympy.oo:
                 return MarshallOlkin(args[0], args[1])
@@ -42,7 +42,7 @@ class Tawn(ExtremeValueCopula):
             if "theta" in kwargs:
                 if kwargs["theta"] == 1:
                     # Independence special case
-                    return IndependenceCopula()(**kwargs)
+                    return BivIndependenceCopula()(**kwargs)
                 elif kwargs["theta"] == sympy.oo:
                     # MarshallOlkin special case
                     alpha_1 = kwargs.pop("alpha_1", cls.alpha_1)
@@ -110,7 +110,7 @@ class Tawn(ExtremeValueCopula):
                 del kwargs["alpha_1"]
             if "alpha_2" in kwargs:
                 del kwargs["alpha_2"]
-            return IndependenceCopula()(**kwargs)
+            return BivIndependenceCopula()(**kwargs)
         elif "theta" in kwargs and kwargs["theta"] == sympy.oo:
             del kwargs["theta"]
             if "alpha_1" in kwargs:

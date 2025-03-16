@@ -3,7 +3,7 @@ import pytest
 import sympy as sp
 
 from copul.families.extreme_value.huesler_reiss import HueslerReiss
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from tests.family_representatives import family_representatives
 
 
@@ -49,11 +49,11 @@ def test_hr_independence_special_case():
     copula = HueslerReiss(delta=0)
 
     # Should return an Independence copula instance
-    assert isinstance(copula, IndependenceCopula)
+    assert isinstance(copula, BivIndependenceCopula)
 
     # Test with positional argument too
     copula2 = HueslerReiss(0)
-    assert isinstance(copula2, IndependenceCopula)
+    assert isinstance(copula2, BivIndependenceCopula)
 
 
 def test_hr_is_symmetric(huesler_reiss_copula):
@@ -117,7 +117,7 @@ def test_hr_call_method():
 
     # Test independence special case
     ind_copula = copula(0)
-    assert isinstance(ind_copula, IndependenceCopula)
+    assert isinstance(ind_copula, BivIndependenceCopula)
 
 
 @pytest.mark.parametrize(

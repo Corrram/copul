@@ -3,7 +3,7 @@ import sympy
 from scipy import integrate
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -11,7 +11,7 @@ class Frank(BivArchimedeanCopula):
     ac = BivArchimedeanCopula
     theta_interval = sympy.Interval(-np.inf, np.inf, left_open=True, right_open=True)
     # Define special cases
-    special_cases = {0: IndependenceCopula}
+    special_cases = {0: BivIndependenceCopula}
 
     @property
     def is_absolutely_continuous(self) -> bool:

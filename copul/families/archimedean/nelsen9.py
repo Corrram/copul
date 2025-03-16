@@ -1,7 +1,7 @@
 import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -9,7 +9,7 @@ class GumbelBarnett(BivArchimedeanCopula):
     ac = BivArchimedeanCopula
     theta = sympy.symbols("theta", nonnegative=True)
     theta_interval = sympy.Interval(0, 1, left_open=False, right_open=False)
-    special_cases = {0: IndependenceCopula}
+    special_cases = {0: BivIndependenceCopula}
 
     @property
     def is_absolutely_continuous(self) -> bool:

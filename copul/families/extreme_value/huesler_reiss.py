@@ -2,12 +2,12 @@ import numpy as np
 import sympy
 from sympy import stats
 from scipy.stats import norm
-from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
-class HueslerReiss(ExtremeValueCopula):
+class HueslerReiss(BivExtremeValueCopula):
     r"""
     Hüsler–Reiss extreme value copula with parameter :math:`\delta \ge 0`.
     When :math:`\delta=0`, it reduces to the independence copula.
@@ -23,7 +23,7 @@ class HueslerReiss(ExtremeValueCopula):
     def __new__(cls, *args, **kwargs):
         # Special handling for delta=0
         if (len(args) == 1 and args[0] == 0) or kwargs.get("delta", None) == 0:
-            return IndependenceCopula()
+            return BivIndependenceCopula()
         return super().__new__(cls)
 
     def __call__(self, *args, **kwargs):
@@ -35,7 +35,7 @@ class HueslerReiss(ExtremeValueCopula):
         if kwargs.get("delta", None) == 0:
             # Return independence copula instead
             kwargs.pop("delta")
-            return IndependenceCopula()(**kwargs)
+            return BivIndependenceCopula()(**kwargs)
         return super().__call__(**kwargs)
 
     @property

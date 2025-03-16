@@ -3,7 +3,7 @@ import pytest
 import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
 
 
@@ -15,7 +15,7 @@ def test_special_cases_create_method():
         theta_interval = sympy.Interval(-1, sympy.oo, left_open=False, right_open=True)
 
         # Define special cases
-        special_cases = {-1: LowerFrechet, 0: IndependenceCopula}
+        special_cases = {-1: LowerFrechet, 0: BivIndependenceCopula}
 
         @property
         def is_absolutely_continuous(self) -> bool:
@@ -34,7 +34,7 @@ def test_special_cases_create_method():
 
     # Test special case: theta = 0 should return IndependenceCopula
     independence = TestCopula.create(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test special case: theta = -1 should return LowerFrechet
     lower_frechet = TestCopula.create(-1)
@@ -46,7 +46,7 @@ def test_special_cases_create_method():
     assert kwargs_regular.theta == 2
 
     kwargs_special = TestCopula.create(theta=0)
-    assert isinstance(kwargs_special, IndependenceCopula)
+    assert isinstance(kwargs_special, BivIndependenceCopula)
 
 
 def test_special_cases_new_method():
@@ -57,7 +57,7 @@ def test_special_cases_new_method():
         theta_interval = sympy.Interval(-1, sympy.oo, left_open=False, right_open=True)
 
         # Define special cases
-        special_cases = {-1: LowerFrechet, 0: IndependenceCopula}
+        special_cases = {-1: LowerFrechet, 0: BivIndependenceCopula}
 
         @property
         def is_absolutely_continuous(self) -> bool:
@@ -76,7 +76,7 @@ def test_special_cases_new_method():
 
     # Test special case: theta = 0 should return IndependenceCopula
     independence = TestCopula(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test special case: theta = -1 should return LowerFrechet
     lower_frechet = TestCopula(-1)
@@ -88,7 +88,7 @@ def test_special_cases_new_method():
     assert kwargs_regular.theta == 2
 
     kwargs_special = TestCopula(theta=0)
-    assert isinstance(kwargs_special, IndependenceCopula)
+    assert isinstance(kwargs_special, BivIndependenceCopula)
 
 
 def test_special_cases_call_method():
@@ -99,7 +99,7 @@ def test_special_cases_call_method():
         theta_interval = sympy.Interval(-1, sympy.oo, left_open=False, right_open=True)
 
         # Define special cases
-        special_cases = {-1: LowerFrechet, 0: IndependenceCopula}
+        special_cases = {-1: LowerFrechet, 0: BivIndependenceCopula}
 
         @property
         def is_absolutely_continuous(self) -> bool:
@@ -121,7 +121,7 @@ def test_special_cases_call_method():
 
     # Test __call__ with special case parameter
     independence = copula(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     lower_frechet = copula(-1)
     assert isinstance(lower_frechet, LowerFrechet)
@@ -132,7 +132,7 @@ def test_special_cases_call_method():
     assert kwargs_regular.theta == 3
 
     kwargs_special = copula(theta=0)
-    assert isinstance(kwargs_special, IndependenceCopula)
+    assert isinstance(kwargs_special, BivIndependenceCopula)
 
 
 def test_empty_special_cases():
@@ -178,7 +178,7 @@ def test_inherited_special_cases():
         theta_interval = sympy.Interval(-1, sympy.oo, left_open=False, right_open=True)
 
         # Define special cases
-        special_cases = {-1: LowerFrechet, 0: IndependenceCopula}
+        special_cases = {-1: LowerFrechet, 0: BivIndependenceCopula}
 
         @property
         def is_absolutely_continuous(self) -> bool:
@@ -200,7 +200,7 @@ def test_inherited_special_cases():
     assert isinstance(regular, SubTestCopula)
 
     independence = SubTestCopula(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     lower_frechet = SubTestCopula(-1)
     assert isinstance(lower_frechet, LowerFrechet)
@@ -214,7 +214,7 @@ def test_overridden_special_cases():
         theta_interval = sympy.Interval(-1, sympy.oo, left_open=False, right_open=True)
 
         # Define special cases
-        special_cases = {-1: LowerFrechet, 0: IndependenceCopula}
+        special_cases = {-1: LowerFrechet, 0: BivIndependenceCopula}
 
         @property
         def is_absolutely_continuous(self) -> bool:
@@ -258,7 +258,7 @@ def test_invalid_params():
         )
 
         # Define special cases and invalid parameters
-        special_cases = {-1: IndependenceCopula}
+        special_cases = {-1: BivIndependenceCopula}
         invalid_params = {0}  # theta = 0 should raise ValueError
 
         @property
@@ -276,7 +276,7 @@ def test_invalid_params():
 
     # Test special case: theta = -1 should return IndependenceCopula
     special_case = TestCopula(-1)
-    assert isinstance(special_case, IndependenceCopula)
+    assert isinstance(special_case, BivIndependenceCopula)
 
     # Test invalid parameter: theta = 0 should raise ValueError
     with pytest.raises(ValueError, match="Parameter theta cannot be 0"):
@@ -306,7 +306,7 @@ def test_both_special_and_invalid_params():
         )
 
         # Define special cases
-        special_cases = {-1: IndependenceCopula, 1: LowerFrechet}
+        special_cases = {-1: BivIndependenceCopula, 1: LowerFrechet}
 
         # Define invalid parameters
         invalid_params = {0, 2}  # theta = 0 or 2 should raise ValueError
@@ -326,7 +326,7 @@ def test_both_special_and_invalid_params():
 
     # Test special cases
     independence = ComplexCopula(-1)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     lower_frechet = ComplexCopula(1)
     assert isinstance(lower_frechet, LowerFrechet)
@@ -341,7 +341,7 @@ def test_both_special_and_invalid_params():
     # Test with __call__ method
     copula = ComplexCopula(3)
     result1 = copula(-1)
-    assert isinstance(result1, IndependenceCopula)
+    assert isinstance(result1, BivIndependenceCopula)
 
     with pytest.raises(ValueError, match="Parameter theta cannot be 2"):
         copula(2)
@@ -552,7 +552,7 @@ def test_cdf_vectorized_special_cases():
     # Define a test copula with special cases
     class TestCopula(BivArchimedeanCopula):
         theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
-        special_cases = {0: IndependenceCopula}
+        special_cases = {0: BivIndependenceCopula}
 
         @property
         def is_absolutely_continuous(self) -> bool:
@@ -567,7 +567,7 @@ def test_cdf_vectorized_special_cases():
 
     # Create special case instance
     independence = TestCopula(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test with regular values
     u_values = np.array([0.2, 0.4, 0.6, 0.8])

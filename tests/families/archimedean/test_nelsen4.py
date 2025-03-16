@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from copul.families.archimedean import GumbelHougaard, Nelsen4
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 
 
 def test_nelsen4():
@@ -46,7 +46,7 @@ def test_nelsen4_special_case_theta_one():
     result = copula(theta=1)
 
     # Check result is an instance of IndependenceCopula
-    assert isinstance(result, IndependenceCopula)
+    assert isinstance(result, BivIndependenceCopula)
 
     # Verify that CDF behaves as independence copula (u*v)
     u, v = 0.3, 0.7

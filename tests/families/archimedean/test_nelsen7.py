@@ -5,7 +5,7 @@ import pytest
 import sympy
 
 from copul.families.archimedean.nelsen7 import Nelsen7
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
 
 
@@ -23,14 +23,14 @@ def test_special_cases():
 
     # Test theta = 1 returns IndependenceCopula
     independence = Nelsen7(1)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test via create factory method
     lower_frechet_create = Nelsen7.create(0)
     assert isinstance(lower_frechet_create, LowerFrechet)
 
     independence_create = Nelsen7.create(1)
-    assert isinstance(independence_create, IndependenceCopula)
+    assert isinstance(independence_create, BivIndependenceCopula)
 
     # Test via call method
     base_copula = Nelsen7(0.5)
@@ -38,7 +38,7 @@ def test_special_cases():
     assert isinstance(lower_frechet_call, LowerFrechet)
 
     independence_call = base_copula(1)
-    assert isinstance(independence_call, IndependenceCopula)
+    assert isinstance(independence_call, BivIndependenceCopula)
 
 
 def test_parameter_validation():

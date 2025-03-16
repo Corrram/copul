@@ -1,8 +1,8 @@
 import logging
 import sympy as sp
 from copul.exceptions import PropertyUnavailableException
-from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -10,7 +10,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 log = logging.getLogger(__name__)
 
 
-class CuadrasAuge(ExtremeValueCopula):
+class CuadrasAuge(BivExtremeValueCopula):
     """
     Cuadras-Auge copula, special case of the Marshall-Olkin copula.
     """
@@ -21,7 +21,7 @@ class CuadrasAuge(ExtremeValueCopula):
             if args[0] == 0:
                 # Copy kwargs without the delta parameter
                 new_kwargs = kwargs.copy()
-                return IndependenceCopula(**new_kwargs)
+                return BivIndependenceCopula(**new_kwargs)
             elif args[0] == 1:
                 # Copy kwargs without the delta parameter
                 new_kwargs = kwargs.copy()
@@ -36,7 +36,7 @@ class CuadrasAuge(ExtremeValueCopula):
                 # Copy kwargs without the delta parameter
                 new_kwargs = kwargs.copy()
                 del new_kwargs["delta"]
-                return IndependenceCopula(**new_kwargs)
+                return BivIndependenceCopula(**new_kwargs)
             elif kwargs["delta"] == 1:
                 # Copy kwargs without the delta parameter
                 new_kwargs = kwargs.copy()
@@ -72,7 +72,7 @@ class CuadrasAuge(ExtremeValueCopula):
 
             if kwargs["delta"] == 0:
                 del kwargs["delta"]
-                return IndependenceCopula()(**kwargs)
+                return BivIndependenceCopula()(**kwargs)
 
             if kwargs["delta"] == 1:
                 del kwargs["delta"]

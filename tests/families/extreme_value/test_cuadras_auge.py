@@ -4,7 +4,7 @@ import sympy as sp
 from unittest.mock import patch
 
 from copul.families.extreme_value import CuadrasAuge
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.exceptions import PropertyUnavailableException
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -52,11 +52,11 @@ def test_ca_independence_special_case():
     # When delta=0, CuadrasAuge becomes the Independence copula
     # Test with positional argument
     copula1 = CuadrasAuge(0)
-    assert isinstance(copula1, IndependenceCopula)
+    assert isinstance(copula1, BivIndependenceCopula)
 
     # Test with keyword argument
     copula2 = CuadrasAuge(delta=0)
-    assert isinstance(copula2, IndependenceCopula)
+    assert isinstance(copula2, BivIndependenceCopula)
 
 
 def test_ca_upper_frechet_special_case():
@@ -206,7 +206,7 @@ def test_ca_call_method():
 
     # Test the independence special case
     ind_copula = copula(0)
-    assert isinstance(ind_copula, IndependenceCopula)
+    assert isinstance(ind_copula, BivIndependenceCopula)
 
     # Test the upper Fréchet special case
     uf_copula = copula(1)

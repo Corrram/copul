@@ -3,14 +3,14 @@ import copy
 import numpy as np
 import sympy
 
-from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
+from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.families.extreme_value.galambos import Galambos
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
-class JoeEV(ExtremeValueCopula):
+class JoeEV(BivExtremeValueCopula):
     @property
     def is_symmetric(self) -> bool:
         return self.alpha_1 == self.alpha_2
@@ -65,14 +65,14 @@ class JoeEV(ExtremeValueCopula):
                 del kwargs["alpha_2"]
             if "delta" in kwargs:
                 del kwargs["delta"]
-            return IndependenceCopula()(**kwargs)
+            return BivIndependenceCopula()(**kwargs)
         elif "alpha_2" in kwargs and kwargs["alpha_2"] == 0:
             del kwargs["alpha_2"]
             if "alpha_1" in kwargs:
                 del kwargs["alpha_1"]
             if "delta" in kwargs:
                 del kwargs["delta"]
-            return IndependenceCopula()(**kwargs)
+            return BivIndependenceCopula()(**kwargs)
         elif "delta" in kwargs and kwargs["delta"] == sympy.oo:
             del kwargs["delta"]
             if "alpha_1" in kwargs:
@@ -88,7 +88,7 @@ class JoeEV(ExtremeValueCopula):
             return MarshallOlkin(**kwargs)(alpha_1=alpha1, alpha_2=alpha2)
         elif "delta" in kwargs and kwargs["delta"] == 0:
             del kwargs["delta"]
-            return IndependenceCopula()(**kwargs)
+            return BivIndependenceCopula()(**kwargs)
         return super().__call__(**kwargs)
 
     @property

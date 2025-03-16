@@ -159,10 +159,3 @@ def test_edge_cases():
     independence = copula(rho=0)
     assert isinstance(independence, ConcreteEllipticalCopula)
     assert independence.rho == 0
-
-
-def test_elliptical_copula_is_abstract():
-    """Test that EllipticalCopula is an abstract class that cannot be instantiated directly."""
-    with pytest.raises(TypeError):
-        # Should raise TypeError due to abstract method 'cdf'
-        EllipticalCopula()

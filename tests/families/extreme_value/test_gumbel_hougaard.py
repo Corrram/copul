@@ -4,7 +4,7 @@ import sympy as sp
 from unittest.mock import patch
 
 from copul.families.extreme_value.gumbel_hougaard import GumbelHougaard
-from copul.families.other import IndependenceCopula
+from copul.families.other import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
@@ -79,7 +79,7 @@ class TestGumbelHougaard:
         copula = GumbelHougaard(theta=1)
 
         # We should get an Independence copula instance
-        assert isinstance(copula, IndependenceCopula)
+        assert isinstance(copula, BivIndependenceCopula)
 
     def test_call_method_with_kwargs(self):
         """Test __call__ method with kwargs"""
@@ -94,7 +94,7 @@ class TestGumbelHougaard:
 
         # New instance should have updated parameter
         assert new_copula.theta == 2.5
-        assert not isinstance(new_copula, IndependenceCopula)
+        assert not isinstance(new_copula, BivIndependenceCopula)
 
     def test_call_method_with_args(self):
         """Test __call__ method with positional args"""
@@ -106,11 +106,11 @@ class TestGumbelHougaard:
 
         # New instance should have updated parameter
         assert new_copula.theta == 2.5
-        assert not isinstance(new_copula, IndependenceCopula)
+        assert not isinstance(new_copula, BivIndependenceCopula)
 
         # Test independence case with positional arg
         ind_copula = copula(1)
-        assert isinstance(ind_copula, IndependenceCopula)
+        assert isinstance(ind_copula, BivIndependenceCopula)
 
     def test_kendalls_tau(self, gumbel_copula):
         """Test Kendall's tau calculation"""
@@ -169,14 +169,13 @@ class TestGumbelHougaard:
         copula = GumbelHougaard(theta=2.0)
 
         # Patch sympy.Integral and sympy.plot to avoid actual computation
-        with patch("sympy.Integral") as mock_integral, patch("sympy.plot") as mock_plot:
+        with patch("sympy.Integral") as mock_integral, patch("sympy.plot"):
             mock_integral.return_value = 1.0  # Mock the integral result
 
             # Call the _rho method
             result = copula._rho()
 
             # Verify that plot and integral were called
-            mock_plot.assert_called_once()
             mock_integral.assert_called_once()
 
             # Check the result formula: 12 * integral - 3

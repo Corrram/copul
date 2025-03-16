@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from copul.families.extreme_value import GumbelHougaard, Tawn
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
@@ -95,7 +95,7 @@ def test_tawn_special_case_independence():
     # Test with __call__ method
     base = Tawn()
     copula = base(alpha_1=0.5, alpha_2=0.7, theta=1)
-    assert isinstance(copula, IndependenceCopula)
+    assert isinstance(copula, BivIndependenceCopula)
 
 
 def test_tawn_special_case_marshall_olkin():

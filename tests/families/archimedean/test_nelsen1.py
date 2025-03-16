@@ -101,10 +101,10 @@ def test_special_case_independence():
     copula = Clayton(0)
 
     # Check instance
-    from copul.families.other.independence_copula import IndependenceCopula
+    from copul.families.other.biv_independence_copula import BivIndependenceCopula
 
     # Since we're now returning the instance directly instead of calling it
-    assert isinstance(copula, IndependenceCopula)
+    assert isinstance(copula, BivIndependenceCopula)
 
     # Check CDF property
     u, v = 0.3, 0.7
@@ -246,17 +246,17 @@ def test_theta_boundary_values():
     ), "Clayton.__call__(-1) should return a LowerFrechet instance"
 
     # When theta = 0, should return IndependenceCopula
-    from copul.families.other.independence_copula import IndependenceCopula
+    from copul.families.other.biv_independence_copula import BivIndependenceCopula
 
     # Make sure we get an IndependenceCopula instance directly
     copula = Clayton(0)
     assert isinstance(
-        copula, IndependenceCopula
+        copula, BivIndependenceCopula
     ), "Clayton(0) should return an IndependenceCopula instance"
 
     # Also test with __call__
     clayton_instance = Clayton(1)  # Create with non-boundary theta
     independence_instance = clayton_instance(0)  # Call with boundary theta
     assert isinstance(
-        independence_instance, IndependenceCopula
+        independence_instance, BivIndependenceCopula
     ), "Clayton.__call__(0) should return an IndependenceCopula instance"

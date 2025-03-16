@@ -1,7 +1,7 @@
 import sympy
 
 from copul.families.bivcopula import BivCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
@@ -63,7 +63,7 @@ class B11(BivCopula):
             # Special cases
             if delta_val == 0:
                 del kwargs["delta"]
-                return IndependenceCopula()(**kwargs)
+                return BivIndependenceCopula()(**kwargs)
             if delta_val == 1:
                 del kwargs["delta"]
                 return UpperFrechet()(**kwargs)

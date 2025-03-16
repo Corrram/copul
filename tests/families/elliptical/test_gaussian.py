@@ -3,7 +3,7 @@ import pytest
 import sympy
 from unittest.mock import patch
 
-from copul.families.other import IndependenceCopula, LowerFrechet, UpperFrechet
+from copul.families.other import BivIndependenceCopula, LowerFrechet, UpperFrechet
 from copul.families.elliptical.gaussian import Gaussian
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
@@ -22,7 +22,7 @@ def gaussian_family():
 
 @pytest.mark.parametrize(
     "rho, expected_class",
-    [(-1, LowerFrechet), (0, IndependenceCopula), (1, UpperFrechet)],
+    [(-1, LowerFrechet), (0, BivIndependenceCopula), (1, UpperFrechet)],
 )
 def test_gaussian_edge_cases(rho, expected_class):
     cop = Gaussian()(rho)

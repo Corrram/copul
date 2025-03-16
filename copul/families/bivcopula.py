@@ -39,7 +39,7 @@ class BivCopula(Copula):
         Path to the parent package directory.
     """
 
-    u, v = sp.symbols("u v", positive=True)
+    u, v = sp.symbols("u v", nonnegative=True)
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
 

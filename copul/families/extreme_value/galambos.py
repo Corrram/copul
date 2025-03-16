@@ -1,12 +1,12 @@
 import numpy as np
 import sympy
 
-from copul.families.extreme_value.extreme_value_copula import ExtremeValueCopula
+from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class Galambos(ExtremeValueCopula):
+class Galambos(BivExtremeValueCopula):
     @property
     def is_symmetric(self) -> bool:
         return True

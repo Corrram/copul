@@ -3,6 +3,8 @@ import pandas as pd
 import pytest
 
 import copul
+from copul.checkerboard.checkerboarder import Checkerboarder
+from tests.family_representatives import family_representatives
 
 
 def test_squared_checkerboard():
@@ -159,7 +161,7 @@ def test_boundary_conditions_for_independence():
 
 def test_boundary_conditions_for_lower_frechet():
     lower_frechet = copul.Families.LOWER_FRECHET.cls()
-    checkerboarder = copul.Checkerboarder(5)
+    checkerboarder = Checkerboarder(5)
     ccop = checkerboarder.compute_check_pi(lower_frechet)
     matr = ccop.matr
     for i in range(5):
@@ -172,7 +174,7 @@ def test_boundary_conditions_for_lower_frechet():
 
 def test_boundary_conditions_for_upper_frechet():
     lower_frechet = copul.Families.UPPER_FRECHET.cls()
-    checkerboarder = copul.Checkerboarder(5)
+    checkerboarder = Checkerboarder(5)
     ccop = checkerboarder.compute_check_pi(lower_frechet)
     matr = ccop.matr
     for i in range(5):
@@ -181,3 +183,12 @@ def test_boundary_conditions_for_upper_frechet():
                 assert np.isclose(matr[i, j], 0.0)
             else:
                 assert np.isclose(matr[i, j], 0.2)
+
+def test_compute_pi_with_galambos():
+    """Test the computation of a checkerboard copula with the
+    Galambos copula."""
+    param = family_representatives["Galambos"]
+    galambos = copul.Families.GALAMBOS.cls(param)
+    checkerboarder = Checkerboarder(50)
+    ccop = checkerboarder.compute_check_pi(galambos)
+    assert ccop.matr.shape == (50, 50)

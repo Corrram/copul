@@ -1,7 +1,7 @@
 import numpy as np
 
 from copul.families.archimedean.nelsen5 import Frank
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 
 
 def test_frank_special_cases_create():
@@ -13,7 +13,7 @@ def test_frank_special_cases_create():
 
     # Test special case: theta = 0 should return IndependenceCopula
     independence = Frank.create(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test with keyword arguments
     kwargs_regular = Frank.create(theta=2)
@@ -21,7 +21,7 @@ def test_frank_special_cases_create():
     assert kwargs_regular.theta == 2
 
     kwargs_special = Frank.create(theta=0)
-    assert isinstance(kwargs_special, IndependenceCopula)
+    assert isinstance(kwargs_special, BivIndependenceCopula)
 
 
 def test_frank_special_cases_new():
@@ -33,7 +33,7 @@ def test_frank_special_cases_new():
 
     # Test special case: theta = 0 should return IndependenceCopula
     independence = Frank(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test with keyword arguments
     kwargs_regular = Frank(theta=2)
@@ -41,7 +41,7 @@ def test_frank_special_cases_new():
     assert kwargs_regular.theta == 2
 
     kwargs_special = Frank(theta=0)
-    assert isinstance(kwargs_special, IndependenceCopula)
+    assert isinstance(kwargs_special, BivIndependenceCopula)
 
 
 def test_frank_special_cases_call():
@@ -56,7 +56,7 @@ def test_frank_special_cases_call():
 
     # Test __call__ with special case parameter
     independence = copula(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test with keyword arguments
     kwargs_regular = copula(theta=3)
@@ -64,7 +64,7 @@ def test_frank_special_cases_call():
     assert kwargs_regular.theta == 3
 
     kwargs_special = copula(theta=0)
-    assert isinstance(kwargs_special, IndependenceCopula)
+    assert isinstance(kwargs_special, BivIndependenceCopula)
 
 
 def test_frank_generator():
@@ -158,7 +158,7 @@ def test_frank_parameter_validation():
     # Frank's special handling should prevent error for theta=0
     # and return IndependenceCopula instead
     independence = Frank(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
 
 def test_frank_tail_dependence():

@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
@@ -32,7 +32,7 @@ class BivClayton(BivArchimedeanCopula):
 
     theta_interval = sympy.Interval(-1, np.inf, left_open=False, right_open=True)
     # Define special cases as a dictionary mapping parameter values to classes
-    special_cases = {-1: LowerFrechet, 0: IndependenceCopula}
+    special_cases = {-1: LowerFrechet, 0: BivIndependenceCopula}
 
     @property
     def _generator_at_0(self):

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from copul.families.archimedean.nelsen20 import Nelsen20
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 
 
 @pytest.fixture
@@ -17,16 +17,16 @@ def test_special_cases():
     """Test that special cases return appropriate copula instances."""
     # Test theta = 0 returns IndependenceCopula
     independence = Nelsen20(0)
-    assert isinstance(independence, IndependenceCopula)
+    assert isinstance(independence, BivIndependenceCopula)
 
     # Test via create factory method
     independence_create = Nelsen20.create(0)
-    assert isinstance(independence_create, IndependenceCopula)
+    assert isinstance(independence_create, BivIndependenceCopula)
 
     # Test via call method
     base_copula = Nelsen20(1)
     independence_call = base_copula(0)
-    assert isinstance(independence_call, IndependenceCopula)
+    assert isinstance(independence_call, BivIndependenceCopula)
 
 
 def test_parameter_validation():
@@ -144,7 +144,7 @@ def test_theta_dependent_behavior():
 def test_independence_case():
     """Test behavior at the special case (theta=0)."""
     # Create an IndependenceCopula instance directly
-    direct_instance = IndependenceCopula()
+    direct_instance = BivIndependenceCopula()
 
     # Get an instance via Nelsen20 special case
     special_case = Nelsen20.create(0)

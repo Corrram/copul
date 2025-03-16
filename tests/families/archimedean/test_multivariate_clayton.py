@@ -4,7 +4,7 @@ import sympy
 from unittest.mock import patch, MagicMock
 
 from copul.families.archimedean.multivariate_clayton import MultivariateClayton
-from copul.families.other.independence_copula import IndependenceCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -26,7 +26,7 @@ class TestMultivariateClayton:
     @pytest.fixture
     def independence_copula(self):
         """Fixture for Clayton copula with theta=0 (independence case)."""
-        return IndependenceCopula(dimension=2)
+        return BivIndependenceCopula(dimension=2)
 
     def test_initialization(self, monkeypatch):
         """Test various initialization parameters."""
@@ -216,7 +216,7 @@ class TestMultivariateClayton:
             # For independence case, CDF should be product of inputs
             return np.prod(args)
 
-        monkeypatch.setattr(IndependenceCopula, "cdf", mock_cdf)
+        monkeypatch.setattr(BivIndependenceCopula, "cdf", mock_cdf)
 
         # For independence case, CDF should be product of inputs
         result = independence_copula.cdf(0.3, 0.7)
