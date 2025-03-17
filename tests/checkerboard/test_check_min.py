@@ -133,6 +133,16 @@ def test_2x2x2_multivar_checkerboard():
     assert copula.cond_distr(2, u) == expected_cd
     assert copula.cond_distr(3, u) == expected_cd
 
+def test_2x2x2_multivar_checkerboard_vectorized():
+    # 3-dim matrix
+    matr = np.full((2, 2, 2), 0.5)
+    copula = CheckMin(matr)
+    u = (0.5, 0.5, 0.5)
+    v = (0.25, 0.25, 0.25)
+    w = (0.75, 0.75, 0.75)
+    points = np.array([u, v, w])
+    cdf_values = copula.cdf(points)
+    assert np.allclose(cdf_values, [0.125, 0.125 / 2, 0.125 + 0.875 / 2])
 
 def test_3x3x3_multivar_checkerboard():
     # 3-dim matrix
