@@ -87,58 +87,51 @@ class BivCheckMin(CheckMin, BivCheckPi):
         Compute Spearman's rho under the assumption that each block
         (cell) is perfectly positively correlated (comonotonic) rather 
         than uniformly distributed in 2D.
-
-        The probability mass in cell (i, j) is placed on the line
-            U = (i + t)/m,  V = (j + t)/n   for t in [0,1].
+        
+        In a cell (i,j) (with i, j = 0, ..., m-1 or n-1) we assume
+            U = (i + t)/m   and   V = (j + t)/n,  for t in [0,1].
+        Hence,
+            E[U*V | cell (i,j)] = [ i*j + (i+j)/2 + 1/3 ]/(m*n).
+        The overall expectation is the weighted sum of these over the cells.
+        Finally, ρ = 12 * E[U*V] - 3.
+        This implementation is fully vectorized.
         """
         matr = np.asarray(self.matr, dtype=float)
         total_mass = matr.sum()
         if total_mass <= 0:
-            return 0.0  # or raise an error if needed
-
-        # Normalize to get p_{i,j}
+            return 0.0  # or raise an error
+        
+        # Normalize to obtain cell probabilities p[i,j]
         p = matr / total_mass
         m, n = p.shape
-
-        # Compute E[U V]
-        E_UV = 0.0
-        for i in range(m):
-            for j in range(n):
-                pij = p[i, j]
-                if pij > 0:
-                    # Integral in the (comonotonic) block (i,j)
-                    val_ij = i*j + 0.5*(i + j) + 1.0/3.0
-                    E_UV += pij * (val_ij / (m * n))
-
-        # Spearman's rho
+        # Create index arrays for rows and columns (0-based)
+        I = np.arange(m).reshape(m, 1)  # shape (m,1)
+        J = np.arange(n).reshape(1, n)  # shape (1,n)
+        # Compute the closed-form for each cell:
+        # E[U*V | cell (i,j)] = [ i*j + (i+j)/2 + 1/3 ]/(m*n)
+        cell_val = (I * J) + 0.5 * (I + J) + (1.0 / 3.0)
+        E_UV = np.sum(p * (cell_val / (m * n)))
         return 12.0 * E_UV - 3.0
     
     def tau(self) -> float:
         tau_checkpi = super().tau()
         extra = np.sum(self.matr**2)
         tau = tau_checkpi + extra
+        return tau  
+      
+    def tau_alternative(self) -> float:
+        tau_checkpi = super().tau_alternative()
+        extra = np.sum(self.matr**2)
+        tau = tau_checkpi + extra
         return tau
 
-    def chatterjees_xi(
+    def xi(
         self,
         condition_on_y: bool = False,
     ) -> float:
-        p = self.matr
-        m, n = p.shape
-        uv_sum = 0.0
-        for i in range(m):
-            for j in range(n):
-                if condition_on_y:
-                    prior = sum(p[:i, j])/sum(p[:, j])
-                    current = p[i, j]/sum(p[:, j])
-                else:
-                    prior = sum(p[i, :j])/sum(p[i, :])
-                    current = p[i, j]/sum(p[i, :])
-                uv_sum += prior + current/2
-
-        xi = 6* uv_sum/(m*n) - 2
+        xi_checkpi = super().xi(condition_on_y)
+        xi = xi_checkpi + np.sum(self.matr**2)
         return xi
-
 
 if __name__ == "__main__":
     ccop = BivCheckMin([[1, 2], [2, 1]])

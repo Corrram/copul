@@ -143,24 +143,13 @@ class BivCheckPi(CheckPi, BivCopula):
             float: Conditional probability.
         """
         return self.cond_distr(2, (u, v))
-
-    def rho(self) -> float:
-        p = self.matr
-        m, n = p.shape
-        uv_sum = 0.0
-        for i in range(m):
-            for j in range(n):
-                # (2i - 1) becomes (2*(i+1) - 1) = 2i + 1
-                uv_sum += p[i, j] * ((2*(i+1) - 1) * (2*(j+1) - 1))
-
-        uv_sum /= (4 * m * n)
-        rho = 12 * uv_sum - 3
-        return rho
     
-    def tau(self) -> float:
+    def tau_alternative(self) -> float:
         p = self.matr
         p = np.asarray(p)
         m, n = p.shape
+
+        # This code works but is less in line with rho and xi
         pos_sum = 0.0  # sum over pairs with i<k and j<l
         neg_sum = 0.0  # sum over pairs with i<k and j>l
         for i in range(m-1):
@@ -174,24 +163,82 @@ class BivCheckPi(CheckPi, BivCopula):
         tau = 2 * (pos_sum - neg_sum)
         return tau
 
-    def chatterjees_xi(
-        self,
-        condition_on_y: bool = False,
-    ) -> float:
-        p = self.matr
+    def rho(self) -> float:
+        """
+        Compute Spearman's rho for a bivariate checkerboard copula.
+        
+        Uses the formula:
+        ρ = 12 * (Σ₍i,j₎ p[i,j]·((2i+1)(2j+1))/(4*m*n)) - 3.
+        
+        This version creates index arrays and computes the sum in one shot.
+        """
+        p = np.asarray(self.matr, dtype=float)
         m, n = p.shape
-        uv_sum = 0.0
-        for i in range(m):
-            for j in range(n):
-                current = p[i, j]
-                if condition_on_y:
-                    prior = sum(p[:i, j])
-                else:
-                    prior = sum(p[i, :j])
-                uv_sum += prior**2 + prior*current + 1/3*current**2
+        # Compute the factors (2*(i+1)-1)=2i+1 for rows and columns:
+        I = 2 * np.arange(m) + 1  # shape (m,)
+        J = 2 * np.arange(n) + 1  # shape (n,)
+        # Outer product produces a matrix of shape (m,n) with entry (i,j) = (2i+1)(2j+1)
+        prod = np.outer(I, J)
+        uv_sum = np.sum(p * prod) / (m * n)
+        return 3 * uv_sum - 3
 
-        xi = 6* uv_sum - 2
-        return xi
+
+    def tau(self) -> float:
+        """
+        Compute Kendall's tau via a closed-form formula.
+        
+        For each cell (i,j), define:
+            prior_i = sum_{r < i} p[r,j]  (cumulative sum along rows, excluding current row)
+            prior_j = sum_{c < j} p[i,c]  (cumulative sum along columns, excluding current column)
+        and then the contribution from cell (i,j) is:
+            f(i,j) = prior_i * prior_j + (prior_i + prior_j) * p[i,j]/2 + (p[i,j]**2)/4.
+        
+        Then tau = 1 - 4 * (sum_{i,j} f(i,j)).
+        
+        This version uses shifted cumulative sums.
+        """
+        p = np.asarray(self.matr, dtype=float)
+        m, n = p.shape
+
+        # Compute cumulative sums along axis=0 and axis=1.
+        # We want the "prior" values: cumulative sum excluding the current cell.
+        prior_i = np.vstack([np.zeros((1, n)), np.cumsum(p, axis=0)[:-1, :]])
+        prior_j = np.hstack([np.zeros((m, 1)), np.cumsum(p, axis=1)[:, :-1]])
+        # Now compute the per-cell contributions:
+        contrib = prior_i * prior_j + (prior_i + prior_j) * p / 2 + (p ** 2) / 4
+        uv_sum = np.sum(contrib)
+        return 1 - 4 * uv_sum
+
+
+    def xi(self, condition_on_y: bool = False) -> float:
+        """
+        Compute Chatterjee's xi via a closed-form formula.
+        
+        For each cell (i,j) define the "prior" as follows:
+        - If condition_on_y is True, let prior = sum_{r < i} p[r,j] (cumulative in rows).
+        - Otherwise, let prior = sum_{c < j} p[i,c] (cumulative in columns).
+        
+        Then the cell's contribution is:
+            contribution = prior^2 + prior * p[i,j] + (1/3)*(p[i,j]**2).
+        
+        Finally, xi = 6 * (sum of contributions) - 2.
+        
+        This implementation uses vectorized cumulative sums.
+        """
+        p = np.asarray(self.matr, dtype=float)
+        m, n = p.shape
+
+        if condition_on_y:
+            # Cumulative sum along rows (for each column)
+            prior = np.vstack([np.zeros((1, n)), np.cumsum(p, axis=0)[:-1, :]])
+            contrib = prior**2 + prior * p + (p**2) / 3.0
+            result = 6 * np.sum(contrib)*n/m - 2
+        else:
+            # Cumulative sum along columns (for each row)
+            prior = np.hstack([np.zeros((m, 1)), np.cumsum(p, axis=1)[:, :-1]])
+            contrib = prior**2 + prior * p + (p**2) / 3.0
+            result = 6 * np.sum(contrib)*m/n - 2
+        return result
 
 
 if __name__ == "__main__":
