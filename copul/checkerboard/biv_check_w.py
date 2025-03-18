@@ -714,40 +714,35 @@ class BivCheckW(BivCheckPi):
 
     def rho(self) -> float:
         """
-        Compute Spearman's rho under the assumption that each block (cell)
-        imposes perfect negative correlation on that sub-rectangle:
+        Optimized computation of Spearman's rho under the assumption that each cell 
+        enforces perfect negative correlation (i.e. anti-diagonal dependence):
         
             U(t) = (i + t)/m,
-            V(t) = (j + 1 - t)/n,
-            t in [0, 1].
+            V(t) = (j + 1 - t)/n, for t in [0, 1].
         
-        Instead of a 2D uniform distribution in each cell, we have this
-        1D 'anti-diagonal' line. The mass in cell (i, j) is p_{i,j},
-        and we integrate U * V over that line to get E[U V | cell (i,j)].
+        For each cell (i,j) the integral is computed in closed-form:
+        
+            E[U*V | cell (i,j)] = [ i*(j+1) + ((j+1)-i)/2 - 1/3 ] / (m*n)
+        
+        The overall expectation is the weighted sum over cells, and then
+            ρ = 12 * E[U*V] - 3.
+        This implementation uses vectorized NumPy operations.
         """
-
         matr = np.asarray(self.matr, dtype=float)
         total_mass = matr.sum()
         if total_mass <= 0:
-            # Degenerate case: no mass
             return 0.0
-        
-        # Normalize to get p_{i,j}
+        # Normalize to get cell probabilities p[i,j]
         p = matr / total_mass
         m, n = p.shape
-        
-        # Compute E[U V]
-        E_UV = 0.0
-        for i in range(m):
-            for j in range(n):
-                pij = p[i, j]
-                if pij > 0:
-                    # integral_0^1 of ((i+t)/m)*(((j+1)-t)/n) dt
-                    # = 1/(m*n) [ i*(j+1) + ((j+1)-i)/2 - 1/3 ]
-                    val_ij = i*(j+1) + ((j+1) - i)/2.0 - 1.0/3.0
-                    E_UV += pij * (val_ij / (m * n))
-        
-        # Spearman's rho
+        # Create index arrays for rows (i) and columns (j)
+        I = np.arange(m).reshape(m, 1)   # shape (m,1)
+        J = np.arange(n).reshape(1, n)   # shape (1,n)
+        # For cell (i,j), the closed-form integrated value is:
+        #    val_ij = i*(j+1) + (((j+1)-i)/2) - (1/3)
+        # and then divided by (m*n).
+        val = I * (J + 1) + (((J + 1) - I) / 2.0) - (1.0 / 3.0)
+        E_UV = np.sum(p * (val / (m * n)))
         return 12.0 * E_UV - 3.0
     
     def tau(self) -> float:
@@ -755,23 +750,17 @@ class BivCheckW(BivCheckPi):
         extra = np.sum(self.matr**2)
         tau = tau_checkpi - extra
         return tau
+    
+    def tau_alternative(self) -> float:
+        tau_checkpi = super().tau_alternative()
+        extra = np.sum(self.matr**2)
+        tau = tau_checkpi - extra
+        return tau
 
-    def chatterjees_xi(
+    def xi(
         self,
         condition_on_y: bool = False,
     ) -> float:
-        p = self.matr
-        m, n = p.shape
-        uv_sum = 0.0
-        for i in range(m):
-            for j in range(n):
-                if condition_on_y:
-                    prior = sum(p[:i, j])/sum(p[:, j])
-                    current = p[i, j]/sum(p[:, j])
-                else:
-                    prior = sum(p[i, :j])/sum(p[i, :])
-                    current = p[i, j]/sum(p[i, :])
-                uv_sum += prior + current/2
-
-        xi = 6* uv_sum/(m*n) - 2
+        xi_checkpi = super().xi(condition_on_y)
+        xi = xi_checkpi + np.sum(self.matr**2)
         return xi
