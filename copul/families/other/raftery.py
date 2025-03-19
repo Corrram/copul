@@ -1,8 +1,9 @@
 import sympy
 
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -94,18 +95,18 @@ class Raftery(BivCopula):
         # Handle special cases to avoid division by zero
         if hasattr(self, "_independence") and self._independence:
             # delta = 0: Independence copula
-            return SymPyFuncWrapper(u * v)
+            return CDFWrapper(u * v)
 
         if hasattr(self, "_upper_frechet") and self._upper_frechet:
             # delta = 1: Upper Fréchet bound
-            return SymPyFuncWrapper(sympy.Min(u, v))
+            return CDFWrapper(sympy.Min(u, v))
 
         # Regular case: 0 < delta < 1
         cdf_expr = sympy.Min(u, v) + (1 - d) / (1 + d) * (u * v) ** (1 / (1 - d)) * (
             1 - sympy.Max(u, v) ** (-(1 + d) / (1 - d))
         )
 
-        return SymPyFuncWrapper(cdf_expr)
+        return CDFWrapper(cdf_expr)
 
     def cdf_vectorized(self, u, v):
         """
@@ -268,7 +269,7 @@ class Raftery(BivCopula):
             * (delta * v ** (-1 / (1 - delta)) + v ** (delta / (1 - delta)))
         )
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         """
         Calculate Spearman's rho for the Raftery copula.
 
@@ -277,7 +278,7 @@ class Raftery(BivCopula):
         self._set_params(args, kwargs)
         return self.delta * (4 - 3 * self.delta) / (2 - self.delta) ** 2
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the Raftery copula.
 

@@ -165,22 +165,22 @@ def test_pickands_constraints():
         assert max(t, 1 - t) <= a_t <= 1 + 1e-10
 
 
-def test_spearmans_rho(copula):
+def test_rho(copula):
     """Test Spearman's rho calculation."""
     # Just check that we can calculate it without errors
     try:
-        rho = copula.spearmans_rho()
+        rho = copula.rho()
         # Spearman's rho should be between -1 and 1
         assert -1 <= float(rho) <= 1
     except Exception as e:
         pytest.skip(f"Spearman's rho calculation raised an exception: {e}")
 
 
-def test_kendalls_tau(copula):
+def test_tau(copula):
     """Test Kendall's tau calculation."""
     # Just check that we can calculate it without errors
     try:
-        tau = copula.kendalls_tau()
+        tau = copula.tau()
         # Kendall's tau should be between -1 and 1
         assert -1 <= float(tau) <= 1
     except Exception as e:

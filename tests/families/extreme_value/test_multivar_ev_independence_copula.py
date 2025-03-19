@@ -177,8 +177,8 @@ def test_pdf_vectorized(copula3d):
 def test_dependence_measures(copula3d):
     """Test all dependence measures."""
     # All dependence measures should be 0 for independence
-    assert copula3d.kendalls_tau() == 0
-    assert copula3d.spearmans_rho() == 0
+    assert copula3d.tau() == 0
+    assert copula3d.rho() == 0
     assert copula3d.lambda_L() == 0
     assert copula3d.lambda_U() == 0
 

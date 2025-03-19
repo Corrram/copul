@@ -10,7 +10,7 @@ from tests.family_representatives import family_representatives
 def test_squared_checkerboard():
     clayton = copul.Families.CLAYTON.cls(2)
     checkerboarder = copul.Checkerboarder(3)
-    ccop = checkerboarder.compute_check_pi(clayton)
+    ccop = checkerboarder.get_checkerboard_copula(clayton)
     assert ccop.matr.shape == (3, 3)
     assert ccop.matr.sum() == 1.0
 
@@ -18,7 +18,7 @@ def test_squared_checkerboard():
 def test_rectangular_checkerboard():
     clayton = copul.Families.CLAYTON.cls(2)
     checkerboarder = copul.Checkerboarder([3, 10])
-    ccop = checkerboarder.compute_check_pi(clayton)
+    ccop = checkerboarder.get_checkerboard_copula(clayton)
     assert ccop.matr.shape == (3, 10)
     matr_sum = ccop.matr.sum()
     assert np.isclose(matr_sum, 1.0)
@@ -27,7 +27,7 @@ def test_rectangular_checkerboard():
 def test_rectangular_checkerboard_with_n16():
     n16 = copul.Families.NELSEN16.cls(2)
     checkerboarder = copul.Checkerboarder([3, 10])
-    ccop = checkerboarder.compute_check_pi(n16)
+    ccop = checkerboarder.get_checkerboard_copula(n16)
     assert ccop.matr.shape == (3, 10)
     matr_sum = ccop.matr.sum()
     assert np.isclose(matr_sum, 1.0)
@@ -37,9 +37,9 @@ def test_xi_computation():
     np.random.seed(121)
     copula = copul.Families.NELSEN7.cls(0.5)
     checkerboarder = copul.Checkerboarder(10)
-    ccop = checkerboarder.compute_check_pi(copula)
-    orig_xi = copula.chatterjees_xi()
-    xi = ccop.chatterjees_xi()
+    ccop = checkerboarder.get_checkerboard_copula(copula)
+    orig_xi = copula.xi()
+    xi = ccop.xi()
     assert 0.5 * orig_xi <= xi <= orig_xi
 
 
@@ -72,7 +72,7 @@ def test_different_copula_families():
         family, param = family_param
         copula = family.cls(param)
         checkerboarder = copul.Checkerboarder(5)
-        ccop = checkerboarder.compute_check_pi(copula)
+        ccop = checkerboarder.get_checkerboard_copula(copula)
 
         # Check properties of the checkerboard copula
         assert ccop.matr.shape == (5, 5)
@@ -151,7 +151,7 @@ def test_boundary_conditions_for_independence():
     # Test with independence (using Clayton with parameter close to 0)
     independent = copul.Families.CLAYTON.cls(0.01)  # Almost independent
     checkerboarder = copul.Checkerboarder(5)
-    ccop = checkerboarder.compute_check_pi(independent)
+    ccop = checkerboarder.get_checkerboard_copula(independent)
 
     # For independence, all cells should be approximately equal
     expected_value = 1.0 / 25  # 5x5 grid
@@ -162,7 +162,7 @@ def test_boundary_conditions_for_independence():
 def test_boundary_conditions_for_lower_frechet():
     lower_frechet = copul.Families.LOWER_FRECHET.cls()
     checkerboarder = Checkerboarder(5)
-    ccop = checkerboarder.compute_check_pi(lower_frechet)
+    ccop = checkerboarder.get_checkerboard_copula(lower_frechet)
     matr = ccop.matr
     for i in range(5):
         for j in range(5):
@@ -175,7 +175,7 @@ def test_boundary_conditions_for_lower_frechet():
 def test_boundary_conditions_for_upper_frechet():
     lower_frechet = copul.Families.UPPER_FRECHET.cls()
     checkerboarder = Checkerboarder(5)
-    ccop = checkerboarder.compute_check_pi(lower_frechet)
+    ccop = checkerboarder.get_checkerboard_copula(lower_frechet)
     matr = ccop.matr
     for i in range(5):
         for j in range(5):
@@ -190,5 +190,5 @@ def test_compute_pi_with_galambos():
     param = family_representatives["Galambos"]
     galambos = copul.Families.GALAMBOS.cls(param)
     checkerboarder = Checkerboarder(50)
-    ccop = checkerboarder.compute_check_pi(galambos)
+    ccop = checkerboarder.get_checkerboard_copula(galambos)
     assert ccop.matr.shape == (50, 50)

@@ -1,5 +1,6 @@
 import logging
 
+from typing_extensions import TypeAlias
 import numpy as np
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
@@ -764,3 +765,6 @@ class BivCheckW(BivCheckPi):
         xi_checkpi = super().xi(condition_on_y)
         xi = xi_checkpi + np.sum(self.matr**2)
         return xi
+    
+
+CheckW: TypeAlias = BivCheckW

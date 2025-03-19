@@ -1,6 +1,6 @@
 import sympy
 
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -96,7 +96,7 @@ class FarlieGumbelMorgenstern(BivCopula):
         result = 1 + self.theta * (1 - 2 * self.u) * (1 - 2 * self.v)
         return SymPyFuncWrapper(result)
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         """
         Calculate Spearman's rho for the FGM copula.
 
@@ -105,7 +105,7 @@ class FarlieGumbelMorgenstern(BivCopula):
         self._set_params(args, kwargs)
         return self.theta / 3
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the FGM copula.
 

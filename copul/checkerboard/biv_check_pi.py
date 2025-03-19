@@ -11,10 +11,11 @@ import warnings
 
 import sympy
 from copul.checkerboard.check_pi import CheckPi
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_core_copula import BivCoreCopula
+from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
 
 
-class BivCheckPi(CheckPi, BivCopula):
+class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
     """
     Bivariate Checkerboard Copula class.
 
@@ -59,7 +60,7 @@ class BivCheckPi(CheckPi, BivCopula):
             raise ValueError("All matrix values must be non-negative")
 
         CheckPi.__init__(self, matr)
-        BivCopula.__init__(self, **kwargs)
+        BivCoreCopula.__init__(self, **kwargs)
 
         self.m = self.matr.shape[0]
         self.n = self.matr.shape[1]
@@ -115,34 +116,12 @@ class BivCheckPi(CheckPi, BivCopula):
         return True
 
     def cond_distr_1(
-        self, u: Optional[float] = None, v: Optional[float] = None
-    ) -> float:
-        """
-        Compute the conditional distribution F(U1 ≤ u | U2 = v).
+        self, *args
+    ):
+        return self.cond_distr(1, *args)
 
-        Args:
-            u: Value of U1 (first variable).
-            v: Value of U2 (second variable).
-
-        Returns:
-            float: Conditional probability.
-        """
-        return self.cond_distr(1, (u, v))
-
-    def cond_distr_2(
-        self, u: Optional[float] = None, v: Optional[float] = None
-    ) -> float:
-        """
-        Compute the conditional distribution F(U2 ≤ v | U1 = u).
-
-        Args:
-            u: Value of U1 (first variable).
-            v: Value of U2 (second variable).
-
-        Returns:
-            float: Conditional probability.
-        """
-        return self.cond_distr(2, (u, v))
+    def cond_distr_2(self, *args):
+        return self.cond_distr(2, *args)
     
     def tau_alternative(self) -> float:
         p = self.matr
@@ -256,7 +235,7 @@ if __name__ == "__main__":
     # Calculate dependence measures
     print(f"Kendall's tau: {copul.tau():.4f}")
     print(f"Spearman's rho: {copul.rho():.4f}")
-    print(f"Chatterjee's xi: {copul.chatterjees_xi(n_samples=10_000):.4f}")
+    print(f"Chatterjee's xi: {copul.xi(n_samples=10_000):.4f}")
 
     # Visualize conditional distribution
     try:

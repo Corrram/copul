@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.families.other.farlie_gumbel_morgenstern import FarlieGumbelMorgenstern
 
 
@@ -227,27 +227,27 @@ def test_conditional_distribution():
         )
 
 
-def test_spearmans_rho():
+def test_rho():
     """Test Spearman's rho calculation."""
     # Test with different theta values
     test_cases = [(-1, -1 / 3), (-0.5, -1 / 6), (0, 0), (0.5, 1 / 6), (1, 1 / 3)]
 
     for theta, expected in test_cases:
         copula = FarlieGumbelMorgenstern(theta=theta)
-        rho = float(copula.spearmans_rho())
+        rho = float(copula.rho())
         assert abs(rho - expected) < 1e-10, (
             f"Spearman's rho incorrect for theta={theta}"
         )
 
 
-def test_kendalls_tau():
+def test_tau():
     """Test Kendall's tau calculation."""
     # Test with different theta values
     test_cases = [(-1, -2 / 9), (-0.5, -1 / 9), (0, 0), (0.5, 1 / 9), (1, 2 / 9)]
 
     for theta, expected in test_cases:
         copula = FarlieGumbelMorgenstern(theta=theta)
-        tau = float(copula.kendalls_tau())
+        tau = float(copula.tau())
         assert abs(tau - expected) < 1e-10, f"Kendall's tau incorrect for theta={theta}"
 
 
@@ -281,11 +281,11 @@ def test_dependence_range():
     min_copula = FarlieGumbelMorgenstern(theta=-1)
     max_copula = FarlieGumbelMorgenstern(theta=1)
 
-    min_rho = float(min_copula.spearmans_rho())
-    max_rho = float(max_copula.spearmans_rho())
+    min_rho = float(min_copula.rho())
+    max_rho = float(max_copula.rho())
 
-    min_tau = float(min_copula.kendalls_tau())
-    max_tau = float(max_copula.kendalls_tau())
+    min_tau = float(min_copula.tau())
+    max_tau = float(max_copula.tau())
 
     # Check bounds for Spearman's rho
     assert abs(min_rho - (-1 / 3)) < 1e-10, "Minimum Spearman's rho should be -1/3"

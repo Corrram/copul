@@ -195,13 +195,13 @@ def test_frank_conditional_distributions():
         assert np.isclose(cond_dist, expected, rtol=1e-5)
 
 
-def test_frank_kendalls_tau():
+def test_frank_tau():
     """Test Kendall's tau for Frank copula with both positive and negative theta."""
     # Known values for positive theta
     pos_thetas = [1, 2, 5, 10]
     for theta in pos_thetas:
         copula = Frank(theta)
-        tau = float(copula.kendalls_tau())
+        tau = float(copula.tau())
 
         # For Frank copula with positive theta, tau should be positive
         assert tau > 0
@@ -211,16 +211,16 @@ def test_frank_kendalls_tau():
         # Check the trend only
         if theta > 1:
             prev_copula = Frank(theta - 1)
-            prev_tau = float(prev_copula.kendalls_tau())
+            prev_tau = float(prev_copula.tau())
             assert tau > prev_tau
 
 
-def test_frank_negative_kendalls_tau():
+def test_frank_negative_tau():
     # Known values for negative theta
     neg_thetas = [-1, -2, -5, -10]
     for theta in neg_thetas:
         copula = Frank(theta)
-        tau = float(copula.kendalls_tau())
+        tau = float(copula.tau())
 
         # For Frank copula with negative theta, tau should be negative
         assert tau < 0
@@ -230,21 +230,21 @@ def test_frank_negative_kendalls_tau():
         # Check the trend only
         if theta < -1:
             prev_copula = Frank(theta + 1)
-            prev_tau = float(prev_copula.kendalls_tau())
+            prev_tau = float(prev_copula.tau())
             assert tau < prev_tau
 
     # For theta = 0 (independence), tau should be 0
     independence = Frank.create(0)
-    assert np.isclose(float(independence.kendalls_tau()), 0, atol=1e-10)
+    assert np.isclose(float(independence.tau()), 0, atol=1e-10)
 
 
-def test_frank_spearmans_rho():
+def test_frank_rho():
     """Test Spearman's rho for Frank copula with both positive and negative theta."""
     # Known values for positive theta
     pos_thetas = [1, 2, 5, 10]
     for theta in pos_thetas:
         copula = Frank(theta)
-        rho = float(copula.spearmans_rho())
+        rho = float(copula.rho())
 
         # For Frank copula with positive theta, rho should be positive
         assert rho > 0
@@ -254,16 +254,16 @@ def test_frank_spearmans_rho():
         # Check the trend only
         if theta > 1:
             prev_copula = Frank(theta - 1)
-            prev_rho = float(prev_copula.spearmans_rho())
+            prev_rho = float(prev_copula.rho())
             assert rho > prev_rho
 
 
-def test_frank_negative_spearmans_rho():
+def test_frank_negative_rho():
     # Known values for negative theta
     neg_thetas = [-1, -2, -5, -10]
     for theta in neg_thetas:
         copula = Frank(theta)
-        rho = float(copula.spearmans_rho())
+        rho = float(copula.rho())
 
         # For Frank copula with negative theta, rho should be negative
         assert rho < 0
@@ -273,12 +273,12 @@ def test_frank_negative_spearmans_rho():
         # Check the trend only
         if theta < -1:
             prev_copula = Frank(theta + 1)
-            prev_rho = float(prev_copula.spearmans_rho())
+            prev_rho = float(prev_copula.rho())
             assert rho < prev_rho
 
     # For theta = 0 (independence), rho should be 0
     independence = Frank.create(0)
-    assert np.isclose(float(independence.spearmans_rho()), 0, atol=1e-10)
+    assert np.isclose(float(independence.rho()), 0, atol=1e-10)
 
 
 def test_debye_functions():

@@ -68,7 +68,7 @@ class CopulaSampler:
         if approximate:
             grid_partitions = np.ceil(n ** (1 / self._copul.dim)).astype(int)
             checkerboarder = Checkerboarder(grid_partitions, dim=self._copul.dim)
-            ccop = checkerboarder.compute_check_pi(self._copul)
+            ccop = checkerboarder.get_checkerboard_copula(self._copul)
             return ccop.rvs(n)
         # Set random seed if specified
         if self._random_state is not None:

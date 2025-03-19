@@ -4,24 +4,20 @@ import pytest
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 
 
-@pytest.fixture
-def copula():
-    """Create a PiOverSigmaMinusPi copula instance for tests."""
-    return PiOverSigmaMinusPi()
 
-
-def test_theta_value(copula):
+def test_theta_value():
     """Test that theta value is fixed at 1."""
-    assert copula.theta == 1
+    assert PiOverSigmaMinusPi().theta == 1
 
 
-def test_generator_properties(copula):
+def test_generator_properties():
     """Test that the generator and inverse generator are properly defined."""
     # Create test values
     t_vals = np.linspace(0.1, 0.9, 5)
     y_vals = np.linspace(0.1, 5.0, 5)
 
     # Get the generator function
+    copula = PiOverSigmaMinusPi()
     gen = copula.generator
     inv_gen = copula.inv_generator.func
 
@@ -42,8 +38,9 @@ def test_generator_properties(copula):
         )
 
 
-def test_cdf_values(copula):
+def test_cdf_values():
     """Test specific CDF values."""
+    copula = PiOverSigmaMinusPi()
     test_cases = [
         (
             0.5,
@@ -63,8 +60,9 @@ def test_cdf_values(copula):
         assert abs(cdf_val - expected) < 1e-10, f"CDF value incorrect for u={u}, v={v}"
 
 
-def test_pdf_values(copula):
+def test_pdf_values():
     """Test specific PDF values."""
+    copula = PiOverSigmaMinusPi()
     test_cases = [
         (
             0.5,
@@ -95,8 +93,9 @@ def test_pdf_values(copula):
         )
 
 
-def test_conditional_distributions(copula):
+def test_conditional_distributions():
     """Test that conditional distributions are properly defined."""
+    copula = PiOverSigmaMinusPi()
     # Test points
     u, v = 0.5, 0.6
 
@@ -117,8 +116,9 @@ def test_conditional_distributions(copula):
     assert 0 <= cond2 <= 1, f"cond_distr_2({u},{v}) = {cond2} not in [0,1]"
 
 
-def test_boundary_cases(copula):
+def test_boundary_cases():
     """Test that the copula behaves correctly at boundary values."""
+    copula = PiOverSigmaMinusPi()
     # Create a range of test values
     u_vals = np.linspace(0.1, 0.9, 5)
 
@@ -141,8 +141,9 @@ def test_boundary_cases(copula):
         assert abs(cdf_1v - u) < 1e-10, f"C(1,{u}) should be {u}, got {cdf_1v}"
 
 
-def test_tail_dependence(copula):
+def test_tail_dependence():
     """Test the tail dependence coefficients."""
+    copula = PiOverSigmaMinusPi()
     # Lower tail dependence should be 0.5
     lambda_L = copula.lambda_L()
     assert abs(lambda_L - 0.5) < 1e-10, "Lower tail dependence incorrect"
@@ -152,12 +153,14 @@ def test_tail_dependence(copula):
     assert lambda_U == 0, "Upper tail dependence should be 0"
 
 
-def test_is_absolutely_continuous(copula):
+def test_is_absolutely_continuous():
     """Test that the copula is absolutely continuous."""
+    copula = PiOverSigmaMinusPi()
     assert copula.is_absolutely_continuous is True
 
 
-def test_kendalls_tau(copula):
+def test_tau():
     """Test Kendall's tau value."""
-    tau = copula.kendalls_tau()
+    copula = PiOverSigmaMinusPi()
+    tau = copula.tau()
     assert abs(tau - 1 / 3) < 1e-10, "Kendall's tau should be 1/3"

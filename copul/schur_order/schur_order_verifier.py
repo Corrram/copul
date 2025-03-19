@@ -87,7 +87,7 @@ class SchurOrderVerifier:
         # Generate checkerboard approximation
         try:
             checkerboarder = Checkerboarder(self._chess_board_size)
-            checkerboarder.compute_check_pi(self.copula)
+            checkerboarder.get_checkerboard_copula(self.copula)
         except Exception as e:
             msg = f"Error creating checkerboard approximation: {e}"
             logger.error(msg)
@@ -112,7 +112,7 @@ class SchurOrderVerifier:
                 copula_with_theta = self._get_copula_with_param(theta)
 
                 # Generate checkerboard for this specific parameter value
-                theta_ccop = checkerboarder.compute_check_pi(copula_with_theta)
+                theta_ccop = checkerboarder.get_checkerboard_copula(copula_with_theta)
                 rearranged_ccop = CISRearranger().rearrange_checkerboard(theta_ccop)
 
                 # Calculate conditional distributions

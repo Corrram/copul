@@ -143,21 +143,21 @@ class CuadrasAuge(BivExtremeValueCopula):
         log.debug("sub int2: ", sp.latex(int2))
         return sp.simplify(int1 + int2)
 
-    def chatterjees_xi(self, *args, **kwargs):
+    def xi(self, *args, **kwargs):
         self._set_params(args, kwargs)
         # Handle the edge case for delta=0
         if self.delta == 0:
             return 0
         return self.delta**2 / (2 - self.delta)
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
         # Handle the edge case for delta=0
         if self.delta == 0:
             return 0
         return 3 * self.delta / (4 - self.delta)
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         self._set_params(args, kwargs)
         # Handle the edge case for delta=0
         if self.delta == 0:

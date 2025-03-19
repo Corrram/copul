@@ -8,7 +8,7 @@ import sympy as sp
 from unittest.mock import MagicMock, patch
 
 from copul import from_cdf
-from copul.families.copula import Copula
+from copul.families.core.copula import Copula
 
 
 class SampleCopula(Copula):
@@ -27,7 +27,7 @@ class SampleCopula(Copula):
         # Handle any dimension, but only use first two symbols for the CDF
         u1 = self.u_symbols[0]
         u2 = self.u_symbols[1] if len(self.u_symbols) > 1 else self.u_symbols[0]
-        self._cdf = u1 * u2 * (1 + self.theta * (1 - u1) * (1 - u2))
+        self._cdf_expr = u1 * u2 * (1 + self.theta * (1 - u1) * (1 - u2))
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -128,30 +128,22 @@ class TestCopulaBase:
 
     def test_cdf(self):
         """Test cdf property"""
-        # Instead of patching the property directly, patch the CDFWrapper class
-        with patch("copul.wrapper.cdf_wrapper.CDFWrapper") as mock_cdf_wrapper:
-            # Set up the wrapper to return a simple value
-            expected = 0.25
-            mock_instance = MagicMock()
-            mock_instance.return_value = expected
-            mock_cdf_wrapper.return_value = mock_instance
+        # Set up the wrapper to return a simple value
+        expected = 0.25
+        # Create a minimal subclass with a controlled _cdf attribute
+        class TestCopulaForCDF(SampleCopula):
+            def __init__(self):
+                super().__init__()
+                # Simple _cdf expression for testing
+                self._cdf_expr = sp.sympify("u1*u2")
+                self._free_symbols = {}
 
-            # Create a minimal subclass with a controlled _cdf attribute
-            class TestCopulaForCDF(SampleCopula):
-                def __init__(self):
-                    super().__init__()
-                    # Simple _cdf expression for testing
-                    self._cdf = sp.sympify("u1*u2")
-                    self._free_symbols = {}
+        # Use the test subclass
+        test_copula = TestCopulaForCDF()
+        cdf_value = test_copula.cdf(0.5, 0.5)
 
-            # Use the test subclass
-            test_copula = TestCopulaForCDF()
-            cdf_value = test_copula.cdf(0.5, 0.5)
-
-            # Verify the result
-            assert cdf_value == expected
-            mock_cdf_wrapper.assert_called_once()
-            mock_instance.assert_called_once_with(0.5, 0.5)
+        # Verify the result
+        assert cdf_value == expected
 
     def test_conditional_distributions(self):
         """Test conditional distribution methods"""
@@ -245,7 +237,7 @@ class TestCopulaSampling:
         # This is the method we're actually testing
         self.copula.rvs = Copula.rvs.__get__(self.copula)
 
-    @patch("copul.families.copula.CopulaSampler")
+    @patch("copul.families.core.copula_sampling_mixin.CopulaSampler")
     def test_rvs_default_parameters(self, mock_sampler_class):
         """Test the rvs method with default parameters."""
         # Create mock sampler
@@ -266,7 +258,7 @@ class TestCopulaSampling:
         # Verify the result
         assert np.array_equal(result, sample_data)
 
-    @patch("copul.families.copula.CopulaSampler")
+    @patch("copul.families.core.copula_sampling_mixin.CopulaSampler")
     def test_rvs_custom_parameters(self, mock_sampler_class):
         """Test the rvs method with custom parameters."""
         # Create mock sampler
@@ -291,7 +283,7 @@ class TestCopulaSampling:
         # Verify the result
         assert np.array_equal(result, sample_data)
 
-    @patch("copul.families.copula.CopulaSampler")
+    @patch("copul.families.core.copula_sampling_mixin.CopulaSampler")
     def test_rvs_with_approximate(self, mock_sampler_class):
         """Test the rvs method with approximate=True."""
         # Create mock sampler
@@ -312,7 +304,7 @@ class TestCopulaSampling:
         # Verify the result
         assert np.array_equal(result, sample_data)
 
-    @patch("copul.families.copula.CopulaSampler")
+    @patch("copul.families.core.copula_sampling_mixin.CopulaSampler")
     def test_rvs_with_random_state(self, mock_sampler_class):
         """Test the rvs method with a specific random_state."""
         # Create mock sampler
@@ -335,7 +327,7 @@ class TestCopulaSampling:
         # Verify the result
         assert np.array_equal(result, sample_data)
 
-    @patch("copul.families.copula.CopulaSampler")
+    @patch("copul.families.core.copula_sampling_mixin.CopulaSampler")
     def test_rvs_error_handling(self, mock_sampler_class):
         """Test error handling in the rvs method."""
         # Create mock sampler
@@ -369,7 +361,7 @@ def test_rvs_parameter_combinations(n_samples, random_state, approximate):
     original_rvs = Copula.rvs.__get__(mock_copula)
 
     # Create mock sampler
-    with patch("copul.families.copula.CopulaSampler") as mock_sampler_class:
+    with patch("copul.families.core.copula_sampling_mixin.CopulaSampler") as mock_sampler_class:
         mock_sampler = MagicMock()
         mock_sampler.rvs.return_value = np.random.random((n_samples, 2))
         mock_sampler_class.return_value = mock_sampler

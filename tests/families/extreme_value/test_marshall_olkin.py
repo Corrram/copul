@@ -20,33 +20,33 @@ def symmetric_mo_copula():
     return MarshallOlkin(0.5, 0.5)
 
 
-def test_mo_spearmans_rho(marshall_olkin_copula):
-    rho = marshall_olkin_copula.spearmans_rho()
+def test_mo_rho(marshall_olkin_copula):
+    rho = marshall_olkin_copula.rho()
     assert np.isclose(rho, 3 / 7)
 
 
-def test_mo_kendalls_tau(marshall_olkin_copula):
-    tau = marshall_olkin_copula.kendalls_tau()
+def test_mo_tau(marshall_olkin_copula):
+    tau = marshall_olkin_copula.tau()
     assert np.isclose(tau, 1 / 3)
 
 
-def test_mo_chatterjees_xi(marshall_olkin_copula):
-    xi = marshall_olkin_copula.chatterjees_xi()
+def test_mo_xi(marshall_olkin_copula):
+    xi = marshall_olkin_copula.xi()
     assert np.isclose(xi, 1 / 6)
 
 
 def test_mo_chatterjees_xi_with_argument(marshall_olkin_copula):
-    xi = MarshallOlkin().chatterjees_xi(1 / 3, 1)
+    xi = MarshallOlkin().xi(1 / 3, 1)
     assert np.isclose(xi, 1 / 6)
 
 
 def test_mo_kendalls_tau_with_argument(marshall_olkin_copula):
-    tau = MarshallOlkin().kendalls_tau(1 / 3, 1)
+    tau = MarshallOlkin().tau(1 / 3, 1)
     assert np.isclose(tau, 1 / 3)
 
 
 def test_mo_spearmans_rho_with_argument(marshall_olkin_copula):
-    rho = MarshallOlkin().spearmans_rho(1 / 3, 1)
+    rho = MarshallOlkin().rho(1 / 3, 1)
     assert np.isclose(rho, 3 / 7)
 
 

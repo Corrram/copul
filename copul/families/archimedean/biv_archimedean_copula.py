@@ -6,7 +6,7 @@ import sympy
 import matplotlib.pyplot as plt
 
 from copul.families.archimedean.archimedean_copula import ArchimedeanCopula
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_core_copula import BivCoreCopula
 from copul.families.helpers import concrete_expand_log, get_simplified_solution
 from copul.families.copula_graphs import CopulaGraphs
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -15,7 +15,7 @@ from scipy import optimize
 log = logging.getLogger(__name__)
 
 
-class BivArchimedeanCopula(ArchimedeanCopula, BivCopula, ABC):
+class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
     """
     Bivariate Archimedean Copula implementation.
 
@@ -26,7 +26,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCopula, ABC):
     """
 
     @property
-    def dimension(self) -> int:
+    def dim(self) -> int:
         """
         Return the dimension of the copula.
 
@@ -37,8 +37,8 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCopula, ABC):
         """
         return 2
 
-    @dimension.setter
-    def dimension(self, value):
+    @dim.setter
+    def dim(self, value):
         pass
 
     @property
@@ -242,7 +242,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCopula, ABC):
         second_diff = sympy.diff(first_diff, self.y)
         return sympy.simplify(second_diff)
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the bivariate Archimedean copula.
 

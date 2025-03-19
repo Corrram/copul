@@ -3,7 +3,7 @@ import copy
 import numpy as np
 import sympy
 
-from copul.families.extreme_value import GumbelHougaard
+from copul.families.extreme_value import GumbelHougaardEV as GumbelHougaard
 from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
 from copul.families.other.biv_independence_copula import BivIndependenceCopula

@@ -2,7 +2,7 @@ import pytest
 import sympy as sp
 from unittest.mock import patch
 
-from copul.families.extreme_value import GumbelHougaard, Tawn
+from copul.families.extreme_value import GumbelHougaardEV as GumbelHougaard, Tawn
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
@@ -207,10 +207,10 @@ def test_tawn_correlation_properties():
     copula = Tawn(0.5, 0.7, 2.0)
 
     # Check that it has the expected correlation methods
-    assert hasattr(copula, "kendalls_tau")
-    assert hasattr(copula, "spearmans_rho")
-    assert callable(copula.kendalls_tau)
-    assert callable(copula.spearmans_rho)
+    assert hasattr(copula, "tau")
+    assert hasattr(copula, "rho")
+    assert callable(copula.tau)
+    assert callable(copula.rho)
 
 
 def test_tawn_edge_cases():

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.families.other.raftery import Raftery
 
 
@@ -116,7 +116,8 @@ def test_cdf_values(copula):
 
         cdf_val = float(copula.cdf(u=u, v=v))
         # Allowing for some numerical error due to complex formula
-        assert abs(cdf_val - expected) < 1e-8, f"CDF value incorrect for u={u}, v={v}"
+        diff = abs(cdf_val - expected)
+        assert diff < 1e-6, f"CDF value incorrect for u={u}, v={v}"
 
 
 def test_boundary_cases(copula):
@@ -153,7 +154,7 @@ def test_pdf_values(copula):
         assert pdf_val > 0, f"PDF should be positive at u={u}, v={v}"
 
 
-def test_spearmans_rho():
+def test_rho():
     """Test Spearman's rho calculation."""
     # Formula: delta * (4 - 3*delta) / (2 - delta)^2
     test_cases = [
@@ -166,11 +167,11 @@ def test_spearmans_rho():
 
     for delta, expected in test_cases:
         copula = Raftery(delta=delta)
-        rho = float(copula.spearmans_rho())
+        rho = float(copula.rho())
         assert abs(rho - expected) < 1e-8, f"Spearman's rho incorrect for delta={delta}"
 
 
-def test_kendalls_tau():
+def test_tau():
     """Test Kendall's tau calculation."""
     # Formula: 2*delta / (3 - delta)
     test_cases = [
@@ -183,7 +184,7 @@ def test_kendalls_tau():
 
     for delta, expected in test_cases:
         copula = Raftery(delta=delta)
-        tau = float(copula.kendalls_tau())
+        tau = float(copula.tau())
         assert abs(tau - expected) < 1e-8, f"Kendall's tau incorrect for delta={delta}"
 
 

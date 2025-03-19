@@ -157,7 +157,7 @@ class TestMultivariateExtremeValueCopula:
             assert 0 < cdf_value < 1
             
             # Check random sampling
-            with patch("copul.families.copula.CopulaSampler") as mock_sampler_class:
+            with patch("copul.families.core.copula_sampling_mixin.CopulaSampler") as mock_sampler_class:
                 mock_sampler = MagicMock()
                 mock_sampler_class.return_value = mock_sampler
                 mock_sampler.rvs.return_value = np.random.random((10, dim))

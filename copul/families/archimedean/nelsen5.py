@@ -100,7 +100,7 @@ class Frank(BivArchimedeanCopula):
             )
         )
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         """
         Calculate Spearman's rho for the Frank copula using numerical integration.
 
@@ -120,7 +120,7 @@ class Frank(BivArchimedeanCopula):
         rho = 1 - 12 * (d1 - d2) / theta
         return rho * np.sign(self.theta)
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the Frank copula using numerical integration.
 

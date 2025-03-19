@@ -187,7 +187,7 @@ class MultivariateExtremeIndependenceCopula(MultivariateExtremeValueCopula):
         # Return array of ones with appropriate shape
         return np.ones(np.broadcast(*arrays).shape)
     
-    def kendalls_tau(self):
+    def tau(self):
         """
         Compute Kendall's tau for the independence copula.
         
@@ -200,7 +200,7 @@ class MultivariateExtremeIndependenceCopula(MultivariateExtremeValueCopula):
         """
         return 0
     
-    def spearmans_rho(self):
+    def rho(self):
         """
         Compute Spearman's rho for the independence copula.
         

@@ -125,7 +125,7 @@ def test_ccop_cond_distr_2(matr, expected):
 def test_ccop_xi(matr, expected):
     np.random.seed(1)
     ccop = BivCheckPi(matr)
-    xi_estimate = ccop.chatterjees_xi()
+    xi_estimate = ccop.xi()
     actual_diff = np.abs(xi_estimate - expected)
     assert actual_diff < 0.02
 
@@ -320,8 +320,8 @@ def test_xi_2x2_exact():
     ccop_neg = BivCheckPi(matr_neg)
 
     # For 2x2, both should have xi = 1 (perfect dependence)
-    xi_pos = ccop_pos.chatterjees_xi()
-    xi_neg = ccop_neg.chatterjees_xi()
+    xi_pos = ccop_pos.xi()
+    xi_neg = ccop_neg.xi()
     assert np.isclose(xi_pos, 0.5, atol=1e-1)
     assert np.isclose(xi_neg, 0.5, atol=1e-1)
 
@@ -330,7 +330,7 @@ def test_xi_example():
     """Test xi for the example matrix from the original code."""
     matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
     ccop = BivCheckPi(matr)
-    xi_val = ccop.chatterjees_xi()
+    xi_val = ccop.xi()
 
     # Check range (xi is always between 0 and 1)
     assert 0 <= xi_val <= 1
@@ -364,5 +364,5 @@ def test_xi_equivalent_to_monte_carlo():
     # This matrix was tested previously with Monte Carlo
     matr = np.array([[1, 0], [0, 1]])
     ccop = BivCheckPi(matr)
-    xi_value = ccop.chatterjees_xi()
+    xi_value = ccop.xi()
     assert np.isclose(xi_value, 0.5, atol=0.02)

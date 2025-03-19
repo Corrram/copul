@@ -15,10 +15,10 @@ Subpackages
 Submodules
 ----------
 
-copul.families.bivcopula module
+copul.families.core.biv_copula module
 -------------------------------
 
-.. automodule:: copul.families.bivcopula
+.. automodule:: copul.families.core.biv_copula
    :members:
    :show-inheritance:
    :undoc-members:

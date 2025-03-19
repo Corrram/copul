@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 import sympy
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from copul.families.archimedean.multivariate_clayton import MultivariateClayton
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
@@ -36,13 +36,13 @@ class TestMultivariateClayton:
         # Default initialization
         clayton = MultivariateClayton()
         assert clayton.theta == 1.0
-        assert clayton.dimension == 2
+        assert clayton.dim == 2
 
         # Custom parameters
         monkeypatch.setattr(MultivariateClayton, "theta", 2.5, raising=False)
         clayton = MultivariateClayton(theta=2.5, dimension=4)
         assert clayton.theta == 2.5
-        assert clayton.dimension == 4
+        assert clayton.dim == 4
 
         # Invalid theta (negative) should raise ValueError
         with pytest.raises(ValueError):
@@ -50,8 +50,8 @@ class TestMultivariateClayton:
 
     def test_dimension_property(self, clayton_2d, clayton_3d):
         """Test the dimension property."""
-        assert clayton_2d.dimension == 2
-        assert clayton_3d.dimension == 3
+        assert clayton_2d.dim == 2
+        assert clayton_3d.dim == 3
 
     def test_generator_at_0(self, clayton_2d):
         """Test generator value at t=0."""

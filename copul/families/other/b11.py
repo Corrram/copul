@@ -1,6 +1,6 @@
 import sympy
 
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -82,7 +82,7 @@ class B11(BivCopula):
         )
         return SymPyFuncWrapper(cdf)
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         """
         Calculate Spearman's rho for the B11 copula.
 
@@ -91,7 +91,7 @@ class B11(BivCopula):
         self._set_params(args, kwargs)
         return self.delta
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the B11 copula.
 

@@ -120,7 +120,7 @@ class MarshallOlkin(BivExtremeValueCopula):
     def pdf(self):
         raise PropertyUnavailableException("Marshall-Olkin copula does not have a pdf")
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
         # Handle edge case for alpha_1 = alpha_2 = 0
         if self.alpha_1 == 0 and self.alpha_2 == 0:
@@ -135,7 +135,7 @@ class MarshallOlkin(BivExtremeValueCopula):
         )
         return result
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         self._set_params(args, kwargs)
         # Handle edge cases
         if self.alpha_1 == 0 and self.alpha_2 == 0:
@@ -151,7 +151,7 @@ class MarshallOlkin(BivExtremeValueCopula):
         )
         return result
 
-    def chatterjees_xi(self, *args, **kwargs):
+    def xi(self, *args, **kwargs):
         self._set_params(args, kwargs)
         # Handle edge case for alpha_1 = alpha_2 = 0
         if self.alpha_1 == 0 and self.alpha_2 == 0:

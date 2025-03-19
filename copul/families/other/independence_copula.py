@@ -2,7 +2,7 @@ import numpy as np
 import sympy as sp
 from sympy import exp, log
 
-from copul.families.copula import Copula
+from copul.families.core.copula import Copula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
@@ -202,7 +202,7 @@ class IndependenceCopula(Copula):
                     product = product.subs(self.u_symbols[j-1], u[j-1])
         return SymPyFuncWrapper(product)
     
-    def kendalls_tau(self):
+    def tau(self):
         """
         Compute Kendall's tau for the independence copula.
         
@@ -215,7 +215,7 @@ class IndependenceCopula(Copula):
         """
         return 0
     
-    def spearmans_rho(self):
+    def rho(self):
         """
         Compute Spearman's rho for the independence copula.
         

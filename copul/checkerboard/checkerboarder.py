@@ -8,12 +8,15 @@ from joblib import Parallel, delayed
 from numba import njit
 
 from copul.checkerboard.check_pi import CheckPi
+from copul.checkerboard.check_min import CheckMin
+from copul.checkerboard.biv_check_w import BivCheckW
+
 
 log = logging.getLogger(__name__)
 
 
 class Checkerboarder:
-    def __init__(self, n: Union[int, list] = None, dim=2):
+    def __init__(self, n: Union[int, list] = None, dim=2, checkerboard_type="CheckPi"):
         """
         Initialize a Checkerboarder instance.
 
@@ -37,6 +40,7 @@ class Checkerboarder:
             n = [n] * dim
         self.n = n
         self.d = len(self.n)
+        self._checkerboard_type = checkerboard_type
         # Pre-compute common grid points for each dimension.
         self._precalculate_grid_points()
 
@@ -52,7 +56,7 @@ class Checkerboarder:
             points = np.linspace(0, 1, n_i + 1)
             self.grid_points.append(points)
 
-    def compute_check_pi(self, copula, n_jobs=None):
+    def get_checkerboard_copula(self, copula, n_jobs=None):
         """
         Compute the checkerboard representation of a copula's CDF.
 
@@ -72,15 +76,14 @@ class Checkerboarder:
 
         Returns
         -------
-        BivCheckPi or CheckPi
-            The computed checkerboard representation. For 2D, a BivCheckPi instance is returned;
-            for higher dimensions, a CheckPi instance is returned.
+        Checkerboard copula of type self._checkerboard_type
+            The computed checkerboard representation.
         """
         log.debug("Computing checkerboard copula with grid sizes: %s", self.n)
 
         # Use vectorized computation for 2D if available.
         if hasattr(copula, "cdf_vectorized") and self.d <= 2:
-            return self._compute_check_pi_vectorized(copula)
+            return self._compute_checkerboard_vectorized(copula)
 
         # Determine parallelization based on grid size.
         if n_jobs is None:
@@ -88,11 +91,11 @@ class Checkerboarder:
             n_jobs = max(1, min(8, total_cells // 1000))
 
         if n_jobs > 1 and np.prod(self.n) > 100:
-            return self._compute_check_pi_parallel(copula, n_jobs)
+            return self._compute_checkerboard_parallel(copula, n_jobs)
         else:
-            return self._compute_check_pi_serial(copula)
+            return self._compute_checkerboard_serial(copula)
 
-    def _compute_check_pi_vectorized(self, copula):
+    def _compute_checkerboard_vectorized(self, copula):
         """
         Compute the checkerboard representation using fully vectorized operations (2D only).
 
@@ -106,12 +109,12 @@ class Checkerboarder:
 
         Returns
         -------
-        CheckPi
+        CheckPi or BivCheckPi
             The checkerboard representation computed via vectorized operations.
         """
         if self.d != 2:
             warnings.warn("Vectorized computation only supported for 2D case")
-            return self._compute_check_pi_serial(copula)
+            return self._compute_checkerboard_serial(copula)
 
         # Define grid edges for both dimensions
         x_lower = self.grid_points[0][:-1]
@@ -132,10 +135,21 @@ class Checkerboarder:
 
         # Compute cell probabilities using the inclusion-exclusion principle
         cmatr = cdf_upper_upper - cdf_upper_lower - cdf_lower_upper + cdf_lower_lower
+        # round matr entries
+        rounded_cmatr = np.clip(cmatr, 0, 1)
+        return self._get_checkerboard_copula_for(rounded_cmatr)
 
-        return CheckPi(cmatr)
+    def _get_checkerboard_copula_for(self, cmatr):
+        if self._checkerboard_type in ["CheckPi", "BivCheckPi"]:
+            return CheckPi(cmatr)
+        elif self._checkerboard_type in ["CheckMin", "BivCheckMin"]:
+            return CheckMin(cmatr)
+        elif self._checkerboard_type == ["BivCheckW", "CheckW"]:
+            return BivCheckW(cmatr)
+        else:
+            raise ValueError(f"Unknown checkerboard type: {self._checkerboard_type}")
 
-    def _compute_check_pi_parallel(self, copula, n_jobs):
+    def _compute_checkerboard_parallel(self, copula, n_jobs):
         """
         Compute the checkerboard representation in parallel.
 
@@ -168,7 +182,7 @@ class Checkerboarder:
         for idx, value in zip(indices, results):
             cmatr[idx] = value
 
-        return CheckPi(cmatr)
+        return self._get_checkerboard_copula_for(cmatr)
 
     def _process_cell(self, idx, copula):
         """
@@ -193,7 +207,7 @@ class Checkerboarder:
         u_upper = [self.grid_points[k][i + 1] for k, i in enumerate(idx)]
         return self._compute_cell_value(u_lower, u_upper, copula)
 
-    def _compute_check_pi_serial(self, copula):
+    def _compute_checkerboard_serial(self, copula):
         """
         Compute the checkerboard representation serially with caching.
 
@@ -239,7 +253,7 @@ class Checkerboarder:
                 inclusion_exclusion_sum += sign * cdf_value
             cmatr[idx] = inclusion_exclusion_sum
 
-        return CheckPi(cmatr)
+        return self._get_checkerboard_copula_for(cmatr)
 
     def _compute_cell_value(self, u_lower, u_upper, copula):
         """
@@ -335,7 +349,7 @@ class Checkerboarder:
             x, y, bins=[self.n[0], self.n[1]], range=[[0, 1], [0, 1]]
         )
         check_pi_matr = hist / n_obs
-        return CheckPi(check_pi_matr)
+        return self._get_checkerboard_copula_for(check_pi_matr)
 
 
 @njit

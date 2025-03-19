@@ -117,8 +117,8 @@ class TestIndependenceCopula:
     def test_dependence_measures(self, copula):
         """Test all dependence measures"""
         # All dependence measures should be 0 for independence
-        assert copula.kendalls_tau() == 0
-        assert copula.spearmans_rho() == 0
+        assert copula.tau() == 0
+        assert copula.rho() == 0
         assert copula.lambda_L() == 0
         assert copula.lambda_U() == 0
     
@@ -170,7 +170,7 @@ def test_independence_properties():
         assert copula.is_absolutely_continuous is True
         
         # All dependence measures should be 0
-        assert copula.kendalls_tau() == 0
-        assert copula.spearmans_rho() == 0
+        assert copula.tau() == 0
+        assert copula.rho() == 0
         assert copula.lambda_L() == 0
         assert copula.lambda_U() == 0

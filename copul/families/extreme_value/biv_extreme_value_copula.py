@@ -10,7 +10,7 @@ import sympy as sp
 from sympy import Derivative, Subs, log
 
 from copul.families.extreme_value.multivariate_extreme_value_copula import MultivariateExtremeValueCopula
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_core_copula import BivCoreCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.pickands_wrapper import PickandsWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -18,7 +18,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 log_ = logging.getLogger(__name__)
 
 
-class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCopula):
+class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
     """
     Bivariate Extreme Value Copula.
     
@@ -56,16 +56,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCopula):
             del kwargs["dimension"]
         # First initialize as a MultivariateExtremeValueCopula with dimension=2
         MultivariateExtremeValueCopula.__init__(self, 2, *args, **kwargs)
-        
-        # Then initialize the BivCopula part but without passing dimension again
-        # Extract non-dimension kwargs to avoid passing dimension twice
-        biv_kwargs = {k: v for k, v in kwargs.items() if k != 'dimension'}
-        
-        # Initialize BivCopula features
-        # No need to call BivCopula.__init__ as it just sets dimension=2 which we already did
-        
-        # Create bivariate-specific symbols
-        self.u_symbols = [self.u, self.v]
+        BivCoreCopula.__init__(self)
 
 
     @property
@@ -523,7 +514,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCopula):
 
             return SymPyFuncWrapper(pdf_func)
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         """
         Compute Spearman's rho for the extreme value copula.
         
@@ -568,7 +559,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCopula):
         """
         return sp.simplify(12 * sp.integrate(self._rho_int_1(), (self.t, 0, 1)) - 3)
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Compute Kendall's tau for extreme value copulas (Nelsen 5.15).
         

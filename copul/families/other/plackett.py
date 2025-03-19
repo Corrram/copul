@@ -1,7 +1,7 @@
 import sympy
 
 from copul.families.helpers import get_simplified_solution
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
@@ -45,7 +45,7 @@ class Plackett(BivCopula):
         pdf = sympy.diff(self.cdf.func, self.u, self.v)
         return SymPyFuncWrapper(get_simplified_solution(pdf))
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         """
         Calculate Spearman's rho for the Plackett copula.
 

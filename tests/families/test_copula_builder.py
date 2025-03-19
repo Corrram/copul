@@ -18,8 +18,9 @@ def test_2d_clayton():
     cdf = "(x**(-theta) + y**(-theta) - 2)**(-1/theta)"
     copula_family = from_cdf(cdf)
     copula = copula_family(0.5)
-    result = copula.cdf(u=0.5, v=0.5)
-    assert result == copula.cdf(0.5, 0.5)
+    args_result = copula.cdf(0.5, 0.5)
+    kwargs_result = copula.cdf(u=0.5, v=0.5)
+    assert args_result == kwargs_result
 
 
 def test_from_cdf_with_plackett():

@@ -218,7 +218,7 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
             # Fall back to the general implementation in case of errors
             return super().cdf
     
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Compute Kendall's tau for the multivariate Gumbel-Hougaard copula.
         

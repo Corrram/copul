@@ -1,8 +1,8 @@
 import numpy as np
 import sympy
 
-from copul.families.bivcopula import BivCopula
-from copul.families.copula import Copula
+from copul.families.core.copula import Copula
+from copul.families.core.biv_copula import BivCopula
 
 
 class CopulaBuilder:
@@ -23,7 +23,7 @@ class CopulaBuilder:
                 sp_cdf = sp_cdf.subs(symbol, obj.u_symbols[i])
         for i, symbol in enumerate(params):
             sp_cdf = sp_cdf.subs(symbol, obj._free_symbols[symbol])
-        obj._cdf = sp_cdf
+        obj._cdf_expr = sp_cdf
         return obj
 
     @classmethod
