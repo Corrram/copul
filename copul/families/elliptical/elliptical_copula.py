@@ -2,12 +2,11 @@ import sympy as sp
 from abc import abstractmethod
 
 from copul.families.elliptical.multivar_elliptical_copula import MultivariateEllipticalCopula
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_core_copula import BivCoreCopula
 from copul.families.other.lower_frechet import LowerFrechet
 from copul.families.other.upper_frechet import UpperFrechet
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
-class EllipticalCopula(MultivariateEllipticalCopula, BivCopula):
+class EllipticalCopula(MultivariateEllipticalCopula, BivCoreCopula):
     """
     Abstract base class for bivariate elliptical copulas.
     
@@ -81,10 +80,7 @@ class EllipticalCopula(MultivariateEllipticalCopula, BivCopula):
             dimension = kwargs['dimension']
             del kwargs['dimension']
         MultivariateEllipticalCopula.__init__(self, dimension, *args, **kwargs)
-        
-        # Initialize from BivCopula (with explicit dimension to avoid conflict)
-        biv_kwargs = {k: v for k, v in kwargs.items() if k != "dimension"}
-        BivCopula.__init__(self, **biv_kwargs)
+        BivCoreCopula.__init__(self)
     
     def __call__(self, **kwargs):
         """

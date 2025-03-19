@@ -39,20 +39,7 @@ class MultivariateClayton(ArchimedeanCopula):
         **kwargs
             Additional keyword arguments for the parent class.
         """
-        self._dimension = dimension
         super().__init__(dimension=dimension, **kwargs)
-
-    @property
-    def dimension(self) -> int:
-        """
-        Return the dimension of the copula.
-
-        Returns
-        -------
-        int
-            The dimension
-        """
-        return self._dimension
 
     @property
     def _generator_at_0(self):

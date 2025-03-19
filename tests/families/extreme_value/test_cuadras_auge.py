@@ -19,7 +19,7 @@ def cuadras_auge_copula():
 
 def test_cuadras_auge():
     cop = CuadrasAuge(0.5)
-    xi = cop.chatterjees_xi()
+    xi = cop.xi()
     assert np.isclose(xi, 1 / 6)
 
 
@@ -97,17 +97,17 @@ def test_ca_is_absolutely_continuous():
 def test_ca_correlation_measures(cuadras_auge_copula):
     """Test correlation measures with delta=0.5"""
     # Chatterjee's xi
-    xi = cuadras_auge_copula.chatterjees_xi()
+    xi = cuadras_auge_copula.xi()
     assert np.isclose(xi, 0.5**2 / (2 - 0.5))
     assert np.isclose(xi, 1 / 6)
 
     # Spearman's rho
-    rho = cuadras_auge_copula.spearmans_rho()
+    rho = cuadras_auge_copula.rho()
     assert np.isclose(rho, 3 * 0.5 / (4 - 0.5))
     assert np.isclose(rho, 3 / 7)
 
     # Kendall's tau
-    tau = cuadras_auge_copula.kendalls_tau()
+    tau = cuadras_auge_copula.tau()
     assert np.isclose(tau, 0.5 / (2 - 0.5))
     assert np.isclose(tau, 1 / 3)
 
@@ -118,15 +118,15 @@ def test_ca_correlation_with_arguments():
     copula = CuadrasAuge()
 
     # Chatterjee's xi
-    xi = copula.chatterjees_xi(0.5)
+    xi = copula.xi(0.5)
     assert np.isclose(xi, 1 / 6)
 
     # Spearman's rho
-    rho = copula.spearmans_rho(0.5)
+    rho = copula.rho(0.5)
     assert np.isclose(rho, 3 / 7)
 
     # Kendall's tau
-    tau = copula.kendalls_tau(0.5)
+    tau = copula.tau(0.5)
     assert np.isclose(tau, 1 / 3)
 
 
@@ -220,20 +220,20 @@ def test_ca_edge_cases():
     copula_high = CuadrasAuge(0.999)  # Almost upper Fréchet
 
     # For delta near 0, correlation measures should be near 0
-    assert copula_low.kendalls_tau() < 0.001
-    assert copula_low.spearmans_rho() < 0.001
-    assert copula_low.chatterjees_xi() < 0.001
+    assert copula_low.tau() < 0.001
+    assert copula_low.rho() < 0.001
+    assert copula_low.xi() < 0.001
 
     # For delta near 1, values should approach:
     # kendall's tau: 1/1 = 1
     # spearman's rho: 3/3 = 1
     # chatterjee's xi: 1/1 = 1
-    assert np.isclose(copula_high.kendalls_tau(), 0.999 / (2 - 0.999))
-    assert np.isclose(copula_high.spearmans_rho(), 3 * 0.999 / (4 - 0.999))
-    assert np.isclose(copula_high.chatterjees_xi(), 0.999**2 / (2 - 0.999))
-    assert copula_high.kendalls_tau() > 0.9
-    assert copula_high.spearmans_rho() > 0.9
-    assert copula_high.chatterjees_xi() > 0.9
+    assert np.isclose(copula_high.tau(), 0.999 / (2 - 0.999))
+    assert np.isclose(copula_high.rho(), 3 * 0.999 / (4 - 0.999))
+    assert np.isclose(copula_high.xi(), 0.999**2 / (2 - 0.999))
+    assert copula_high.tau() > 0.9
+    assert copula_high.rho() > 0.9
+    assert copula_high.xi() > 0.9
 
 
 def test_ca_with_invalid_parameter():

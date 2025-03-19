@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.families.other.b11 import B11
 
 
@@ -160,7 +160,7 @@ def test_dependence_measures():
         # B11 with parameter delta has Spearman's rho = delta
         # This is because it's a convex combination with weight delta
         if hasattr(copula, "spearmans_rho"):
-            rho = float(copula.spearmans_rho())
+            rho = float(copula.rho())
             assert abs(rho - expected_measure) < 1e-10, (
                 f"Spearman's rho incorrect for delta={delta}"
             )
@@ -168,7 +168,7 @@ def test_dependence_measures():
         # Similarly, Kendall's tau = delta/3 * (3 - 2*delta)
         # (this is a theoretical result for this family)
         if hasattr(copula, "kendalls_tau"):
-            tau = float(copula.kendalls_tau())
+            tau = float(copula.tau())
             expected_tau = delta / 3 * (3 - 2 * delta)
             assert abs(tau - expected_tau) < 1e-10, (
                 f"Kendall's tau incorrect for delta={delta}"

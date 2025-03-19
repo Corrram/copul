@@ -162,7 +162,7 @@ def test_conditional_distribution():
     )
 
 
-def test_spearmans_rho():
+def test_rho():
     """Test Spearman's rho calculation."""
     # From the test failure, it seems the actual formula in the Plackett implementation
     # might not be bounded in [-1,1], or there might be issues with the numerical evaluation
@@ -178,7 +178,7 @@ def test_spearmans_rho():
 
     for theta_val, (min_rho, max_rho) in test_cases:
         copula = Plackett(theta=theta_val)
-        rho = float(copula.spearmans_rho())
+        rho = float(copula.rho())
 
         # Check if rho is in the expected range
         assert min_rho <= rho <= max_rho, (

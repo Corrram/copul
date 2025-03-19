@@ -67,7 +67,7 @@ class CheckMin(Check):
                 # Import the BivCheckMin class here to avoid circular imports
                 try:
                     bcp_module = importlib.import_module(
-                        "copul.checkerboard.bivcheckmin"
+                        "copul.checkerboard.biv_check_min"
                     )
                     BivCheckMin = getattr(bcp_module, "BivCheckMin")
                     # Return a new BivCheckMin instance with the same arguments

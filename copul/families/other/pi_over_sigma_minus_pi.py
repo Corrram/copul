@@ -87,6 +87,6 @@ class PiOverSigmaMinusPi(BivArchimedeanCopula):
         """Upper tail dependence coefficient: λ_U = 0"""
         return 0
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """Kendall's tau for this copula is 1/3"""
         return 1 / 3

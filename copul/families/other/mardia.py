@@ -3,7 +3,7 @@ import copy
 import sympy
 
 from copul.exceptions import PropertyUnavailableException
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -149,7 +149,7 @@ class Mardia(BivCopula):
         # Regular formula for 0 <= theta < 1
         return theta**2 * (1 + theta) / 2
 
-    def chatterjees_xi(self, *args, **kwargs):
+    def xi(self, *args, **kwargs):
         """
         Calculate Chatterjee's xi for the Mardia copula.
 
@@ -158,7 +158,7 @@ class Mardia(BivCopula):
         self._set_params(args, kwargs)
         return self.theta**4 * (3 * self.theta**2 + 1) / 4
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         """
         Calculate Spearman's rho for the Mardia copula.
 
@@ -167,7 +167,7 @@ class Mardia(BivCopula):
         self._set_params(args, kwargs)
         return self.theta**3
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the Mardia copula.
 

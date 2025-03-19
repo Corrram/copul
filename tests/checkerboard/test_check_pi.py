@@ -152,7 +152,7 @@ def test_multivar_checkerboard():
 def test_2d_ccop_cond_distr_1_different_points(u, v, expected):
     matr = [[1, 0], [0, 1]]
     ccop = CheckPi(matr)
-    actual = ccop.cond_distr_1((u, v))
+    actual = ccop.cond_distr_1(u, v)
     assert np.isclose(actual, expected)
 
 
@@ -225,7 +225,7 @@ def test_initialization():
     # Test with sympy Matrix
     matr_sympy = sympy.Matrix([[1, 2], [3, 4]])
     copula_sympy = CheckPi(matr_sympy)
-    assert np.isclose(float(sum(copula_sympy.matr)), 1.0)
+    assert np.isclose(copula_sympy.matr.sum(), 1.0)
 
 
 def test_cdf_boundary_cases():
@@ -371,7 +371,7 @@ def test_str_representation():
     matr = np.array([[1, 2], [3, 4]])
     copula = CheckPi(matr)
 
-    assert str(copula) == "CheckPiCopula((2, 2))"
+    assert str(copula) == "BivCheckPi(m=2, n=2)"
 
 
 def test_is_absolutely_continuous():
@@ -529,5 +529,5 @@ def test_chatterjees_xi_for_independence_copula():
     copula = CheckPi(matr)
 
     # Chatterjee's xi for this copula should be 0
-    xi = copula.chatterjees_xi(seed=42)
+    xi = copula.xi(seed=42)
     assert np.isclose(xi, 0, atol=1e-2)

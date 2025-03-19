@@ -3,10 +3,9 @@ import copy
 import sympy
 
 from copul.exceptions import PropertyUnavailableException
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Frechet(BivCopula):
@@ -164,6 +163,14 @@ class Frechet(BivCopula):
 
         return cdf_values
 
+    def cond_distr_1(self, u=None, v=None):
+        cond_distr = (
+            self._alpha * sympy.Heaviside(self.v - self.u)
+            + self._beta * sympy.Heaviside(self.u + self.v - 1)
+            + self.v * (-self._alpha - self._beta + 1)
+        )
+        return CD2Wrapper(cond_distr)(u, v)
+    
     def cond_distr_2(self, u=None, v=None):
         cond_distr = (
             self._alpha * sympy.Heaviside(self.u - self.v)
@@ -172,11 +179,11 @@ class Frechet(BivCopula):
         )
         return CD2Wrapper(cond_distr)(u, v)
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
         return self._alpha - self._beta
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         self._set_params(args, kwargs)
         return (self._alpha - self._beta) * (2 + self._alpha + self._beta) / 3
 
@@ -188,7 +195,7 @@ class Frechet(BivCopula):
     def lambda_U(self):
         return self._alpha
 
-    def chatterjees_xi(self, *args, **kwargs):
+    def xi(self, *args, **kwargs):
         self._set_params(args, kwargs)
         return (self.alpha - self.beta) ** 2 + self.alpha * self.beta
 

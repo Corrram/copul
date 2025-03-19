@@ -65,7 +65,7 @@ class TestCheck:
         assert str(check) == "CheckerboardCopula((2, 2))"
 
     @patch("mfoci.codec")
-    def test_chatterjees_xi(self, mock_codec):
+    def test_xi(self, mock_codec):
         """Test the calculation of Chatterjee's Xi."""
         # Setup mock return value for mfoci.codec
         mock_codec.return_value = 0.5
@@ -81,7 +81,7 @@ class TestCheck:
 
         # Calculate Chatterjee's Xi
         n = 1_000
-        xi = check.chatterjees_xi(n)
+        xi = check.xi(n)
 
         # Verify rvs was called with the expected argument
         check.rvs.assert_called_once_with(n, random_state=None)

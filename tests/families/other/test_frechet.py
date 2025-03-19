@@ -218,24 +218,24 @@ def test_pdf_not_available(copula):
         copula.pdf
 
 
-def test_spearmans_rho(copula):
+def test_rho(copula):
     """Test Spearman's rho calculation."""
     # Spearman's rho should be alpha - beta
-    rho = float(copula.spearmans_rho())
+    rho = float(copula.rho())
     expected = 0.3 - 0.2
     assert abs(rho - expected) < 1e-10
 
     # Test with different values
     frechet = Frechet(alpha=0.5, beta=0.1)
-    rho = float(frechet.spearmans_rho())
+    rho = float(frechet.rho())
     expected = 0.5 - 0.1
     assert abs(rho - expected) < 1e-10
 
 
-def test_kendalls_tau(copula):
+def test_tau(copula):
     """Test Kendall's tau calculation."""
     # Kendall's tau formula: (alpha - beta) * (2 + alpha + beta) / 3
-    tau = float(copula.kendalls_tau())
+    tau = float(copula.tau())
     expected = (0.3 - 0.2) * (2 + 0.3 + 0.2) / 3
     assert abs(tau - expected) < 1e-10
 
@@ -251,10 +251,10 @@ def test_tail_dependence(copula):
     assert abs(lambda_L - 0.3) < 1e-10
 
 
-def test_chatterjees_xi(copula):
+def test_xi(copula):
     """Test Chatterjee's xi calculation."""
     # Formula: (alpha - beta)^2 + alpha * beta
-    xi = float(copula.chatterjees_xi())
+    xi = float(copula.xi())
     expected = (0.3 - 0.2) ** 2 + 0.3 * 0.2
     assert abs(xi - expected) < 1e-10
 

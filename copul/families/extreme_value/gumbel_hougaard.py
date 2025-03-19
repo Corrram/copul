@@ -1,15 +1,11 @@
-from typing import TypeAlias
-import numpy as np
 import sympy as sp
-from sympy import exp, log
 
 from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.families.extreme_value.multivariate_gumbel_hougaard import MultivariateGumbelHougaard
 from copul.families.other import BivIndependenceCopula
-from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
-class GumbelHougaard(MultivariateGumbelHougaard, BivExtremeValueCopula):
+class GumbelHougaardEV(MultivariateGumbelHougaard, BivExtremeValueCopula):
     """
     Bivariate Gumbel-Hougaard Extreme Value Copula.
     
@@ -84,10 +80,6 @@ class GumbelHougaard(MultivariateGumbelHougaard, BivExtremeValueCopula):
         # Initialize BivExtremeValueCopula first (it will set dimension=2)
         MultivariateGumbelHougaard.__init__(self, 2, *args, **kwargs)
         BivExtremeValueCopula.__init__(self, *args, **kwargs)
-        
-        # Then initialize MultivariateGumbelHougaard but without passing dimension
-        # Extract non-dimension kwargs
-        init_kwargs = {k: v for k, v in kwargs.items() if k != 'dimension'}
         
         # Set theta parameter
         if theta is not None:
@@ -167,18 +159,8 @@ class GumbelHougaard(MultivariateGumbelHougaard, BivExtremeValueCopula):
         return (self.t**self.theta + (1 - self.t) ** self.theta) ** (1 / self.theta)
     
     @property
-    def cdf(self):
-        """
-        Compute the CDF of the bivariate Gumbel-Hougaard copula.
-        
-        Returns
-        -------
-        CDFWrapper
-            A wrapper around the CDF function.
-        """
-        try:
-            # Create the explicit CDF expression
-            base_expr = sp.exp(
+    def _cdf_expr(self):
+        return sp.exp(
                 -(
                     (
                         sp.log(1 / self.v) ** self.theta
@@ -187,20 +169,8 @@ class GumbelHougaard(MultivariateGumbelHougaard, BivExtremeValueCopula):
                     ** (1 / self.theta)
                 )
             )
-            
-            # Handle boundary cases with piecewise expression
-            cdf_expr = sp.Piecewise(
-                (0, sp.Or(sp.Eq(self.u, 0), sp.Eq(self.v, 0))), 
-                (base_expr, True)
-            )
-            
-            return CDFWrapper(cdf_expr)
-            
-        except Exception as e:
-            # Fall back to parent implementation
-            return super().cdf
     
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Compute Kendall's tau for the Gumbel-Hougaard copula.
         
@@ -232,7 +202,3 @@ class GumbelHougaard(MultivariateGumbelHougaard, BivExtremeValueCopula):
         theta = self.theta
         integrand = ((t**theta + (1 - t) ** theta) ** (1 / theta) + 1) ** (-2)
         return 12 * sp.Integral(integrand, (t, 0, 1)) - 3
-
-
-# Define alias
-GumbelHougaardEV: TypeAlias = GumbelHougaard

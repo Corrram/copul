@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from copul.exceptions import PropertyUnavailableException
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.families.other.mardia import Mardia
 
 
@@ -182,20 +182,20 @@ def test_pdf_not_available(copula):
         copula.pdf
 
 
-def test_spearmans_rho():
+def test_rho():
     """Test Spearman's rho calculation."""
     # Test with different theta values
     test_cases = [(-1, -1), (-0.5, -0.125), (0, 0), (0.5, 0.125), (1, 1)]
 
     for theta, expected in test_cases:
         copula = Mardia(theta=theta)
-        rho = float(copula.spearmans_rho())
+        rho = float(copula.rho())
         assert abs(rho - expected) < 1e-10, (
             f"Spearman's rho incorrect for theta={theta}"
         )
 
 
-def test_kendalls_tau():
+def test_tau():
     """Test Kendall's tau calculation."""
     # Formula: theta^3 * (theta^2 + 2) / 3
     test_cases = [
@@ -208,7 +208,7 @@ def test_kendalls_tau():
 
     for theta, expected in test_cases:
         copula = Mardia(theta=theta)
-        tau = float(copula.kendalls_tau())
+        tau = float(copula.tau())
         assert abs(tau - expected) < 1e-10, f"Kendall's tau incorrect for theta={theta}"
 
 
@@ -237,7 +237,7 @@ def test_tail_dependence():
         )
 
 
-def test_chatterjees_xi():
+def test_xi():
     """Test Chatterjee's xi calculation."""
     # Formula: theta^4 * (3*theta^2 + 1) / 4
     test_cases = [
@@ -250,7 +250,7 @@ def test_chatterjees_xi():
 
     for theta, expected in test_cases:
         copula = Mardia(theta=theta)
-        xi = float(copula.chatterjees_xi())
+        xi = float(copula.xi())
         assert abs(xi - expected) < 1e-10, (
             f"Chatterjee's xi incorrect for theta={theta}"
         )

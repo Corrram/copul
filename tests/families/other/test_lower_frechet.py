@@ -133,17 +133,17 @@ def test_pdf_not_available(copula):
         copula.pdf
 
 
-def test_spearmans_rho(copula):
+def test_rho(copula):
     """Test Spearman's rho calculation."""
     # For LowerFrechet, rho = -1
-    rho = float(copula.spearmans_rho())
+    rho = float(copula.rho())
     assert abs(rho - (-1)) < 1e-10
 
 
-def test_kendalls_tau(copula):
+def test_tau(copula):
     """Test Kendall's tau calculation."""
     # For LowerFrechet, tau = -1/3
-    tau = float(copula.kendalls_tau())
+    tau = float(copula.tau())
     expected = -1
     assert abs(tau - expected) < 1e-10, (
         f"Kendall's tau incorrect: got {tau}, expected {expected}"
@@ -161,10 +161,10 @@ def test_tail_dependence(copula):
     assert abs(lambda_L - 0) < 1e-10
 
 
-def test_chatterjees_xi(copula):
+def test_xi(copula):
     """Test Chatterjee's xi calculation."""
     # For LowerFrechet, xi = 1
-    xi = float(copula.chatterjees_xi())
+    xi = float(copula.xi())
     assert abs(xi - 1) < 1e-10, f"Chatterjee's xi incorrect: got {xi}, expected 1"
 
 

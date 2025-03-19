@@ -171,10 +171,10 @@ def test_hr_properties_inheritance():
     copula = HueslerReiss(1.0)
 
     # Should have kendalls_tau and spearmans_rho methods
-    assert hasattr(copula, "kendalls_tau")
-    assert hasattr(copula, "spearmans_rho")
-    assert callable(copula.kendalls_tau)
-    assert callable(copula.spearmans_rho)
+    assert hasattr(copula, "tau")
+    assert hasattr(copula, "rho")
+    assert callable(copula.tau)
+    assert callable(copula.rho)
 
     # Should have CDF method
     assert hasattr(copula, "cdf")

@@ -36,7 +36,7 @@ from copul.families.archimedean import (
     Nelsen21,
     Nelsen22,
 )
-from copul.families.bivcopula import BivCopula
+from copul.families.core.biv_copula import BivCopula
 from copul.families.copula_builder import from_cdf
 from copul.families.elliptical import Gaussian, Laplace, StudentT
 from copul.families.extreme_value import (

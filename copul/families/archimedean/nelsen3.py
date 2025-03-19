@@ -53,7 +53,7 @@ class AliMikhailHaq(BivArchimedeanCopula):
         )
         return SymPyFuncWrapper(cond_distr_1)(u, v)
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         self._set_params(args, kwargs)
         th = self.theta
         t = sympy.symbols("t")
@@ -62,7 +62,7 @@ class AliMikhailHaq(BivArchimedeanCopula):
             12 * (1 + th) * integral - 24 * (1 - th) * sympy.log(1 - th)
         ) / th**2 - 3 * (th + 12) / th
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         self._set_params(args, kwargs)
         theta = self.theta
         return (
@@ -71,7 +71,7 @@ class AliMikhailHaq(BivArchimedeanCopula):
             - 2 * (1 - theta) ** 2 / (3 * theta**2) * sympy.log(1 - theta)
         )
 
-    def chatterjees_xi(self, *args, **kwargs):
+    def xi(self, *args, **kwargs):
         self._set_params(args, kwargs)
         theta = self.theta
         return (

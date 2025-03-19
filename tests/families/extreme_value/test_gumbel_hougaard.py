@@ -3,16 +3,15 @@ import numpy as np
 import sympy as sp
 from unittest.mock import patch
 
-from copul.families.extreme_value.gumbel_hougaard import GumbelHougaard
+from copul.families.extreme_value.gumbel_hougaard import GumbelHougaardEV as GumbelHougaard
 from copul.families.other import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
-
 
 class TestGumbelHougaard:
     @pytest.fixture
     def gumbel_copula(self):
         """Create a GumbelHougaard copula instance with theta=2 for testing"""
-        copula = GumbelHougaard(theta=2.0)
+        copula = GumbelHougaard(2)
         return copula
 
     def test_init(self):
@@ -112,25 +111,25 @@ class TestGumbelHougaard:
         ind_copula = copula(1)
         assert isinstance(ind_copula, BivIndependenceCopula)
 
-    def test_kendalls_tau(self, gumbel_copula):
+    def test_tau(self, gumbel_copula):
         """Test Kendall's tau calculation"""
         # For GumbelHougaard, tau = (theta-1)/theta
         # With theta=2, tau = 0.5
-        tau = gumbel_copula.kendalls_tau()
+        tau = gumbel_copula.tau()
         assert abs(float(tau) - 0.5) < 1e-10
 
         # Create a new copula with different theta
         copula = GumbelHougaard(theta=4.0)
-        tau = copula.kendalls_tau()
+        tau = copula.tau()
         assert abs(float(tau) - 0.75) < 1e-10
 
-    def test_spearmans_rho(self, gumbel_copula):
+    def test_rho(self, gumbel_copula):
         """Test Spearman's rho computation"""
         # Patch the integration result since it's complex
         with patch.object(GumbelHougaard, "_rho") as mock_rho:
             mock_rho.return_value = 0.7  # Expected value for theta=2
 
-            rho = gumbel_copula.spearmans_rho()
+            rho = gumbel_copula.rho()
             assert rho == 0.7
             mock_rho.assert_called_once()
 
@@ -180,3 +179,29 @@ class TestGumbelHougaard:
 
             # Check the result formula: 12 * integral - 3
             assert result == 12 * 1.0 - 3
+
+    @pytest.mark.parametrize(
+        "method_name, point, expected",
+        [
+            ("cond_distr_1", (0, 0), 0),
+            ("cond_distr_2", (0, 0), 0),
+        ],
+    )
+    def test_cond_distr_edge_cases_gh(self, method_name, point, expected, gumbel_copula):
+        method = getattr(gumbel_copula, method_name)
+        func = method(point)
+        evaluated_func = float(func)     
+        assert np.isclose(evaluated_func, expected)
+
+    @pytest.mark.parametrize(
+        "method_name, point, expected",
+        [
+            ("cond_distr_1", (0, 0), 0),
+            ("cond_distr_2", (0, 0), 0),
+        ],
+    )
+    def test_cond_distr_edge_cases_gh_with_asterisk(self, method_name, point, expected, gumbel_copula):
+        method = getattr(gumbel_copula, method_name)
+        func = method(*point)
+        evaluated_func = float(func)     
+        assert np.isclose(evaluated_func, expected)

@@ -53,16 +53,16 @@ def test_gaussian_cd1():
     assert np.isclose(cdf.evalf(), 0.504078212489690)
 
 
-@pytest.mark.parametrize("rho, expected", [(-1, -1), (0, 0), (1, 1)])
-def test_gaussian_tau(rho, expected):
-    cop = Gaussian()(rho)
-    assert cop.kendalls_tau() == expected
+@pytest.mark.parametrize("tau, expected", [(-1, -1), (0, 0), (1, 1)])
+def test_gaussian_tau(tau, expected):
+    cop = Gaussian()(tau)
+    assert cop.tau() == expected
 
 
-@pytest.mark.parametrize("rho, expected", [(-1, 1), (0, 0), (1, 1)])
-def test_gaussian_xi(rho, expected):
-    cop = Gaussian()(rho)
-    assert cop.chatterjees_xi() == expected
+@pytest.mark.parametrize("xi, expected", [(-1, 1), (0, 0), (1, 1)])
+def test_gaussian_xi(xi, expected):
+    cop = Gaussian()(xi)
+    assert cop.xi() == expected
 
 
 # Extended tests
@@ -138,7 +138,7 @@ def test_gaussian_pdf():
         assert isinstance(result, SymPyFuncWrapper)
 
 
-def test_gaussian_spearmans_rho():
+def test_gaussian_rho():
     """Test Spearman's rho calculation."""
     # For rho = 0.5, Spearman's rho should be 6/π * arcsin(0.5/2) ≈ 0.4886
     cop = Gaussian(0.5)
@@ -161,9 +161,9 @@ def test_gaussian_correlation_measures_consistency():
         cop = Gaussian(rho)
 
         # Calculate correlation measures
-        tau = cop.kendalls_tau()
+        tau = cop.tau()
         spearman = cop.spearmans_rho()
-        xi = cop.chatterjees_xi()
+        xi = cop.xi()
 
         # For Gaussian copula, certain relationships should hold:
         # - tau and rho have the same sign

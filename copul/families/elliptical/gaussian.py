@@ -388,7 +388,7 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
             # Otherwise use the multivariate implementation
             return super().pdf
     
-    def chatterjees_xi(self, *args, **kwargs):
+    def xi(self, *args, **kwargs):
         """
         Compute Chatterjee's xi measure of dependence.
         
@@ -412,7 +412,7 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         self._set_params(args, kwargs)
         return 6 / np.pi * np.arcsin(float(self.rho) / 2)
     
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Compute Kendall's tau rank correlation.
         

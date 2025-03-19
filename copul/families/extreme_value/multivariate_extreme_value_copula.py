@@ -6,7 +6,7 @@ import numpy as np
 import sympy as sp
 from sympy import exp, log
 
-from copul.families.copula import Copula
+from copul.families.core.copula import Copula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 

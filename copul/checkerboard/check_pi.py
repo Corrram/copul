@@ -35,7 +35,7 @@ class CheckPi(Check):
                     import importlib
 
                     bcp_module = importlib.import_module(
-                        "copul.checkerboard.bivcheckpi"
+                        "copul.checkerboard.biv_check_pi"
                     )
                     BivCheckPi = getattr(bcp_module, "BivCheckPi")
                     # Return a new BivCheckPi instance with the same arguments
@@ -760,6 +760,7 @@ class CheckPi(Check):
             results[valid_mask][i] = self.matr[tuple(idx)]
         
         return results
+    
     def rvs(self, n=1, random_state=None, **kwargs):
         """
         Draw random variates from the d-dimensional checkerboard copula efficiently.

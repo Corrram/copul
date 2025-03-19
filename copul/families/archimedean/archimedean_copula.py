@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 import sympy
 
-from copul.families.copula import Copula
+from copul.families.core.copula import Copula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 from copul.wrapper.inv_gen_wrapper import InvGenWrapper
 
@@ -129,7 +129,9 @@ class ArchimedeanCopula(Copula, ABC):
                 raise ValueError(
                     f"Parameter theta must be <= {upper_bound}, got {theta_val}"
                 )
-
+        
+        if "dimension" not in kwargs:
+            kwargs["dimension"] = self.dim
         super().__init__(**kwargs)
 
     def __str__(self):

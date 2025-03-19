@@ -2,7 +2,6 @@ from copul.families.extreme_value.bb5 import BB5
 from copul.families.extreme_value.cuadras_auge import CuadrasAuge
 from copul.families.extreme_value.galambos import Galambos
 from copul.families.extreme_value.gumbel_hougaard import (
-    GumbelHougaard,
     GumbelHougaardEV,
 )
 from copul.families.extreme_value.huesler_reiss import HueslerReiss
@@ -15,7 +14,6 @@ __all__ = [
     "BB5",
     "CuadrasAuge",
     "Galambos",
-    "GumbelHougaard",
     "GumbelHougaardEV",
     "HueslerReiss",
     "JoeEV",

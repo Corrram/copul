@@ -106,10 +106,10 @@ class TestMultivariateGumbelHougaard:
             manual_cdf = float(copula.cdf(u[i], v[i], w[i]))
             assert abs(cdf_values[i] - manual_cdf) < 1e-10
     
-    def test_kendalls_tau(self, copula):
+    def test_tau(self, copula):
         """Test Kendall's tau computation"""
         # For theta=2, tau should be (2-1)/2 = 0.5
-        tau = copula.kendalls_tau()
+        tau = copula.tau()
         assert float(tau) == 0.5
         
         # Test with different theta values
@@ -119,7 +119,7 @@ class TestMultivariateGumbelHougaard:
             test_copula = MultivariateGumbelHougaard(dimension=3, theta=theta)
             
             # Compute tau
-            tau = test_copula.kendalls_tau()
+            tau = test_copula.tau()
             
             # Check against expected formula: (theta-1)/theta
             expected_tau = (theta - 1) / theta
@@ -182,12 +182,12 @@ def test_kendalls_tau_values(theta, expected_tau):
     if theta == 1.0:
         # Create independence copula directly for testing
         indep_copula = BivIndependenceCopula()
-        tau = indep_copula.kendalls_tau()
+        tau = indep_copula.tau()
         assert float(tau) == expected_tau
     else:
         # Create Gumbel-Hougaard copula with specified theta
         copula = MultivariateGumbelHougaard(dimension=2, theta=theta)
-        tau = copula.kendalls_tau()
+        tau = copula.tau()
         assert abs(float(tau) - expected_tau) < 1e-10
 
 

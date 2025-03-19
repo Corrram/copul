@@ -62,7 +62,7 @@ class TestCISRearranger:
         mock_checkerboarder = MagicMock(spec=Checkerboarder)
         mock_checkerboarder_class.return_value = mock_checkerboarder
         mock_check_pi = MagicMock(spec=BivCheckPi)
-        mock_checkerboarder.compute_check_pi.return_value = mock_check_pi
+        mock_checkerboarder.get_checkerboard_copula.return_value = mock_check_pi
 
         # Mock the rearrange_checkerboard method
         with patch.object(
@@ -72,7 +72,7 @@ class TestCISRearranger:
 
             # Verify checkerboarder was created and used
             mock_checkerboarder_class.assert_called_once_with(self.checkerboard_size)
-            mock_checkerboarder.compute_check_pi.assert_called_once_with(mock_copula)
+            mock_checkerboarder.get_checkerboard_copula.assert_called_once_with(mock_copula)
 
             # Verify rearrange_checkerboard was called with the right argument
             mock_rearrange.assert_called_once_with(mock_check_pi)
@@ -95,7 +95,7 @@ class TestCISRearranger:
         ) as mock_checkerboarder_cls:
             mock_checkerboarder = MagicMock()
             mock_check_pi = MagicMock(spec=BivCheckPi)
-            mock_checkerboarder.compute_check_pi.return_value = mock_check_pi
+            mock_checkerboarder.get_checkerboard_copula.return_value = mock_check_pi
             mock_checkerboarder_cls.return_value = mock_checkerboarder
 
             # Mock the rearrange_checkerboard method
@@ -109,7 +109,7 @@ class TestCISRearranger:
 
                 # Verify the mock was called correctly
                 mock_checkerboarder_cls.assert_called_once_with(self.checkerboard_size)
-                mock_checkerboarder.compute_check_pi.assert_called_once_with(
+                mock_checkerboarder.get_checkerboard_copula.assert_called_once_with(
                     mock_copula
                 )
                 mock_rearrange.assert_called_once_with(mock_check_pi)

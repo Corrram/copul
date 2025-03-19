@@ -66,7 +66,7 @@ class CISRearranger:
             log.debug(
                 f"Converting copula to checkerboard approximation with grid size {self._checkerboard_size}"
             )
-            ccop = checkerboarder.compute_check_pi(copula)
+            ccop = checkerboarder.get_checkerboard_copula(copula)
 
         # Perform the rearrangement
         return self.rearrange_checkerboard(ccop)

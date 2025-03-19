@@ -7,7 +7,7 @@ from copul.families.archimedean import AliMikhailHaq, Nelsen3
 
 def test_nelsen3():
     nelsen3 = Nelsen3(0.5)
-    result = nelsen3.chatterjees_xi()
+    result = nelsen3.xi()
     assert np.isclose(result, 0.0225887222397811)
 
 
@@ -181,7 +181,7 @@ def test_nelsen3_kendalls_tau_adjusted():
 
     for theta, expected in test_cases:
         copula = Nelsen3(theta)
-        tau = float(copula.kendalls_tau())
+        tau = float(copula.tau())
         assert np.isclose(tau, expected, rtol=0.01)
 
 
@@ -194,7 +194,7 @@ def test_nelsen3_kendalls_tau_theta_zero():
     # Use numerical approximation
     theta_small = 1e-3
     copula = Nelsen3(theta_small)
-    tau = float(copula.kendalls_tau())
+    tau = float(copula.tau())
     assert abs(tau) < 0.01  # Should be very close to 0
 
 
@@ -205,7 +205,7 @@ def test_nelsen3_spearmans_rho_adjusted():
 
     for theta, expected in test_cases:
         copula = Nelsen3(theta)
-        rho = float(copula.spearmans_rho())
+        rho = float(copula.rho())
         assert np.isclose(rho, expected, rtol=0.02)
 
 
@@ -218,15 +218,15 @@ def test_nelsen3_spearmans_rho_theta_zero():
     # Use numerical approximation
     theta_small = 1e-3
     copula = Nelsen3(theta_small)
-    rho = float(copula.spearmans_rho())
+    rho = float(copula.rho())
     assert abs(rho) < 0.01  # Should be very close to 0
 
 
 @pytest.mark.parametrize("theta", [-1, -0.5, 0.5, 0.9])  # Skip theta=0
-def test_nelsen3_chatterjees_xi(theta):
+def test_nelsen3_xi(theta):
     """Test Chatterjee's xi for Nelsen3."""
     copula = Nelsen3(theta)
-    xi = float(copula.chatterjees_xi())
+    xi = float(copula.xi())
 
     # Using the original test case value for theta=0.5
     if abs(theta - 0.5) < 1e-10:
@@ -249,15 +249,15 @@ def test_nelsen3_chatterjees_xi_theta_zero():
         return 0.0
 
     # Temporarily replace the method
-    original_xi = copula.chatterjees_xi
-    copula.chatterjees_xi = patched_xi
+    original_xi = copula.xi
+    copula.xi = patched_xi
 
     try:
-        xi = copula.chatterjees_xi()
+        xi = copula.xi()
         assert np.isclose(xi, 0.0)
     finally:
         # Restore original method
-        copula.chatterjees_xi = original_xi
+        copula.xi = original_xi
 
 
 # Adjusted specific values test

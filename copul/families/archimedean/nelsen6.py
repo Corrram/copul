@@ -4,6 +4,7 @@ import sympy
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -31,7 +32,7 @@ class Joe(HeavyComputeArch):
         gen = 1 - (-((1 - self.u) ** theta - 1) * ((1 - self.v) ** theta - 1) + 1) ** (
             1 / theta
         )
-        return SymPyFuncWrapper(gen)
+        return CDFWrapper(gen)
 
     def cond_distr_1(self, u=None, v=None):
         theta = self.theta

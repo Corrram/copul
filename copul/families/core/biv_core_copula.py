@@ -5,7 +5,6 @@ import types
 
 import numpy as np
 import sympy as sp
-from copul.families.copula import Copula
 from matplotlib import pyplot as plt
 
 from copul.families.cis_verifier import CISVerifier
@@ -19,7 +18,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 log = logging.getLogger(__name__)
 
 
-class BivCopula(Copula):
+class BivCoreCopula:
     """
     Base class for bivariate copulas using symbolic expressions.
 
@@ -43,7 +42,7 @@ class BivCopula(Copula):
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         """
         Initialize a bivariate copula instance.
 
@@ -58,10 +57,7 @@ class BivCopula(Copula):
         **kwargs : dict
             Keyword parameters to override default symbolic parameters.
         """
-        if "dimension" in kwargs:
-            kwargs.pop("dimension")
-        super().__init__(2, *args, **kwargs)
-        self.dimension = 2
+        self.dim = 2
         self.u_symbols = [self.u, self.v]
 
     def __str__(self):
@@ -216,7 +212,7 @@ class BivCopula(Copula):
         result = CD2Wrapper(sp.diff(self.cdf, self.v))
         return result(u, v)
 
-    def chatterjees_xi(self, *args, **kwargs):
+    def xi(self, *args, **kwargs):
         """
         Compute Chatterjee's xi correlation measure.
 
@@ -247,7 +243,7 @@ class BivCopula(Copula):
         log.debug("xi latex: %s", sp.latex(xi))
         return SymPyFuncWrapper(xi)
 
-    def spearmans_rho(self, *args, **kwargs):
+    def rho(self, *args, **kwargs):
         """
         Compute Spearman's rho correlation measure.
 
@@ -276,7 +272,7 @@ class BivCopula(Copula):
         """
         return sp.simplify(12 * self._rho_int_2() - 3)
 
-    def kendalls_tau(self, *args, **kwargs):
+    def tau(self, *args, **kwargs):
         """
         Compute Kendall's tau correlation measure.
 

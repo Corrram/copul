@@ -158,7 +158,7 @@ def test_nelsen4_archimedean_property(theta):
         (5, 0.8),
     ],
 )
-def test_nelsen4_kendalls_tau(theta, expected):
+def test_nelsen4_tau(theta, expected):
     """Test Kendall's tau for Nelsen4.
 
     For Gumbel copula, Kendall's tau = (θ-1)/θ

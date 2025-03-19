@@ -165,12 +165,12 @@ def test_conditional_distribution_2(nelsen7_copula):
         assert np.isclose(result, expected, rtol=1e-5)
 
 
-def test_chatterjees_xi(nelsen7_copula):
+def test_xi(nelsen7_copula):
     """Test Chatterjee's xi coefficient."""
     # For Nelsen7, xi = 1 - theta
     theta = 0.5
     expected = 1 - theta
-    actual = float(nelsen7_copula.chatterjees_xi())
+    actual = float(nelsen7_copula.xi())
     assert np.isclose(actual, expected, rtol=1e-5)
 
     # Test with other theta values
@@ -182,25 +182,25 @@ def test_chatterjees_xi(nelsen7_copula):
             copula = Nelsen7(theta)
 
         expected = 1 - theta
-        actual = float(copula.chatterjees_xi())
+        actual = float(copula.xi())
         assert np.isclose(actual, expected, rtol=1e-5)
 
 
-def test_kendalls_tau(nelsen7_copula):
+def test_tau(nelsen7_copula):
     """Test Kendall's tau coefficient."""
     theta = 0.5
     # Manual calculation using the formula for theta=0.5
     log_term = np.log(1 - theta)
     expected = 2 - 2 / theta - 2 * (theta - 1) ** 2 * log_term / theta**2
-    actual = float(nelsen7_copula.kendalls_tau())
+    actual = float(nelsen7_copula.tau())
     assert np.isclose(actual, expected, rtol=1e-5)
 
     # Test special cases
     lower_frechet = Nelsen7.create(0)
-    assert float(lower_frechet.kendalls_tau()) == -1
+    assert float(lower_frechet.tau()) == -1
 
     independence = Nelsen7.create(1)
-    assert float(independence.kendalls_tau()) == 0
+    assert float(independence.tau()) == 0
 
 
 def test_lambda_l(nelsen7_copula):
@@ -256,12 +256,12 @@ def test_helper_methods_existence(nelsen7_copula):
 @pytest.mark.parametrize("theta, expected", [(0, -1), (1, 0)])
 def test_nelsen7_rho(theta, expected):
     nelsen = Nelsen7()(theta)
-    rho = nelsen.spearmans_rho()
+    rho = nelsen.rho()
     assert np.isclose(rho, expected)
 
 
 @pytest.mark.parametrize("theta, expected", [(0, -1), (1, 0)])
 def test_nelsen7_tau(theta, expected):
     nelsen = Nelsen7(theta)
-    tau = nelsen.kendalls_tau()
+    tau = nelsen.tau()
     assert np.isclose(tau, expected)

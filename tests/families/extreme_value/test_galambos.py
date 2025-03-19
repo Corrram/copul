@@ -131,18 +131,18 @@ class TestGalambos:
             result = ev_copula.pickands(0.5)
             assert abs(float(result) - 0.6464466094067263) < 1e-10
 
-    def test_kendalls_tau(self, galambos_copula):
+    def test_tau(self, galambos_copula):
         """Test Kendall's tau computation"""
         # For Galambos with delta=2, tau should be approximately 0.5
-        with patch.object(Galambos, "kendalls_tau", return_value=0.5):
-            tau = galambos_copula.kendalls_tau()
+        with patch.object(Galambos, "tau", return_value=0.5):
+            tau = galambos_copula.tau()
             assert tau == 0.5
 
-    def test_spearmans_rho(self, galambos_copula):
+    def test_rho(self, galambos_copula):
         """Test Spearman's rho computation"""
         # For Galambos with delta=2, rho should be approximately 0.7
-        with patch.object(Galambos, "spearmans_rho", return_value=0.7):
-            rho = galambos_copula.spearmans_rho()
+        with patch.object(Galambos, "rho", return_value=0.7):
+            rho = galambos_copula.rho()
             assert rho == 0.7
 
     def test_parameter_update(self):
