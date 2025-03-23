@@ -112,26 +112,16 @@ class BivCheckMin(CheckMin, BivCheckPi):
         cell_val = (I * J) + 0.5 * (I + J) + (1.0 / 3.0)
         E_UV = np.sum(p * (cell_val / (m * n)))
         return 12.0 * E_UV - 3.0
-    
+          
     def tau(self) -> float:
-        tau_checkpi = super().tau()
-        extra = np.sum(self.matr**2)
-        tau = tau_checkpi + extra
-        return tau  
-      
-    def tau_alternative(self) -> float:
-        tau_checkpi = super().tau_alternative()
-        extra = np.sum(self.matr**2)
-        tau = tau_checkpi + extra
-        return tau
+        return super().tau() + np.sum(self.matr**2)
 
     def xi(
         self,
         condition_on_y: bool = False,
     ) -> float:
-        xi_checkpi = super().xi(condition_on_y)
-        xi = xi_checkpi + np.sum(self.matr**2)
-        return xi
+        m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
+        return super().xi(condition_on_y) + m*np.sum(self.matr**2)/n
 
 if __name__ == "__main__":
     ccop = BivCheckMin([[1, 2], [2, 1]])

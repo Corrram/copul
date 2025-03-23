@@ -105,38 +105,34 @@ def test_biv_check_min_rvs(matr):
 
 
 # Tests for tau (Kendall's tau)
-@pytest.mark.parametrize("method", ["tau", "tau_alternative"])
-def test_tau_independence(method):
+@pytest.mark.parametrize("n", [2, 3, 4])
+def test_tau_independence(n):
     """Test that tau is close to 0 for independence copula."""
-    matr = np.ones((4, 4))  # Uniform distribution represents independence
+    matr = np.ones((n, n))  # Uniform distribution represents independence
     ccop = BivCheckW(matr)
-    tau = getattr(ccop, method)()
+    tau = ccop.tau()
     assert tau < 0
 
 
-@pytest.mark.parametrize("method", ["tau", "tau_alternative"])
-def test_tau_perfect_dependence(method):
+def test_tau_perfect_dependence():
     """Test tau for perfect positive and negative dependence."""
     # Perfect positive dependence
     matr_pos = np.zeros((3, 3))
     np.fill_diagonal(matr_pos, 1)  # Place 1's on the main diagonal
     ccop_pos = BivCheckW(matr_pos)
-    tau_pos = getattr(ccop_pos, method)()
-
+    tau_pos = ccop_pos.tau()
     # Perfect negative dependence
     matr_neg = np.zeros((3, 3))
     for i in range(3):
         matr_neg[i, 2 - i] = 1  # Place 1's on the opposite diagonal
     ccop_neg = BivCheckW(matr_neg)
-    tau_neg = getattr(ccop_neg, method)()
+    tau_neg = ccop_neg.tau()
 
     # Tau should be positive for positive dependence and negative for negative dependence
     assert tau_pos < 0.4
     assert tau_neg < -0.5
 
-
-@pytest.mark.parametrize("method", ["tau", "tau_alternative"])
-def test_tau_2x2_exact(method):
+def test_tau_2x2_exact():
     """Test exact values for 2x2 checkerboard copulas."""
     # For a 2x2 checkerboard with perfect positive dependence
     matr_pos = np.array([[1, 0], [0, 1]])
@@ -147,18 +143,17 @@ def test_tau_2x2_exact(method):
     ccop_neg = BivCheckW(matr_neg)
 
     # For 2x2, these are the exact values
-    pos_tau = getattr(ccop_pos, method)()
+    pos_tau = ccop_pos.tau()
     assert np.isclose(pos_tau, 0, atol=1e-2)
-    neg_tau = getattr(ccop_neg, method)()
+    neg_tau = ccop_neg.tau()
     assert np.isclose(neg_tau, -1, atol=1e-2)
 
 
-@pytest.mark.parametrize("method", ["tau", "tau_alternative"])
-def test_tau_example(method):
+def test_tau_example():
     """Test tau for the example matrix from the original code."""
     matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
     ccop = BivCheckW(matr)
-    tau_val = getattr(ccop, method)()
+    tau_val = ccop.tau()
 
     # Check range and expected sign (this matrix has positive dependence)
     assert -1 <= tau_val <= 1
@@ -292,13 +287,12 @@ def test_xi_example():
     assert 0 <= xi_val <= 1
 
 
-@pytest.mark.parametrize("method", ["tau", "tau_alternative"])
-def test_measure_consistency(method):
+def test_measure_consistency():
     """Test that tau and rho have consistent signs for asymmetric matrices."""
     # Create a matrix with positive dependence
     matr_pos = np.array([[0.6, 0.2, 0.0], [0.2, 0.4, 0.2], [0.0, 0.2, 0.6]])
     ccop_pos = BivCheckW(matr_pos)
-    tau_pos = getattr(ccop_pos, method)()
+    tau_pos = ccop_pos.tau()
     rho_pos = ccop_pos.rho()
 
     # Both should be positive
@@ -308,7 +302,7 @@ def test_measure_consistency(method):
     # Create a matrix with negative dependence
     matr_neg = np.array([[0.0, 0.2, 0.6], [0.2, 0.4, 0.2], [0.6, 0.2, 0.0]])
     ccop_neg = BivCheckW(matr_neg)
-    tau_neg = getattr(ccop_neg, method)()
+    tau_neg = ccop_neg.tau()
     rho_neg = ccop_neg.rho()
 
     # Both should be negative
