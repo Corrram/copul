@@ -122,25 +122,6 @@ class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
 
     def cond_distr_2(self, *args):
         return self.cond_distr(2, *args)
-    
-    def tau_alternative(self) -> float:
-        p = self.matr
-        p = np.asarray(p)
-        m, n = p.shape
-
-        # This code works but is less in line with rho and xi
-        pos_sum = 0.0  # sum over pairs with i<k and j<l
-        neg_sum = 0.0  # sum over pairs with i<k and j>l
-        for i in range(m-1):
-            for k in range(i+1, m):
-                for j in range(n-1):
-                    for l in range(j+1, n):
-                        pos_sum += p[i, j] * p[k, l]
-                for j in range(1, n):
-                    for l in range(0, j):
-                        neg_sum += p[i, j] * p[k, l]
-        tau = 2 * (pos_sum - neg_sum)
-        return tau
 
     def rho(self) -> float:
         """
@@ -161,35 +142,33 @@ class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
         uv_sum = np.sum(p * prod) / (m * n)
         return 3 * uv_sum - 3
 
-
     def tau(self) -> float:
         """
-        Compute Kendall's tau via a closed-form formula.
+        Calculate the tau coefficient more efficiently using numpy's vectorized operations.
         
-        For each cell (i,j), define:
-            prior_i = sum_{r < i} p[r,j]  (cumulative sum along rows, excluding current row)
-            prior_j = sum_{c < j} p[i,c]  (cumulative sum along columns, excluding current column)
-        and then the contribution from cell (i,j) is:
-            f(i,j) = prior_i * prior_j + (prior_i + prior_j) * p[i,j]/2 + (p[i,j]**2)/4.
-        
-        Then tau = 1 - 4 * (sum_{i,j} f(i,j)).
-        
-        This version uses shifted cumulative sums.
+        Returns:
+            float: The calculated tau coefficient.
         """
-        p = np.asarray(self.matr, dtype=float)
-        m, n = p.shape
-
-        # Compute cumulative sums along axis=0 and axis=1.
-        # We want the "prior" values: cumulative sum excluding the current cell.
-        prior_i = np.vstack([np.zeros((1, n)), np.cumsum(p, axis=0)[:-1, :]])
-        prior_j = np.hstack([np.zeros((m, 1)), np.cumsum(p, axis=1)[:, :-1]])
-        # Now compute the per-cell contributions:
-        contrib = prior_i * prior_j + (prior_i + prior_j) * p / 2 + (p ** 2) / 4
-        uv_sum = np.sum(contrib)
-        return 1 - 4 * uv_sum
-
+        Xi_m = 2 *np.tri(self.m) - np.eye(self.m)
+        Xi_n = 2 * np.tri(self.n) - np.eye(self.n)
+        return 1 - np.trace(Xi_m @ self.matr @ Xi_n @ self.matr.T)
 
     def xi(self, condition_on_y: bool = False) -> float:
+        if condition_on_y:
+            delta = self.matr.T
+            m = self.n
+            n = self.m
+        else:
+            delta = self.matr
+            m = self.m
+            n = self.n
+        T = np.ones(n) - np.tri(n)
+        M = T @ T.T + T.T + 1/3*np.eye(n)
+        trace = np.trace(delta.T @ delta @ M)
+        xi = 6*m/n * trace - 2
+        return xi
+
+    def xi_(self, condition_on_y: bool = False) -> float:
         """
         Compute Chatterjee's xi via a closed-form formula.
         
