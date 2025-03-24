@@ -60,4 +60,5 @@ dev = [
     "twine>=6.1.0",
     "hatchling>=1.27.0",
     "mpld3>=0.5.10",
+    "seaborn>=0.13.2",
 ]

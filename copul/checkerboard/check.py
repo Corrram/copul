@@ -24,7 +24,7 @@ class Check:
         return f"CheckerboardCopula({self.matr.shape})"
 
     @classmethod
-    def from_data(cls, data, num_bins=None):
+    def from_data(cls, data, num_bins=None, kappa=1/3):
         """
         Create a checkerboard copula from raw data **very quickly** by:
           1. Sorting each dimension to compute ordinal ranks.
@@ -42,6 +42,11 @@ class Check:
         num_bins : int or list/array of int, optional
             Number of bins in each dimension. If None, defaults to
             ~ n^(1/(2*d)) per dimension.
+        kappa : float, optional
+            Exponent for the number of bins. Default is 1/3.
+            This is a heuristic to control the number of bins 
+            vs number of observations per bin.
+            Recommended range is 1.0 to 2.0.
 
         Returns
         -------
@@ -57,7 +62,7 @@ class Check:
         # Heuristic default for the number of bins
         if num_bins is None:
             # Similar to sqrt rule in each dimension => n^(1/(2*d))
-            bin_count = int(np.round(n_samples ** (1.0 / (2.0 * n_features))))
+            bin_count = np.ceil(n_samples ** (2*kappa / n_features))
             num_bins = np.full(n_features, bin_count, dtype=int)
         elif isinstance(num_bins, int):
             num_bins = np.full(n_features, num_bins, dtype=int)
@@ -80,7 +85,7 @@ class Check:
         #      But if you want to match standard pseudo-obs more closely, include +1.
 
         for dim in range(n_features):
-            order = np.argsort(data[:, dim], kind='mergesort')
+            order = np.argsort(data[:, dim], kind='quicksort')
             
             # Ranks go from 0..(n_samples-1)
             # Put them back into bin_indices in their original position
