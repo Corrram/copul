@@ -11,6 +11,9 @@ from copul.checkerboard.check_pi import CheckPi
 from copul.checkerboard.check_min import CheckMin
 from copul.checkerboard.biv_check_w import BivCheckW
 
+# Import your BernsteinCopula class:
+# (Adjust the import path if it's located elsewhere.)
+from copul.checkerboard.bernstein import BernsteinCopula
 
 log = logging.getLogger(__name__)
 
@@ -29,10 +32,13 @@ class Checkerboarder:
         dim : int, optional
             The number of dimensions for the checkerboard grid.
             Defaults to 2.
-
-        Notes
-        -----
-        Pre-calculates grid points for each dimension upon initialization.
+        checkerboard_type : str, optional
+            Specifies which checkerboard-based copula class to return.
+            Possible values include:
+              - "CheckPi", "BivCheckPi"
+              - "CheckMin", "BivCheckMin"
+              - "CheckW", "BivCheckW"
+              - "Bernstein", "BernsteinCopula"
         """
         if n is None:
             n = 20
@@ -45,12 +51,7 @@ class Checkerboarder:
         self._precalculate_grid_points()
 
     def _precalculate_grid_points(self):
-        """
-        Pre-calculate grid points for each dimension.
-
-        Computes linearly spaced grid points on the interval [0, 1] for each dimension
-        and stores them in the instance attribute 'grid_points' to avoid redundant calculations.
-        """
+        """Pre-calculate grid points for each dimension, linearly spaced in [0,1]."""
         self.grid_points = []
         for n_i in self.n:
             points = np.linspace(0, 1, n_i + 1)
@@ -62,8 +63,8 @@ class Checkerboarder:
 
         The method computes a discrete approximation (checkerboard) of the copula by
         evaluating the CDF over a grid defined by pre-calculated grid points. It uses
-        vectorized computation for 2D cases if available; otherwise, it defaults to parallel
-        or serial processing based on grid size and the n_jobs parameter.
+        vectorized computation for 2D cases if available; otherwise, it defaults to
+        parallel or serial processing.
 
         Parameters
         ----------
@@ -71,23 +72,25 @@ class Checkerboarder:
             A copula object that must provide a 'cdf' method, and optionally a
             'cdf_vectorized' method for 2D cases.
         n_jobs : int, optional
-            The number of parallel jobs to use. If None, the number of jobs is determined
-            automatically based on the grid size. Setting n_jobs to 1 disables parallelization.
+            Number of parallel jobs to use. If None, a heuristic is used based
+            on the grid size.
 
         Returns
         -------
-        Checkerboard copula of type self._checkerboard_type
-            The computed checkerboard representation.
+        CheckPi / CheckMin / BivCheckW / BernsteinCopula
+            The computed checkerboard representation, depending on
+            self._checkerboard_type.
         """
         log.debug("Computing checkerboard copula with grid sizes: %s", self.n)
 
-        # Use vectorized computation for 2D if available.
-        if hasattr(copula, "cdf_vectorized") and self.d <= 2:
+        # If 2D and copula has a 'cdf_vectorized' method, do vectorized approach
+        if hasattr(copula, "cdf_vectorized") and self.d == 2:
             return self._compute_checkerboard_vectorized(copula)
 
-        # Determine parallelization based on grid size.
+        # Otherwise, decide on serial vs parallel
         if n_jobs is None:
             total_cells = np.prod(self.n)
+            # Simple heuristic: up to 8 jobs, and only if large enough
             n_jobs = max(1, min(8, total_cells // 1000))
 
         if n_jobs > 1 and np.prod(self.n) > 100:
@@ -97,23 +100,11 @@ class Checkerboarder:
 
     def _compute_checkerboard_vectorized(self, copula):
         """
-        Compute the checkerboard representation using fully vectorized operations (2D only).
-
-        Uses the copula's cdf_vectorized method to compute all grid cell values in a single
-        operation, significantly improving performance compared to cell-by-cell evaluation.
-
-        Parameters
-        ----------
-        copula : object
-            A copula object providing a 'cdf_vectorized' method.
-
-        Returns
-        -------
-        CheckPi or BivCheckPi
-            The checkerboard representation computed via vectorized operations.
+        2D-only: Compute the checkerboard representation using a vectorized approach
+        with the copula's cdf_vectorized(u, v).
         """
         if self.d != 2:
-            warnings.warn("Vectorized computation only supported for 2D case")
+            warnings.warn("Vectorized computation only supported for 2D case.")
             return self._compute_checkerboard_serial(copula)
 
         # Define grid edges for both dimensions
@@ -126,175 +117,116 @@ class Checkerboarder:
         X_lower, Y_lower = np.meshgrid(x_lower, y_lower, indexing="ij")
         X_upper, Y_upper = np.meshgrid(x_upper, y_upper, indexing="ij")
 
-        # Apply inclusion-exclusion principle using vectorized CDF evaluation
-        # C(u_upper, v_upper) - C(u_upper, v_lower) - C(u_lower, v_upper) + C(u_lower, v_lower)
-        cdf_upper_upper = copula.cdf_vectorized(X_upper, Y_upper)
-        cdf_lower_lower = copula.cdf_vectorized(X_lower, Y_lower)
-        cdf_upper_lower = copula.cdf_vectorized(X_upper, Y_lower)
-        cdf_lower_upper = copula.cdf_vectorized(X_lower, Y_upper)
+        # Inclusion-exclusion using vectorized cdf
+        cdf_uu = copula.cdf_vectorized(X_upper, Y_upper)
+        cdf_ll = copula.cdf_vectorized(X_lower, Y_lower)
+        cdf_ul = copula.cdf_vectorized(X_upper, Y_lower)
+        cdf_lu = copula.cdf_vectorized(X_lower, Y_upper)
 
-        # Compute cell probabilities using the inclusion-exclusion principle
-        cmatr = cdf_upper_upper - cdf_upper_lower - cdf_lower_upper + cdf_lower_lower
-        # round matr entries
-        rounded_cmatr = np.clip(cmatr, 0, 1)
-        return self._get_checkerboard_copula_for(rounded_cmatr)
-
-    def _get_checkerboard_copula_for(self, cmatr):
-        if self._checkerboard_type in ["CheckPi", "BivCheckPi"]:
-            return CheckPi(cmatr)
-        elif self._checkerboard_type in ["CheckMin", "BivCheckMin"]:
-            return CheckMin(cmatr)
-        elif self._checkerboard_type == ["BivCheckW", "CheckW"]:
-            return BivCheckW(cmatr)
-        else:
-            raise ValueError(f"Unknown checkerboard type: {self._checkerboard_type}")
+        cmatr = cdf_uu - cdf_ul - cdf_lu + cdf_ll
+        cmatr = np.clip(cmatr, 0, 1)
+        return self._get_checkerboard_copula_for(cmatr)
 
     def _compute_checkerboard_parallel(self, copula, n_jobs):
         """
-        Compute the checkerboard representation in parallel.
-
-        Divides the grid into cells, processes each cell concurrently, and then reassembles
-        the results into the final checkerboard matrix.
-
-        Parameters
-        ----------
-        copula : object
-            A copula object providing a 'cdf' method.
-        n_jobs : int
-            Number of parallel jobs to use.
-
-        Returns
-        -------
-        CheckPi or BivCheckPi
-            The resulting checkerboard representation. For dimensions >2, returns a CheckPi;
-            for 2D, returns a BivCheckPi.
+        Compute the checkerboard representation in parallel by subdividing the
+        grid into cells and evaluating each cell’s measure with inclusion-exclusion.
         """
-        # Generate list of indices for all grid cells.
         indices = list(np.ndindex(*self.n))
 
-        # Process each cell in parallel.
         results = Parallel(n_jobs=n_jobs)(
             delayed(self._process_cell)(idx, copula) for idx in indices
         )
-
-        # Assemble results into a matrix.
         cmatr = np.zeros(self.n)
         for idx, value in zip(indices, results):
             cmatr[idx] = value
 
         return self._get_checkerboard_copula_for(cmatr)
 
-    def _process_cell(self, idx, copula):
-        """
-        Process a single grid cell for parallel computation.
-
-        For the given cell index, the method determines the corresponding hypercube
-        (using precomputed grid points) and computes its value using inclusion-exclusion.
-
-        Parameters
-        ----------
-        idx : tuple of int
-            Indices representing the cell location in the grid.
-        copula : object
-            A copula object with a 'cdf' method.
-
-        Returns
-        -------
-        float
-            The computed CDF-based value for the cell.
-        """
-        u_lower = [self.grid_points[k][i] for k, i in enumerate(idx)]
-        u_upper = [self.grid_points[k][i + 1] for k, i in enumerate(idx)]
-        return self._compute_cell_value(u_lower, u_upper, copula)
-
     def _compute_checkerboard_serial(self, copula):
         """
-        Compute the checkerboard representation serially with caching.
-
-        Uses an internal cache for CDF evaluations to reduce redundant calculations,
-        applying the inclusion-exclusion principle for each grid cell.
-
-        Parameters
-        ----------
-        copula : object
-            A copula object providing a 'cdf' method.
-
-        Returns
-        -------
-        CheckPi or BivCheckPi
-            The computed checkerboard representation. Returns a CheckPi for d > 2,
-            otherwise a BivCheckPi.
+        Compute checkerboard representation serially, with caching of CDF calls
+        to avoid redundant evaluations.
         """
         cdf_cache = {}
         cmatr = np.zeros(self.n)
         indices = np.ndindex(*self.n)
 
         def get_cached_cdf(point):
-            point_tuple = tuple(point)
-            if point_tuple not in cdf_cache:
-                cdf_value = copula.cdf(*point)
-                if not isinstance(cdf_value, (float, int)):
-                    cdf_value = cdf_value.evalf()
-                cdf_cache[point_tuple] = cdf_value
-            return cdf_cache[point_tuple]
+            pt_tuple = tuple(point)
+            if pt_tuple not in cdf_cache:
+                val = copula.cdf(*point)
+                # Convert to float if symbolic or array-like
+                if not isinstance(val, (float, int)):
+                    val = float(val)
+                cdf_cache[pt_tuple] = val
+            return cdf_cache[pt_tuple]
 
         for idx in indices:
             u_lower = [self.grid_points[k][i] for k, i in enumerate(idx)]
             u_upper = [self.grid_points[k][i + 1] for k, i in enumerate(idx)]
-            inclusion_exclusion_sum = 0
-            # Iterate over all 2^d corners of the hypercube.
+
+            # Inclusion-exclusion sum
+            ie_sum = 0.0
+            # 2^d corners
             for corner in range(1 << self.d):
-                corner_indices = [
-                    (u_upper[k] if corner & (1 << k) else u_lower[k])
-                    for k in range(self.d)
-                ]
-                sign = (-1) ** (bin(corner).count("1")+1)
-                cdf_value = get_cached_cdf(corner_indices)
-                inclusion_exclusion_sum += sign * cdf_value
-            cmatr[idx] = inclusion_exclusion_sum
+                corner_point = []
+                for dim_idx in range(self.d):
+                    if corner & (1 << dim_idx):
+                        corner_point.append(u_upper[dim_idx])
+                    else:
+                        corner_point.append(u_lower[dim_idx])
+                # sign factor => (-1)^(# of upper corners), carefully offset
+                sign = (-1) ** (bin(corner).count("1") + self.d)
+                ie_sum += sign * get_cached_cdf(corner_point)
+
+            cmatr[idx] = ie_sum
 
         return self._get_checkerboard_copula_for(cmatr)
 
-    def _compute_cell_value(self, u_lower, u_upper, copula):
+    def _process_cell(self, idx, copula):
         """
-        Compute the value for a single grid cell using the inclusion-exclusion principle.
-
-        Evaluates the copula's CDF at each corner of the hypercube defined by u_lower and u_upper,
-        applying alternating signs based on the inclusion-exclusion principle.
-
-        Parameters
-        ----------
-        u_lower : list of float
-            Lower bounds for the cell in each dimension.
-        u_upper : list of float
-            Upper bounds for the cell in each dimension.
-        copula : object
-            A copula object with a 'cdf' method.
-
-        Returns
-        -------
-        float
-            The computed cell value.
+        Process a single cell in the grid (for parallel).
         """
-        inclusion_exclusion_sum = 0
+        u_lower = [self.grid_points[k][i] for k, i in enumerate(idx)]
+        u_upper = [self.grid_points[k][i + 1] for k, i in enumerate(idx)]
+
+        inclusion_exclusion_sum = 0.0
         for corner in range(1 << self.d):
-            corner_indices = [
-                (u_upper[k] if corner & (1 << k) else u_lower[k]) for k in range(self.d)
+            corner_point = [
+                (u_upper[dim] if corner & (1 << dim) else u_lower[dim])
+                for dim in range(self.d)
             ]
-            sign = (-1) ** (bin(corner).count("1") + 2)
+            sign = (-1) ** (bin(corner).count("1") + self.d)
             try:
-                cdf_value = copula.cdf(*corner_indices).evalf()
-                inclusion_exclusion_sum += sign * cdf_value
+                cdf_val = copula.cdf(*corner_point)
+                cdf_val = float(cdf_val)
+                inclusion_exclusion_sum += sign * cdf_val
             except Exception as e:
-                log.warning(f"Error computing CDF at {corner_indices}: {e}")
+                log.warning(f"Error computing CDF at {corner_point}: {e}")
         return inclusion_exclusion_sum
+
+    def _get_checkerboard_copula_for(self, cmatr):
+        """
+        Based on self._checkerboard_type, return the corresponding checkerboard-like copula
+        or a BernsteinCopula.
+        """
+        # CheckPi, CheckMin, BivCheckW, or Bernstein
+        if self._checkerboard_type in ["CheckPi", "BivCheckPi"]:
+            return CheckPi(cmatr)
+        elif self._checkerboard_type in ["CheckMin", "BivCheckMin"]:
+            return CheckMin(cmatr)
+        elif self._checkerboard_type in ["BivCheckW", "CheckW"]:
+            return BivCheckW(cmatr)
+        elif self._checkerboard_type in ["Bernstein", "BernsteinCopula"]:
+            # Interpret 'cmatr' as the coefficient tensor for a Bernstein copula
+            return BernsteinCopula(cmatr, check_theta=False)
+        else:
+            raise ValueError(f"Unknown checkerboard type: {self._checkerboard_type}")
 
     def from_data(self, data: Union[pd.DataFrame, np.ndarray, list]):
         """
-        Create a checkerboard copula from empirical data.
-
-        Converts input data to a DataFrame (if needed), computes rank-transformed values using a
-        fast numba-accelerated function, and then builds a checkerboard density estimate.
+        Create a checkerboard copula from empirical data (rank-based).
 
         Parameters
         ----------
@@ -303,8 +235,9 @@ class Checkerboarder:
 
         Returns
         -------
-        CheckPi or BivCheckPi
+        CheckPi, BivCheckPi, or other
             A checkerboard copula representation derived from the data.
+            (If self._checkerboard_type == "Bernstein", returns a BernsteinCopula.)
         """
         if isinstance(data, (list, np.ndarray)):
             data = pd.DataFrame(data)
@@ -319,37 +252,24 @@ class Checkerboarder:
         if self.d == 2:
             return self._from_data_bivariate(rank_df, n_obs)
         else:
+            # For d>2, a more general approach (e.g. d-dim histogram) would be needed.
+            # For now, we just create an empty checkerboard or do a histogram-based approach.
             check_pi_matr = np.zeros(self.n)
-            return CheckPi(check_pi_matr)
+            return self._get_checkerboard_copula_for(check_pi_matr)
 
     def _from_data_bivariate(self, data, n_obs):
         """
         Construct a bivariate checkerboard copula from rank-transformed data.
 
-        Uses numpy’s histogram2d function to efficiently bin the data and normalizes the result.
-
-        Parameters
-        ----------
-        data : pd.DataFrame
-            A DataFrame containing bivariate rank-transformed data.
-        n_obs : int
-            Total number of observations.
-
-        Returns
-        -------
-        BivCheckPi
-            A bivariate checkerboard copula representation.
+        Uses numpy’s histogram2d for binning, normalizes, and returns the
+        appropriate checkerboard object (or Bernstein).
         """
-        check_pi_matr = np.zeros((self.n[0], self.n[1]))
         x = data.iloc[:, 0].values
         y = data.iloc[:, 1].values
 
-        # Compute histogram bins for the data.
-        hist, _, _ = np.histogram2d(
-            x, y, bins=[self.n[0], self.n[1]], range=[[0, 1], [0, 1]]
-        )
-        check_pi_matr = hist / n_obs
-        return self._get_checkerboard_copula_for(check_pi_matr)
+        hist, _, _ = np.histogram2d(x, y, bins=[self.n[0], self.n[1]], range=[[0, 1], [0, 1]])
+        cmatr = hist / n_obs
+        return self._get_checkerboard_copula_for(cmatr)
 
 
 @njit
@@ -371,33 +291,37 @@ def _fast_rank(x):
     ranks = np.empty(n, dtype=np.float64)
     idx = np.argsort(x)
     for i in range(n):
+        # i-th smallest element gets rank (i+1)/n
         ranks[idx[i]] = (i + 1) / n
     return ranks
 
 
-def from_data(data, checkerboard_size=None):
+def from_data(data, checkerboard_size=None, checkerboard_type="CheckPi"):
     """
-    Create a checkerboard copula from empirical data using an adaptive grid size.
-
-    This is an optimized wrapper that determines the grid size based on the number of samples,
-    constructs a Checkerboarder instance, and generates the corresponding copula.
+    Create a checkerboard-based copula from empirical data using an adaptive grid size.
 
     Parameters
     ----------
     data : pd.DataFrame, np.ndarray, or list
-        The empirical data from which to build the copula.
+        Empirical data (samples) from which to build the copula.
     checkerboard_size : int, optional
-        Number of grid partitions per dimension. If not provided, an adaptive value is computed
-        based on the data size.
+        Number of grid partitions per dimension. If None, an adaptive size is computed.
+    checkerboard_type : str, optional
+        Which checkerboard-like object to construct ("CheckPi", "Bernstein", etc.).
 
     Returns
     -------
-    CheckPi or BivCheckPi
-        The constructed checkerboard copula representation.
+    Union[CheckPi, CheckMin, BivCheckW, BernsteinCopula]
+        The resulting checkerboard copula approximation.
     """
     if checkerboard_size is None:
         n_samples = len(data)
+        # Heuristic: at least 10, at most 50, scaled by sqrt of sample size
         checkerboard_size = min(max(10, int(np.sqrt(n_samples) / 5)), 50)
 
-    dimensions = data.shape[1] if hasattr(data, "shape") else len(data[0])
-    return Checkerboarder(checkerboard_size, dimensions).from_data(data)
+    if isinstance(data, (list, np.ndarray)):
+        data = pd.DataFrame(data)
+
+    dimensions = data.shape[1]
+    cb = Checkerboarder(n=checkerboard_size, dim=dimensions, checkerboard_type=checkerboard_type)
+    return cb.from_data(data)
