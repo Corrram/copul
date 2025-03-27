@@ -256,11 +256,12 @@ def test_calculate_student_t_cdf():
     expected = 0.3 * 0.7 * 0.5 / 4.0
     assert result == expected
 
+
 @pytest.mark.parametrize(
     "point, expected", [((0, 0), 0), ((0, 0.5), 0), ((1, 0.5), 0.5), ((1, 1), 1)]
 )
 def test_cdf_edge_cases(point, expected):
-    cop = StudentT(0.5,2)
+    cop = StudentT(0.5, 2)
     evaluated_cdf = cop.cdf(*point)
     actual = evaluated_cdf.evalf()
     assert np.isclose(actual, expected)

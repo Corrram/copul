@@ -28,9 +28,9 @@ class SymPyFuncWrapper:
 
         type_ = type(sympy_func)
         allowed = (sympy.Expr, float, int)
-        assert isinstance(
-            sympy_func, allowed
-        ), f"Function must be from sympy, but is {type_}"
+        assert isinstance(sympy_func, allowed), (
+            f"Function must be from sympy, but is {type_}"
+        )
 
         # Convert numeric types to SymPy Number
         if isinstance(sympy_func, (float, int)):

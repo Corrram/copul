@@ -28,6 +28,30 @@ copul.wrapper.cdf\_wrapper module
    :show-inheritance:
    :undoc-members:
 
+copul.wrapper.cdi\_wrapper module
+---------------------------------
+
+.. automodule:: copul.wrapper.cdi_wrapper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.wrapper.conditional\_wrapper module
+-----------------------------------------
+
+.. automodule:: copul.wrapper.conditional_wrapper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.wrapper.inv\_gen\_wrapper module
+--------------------------------------
+
+.. automodule:: copul.wrapper.inv_gen_wrapper
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.wrapper.pickands\_wrapper module
 --------------------------------------
 

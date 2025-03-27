@@ -2,8 +2,7 @@ from copul import Checkerboarder
 
 
 class CopulaApproximatorMixin:
-
-    def to_check_pi(self, grid_size: tuple|int=100):
+    def to_check_pi(self, grid_size: tuple | int = 100):
         """
         Convert the copula to a CheckPi object.
 
@@ -20,8 +19,8 @@ class CopulaApproximatorMixin:
             A CheckPi object representing the copula.
         """
         return self.to_checkerboard(grid_size, checkerboard_type="CheckPi")
-    
-    def to_check_min(self, grid_size: tuple|int=100):
+
+    def to_check_min(self, grid_size: tuple | int = 100):
         """
         Convert the copula to a CheckMin object.
 
@@ -38,8 +37,8 @@ class CopulaApproximatorMixin:
             A CheckMin object representing the copula.
         """
         return self.to_checkerboard(grid_size, checkerboard_type="CheckMin")
-    
-    def to_check_w(self, grid_size: tuple|int=100):
+
+    def to_check_w(self, grid_size: tuple | int = 100):
         """
         Convert the copula to a CheckW object.
 
@@ -57,6 +56,8 @@ class CopulaApproximatorMixin:
         """
         return self.to_checkerboard(grid_size, checkerboard_type="CheckW")
 
-    def to_checkerboard(self, grid_size: tuple|int=100, checkerboard_type:str="BivCheckPi"):
+    def to_checkerboard(
+        self, grid_size: tuple | int = 100, checkerboard_type: str = "BivCheckPi"
+    ):
         checkerboarder = Checkerboarder(grid_size, self.dim, checkerboard_type)
         return checkerboarder.get_checkerboard_copula(self)

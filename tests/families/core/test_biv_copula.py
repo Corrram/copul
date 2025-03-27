@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 import sympy as sp
 from unittest.mock import patch
 
@@ -24,17 +23,15 @@ def copula_fam():
 
     return SimpleBivCopula
 
+
 def test_init(copula_fam):
     """Test initialization of BivCopula"""
     copula = copula_fam(0.5)
     assert copula.dim == 2
     assert copula.theta == 0.5
-    assert (
-        len(copula.params) == 0
-    )  # params used in init are removed from list
-    assert (
-        copula.intervals == {}
-    )  # intervals for used params are removed
+    assert len(copula.params) == 0  # params used in init are removed from list
+    assert copula.intervals == {}  # intervals for used params are removed
+
 
 def test_segregate_symbols():
     """Test the _segregate_symbols static method"""
@@ -62,6 +59,7 @@ def test_segregate_symbols():
     assert func_vars == [all_symbols[0]]
     assert set(params) == set(all_symbols[1:])  # Use a set to ignore order
 
+
 def test_from_string():
     """Test the _from_string class method"""
     # Create with string parameters
@@ -73,6 +71,7 @@ def test_from_string():
     assert str(biv_copula.params[1]) == "beta"
     assert hasattr(biv_copula, "alpha")
     assert hasattr(biv_copula, "beta")
+
 
 def test_rank_correlations(copula_fam):
     """Test rank correlation calculations"""
@@ -89,6 +88,7 @@ def test_rank_correlations(copula_fam):
         rho = copula.rho()
         assert rho == 0.5
 
+
 @patch("copul.families.tp2_verifier.TP2Verifier.is_tp2")
 def test_is_tp2(mock_is_tp2, copula_fam):
     """Test TP2 property verification"""
@@ -97,6 +97,7 @@ def test_is_tp2(mock_is_tp2, copula_fam):
 
     assert copula.is_tp2() is True
     mock_is_tp2.assert_called_once_with(copula)
+
 
 @patch("copul.families.cis_verifier.CISVerifier.is_cis")
 def test_is_cis(mock_is_cis, copula_fam):

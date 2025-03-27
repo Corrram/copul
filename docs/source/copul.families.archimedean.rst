@@ -12,10 +12,34 @@ copul.families.archimedean.archimedean\_copula module
    :show-inheritance:
    :undoc-members:
 
+copul.families.archimedean.biv\_archimedean\_copula module
+----------------------------------------------------------
+
+.. automodule:: copul.families.archimedean.biv_archimedean_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.archimedean.heavy\_compute\_arch module
 ------------------------------------------------------
 
 .. automodule:: copul.families.archimedean.heavy_compute_arch
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.archimedean.multivar\_arch\_independence module
+--------------------------------------------------------------
+
+.. automodule:: copul.families.archimedean.multivar_arch_independence
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.archimedean.multivariate\_clayton module
+-------------------------------------------------------
+
+.. automodule:: copul.families.archimedean.multivariate_clayton
    :members:
    :show-inheritance:
    :undoc-members:

@@ -203,6 +203,7 @@ def test_conditional_distribution():
             f"Numerical derivative ({numerical_derivative}) too far from cond_distr_2 ({cond2}) at u={u}, v={v}"
         )
 
+
 @pytest.mark.parametrize(
     "point, expected", [((0, 0), 0), ((0.5, 0), 0.65), ((1, 0), 1)]
 )

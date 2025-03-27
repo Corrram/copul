@@ -9,7 +9,6 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class TestMultivariateClayton:
-
     @pytest.fixture
     def clayton_2d(self):
         """Fixture for 2D Clayton copula with theta=1."""

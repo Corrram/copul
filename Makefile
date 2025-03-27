@@ -47,6 +47,7 @@ format:
 # Build package
 build:
 	$(UV) build
+	uv pip install -e .
 
 publish: clean build
 	twine upload dist/*

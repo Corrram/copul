@@ -28,6 +28,22 @@ copul.families.elliptical.laplace module
    :show-inheritance:
    :undoc-members:
 
+copul.families.elliptical.multivar\_elliptical\_copula module
+-------------------------------------------------------------
+
+.. automodule:: copul.families.elliptical.multivar_elliptical_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.elliptical.multivar\_gaussian module
+---------------------------------------------------
+
+.. automodule:: copul.families.elliptical.multivar_gaussian
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.elliptical.student\_t module
 -------------------------------------------
 

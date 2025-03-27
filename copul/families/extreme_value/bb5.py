@@ -3,7 +3,9 @@ import sympy
 
 from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.families.extreme_value.galambos import Galambos
-from copul.families.extreme_value.gumbel_hougaard import GumbelHougaardEV as GumbelHougaard
+from copul.families.extreme_value.gumbel_hougaard import (
+    GumbelHougaardEV as GumbelHougaard,
+)
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.cdf_wrapper import CDFWrapper
 

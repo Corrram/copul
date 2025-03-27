@@ -1,4 +1,6 @@
 import numpy as np
+import mfoci
+
 
 class Check:
     def __init__(self, matr):
@@ -24,7 +26,7 @@ class Check:
         return f"CheckerboardCopula({self.matr.shape})"
 
     @classmethod
-    def from_data(cls, data, num_bins=None, kappa=1/3):
+    def from_data(cls, data, num_bins=None, kappa=1 / 3, **kwargs):
         """
         Create a checkerboard copula from raw data **very quickly** by:
           1. Sorting each dimension to compute ordinal ranks.
@@ -44,7 +46,7 @@ class Check:
             ~ n^(1/(2*d)) per dimension.
         kappa : float, optional
             Exponent for the number of bins. Default is 1/3.
-            This is a heuristic to control the number of bins 
+            This is a heuristic to control the number of bins
             vs number of observations per bin.
             Recommended range is 1.0 to 2.0.
 
@@ -58,11 +60,13 @@ class Check:
             data = data.reshape(-1, 1)
 
         n_samples, n_features = data.shape
+        if n_samples == 0 or n_features == 0:
+            raise ValueError("Data must have at least one sample and one feature.")
 
         # Heuristic default for the number of bins
         if num_bins is None:
             # Similar to sqrt rule in each dimension => n^(1/(2*d))
-            bin_count = np.ceil(n_samples ** (2*kappa / n_features))
+            bin_count = np.floor(n_samples ** (2 * kappa / n_features))
             num_bins = np.full(n_features, bin_count, dtype=int)
         elif isinstance(num_bins, int):
             num_bins = np.full(n_features, num_bins, dtype=int)
@@ -81,17 +85,17 @@ class Check:
         #    - The rank of the smallest point is 0, next is 1, etc. (ordinal rank)
         #    - Convert that rank to a bin index by scale+floor.
         #    - In other words, bin_index = floor( (rank + 1)/(n+1) * num_bins[d] ).
-        #      For speed, we usually just do rank / n, ignoring +1. 
+        #      For speed, we usually just do rank / n, ignoring +1.
         #      But if you want to match standard pseudo-obs more closely, include +1.
 
         for dim in range(n_features):
-            order = np.argsort(data[:, dim], kind='quicksort')
-            
+            order = np.argsort(data[:, dim], kind="quicksort")
+
             # Ranks go from 0..(n_samples-1)
             # Put them back into bin_indices in their original position
             bin_indices[order, dim] = np.arange(n_samples, dtype=np.int64)
 
-            # Convert ranks to bin indices. 
+            # Convert ranks to bin indices.
             # Option A: classic pseudo-observations => (rank+1)/(n+1)
             # Option B: simpler => rank/n
             # We'll do Option A to be consistent with typical definitions:
@@ -117,7 +121,6 @@ class Check:
 
         # 3) Create the copula object (normalizes in __init__)
         return cls(hist)
-
 
     def lambda_L(self):
         """Lower tail dependence (usually 0 for a checkerboard copula)."""

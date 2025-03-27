@@ -8,6 +8,8 @@ def main():
     # copula_2d = copulas_2d(theta=3)
     # copula_2d.scatter_plot()
 
+    clayton = MultivariateClayton(theta=10, dimension=2)
+    clayton.scatter_plot(n=1_000, approximate=True)
     clayton = MultivariateClayton(theta=0.1, dimension=3)
     clayton.scatter_plot(n=1_000, approximate=True)
 
@@ -15,9 +17,9 @@ def main():
     copulas = copul.from_cdf(func)
     copula = copulas(theta=8)
     result = copula.cdf(u1=0.5, u2=0.5, u3=0.5)
-    cd1 = copulas.cond_distr(1)
-    cd2 = copulas.cond_distr(2)
-    pdf = copulas.pdf()
+    copulas.cond_distr(1)
+    copulas.cond_distr(2)
+    copulas.pdf()
     copula.scatter_plot(approximate=True)
 
     # func_4d = "(x**(-theta) + y**(-theta) + z**(-theta) + w**(-theta) - 3)**(-1/theta)"

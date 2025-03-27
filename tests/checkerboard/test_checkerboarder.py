@@ -184,6 +184,7 @@ def test_boundary_conditions_for_upper_frechet():
             else:
                 assert np.isclose(matr[i, j], 0.2)
 
+
 def test_compute_pi_with_galambos():
     """Test the computation of a checkerboard copula with the
     Galambos copula."""

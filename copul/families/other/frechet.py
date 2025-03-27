@@ -170,7 +170,7 @@ class Frechet(BivCopula):
             + self.v * (-self._alpha - self._beta + 1)
         )
         return CD2Wrapper(cond_distr)(u, v)
-    
+
     def cond_distr_2(self, u=None, v=None):
         cond_distr = (
             self._alpha * sympy.Heaviside(self.u - self.v)

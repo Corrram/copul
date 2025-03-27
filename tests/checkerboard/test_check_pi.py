@@ -301,6 +301,7 @@ def test_higher_dimensional_cdf():
     assert np.isclose(copula.pdf(1 / 6, 1 / 6, 1 / 6), 1 / 27)
     assert np.isclose(copula.pdf(5 / 6, 5 / 6, 5 / 6), 1 / 27)
 
+
 def test_higher_dimensional_cdf_vectorized():
     """Test operations on higher-dimensional checkerboard copulas."""
     # Create a 3x3x3 checkerboard
@@ -315,6 +316,7 @@ def test_higher_dimensional_cdf_vectorized():
     points = np.array([[1 / 3, 1 / 3, 1 / 3], [2 / 3, 2 / 3, 2 / 3], [1, 1, 1]])
     values = copula.cdf(points)
     assert np.isclose(values, [1 / 27, 8 / 27, 1]).all()
+
 
 def test_rvs_distribution():
     """Test that random samples follow the expected distribution."""
@@ -476,6 +478,7 @@ def test_random_points_cdf_vectorized_2d():
     cdf_vals = copula.cdf(np.array([xs, ys]).T)
     for x, y, cdf_val in zip(xs, ys, cdf_vals):
         assert np.isclose(cdf_val, copula.cdf(x, y), atol=1e-10)
+
 
 def test_cond_distr_consistency_3d():
     """

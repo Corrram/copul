@@ -46,13 +46,15 @@ def test_cond_distr_edge_cases(method_name, point, expected):
             cop = cop(param)
         method = getattr(cop, method_name)
         try:
-             func = method(*point)
+            func = method(*point)
         except ValueError as e:
             raise ValueError(
                 f"Error evaluating {copula}.{method_name}({point}): {e}"
             ) from e
-        evaluated_func = float(func)     
-        assert np.isclose(evaluated_func, expected), f"{copula} {method_name}: {evaluated_func}"
+        evaluated_func = float(func)
+        assert np.isclose(evaluated_func, expected), (
+            f"{copula} {method_name}: {evaluated_func}"
+        )
 
 
 def test_pdfs():

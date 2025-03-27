@@ -4,7 +4,6 @@ from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.check_min import CheckMin
 from copul.exceptions import PropertyUnavailableException
 
-from typing import Any
 
 class BivCheckMin(CheckMin, BivCheckPi):
     """Bivariate Checkerboard Minimum class.
@@ -48,7 +47,7 @@ class BivCheckMin(CheckMin, BivCheckPi):
     def __str__(self) -> str:
         """Return string representation of the instance."""
         return f"CheckMin(m={self.m}, n={self.n})"
-    
+
     def __repr__(self) -> str:
         """Return string representation of the instance."""
         return f"CheckMin(m={self.m}, n={self.n})"
@@ -83,45 +82,18 @@ class BivCheckMin(CheckMin, BivCheckPi):
         raise PropertyUnavailableException("PDF does not exist for BivCheckMin.")
 
     def rho(self) -> float:
-        """
-        Compute Spearman's rho under the assumption that each block
-        (cell) is perfectly positively correlated (comonotonic) rather 
-        than uniformly distributed in 2D.
-        
-        In a cell (i,j) (with i, j = 0, ..., m-1 or n-1) we assume
-            U = (i + t)/m   and   V = (j + t)/n,  for t in [0,1].
-        Hence,
-            E[U*V | cell (i,j)] = [ i*j + (i+j)/2 + 1/3 ]/(m*n).
-        The overall expectation is the weighted sum of these over the cells.
-        Finally, ρ = 12 * E[U*V] - 3.
-        This implementation is fully vectorized.
-        """
-        matr = np.asarray(self.matr, dtype=float)
-        total_mass = matr.sum()
-        if total_mass <= 0:
-            return 0.0  # or raise an error
-        
-        # Normalize to obtain cell probabilities p[i,j]
-        p = matr / total_mass
-        m, n = p.shape
-        # Create index arrays for rows and columns (0-based)
-        I = np.arange(m).reshape(m, 1)  # shape (m,1)
-        J = np.arange(n).reshape(1, n)  # shape (1,n)
-        # Compute the closed-form for each cell:
-        # E[U*V | cell (i,j)] = [ i*j + (i+j)/2 + 1/3 ]/(m*n)
-        cell_val = (I * J) + 0.5 * (I + J) + (1.0 / 3.0)
-        E_UV = np.sum(p * (cell_val / (m * n)))
-        return 12.0 * E_UV - 3.0
-          
+        return BivCheckPi.rho(self) + 1 / (self.m * self.n)
+
     def tau(self) -> float:
-        return super().tau() + np.sum(self.matr**2)
+        return BivCheckPi.tau(self) + np.trace(self.matr.T @ self.matr)
 
     def xi(
         self,
         condition_on_y: bool = False,
     ) -> float:
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
-        return super().xi(condition_on_y) + m*np.sum(self.matr**2)/n
+        return super().xi(condition_on_y) + m * np.trace(self.matr.T @ self.matr) / n
+
 
 if __name__ == "__main__":
     ccop = BivCheckMin([[1, 2], [2, 1]])

@@ -1,5 +1,4 @@
 from copul.copula_sampler import CopulaSampler
-import numpy as np
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 
@@ -32,7 +31,6 @@ class CopulaSamplingMixin:
         """
         sampler = CopulaSampler(self, random_state=random_state)
         return sampler.rvs(n, approximate)
-
 
     def scatter_plot(
         self, n=1_000, approximate=False, figsize=(10, 8), alpha=0.6, colormap="viridis"
@@ -134,7 +132,7 @@ class CopulaSamplingMixin:
             fig.suptitle(title, fontsize=16)
 
             # Variable names
-            var_names = [f"u{i+1}" for i in range(self.dim)]
+            var_names = [f"u{i + 1}" for i in range(self.dim)]
 
             # Fill the scatter plot matrix
             for i in range(self.dim):

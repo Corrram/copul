@@ -3,9 +3,12 @@ import numpy as np
 import sympy as sp
 from unittest.mock import patch
 
-from copul.families.extreme_value.gumbel_hougaard import GumbelHougaardEV as GumbelHougaard
+from copul.families.extreme_value.gumbel_hougaard import (
+    GumbelHougaardEV as GumbelHougaard,
+)
 from copul.families.other import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
+
 
 class TestGumbelHougaard:
     @pytest.fixture
@@ -187,10 +190,12 @@ class TestGumbelHougaard:
             ("cond_distr_2", (0, 0), 0),
         ],
     )
-    def test_cond_distr_edge_cases_gh(self, method_name, point, expected, gumbel_copula):
+    def test_cond_distr_edge_cases_gh(
+        self, method_name, point, expected, gumbel_copula
+    ):
         method = getattr(gumbel_copula, method_name)
         func = method(point)
-        evaluated_func = float(func)     
+        evaluated_func = float(func)
         assert np.isclose(evaluated_func, expected)
 
     @pytest.mark.parametrize(
@@ -200,8 +205,10 @@ class TestGumbelHougaard:
             ("cond_distr_2", (0, 0), 0),
         ],
     )
-    def test_cond_distr_edge_cases_gh_with_asterisk(self, method_name, point, expected, gumbel_copula):
+    def test_cond_distr_edge_cases_gh_with_asterisk(
+        self, method_name, point, expected, gumbel_copula
+    ):
         method = getattr(gumbel_copula, method_name)
         func = method(*point)
-        evaluated_func = float(func)     
+        evaluated_func = float(func)
         assert np.isclose(evaluated_func, expected)

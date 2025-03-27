@@ -151,6 +151,7 @@ def test_tau_independence(n):
     tau = ccop.tau()
     assert np.isclose(tau, 0, atol=1e-2)
 
+
 @pytest.mark.parametrize("n", [3, 4])
 def test_tau_perfect_dependence(n):
     """Test tau for perfect positive and negative dependence."""
@@ -171,6 +172,7 @@ def test_tau_perfect_dependence(n):
     assert tau_pos > 0.5
     assert tau_neg < -0.5
 
+
 def test_tau_2x2_exact():
     """Test exact values for 2x2 checkerboard copulas."""
     np.random.seed(42)
@@ -188,11 +190,22 @@ def test_tau_2x2_exact():
     tau_neg = ccop_neg.tau()
     assert np.isclose(tau_neg, -0.5, atol=1e-2)
 
+
 def test_measures_of_assiciation_with_rectangular_matrix():
     """Test that tau and rho are consistent for a rectangular matrix."""
     matr = [
-        [0.258794517498538, 0.3467253550730139, 0.39100995184938075, 0.41768373795216235], 
-        [0.4483122636880096, 0.3603814261135337, 0.3160968293371668, 0.2894230432343852]
+        [
+            0.258794517498538,
+            0.3467253550730139,
+            0.39100995184938075,
+            0.41768373795216235,
+        ],
+        [
+            0.4483122636880096,
+            0.3603814261135337,
+            0.3160968293371668,
+            0.2894230432343852,
+        ],
     ]
     ccop = BivCheckPi(matr)
     xi1 = ccop.xi(condition_on_y=False)
@@ -202,7 +215,8 @@ def test_measures_of_assiciation_with_rectangular_matrix():
     tau = ccop.tau()
     rho = ccop.rho()
     assert 1 > tau > -1
-    assert 1 >rho > -1
+    assert 1 > rho > -1
+
 
 def test_tau_example():
     """Test tau for the example matrix from the original code."""
@@ -275,7 +289,10 @@ def test_rho_example():
 
 
 # Tests for xi (Chatterjee's xi)
-@pytest.mark.parametrize("n, condition_on_y", ([(1, True), (1, False), (2, True), (2, False), (3, True), (3, False)]))
+@pytest.mark.parametrize(
+    "n, condition_on_y",
+    ([(1, True), (1, False), (2, True), (2, False), (3, True), (3, False)]),
+)
 def test_xi_independence(n, condition_on_y):
     """Test that xi is close to 0 for independence copula."""
     matr = np.ones((n, n))  # Uniform distribution represents independence

@@ -92,10 +92,11 @@ def test_tau_independence(n):
     """Test that tau is close to 0 for independence copula."""
     matr = np.ones((n, n))  # Uniform distribution represents independence
     ccop = BivCheckMin(matr)
-    tau = ccop.tau() 
+    tau = ccop.tau()
     assert tau > 0.01
 
-@pytest.mark.parametrize("n", [1,2,3,4])
+
+@pytest.mark.parametrize("n", [1, 2, 3, 4])
 def test_xi_independence(n):
     """Test that tau is close to 0 for independence copula."""
     matr = np.ones((n, n))  # Uniform distribution represents independence
@@ -103,7 +104,8 @@ def test_xi_independence(n):
     xi = ccop.xi()
     assert xi > 0.01
 
-@pytest.mark.parametrize("n", [3,4])
+
+@pytest.mark.parametrize("n", [3, 4])
 def test_tau_perfect_dependence(n):
     """Test tau for perfect positive and negative dependence."""
     # Perfect positive dependence
@@ -123,6 +125,7 @@ def test_tau_perfect_dependence(n):
     assert tau_pos > 0.6
     assert -0.3 > tau_neg > -0.6
 
+
 def test_tau_2x2_exact():
     """Test exact values for 2x2 checkerboard copulas."""
     np.random.seed(42)
@@ -140,7 +143,8 @@ def test_tau_2x2_exact():
     neg_tau = ccop_neg.tau()
     assert np.isclose(neg_tau, 0, atol=1e-2)
 
-@pytest.mark.parametrize("n", [2,3,4])
+
+@pytest.mark.parametrize("n", [2, 3, 4])
 def test_xi_with_shuffled_eye(n):
     """Test that xi is close to 1 for a shuffled identity matrix."""
     np.random.seed(42)
@@ -150,6 +154,7 @@ def test_xi_with_shuffled_eye(n):
     ccop = BivCheckMin(matr)
     xi = ccop.xi()
     assert np.isclose(xi, 1, atol=0.02)
+
 
 def test_tau_example():
     """Test tau for the example matrix from the original code."""
@@ -161,6 +166,7 @@ def test_tau_example():
     assert -1 <= tau_val <= 1
     assert tau_val > 0
 
+
 # Tests for rho (Spearman's rho)
 def test_rho_independence():
     """Test that rho is close to 0 for independence copula."""
@@ -169,6 +175,7 @@ def test_rho_independence():
     ccop = BivCheckMin(matr)
     rho = ccop.rho()
     assert rho > 0.02
+
 
 def test_rho_perfect_dependence():
     """Test rho for perfect positive and negative dependence."""
@@ -264,6 +271,7 @@ def test_xi_example():
     # Check range (xi is always between 0 and 1)
     assert 0 <= xi_val <= 1
 
+
 def test_measure_consistency():
     """Test that tau and rho have consistent signs for asymmetric matrices."""
     # Create a matrix with positive dependence
@@ -299,8 +307,18 @@ def test_xi_equivalent_to_monte_carlo():
 def test_measures_of_assiciation_with_rectangular_matrix():
     """Test that tau and rho are consistent for a rectangular matrix."""
     matr = [
-        [0.258794517498538, 0.3467253550730139, 0.39100995184938075, 0.41768373795216235], 
-        [0.4483122636880096, 0.3603814261135337, 0.3160968293371668, 0.2894230432343852]
+        [
+            0.258794517498538,
+            0.3467253550730139,
+            0.39100995184938075,
+            0.41768373795216235,
+        ],
+        [
+            0.4483122636880096,
+            0.3603814261135337,
+            0.3160968293371668,
+            0.2894230432343852,
+        ],
     ]
     ccop = BivCheckMin(matr)
     xi = ccop.xi(condition_on_y=True)
@@ -310,4 +328,4 @@ def test_measures_of_assiciation_with_rectangular_matrix():
     tau = ccop.tau()
     rho = ccop.rho()
     assert 1 > tau > -1
-    assert 1 >rho > -1
+    assert 1 > rho > -1

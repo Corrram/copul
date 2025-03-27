@@ -12,6 +12,14 @@ copul.families.other.b11 module
    :show-inheritance:
    :undoc-members:
 
+copul.families.other.biv\_independence\_copula module
+-----------------------------------------------------
+
+.. automodule:: copul.families.other.biv_independence_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.other.farlie\_gumbel\_morgenstern module
 -------------------------------------------------------
 

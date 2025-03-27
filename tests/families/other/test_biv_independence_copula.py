@@ -92,6 +92,7 @@ def test_pdf(independence_copula):
         expected = 1.0  # Independence copula has uniform density
         assert abs(pdf_float - expected) < 1e-10
 
+
 # def test_pdf_with_positional_arguments(independence_copula):
 #     """Test that the PDF is constant 1 on the unit square."""
 #     # Sample points in the interior of the unit square

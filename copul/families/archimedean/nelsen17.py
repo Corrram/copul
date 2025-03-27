@@ -26,9 +26,9 @@ class Nelsen17(BivArchimedeanCopula):
     def _raw_inv_generator(self):
         theta = self.theta
         y = self.y
-        return (
-            2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)
-        ) ** (1 / theta) - 1
+        return (2**theta * sympy.exp(y) / (2**theta * sympy.exp(y) - 2**theta + 1)) ** (
+            1 / theta
+        ) - 1
 
     @property
     def cdf(self):

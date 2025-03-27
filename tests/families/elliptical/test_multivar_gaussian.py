@@ -115,7 +115,7 @@ def test_cond_distr_2d(gaussian_2d):
     v_val = 0.7
 
     # Create a float version of the correlation matrix
-    corr_matrix_np = np.array(gaussian_2d.corr_matrix).astype(np.float64)
+    np.array(gaussian_2d.corr_matrix).astype(np.float64)
 
     # Manually calculate the expected result
     # For identity correlation, the conditional is just the value itself

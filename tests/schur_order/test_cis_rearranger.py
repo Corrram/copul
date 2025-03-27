@@ -72,7 +72,9 @@ class TestCISRearranger:
 
             # Verify checkerboarder was created and used
             mock_checkerboarder_class.assert_called_once_with(self.checkerboard_size)
-            mock_checkerboarder.get_checkerboard_copula.assert_called_once_with(mock_copula)
+            mock_checkerboarder.get_checkerboard_copula.assert_called_once_with(
+                mock_copula
+            )
 
             # Verify rearrange_checkerboard was called with the right argument
             mock_rearrange.assert_called_once_with(mock_check_pi)
