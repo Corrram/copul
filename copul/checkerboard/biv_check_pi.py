@@ -6,7 +6,7 @@ that combines properties of both CheckPi and BivCopula classes.
 """
 
 import numpy as np
-from typing import Union, List, Optional, Any
+from typing import Union, List
 import warnings
 
 import sympy
@@ -115,9 +115,7 @@ class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
         """
         return True
 
-    def cond_distr_1(
-        self, *args
-    ):
+    def cond_distr_1(self, *args):
         return self.cond_distr(1, *args)
 
     def cond_distr_2(self, *args):
@@ -126,30 +124,27 @@ class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
     def rho(self) -> float:
         """
         Compute Spearman's rho for a bivariate checkerboard copula.
-        
-        Uses the formula:
-        ρ = 12 * (Σ₍i,j₎ p[i,j]·((2i+1)(2j+1))/(4*m*n)) - 3.
-        
-        This version creates index arrays and computes the sum in one shot.
         """
         p = np.asarray(self.matr, dtype=float)
         m, n = p.shape
         # Compute the factors (2*(i+1)-1)=2i+1 for rows and columns:
-        I = 2 * np.arange(m) + 1  # shape (m,)
-        J = 2 * np.arange(n) + 1  # shape (n,)
-        # Outer product produces a matrix of shape (m,n) with entry (i,j) = (2i+1)(2j+1)
-        prod = np.outer(I, J)
-        uv_sum = np.sum(p * prod) / (m * n)
-        return 3 * uv_sum - 3
+        i = np.arange(m).reshape(-1, 1)  # Column vector (i from 0 to m-1)
+        j = np.arange(n).reshape(1, -1)  # Row vector (j from 0 to n-1)
+
+        numerator = (2 * m - 2 * i - 1) * (2 * n - 2 * j - 1)
+        denominator = m * n
+        omega = numerator / denominator
+        trace = np.trace(omega.T @ p)
+        return 3 * trace - 3
 
     def tau(self) -> float:
         """
         Calculate the tau coefficient more efficiently using numpy's vectorized operations.
-        
+
         Returns:
             float: The calculated tau coefficient.
         """
-        Xi_m = 2 *np.tri(self.m) - np.eye(self.m)
+        Xi_m = 2 * np.tri(self.m) - np.eye(self.m)
         Xi_n = 2 * np.tri(self.n) - np.eye(self.n)
         return 1 - np.trace(Xi_m @ self.matr @ Xi_n @ self.matr.T)
 
@@ -163,24 +158,24 @@ class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
             m = self.m
             n = self.n
         T = np.ones(n) - np.tri(n)
-        M = T @ T.T + T.T + 1/3*np.eye(n)
+        M = T @ T.T + T.T + 1 / 3 * np.eye(n)
         trace = np.trace(delta.T @ delta @ M)
-        xi = 6*m/n * trace - 2
+        xi = 6 * m / n * trace - 2
         return xi
 
     def xi_(self, condition_on_y: bool = False) -> float:
         """
         Compute Chatterjee's xi via a closed-form formula.
-        
+
         For each cell (i,j) define the "prior" as follows:
         - If condition_on_y is True, let prior = sum_{r < i} p[r,j] (cumulative in rows).
         - Otherwise, let prior = sum_{c < j} p[i,c] (cumulative in columns).
-        
+
         Then the cell's contribution is:
             contribution = prior^2 + prior * p[i,j] + (1/3)*(p[i,j]**2).
-        
+
         Finally, xi = 6 * (sum of contributions) - 2.
-        
+
         This implementation uses vectorized cumulative sums.
         """
         p = np.asarray(self.matr, dtype=float)
@@ -190,12 +185,12 @@ class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
             # Cumulative sum along rows (for each column)
             prior = np.vstack([np.zeros((1, n)), np.cumsum(p, axis=0)[:-1, :]])
             contrib = prior**2 + prior * p + (p**2) / 3.0
-            result = 6 * np.sum(contrib)*n/m - 2
+            result = 6 * np.sum(contrib) * n / m - 2
         else:
             # Cumulative sum along columns (for each row)
             prior = np.hstack([np.zeros((m, 1)), np.cumsum(p, axis=1)[:, :-1]])
             contrib = prior**2 + prior * p + (p**2) / 3.0
-            result = 6 * np.sum(contrib)*m/n - 2
+            result = 6 * np.sum(contrib) * m / n - 2
         return result
 
 

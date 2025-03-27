@@ -132,6 +132,7 @@ def test_tau_perfect_dependence():
     assert tau_pos < 0.4
     assert tau_neg < -0.5
 
+
 def test_tau_2x2_exact():
     """Test exact values for 2x2 checkerboard copulas."""
     # For a 2x2 checkerboard with perfect positive dependence
@@ -220,7 +221,7 @@ def test_rho_example():
 
 
 # Tests for xi (Chatterjee's xi)
-@pytest.mark.parametrize("n", [2,3,4])
+@pytest.mark.parametrize("n", [2, 3, 4])
 def test_xi_independence_with_order(n):
     """Test that xi is close to 0 for independence copula."""
     np.random.seed(42)
@@ -249,7 +250,8 @@ def test_xi_perfect_dependence():
     assert xi_pos > 0.8
     assert xi_neg > 0.8
 
-@pytest.mark.parametrize("n", [2,3,4])
+
+@pytest.mark.parametrize("n", [2, 3, 4])
 def test_xi_with_shuffled_eye(n):
     """Test that xi is close to 1 for a shuffled identity matrix."""
     np.random.seed(42)
@@ -259,6 +261,7 @@ def test_xi_with_shuffled_eye(n):
     ccop = BivCheckW(matr)
     xi = ccop.xi()
     assert np.isclose(xi, 1, atol=0.02)
+
 
 def test_xi_2x2_exact():
     """Test exact values for 2x2 checkerboard copulas."""
@@ -309,11 +312,22 @@ def test_measure_consistency():
     assert tau_neg < 0
     assert rho_neg < 0
 
+
 def test_measures_of_assiciation_with_rectangular_matrix():
     """Test that tau and rho are consistent for a rectangular matrix."""
     matr = [
-        [0.258794517498538, 0.3467253550730139, 0.39100995184938075, 0.41768373795216235], 
-        [0.4483122636880096, 0.3603814261135337, 0.3160968293371668, 0.2894230432343852]
+        [
+            0.258794517498538,
+            0.3467253550730139,
+            0.39100995184938075,
+            0.41768373795216235,
+        ],
+        [
+            0.4483122636880096,
+            0.3603814261135337,
+            0.3160968293371668,
+            0.2894230432343852,
+        ],
     ]
     ccop = BivCheckW(matr)
     xi = ccop.xi(condition_on_y=True)
@@ -323,4 +337,4 @@ def test_measures_of_assiciation_with_rectangular_matrix():
     tau = ccop.tau()
     rho = ccop.rho()
     assert 1 > tau > -1
-    assert 1 >rho > -1
+    assert 1 > rho > -1

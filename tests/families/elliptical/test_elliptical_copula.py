@@ -1,6 +1,5 @@
 import pytest
 import sympy as sp
-import numpy as np
 from unittest.mock import patch
 
 from copul.families.elliptical.elliptical_copula import EllipticalCopula
@@ -96,6 +95,7 @@ def test_corr_matrix(elliptical_copula_with_rho):
     assert corr_matrix[1, 1] == 1
     assert corr_matrix[0, 1] == 0.5
     assert corr_matrix[1, 0] == 0.5
+
 
 def test_cdf_abstract_method():
     """Test that the cdf property is implemented in the concrete class."""

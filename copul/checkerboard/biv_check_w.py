@@ -6,7 +6,6 @@ import numpy as np
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.exceptions import PropertyUnavailableException
 
-from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -59,10 +58,10 @@ class BivCheckW(BivCheckPi):
     def cdf(self, *args):
         """
         Compute the CDF at one or multiple points using the W-fraction approach.
-        
+
         This method handles both single-point and multi-point CDF evaluation
         in an efficient vectorized manner.
-        
+
         Parameters
         ----------
         *args : array-like or float
@@ -70,36 +69,36 @@ class BivCheckW(BivCheckPi):
             - Two separate coordinates (u, v) of a single point
             - A single array-like object with coordinates [u, v] of a single point
             - A 2D array where each row represents a separate point [u, v]
-            
+
         Returns
         -------
         float or numpy.ndarray
             If a single point is provided, returns a float.
             If multiple points are provided, returns an array of shape (n_points,).
-        
+
         Examples
         --------
         # Single point as separate arguments
         value = copula.cdf(0.3, 0.7)
-        
+
         # Single point as array
         value = copula.cdf([0.3, 0.7])
-        
+
         # Multiple points as 2D array
         values = copula.cdf(np.array([[0.1, 0.2], [0.3, 0.4]]))
         """
         # Handle different input formats
         if len(args) == 0:
             raise ValueError("No arguments provided")
-        
+
         elif len(args) == 1:
             # A single argument was provided - either a point or multiple points
             arg = args[0]
-            
-            if hasattr(arg, 'ndim') and hasattr(arg, 'shape'):
+
+            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 # NumPy array or similar
                 arr = np.asarray(arg, dtype=float)
-                
+
                 if arr.ndim == 1:
                     # 1D array - single point
                     if len(arr) != 2:  # Hardcoded 2D
@@ -107,7 +106,7 @@ class BivCheckW(BivCheckPi):
                             f"Expected point array of length 2, got {len(arr)}"
                         )
                     return self._cdf_single_point(arr[0], arr[1])
-                    
+
                 elif arr.ndim == 2:
                     # 2D array - multiple points
                     if arr.shape[1] != 2:  # Hardcoded 2D
@@ -115,11 +114,11 @@ class BivCheckW(BivCheckPi):
                             f"Expected points with 2 dimensions, got {arr.shape[1]}"
                         )
                     return self._cdf_vectorized_impl(arr)
-                    
+
                 else:
                     raise ValueError(f"Expected 1D or 2D array, got {arr.ndim}D array")
-            
-            elif hasattr(arg, '__len__'):
+
+            elif hasattr(arg, "__len__"):
                 # List, tuple, or similar sequence
                 if len(arg) == 2:  # Hardcoded 2D
                     # Single point as a sequence
@@ -128,34 +127,32 @@ class BivCheckW(BivCheckPi):
                     raise ValueError(
                         f"Expected point with 2 dimensions, got {len(arg)}"
                     )
-            
+
             else:
                 # Single scalar value - not valid for 2D case
                 raise ValueError(
-                    f"Single scalar provided but copula requires 2 dimensions"
+                    "Single scalar provided but copula requires 2 dimensions"
                 )
-        
+
         elif len(args) == 2:
             # Two arguments provided for u and v coordinates
             return self._cdf_single_point(args[0], args[1])
-        
+
         else:
             # Too many arguments
-            raise ValueError(
-                f"Expected 2 coordinates, got {len(args)}"
-            )
+            raise ValueError(f"Expected 2 coordinates, got {len(args)}")
 
     def _cdf_single_point(self, u, v):
         """
         Helper method to compute CDF for a single point using the W-fraction approach.
-        
+
         Parameters
         ----------
         u : float
             First coordinate.
         v : float
             Second coordinate.
-            
+
         Returns
         -------
         float
@@ -193,12 +190,12 @@ class BivCheckW(BivCheckPi):
     def _cdf_vectorized_impl(self, points):
         """
         Implementation of vectorized CDF for multiple points using the W-fraction approach.
-        
+
         Parameters
         ----------
         points : numpy.ndarray
             Array of shape (n_points, 2) where each row is a point.
-            
+
         Returns
         -------
         numpy.ndarray
@@ -206,83 +203,83 @@ class BivCheckW(BivCheckPi):
         """
         # Convert to numpy array
         points = np.asarray(points, dtype=float)
-        
+
         n_points = points.shape[0]
         results = np.zeros(n_points)
-        
+
         # Create mask arrays for special cases
         all_zeros_mask = np.any(points <= 0, axis=1)
         all_ones_mask = np.all(points >= 1, axis=1)
-        
+
         # Set results for special cases
         results[all_zeros_mask] = 0.0
         results[all_ones_mask] = 1.0
-        
+
         # Filter out points that need actual computation
         compute_mask = ~(all_zeros_mask | all_ones_mask)
         compute_points = points[compute_mask]
-        
+
         if len(compute_points) == 0:
             return results
-        
+
         # Create a 2D grid of cell indices for vectorized computation
-        i_indices, j_indices = np.meshgrid(range(self.m), range(self.n), indexing='ij')
+        i_indices, j_indices = np.meshgrid(range(self.m), range(self.n), indexing="ij")
         i_indices = i_indices.ravel()
         j_indices = j_indices.ravel()
-        
+
         # Get cell masses
         cell_masses = self.matr.ravel()
-        
+
         # Filter out cells with zero mass
         positive_mask = cell_masses > 0
         if not np.any(positive_mask):
             return results
-        
+
         i_indices = i_indices[positive_mask]
         j_indices = j_indices[positive_mask]
         cell_masses = cell_masses[positive_mask]
-        
+
         # Calculate cell bounds
         x0 = i_indices[:, np.newaxis] / self.m
         x1 = (i_indices[:, np.newaxis] + 1) / self.m
         y0 = j_indices[:, np.newaxis] / self.n
         y1 = (j_indices[:, np.newaxis] + 1) / self.n
-        
+
         # Calculate overlaps for all points
         u_values = compute_points[:, 0]
         v_values = compute_points[:, 1]
-        
+
         u_values = u_values[np.newaxis, :]
         v_values = v_values[np.newaxis, :]
-        
+
         # Calculate x and y overlaps
         overlap_x = np.maximum(0.0, np.minimum(u_values, x1) - x0)
         overlap_y = np.maximum(0.0, np.minimum(v_values, y1) - y0)
-        
+
         # Calculate fractions - applying the W-copula specific formula
         fx = overlap_x * self.m
         fy = overlap_y * self.n
         frac_ij = np.maximum(0.0, fx + fy - 1.0)
-        
+
         # Zero out contributions from cells with no overlap
         zero_overlap_mask = (overlap_x <= 0) | (overlap_y <= 0)
         frac_ij[zero_overlap_mask] = 0.0
-        
+
         # Calculate weighted contributions
         weighted_fractions = cell_masses[:, np.newaxis] * frac_ij
-        
+
         # Sum contributions for each point
         point_results = np.sum(weighted_fractions, axis=0)
-        
+
         # Put results back in the output array
         results[compute_mask] = point_results
-        
+
         return results
 
     def cond_distr(self, i, *args):
         """
         Compute the conditional distribution for one or multiple points.
-        
+
         Parameters
         ----------
         i : int
@@ -292,39 +289,39 @@ class BivCheckW(BivCheckPi):
             - Two separate coordinates (u, v) of a single point
             - A single array-like object with coordinates [u, v] of a single point
             - A 2D array where each row represents a separate point [u, v]
-            
+
         Returns
         -------
         float or numpy.ndarray
             If a single point is provided, returns a float.
             If multiple points are provided, returns an array of shape (n_points,).
-        
+
         Examples
         --------
         # Single point as separate arguments
         value = copula.cond_distr(1, 0.3, 0.7)
-        
+
         # Single point as array
         value = copula.cond_distr(1, [0.3, 0.7])
-        
+
         # Multiple points as 2D array
         values = copula.cond_distr(1, np.array([[0.1, 0.2], [0.3, 0.4]]))
         """
         if i < 1 or i > 2:  # Hardcoded 2D
             raise ValueError(f"Dimension {i} out of range 1..2")
-        
+
         # Handle different input formats
         if len(args) == 0:
             raise ValueError("No point coordinates provided")
-        
+
         elif len(args) == 1:
             # A single argument was provided - either a point or multiple points
             arg = args[0]
-            
-            if hasattr(arg, 'ndim') and hasattr(arg, 'shape'):
+
+            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 # NumPy array or similar
                 arr = np.asarray(arg, dtype=float)
-                
+
                 if arr.ndim == 1:
                     # 1D array - single point
                     if len(arr) != 2:  # Hardcoded 2D
@@ -332,7 +329,7 @@ class BivCheckW(BivCheckPi):
                             f"Expected point array of length 2, got {len(arr)}"
                         )
                     return self._cond_distr_single(i, arr)
-                    
+
                 elif arr.ndim == 2:
                     # 2D array - multiple points
                     if arr.shape[1] != 2:  # Hardcoded 2D
@@ -340,11 +337,11 @@ class BivCheckW(BivCheckPi):
                             f"Expected points with 2 dimensions, got {arr.shape[1]}"
                         )
                     return self._cond_distr_vectorized(i, arr)
-                    
+
                 else:
                     raise ValueError(f"Expected 1D or 2D array, got {arr.ndim}D array")
-            
-            elif hasattr(arg, '__len__'):
+
+            elif hasattr(arg, "__len__"):
                 # List, tuple, or similar sequence
                 if len(arg) == 2:  # Hardcoded 2D
                     # Single point as a sequence
@@ -353,42 +350,40 @@ class BivCheckW(BivCheckPi):
                     raise ValueError(
                         f"Expected point with 2 dimensions, got {len(arg)}"
                     )
-            
+
             else:
                 # Single scalar value - not valid for 2D case
                 raise ValueError(
-                    f"Single scalar provided but copula requires 2 dimensions"
+                    "Single scalar provided but copula requires 2 dimensions"
                 )
-        
+
         elif len(args) == 2:
             # Two arguments provided for u and v coordinates
             return self._cond_distr_single(i, np.array([args[0], args[1]], dtype=float))
-        
+
         else:
             # Too many arguments
-            raise ValueError(
-                f"Expected 2 coordinates, got {len(args)}"
-            )
+            raise ValueError(f"Expected 2 coordinates, got {len(args)}")
 
     def _cond_distr_single(self, i, u):
         """
         Helper method for conditional distribution of a single point.
         This preserves the original implementation for W-copula for a single point.
-        
+
         Parameters
         ----------
         i : int
             Dimension index (1-based) to condition on.
         u : numpy.ndarray
             Single point as a 1D array of length 2.
-            
+
         Returns
         -------
         float
             Conditional distribution value.
         """
         i0 = i - 1  # Convert to 0-based index
-        
+
         # Find which cell the conditioning coordinate falls into
         x_i = u[i0]
         if x_i < 0:
@@ -404,13 +399,13 @@ class BivCheckW(BivCheckPi):
                 i_idx = 0
             elif i_idx >= dim_size:
                 i_idx = dim_size - 1
-        
+
         # For safety, reset the intervals cache between calls
         self.intervals = {}
-        
+
         # Cache key for the slice indices
         slice_key = (i, i_idx)
-        
+
         # Calculate denominator - sum of all cells in the slice
         if slice_key in self.intervals:
             slice_indices = self.intervals[slice_key]
@@ -431,13 +426,13 @@ class BivCheckW(BivCheckPi):
                     cell_mass = self.matr[i_idx2, i_idx]
                     denom += cell_mass
                     slice_indices.append((i_idx2, i_idx))
-            
+
             # Store in cache
             self.intervals[slice_key] = slice_indices
-        
+
         if denom <= 0:
             return 0.0
-        
+
         # Calculate the conditioning dimension's fraction
         val_i0 = u[i0]
         dim_size = self.m if i0 == 0 else self.n
@@ -445,52 +440,52 @@ class BivCheckW(BivCheckPi):
         upper_i0 = (i_idx + 1) / dim_size
         overlap_len_i0 = max(0.0, min(val_i0, upper_i0) - lower_i0)
         frac_i = overlap_len_i0 * dim_size
-        
+
         # Calculate numerator
         num = 0.0
         for c in slice_indices:
             cell_mass = self.matr[c]
             if cell_mass <= 0:
                 continue
-            
+
             # Check other dimension (not i0)
             j = 1 - i0  # If i0 is 0, j is 1; if i0 is 1, j is 0
             val_j = u[j]
             dim_size_j = self.n if j == 1 else self.m
             lower_j = c[j] / dim_size_j
-            
+
             # Early exit if below threshold
             if val_j <= lower_j:
                 continue
-            
+
             upper_j = (c[j] + 1) / dim_size_j
-            
+
             # If val_j >= upper_j, entire cell is included
             if val_j >= upper_j:
                 num += cell_mass
                 continue
-            
+
             # Partial overlap - calculate fraction
             overlap_len = val_j - lower_j
             frac_j = overlap_len * dim_size_j
-            
+
             # W-copula condition
             if frac_j + frac_i >= 1:
                 num += cell_mass
-        
+
         return num / denom
 
     def _cond_distr_vectorized(self, i, points):
         """
         Vectorized implementation of conditional distribution for multiple points.
-        
+
         Parameters
         ----------
         i : int
             Dimension index (1-based) to condition on.
         points : numpy.ndarray
             Multiple points as a 2D array of shape (n_points, 2).
-            
+
         Returns
         -------
         numpy.ndarray
@@ -498,23 +493,23 @@ class BivCheckW(BivCheckPi):
         """
         # Convert to numpy array
         points = np.asarray(points, dtype=float)
-        
+
         n_points = points.shape[0]
         results = np.zeros(n_points)
-        
+
         # Convert to 0-based index
         i0 = i - 1
-        
+
         # Process each point separately - the BivCheckW cond_distr algorithm isn't easily vectorizable
         # across multiple points at once due to its conditional logic
         for p_idx, u in enumerate(points):
             x_i = u[i0]
-            
+
             # Special case: conditioning coordinate < 0
             if x_i < 0:
                 results[p_idx] = 0.0
                 continue
-            
+
             # Determine the cell index along the conditioning dimension
             if x_i >= 1:
                 i_idx = self.m if i0 == 0 else self.n
@@ -524,7 +519,7 @@ class BivCheckW(BivCheckPi):
                 i_idx = int(np.floor(x_i * dim_size))
                 # clamp
                 i_idx = max(0, min(i_idx, dim_size - 1))
-            
+
             # Get the slice of cells along the conditioning dimension
             if i0 == 0:  # Fix row
                 # Get all cells in this row
@@ -532,14 +527,14 @@ class BivCheckW(BivCheckPi):
             else:  # Fix column
                 # Get all cells in this column
                 slice_indices = [(i_row, i_idx) for i_row in range(self.m)]
-            
+
             # Calculate denominator - sum of all cells in the slice
             denom = sum(self.matr[c] for c in slice_indices)
-            
+
             if denom <= 0:
                 results[p_idx] = 0.0
                 continue
-            
+
             # Calculate the conditioning dimension's fraction
             val_i0 = u[i0]
             dim_size = self.m if i0 == 0 else self.n
@@ -547,130 +542,43 @@ class BivCheckW(BivCheckPi):
             upper_i0 = (i_idx + 1) / dim_size
             overlap_len_i0 = max(0.0, min(val_i0, upper_i0) - lower_i0)
             frac_i = overlap_len_i0 * dim_size
-            
+
             # Calculate numerator using W-copula specific logic
             num = 0.0
             for c in slice_indices:
                 cell_mass = self.matr[c]
                 if cell_mass <= 0:
                     continue
-                
+
                 # Check other dimension (not i0)
                 j = 1 - i0  # If i0 is 0, j is 1; if i0 is 1, j is 0
                 val_j = u[j]
                 dim_size_j = self.n if j == 1 else self.m
                 lower_j = c[j] / dim_size_j
-                
+
                 # Early exit if below threshold
                 if val_j <= lower_j:
                     continue
-                
+
                 upper_j = (c[j] + 1) / dim_size_j
-                
+
                 # If val_j >= upper_j, entire cell is included
                 if val_j >= upper_j:
                     num += cell_mass
                     continue
-                
+
                 # Partial overlap - calculate fraction
                 overlap_len = val_j - lower_j
                 frac_j = overlap_len * dim_size_j
-                
+
                 # W-copula condition
                 if frac_j + frac_i >= 1:
                     num += cell_mass
-            
+
             results[p_idx] = num / denom
-        
+
         return results
 
-    def pdf(self, *args):
-        """
-        Evaluate the piecewise PDF at one or multiple points.
-        
-        Note: PDF does not properly exist for BivCheckW copula, so this method
-        always returns 0 for any inputs.
-        
-        Parameters
-        ----------
-        *args : array-like or float
-            Either:
-            - Two separate coordinates (u, v) of a single point
-            - A single array-like object with coordinates [u, v] of a single point
-            - A 2D array where each row represents a separate point [u, v]
-            
-        Returns
-        -------
-        float or numpy.ndarray
-            Always returns 0 (or array of zeros for multiple points).
-        
-        Examples
-        --------
-        # Single point as separate arguments
-        value = copula.pdf(0.3, 0.7)  # Returns 0.0
-        
-        # Single point as array
-        value = copula.pdf([0.3, 0.7])  # Returns 0.0
-        
-        # Multiple points as 2D array
-        values = copula.pdf(np.array([[0.1, 0.2], [0.3, 0.4]]))  # Returns array of zeros
-        """
-        # Handle different input formats and return appropriate zeros
-        if len(args) == 0:
-            raise ValueError("No arguments provided")
-        
-        elif len(args) == 1:
-            # A single argument was provided - either a point or multiple points
-            arg = args[0]
-            
-            if hasattr(arg, 'ndim') and hasattr(arg, 'shape'):
-                # NumPy array or similar
-                arr = np.asarray(arg, dtype=float)
-                
-                if arr.ndim == 1:
-                    # 1D array - single point
-                    if len(arr) != 2:  # Hardcoded 2D
-                        raise ValueError(
-                            f"Expected point array of length 2, got {len(arr)}"
-                        )
-                    return 0.0
-                    
-                elif arr.ndim == 2:
-                    # 2D array - multiple points
-                    if arr.shape[1] != 2:  # Hardcoded 2D
-                        raise ValueError(
-                            f"Expected points with 2 dimensions, got {arr.shape[1]}"
-                        )
-                    return np.zeros(arr.shape[0])
-                    
-                else:
-                    raise ValueError(f"Expected 1D or 2D array, got {arr.ndim}D array")
-            
-            elif hasattr(arg, '__len__'):
-                # List, tuple, or similar sequence
-                if len(arg) == 2:  # Hardcoded 2D
-                    # Single point as a sequence
-                    return 0.0
-                else:
-                    raise ValueError(
-                        f"Expected point with 2 dimensions, got {len(arg)}"
-                    )
-            
-            else:
-                # Single scalar value - not valid for 2D case
-                raise ValueError(
-                    f"Single scalar provided but copula requires 2 dimensions"
-                )
-        
-        elif len(args) == 2:
-            # Two arguments provided for u and v coordinates
-            return 0.0
-        
-        else:
-            # Too many arguments
-            raise ValueError(
-                f"Expected 2 coordinates, got {len(args)}"
-            )
     def rvs(self, n=1):
         """Generate n random samples."""
         # Get cell indices according to their probability weights
@@ -714,47 +622,17 @@ class BivCheckW(BivCheckPi):
         raise PropertyUnavailableException("PDF does not exist for BivCheckW.")
 
     def rho(self) -> float:
-        """
-        Optimized computation of Spearman's rho under the assumption that each cell 
-        enforces perfect negative correlation (i.e. anti-diagonal dependence):
-        
-            U(t) = (i + t)/m,
-            V(t) = (j + 1 - t)/n, for t in [0, 1].
-        
-        For each cell (i,j) the integral is computed in closed-form:
-        
-            E[U*V | cell (i,j)] = [ i*(j+1) + ((j+1)-i)/2 - 1/3 ] / (m*n)
-        
-        The overall expectation is the weighted sum over cells, and then
-            ρ = 12 * E[U*V] - 3.
-        This implementation uses vectorized NumPy operations.
-        """
-        matr = np.asarray(self.matr, dtype=float)
-        total_mass = matr.sum()
-        if total_mass <= 0:
-            return 0.0
-        # Normalize to get cell probabilities p[i,j]
-        p = matr / total_mass
-        m, n = p.shape
-        # Create index arrays for rows (i) and columns (j)
-        I = np.arange(m).reshape(m, 1)   # shape (m,1)
-        J = np.arange(n).reshape(1, n)   # shape (1,n)
-        # For cell (i,j), the closed-form integrated value is:
-        #    val_ij = i*(j+1) + (((j+1)-i)/2) - (1/3)
-        # and then divided by (m*n).
-        val = I * (J + 1) + (((J + 1) - I) / 2.0) - (1.0 / 3.0)
-        E_UV = np.sum(p * (val / (m * n)))
-        return 12.0 * E_UV - 3.0
-    
+        return BivCheckPi.rho(self) - 1 / (self.m * self.n)
+
     def tau(self) -> float:
-        return super().tau() - np.sum(self.matr**2)
+        return BivCheckPi.tau(self) - np.trace(self.matr.T @ self.matr)
 
     def xi(
         self,
         condition_on_y: bool = False,
     ) -> float:
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
-        return super().xi(condition_on_y) + m*np.sum(self.matr**2)/n
-    
+        return super().xi(condition_on_y) + m * np.trace(self.matr.T @ self.matr) / n
+
 
 CheckW: TypeAlias = BivCheckW

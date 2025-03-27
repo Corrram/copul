@@ -27,6 +27,7 @@ class TestCopulaSampler:
         u, v = sympy.symbols("u v")
         self.mock_copula.u_symbols = [u, v]
         self.mock_copula.dim = 2
+        self.mock_copula.intervals = []
 
         # Default sampler with mock copula
         self.sampler = CopulaSampler(self.mock_copula)
@@ -263,9 +264,11 @@ def test_error_counter_is_class_var():
     """Test that the error counter is a class variable."""
     # Create two samplers
     mock_copula1 = MagicMock()
+    mock_copula1.intervals = []
     sampler1 = CopulaSampler(mock_copula1)
 
     mock_copula2 = MagicMock()
+    mock_copula2.intervals = []
     sampler2 = CopulaSampler(mock_copula2)
 
     # Verify both samplers access the same class variable
@@ -294,6 +297,7 @@ def test_with_check_pi_copula(mock_sample_val):
     mock_check_pi = MagicMock(spec=CheckPi)
     mock_check_pi.__class__ = CheckPi
     mock_check_pi.dim = 2
+    mock_check_pi.intervals = []
 
     # Setup a simple conditional distribution
     def cond_distr(u, v):

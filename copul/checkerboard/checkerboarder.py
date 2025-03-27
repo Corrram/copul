@@ -248,7 +248,7 @@ class Checkerboarder:
                     (u_upper[k] if corner & (1 << k) else u_lower[k])
                     for k in range(self.d)
                 ]
-                sign = (-1) ** (bin(corner).count("1") + 2)
+                sign = (-1) ** (bin(corner).count("1")+1)
                 cdf_value = get_cached_cdf(corner_indices)
                 inclusion_exclusion_sum += sign * cdf_value
             cmatr[idx] = inclusion_exclusion_sum

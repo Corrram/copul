@@ -130,6 +130,7 @@ class TestCopulaBase:
         """Test cdf property"""
         # Set up the wrapper to return a simple value
         expected = 0.25
+
         # Create a minimal subclass with a controlled _cdf attribute
         class TestCopulaForCDF(SampleCopula):
             def __init__(self):
@@ -319,9 +320,7 @@ class TestCopulaSampling:
         result = self.copula.rvs(n=5, random_state=123)
 
         # Verify the calls
-        mock_sampler_class.assert_called_once_with(
-            self.copula, random_state=123
-        )
+        mock_sampler_class.assert_called_once_with(self.copula, random_state=123)
         mock_sampler.rvs.assert_called_once_with(5, False)
 
         # Verify the result
@@ -361,7 +360,9 @@ def test_rvs_parameter_combinations(n_samples, random_state, approximate):
     original_rvs = Copula.rvs.__get__(mock_copula)
 
     # Create mock sampler
-    with patch("copul.families.core.copula_sampling_mixin.CopulaSampler") as mock_sampler_class:
+    with patch(
+        "copul.families.core.copula_sampling_mixin.CopulaSampler"
+    ) as mock_sampler_class:
         mock_sampler = MagicMock()
         mock_sampler.rvs.return_value = np.random.random((n_samples, 2))
         mock_sampler_class.return_value = mock_sampler

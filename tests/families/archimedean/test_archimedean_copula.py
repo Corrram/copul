@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 import sympy
 from unittest.mock import patch, MagicMock
 
@@ -64,7 +63,6 @@ class ConcreteArchimedeanCopula(ArchimedeanCopula):
 
 
 class TestArchimedeanCopula:
-
     @pytest.fixture
     def copula(self, monkeypatch):
         # Patch Copula.__init__ to avoid dimension parameter issue
@@ -150,7 +148,7 @@ class TestArchimedeanCopula:
         with patch.object(ConcreteArchimedeanCopula, "__new__", classmethod(mock_new)):
             # Test with special case
             with pytest.raises(ValueError):
-                result = ConcreteArchimedeanCopula(theta=0)
+                ConcreteArchimedeanCopula(theta=0)
 
     def test_invalid_params(self, monkeypatch):
         """Test invalid parameter handling."""
@@ -209,12 +207,12 @@ class TestArchimedeanCopula:
             ConcreteArchimedeanCopula, "create", classmethod(mock_create)
         ):
             # Test with positional argument
-            result1 = ConcreteArchimedeanCopula.create(1.5)
+            ConcreteArchimedeanCopula.create(1.5)
             assert test_results["called_with"][0] == ConcreteArchimedeanCopula
             assert test_results["called_with"][1].get("theta") == 1.5
 
             # Test with keyword argument
-            result2 = ConcreteArchimedeanCopula.create(theta=2.5)
+            ConcreteArchimedeanCopula.create(theta=2.5)
             assert test_results["called_with"][0] == ConcreteArchimedeanCopula
             assert test_results["called_with"][1].get("theta") == 2.5
 
@@ -272,8 +270,10 @@ class TestArchimedeanCopula:
 
     def test_generator_property(self, copula, monkeypatch):
         """Test generator property."""
+
         # Create a mock generator wrapper
-        generator_func = lambda t_val: ((1 / t_val) ** 2 - 1) / 2
+        def generator_func(t_val):
+            return ((1 / t_val) ** 2 - 1) / 2
 
         generator_wrapper = MagicMock(spec=SymPyFuncWrapper)
         generator_wrapper.subs.side_effect = lambda t, t_val: generator_func(t_val)
@@ -300,8 +300,10 @@ class TestArchimedeanCopula:
 
     def test_inv_generator_property(self, copula, monkeypatch):
         """Test inverse generator property."""
+
         # Create a mock inverse generator wrapper
-        inv_generator_func = lambda y_val: (1 + 2 * y_val) ** (-1 / 2)
+        def inv_generator_func(y_val):
+            return (1 + 2 * y_val) ** (-1 / 2)
 
         inv_generator_wrapper = MagicMock(spec=InvGenWrapper)
         inv_generator_wrapper.subs.side_effect = lambda y, y_val: inv_generator_func(

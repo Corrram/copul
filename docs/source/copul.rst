@@ -40,6 +40,14 @@ copul.copula\_sampler module
    :show-inheritance:
    :undoc-members:
 
+copul.data\_uniformer module
+----------------------------
+
+.. automodule:: copul.data_uniformer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.exceptions module
 -----------------------
 

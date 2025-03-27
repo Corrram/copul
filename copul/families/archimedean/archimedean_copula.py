@@ -129,7 +129,7 @@ class ArchimedeanCopula(Copula, ABC):
                 raise ValueError(
                     f"Parameter theta must be <= {upper_bound}, got {theta_val}"
                 )
-        
+
         if "dimension" not in kwargs:
             kwargs["dimension"] = self.dim
         super().__init__(**kwargs)

@@ -87,7 +87,7 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
                 ).cdf(quantiles)
 
                 return float(result)
-            except Exception as e:
+            except Exception:
                 # Fallback for special cases or errors
                 if len(u_values) == 2:
                     # For bivariate case with issues, use the product (independence)
@@ -138,10 +138,6 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
             try:
                 # For bivariate case, use statsmodels for better accuracy
                 if n == 2 and hasattr(self, "rho") and i_idx in [0, 1]:
-                    from statsmodels.distributions.copula.elliptical import (
-                        GaussianCopula as StatsGaussianCopula,
-                    )
-
                     # Determine which is the other index
                     other_idx = 0 if i_idx == 1 else 1
 
@@ -252,7 +248,7 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
                     except np.linalg.LinAlgError:
                         # Fallback to independence for singular matrix
                         return u_target
-            except Exception as e:
+            except Exception:
                 # Fallback to independence for any other errors
                 return float(u_values[i_idx])
 
@@ -337,7 +333,7 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
 
                 # Apply the change of variables formula
                 return float(pdf_value / std_normal_pdfs)
-            except Exception as e:
+            except Exception:
                 # Fallback to independence copula (PDF = 1.0) for errors
                 return 1.0
 

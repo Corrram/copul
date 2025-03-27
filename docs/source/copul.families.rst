@@ -15,26 +15,10 @@ Subpackages
 Submodules
 ----------
 
-copul.families.core.biv_copula module
--------------------------------
-
-.. automodule:: copul.families.core.biv_copula
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 copul.families.cis\_verifier module
 -----------------------------------
 
 .. automodule:: copul.families.cis_verifier
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-copul.families.copula module
-----------------------------
-
-.. automodule:: copul.families.copula
    :members:
    :show-inheritance:
    :undoc-members:
@@ -51,14 +35,6 @@ copul.families.copula\_graphs module
 ------------------------------------
 
 .. automodule:: copul.families.copula_graphs
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-copul.families.core\_copula module
-----------------------------------
-
-.. automodule:: copul.families.core_copula
    :members:
    :show-inheritance:
    :undoc-members:

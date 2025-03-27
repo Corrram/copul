@@ -12,18 +12,18 @@ copul.families.extreme\_value.bb5 module
    :show-inheritance:
    :undoc-members:
 
-copul.families.extreme\_value.cuadras\_auge module
---------------------------------------------------
+copul.families.extreme\_value.biv\_extreme\_value\_copula module
+----------------------------------------------------------------
 
-.. automodule:: copul.families.extreme_value.cuadras_auge
+.. automodule:: copul.families.extreme_value.biv_extreme_value_copula
    :members:
    :show-inheritance:
    :undoc-members:
 
-copul.families.extreme\_value.extreme\_value\_copula module
------------------------------------------------------------
+copul.families.extreme\_value.cuadras\_auge module
+--------------------------------------------------
 
-.. automodule:: copul.families.extreme_value.extreme_value_copula
+.. automodule:: copul.families.extreme_value.cuadras_auge
    :members:
    :show-inheritance:
    :undoc-members:
@@ -64,6 +64,30 @@ copul.families.extreme\_value.marshall\_olkin module
 ----------------------------------------------------
 
 .. automodule:: copul.families.extreme_value.marshall_olkin
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.extreme\_value.multivar\_ev\_independence\_copula module
+-----------------------------------------------------------------------
+
+.. automodule:: copul.families.extreme_value.multivar_ev_independence_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.extreme\_value.multivariate\_extreme\_value\_copula module
+-------------------------------------------------------------------------
+
+.. automodule:: copul.families.extreme_value.multivariate_extreme_value_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.extreme\_value.multivariate\_gumbel\_hougaard module
+-------------------------------------------------------------------
+
+.. automodule:: copul.families.extreme_value.multivariate_gumbel_hougaard
    :members:
    :show-inheritance:
    :undoc-members:

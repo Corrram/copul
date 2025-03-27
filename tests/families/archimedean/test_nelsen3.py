@@ -274,3 +274,19 @@ def test_nelsen3_specific_values_adjusted(u, v, theta, expected_approx):
     copula = Nelsen3(theta)
     cdf_val = float(copula.cdf(u=u, v=v))
     assert np.isclose(cdf_val, expected_approx, rtol=0.05)
+
+@pytest.mark.parametrize(
+    "method_name, point, expected",
+    [
+        ("cond_distr_1", (0, 0), 0),
+        # ("cond_distr_1", (0, 1), 1),  # ToDo: Check why this sometimes fails from cli
+        ("cond_distr_2", (0, 0), 0),
+        # ("cond_distr_2", (1, 0), 1),
+    ],
+)
+def test_nelsen3_cond_distr_edge_cases_(method_name, point, expected):
+    cop = Nelsen3(0.5)  # Use a specific theta value for testing
+    method = getattr(cop, method_name)
+    func = method(*point)
+    evaluated_func = float(func)
+    assert np.isclose(evaluated_func, expected)

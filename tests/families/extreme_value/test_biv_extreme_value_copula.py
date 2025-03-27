@@ -281,6 +281,7 @@ def test_cdf_vectorized_basic(copula):
     # Check that results match
     np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
 
+
 def test_cdf_vectorized_broadcasting_u(copula):
     """Test that cdf_vectorized correctly handles broadcasting with u as scalar."""
     # Test broadcasting: u is scalar, v is array
@@ -294,9 +295,10 @@ def test_cdf_vectorized_broadcasting_u(copula):
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_scalar, v_array)
-    
+
     # Check that results match
     np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
 
 def test_cdf_vectorized_broadcasting_v(copula):
     """Test that cdf_vectorized correctly handles broadcasting with v as scalar."""
@@ -311,9 +313,11 @@ def test_cdf_vectorized_broadcasting_v(copula):
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_array, v_scalar)
-    
+
     # Check that results match
     np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+
+
 def test_cdf_vectorized_grid(copula):
     """Test cdf_vectorized with grid inputs."""
     # Create grid of values

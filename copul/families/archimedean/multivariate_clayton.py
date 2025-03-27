@@ -138,15 +138,15 @@ class MultivariateClayton(ArchimedeanCopula):
         # Symbolic case - build an expression with the right number of variables
         # First, create the symbolic variables
         u_vars = []
-        for i in range(self.dimension):
-            u_vars.append(sympy.symbols(f"u{i+1}", positive=True))
+        for i in range(self.dim):
+            u_vars.append(sympy.symbols(f"u{i + 1}", positive=True))
 
         # Handle independence case (θ = 0)
         if self.theta == 0:
             return SymPyFuncWrapper(sympy.prod(u_vars))
 
         # Regular case
-        term_sum = sum(u ** (-self.theta) for u in u_vars) - self.dimension + 1
+        term_sum = sum(u ** (-self.theta) for u in u_vars) - self.dim + 1
         cdf_expr = sympy.Max(0, term_sum) ** (-1 / self.theta)
 
         return SymPyFuncWrapper(cdf_expr)
@@ -169,8 +169,8 @@ class MultivariateClayton(ArchimedeanCopula):
         arrays = [np.asarray(arg) for arg in args]
 
         # Check if the number of arrays matches the dimension
-        if len(arrays) != self.dimension:
-            raise ValueError(f"Expected {self.dimension} inputs, got {len(arrays)}")
+        if len(arrays) != self.dim:
+            raise ValueError(f"Expected {self.dim} inputs, got {len(arrays)}")
 
         # Ensure all arrays have compatible shapes
         shapes = [arr.shape for arr in arrays]
@@ -203,7 +203,7 @@ class MultivariateClayton(ArchimedeanCopula):
         # Only compute for non-zero inputs
         if np.any(non_zero_mask):
             # Compute the sum term: ∑ᵢ uᵢ^(-θ) - n + 1
-            sum_term = -self.dimension + 1
+            sum_term = -self.dim + 1
             for arr in arrays:
                 sum_term = sum_term + np.power(arr[non_zero_mask], -self.theta)
 
