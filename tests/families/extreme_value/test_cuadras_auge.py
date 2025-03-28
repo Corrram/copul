@@ -7,6 +7,7 @@ from copul.families.extreme_value import CuadrasAuge
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.exceptions import PropertyUnavailableException
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 
@@ -153,7 +154,7 @@ def test_ca_cdf():
     copula = CuadrasAuge(0.3)
 
     # Mock the SymPyFuncWrapper to avoid actual computation
-    with patch.object(SymPyFuncWrapper, "__call__") as mock_call:
+    with patch.object(CDFWrapper, "__call__") as mock_call:
         mock_call.return_value = 0.42  # Mock return value
 
         # Call CDF

@@ -213,6 +213,17 @@ class SymPyFuncWrapper:
             A new SymPyFuncWrapper with the factored expression.
         """
         return SymPyFuncWrapper(sympy.factor(self._func))
+    
+    def has(self, *args, **kwargs) -> bool:
+        """
+        Check if the expression has a certain property.
+
+        This method directly uses SymPy's has method.
+
+        Returns:
+            True if the expression has the specified property, False otherwise.
+        """
+        return self._func.has(*args, **kwargs)
 
     def to_latex(self) -> str:
         """

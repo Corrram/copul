@@ -2,7 +2,10 @@ import copy
 import numpy as np
 import sympy
 
+from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
+from copul.wrapper.cdi_wrapper import CDiWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -15,8 +18,34 @@ class CoreCopula:
     params = []
     intervals = {}
     log_cut_off = 4
-    _cdf_expr = None  # Renamed from _cdf to avoid confusion with the new method
+    _cdf_expr_internal = None  # Renamed from _cdf to avoid confusion with the new method
     _free_symbols = {}
+
+    @property
+    def _cdf_expr(self):
+        # If we have an internal expression set, use it as a template
+        if self._cdf_expr_internal is not None:
+            # Make a deep copy to avoid modifying the original
+            expr = self._cdf_expr_internal
+            
+            # Apply any symbol updates if _free_symbols is available
+            if hasattr(self, '_free_symbols') and self._free_symbols:
+                current_values = {}
+                for symbol_name, symbol_obj in self._free_symbols.items():
+                    # Get the current value from the object
+                    if hasattr(self, symbol_name):
+                        current_values[symbol_obj] = getattr(self, symbol_name)
+                
+                # Only create a new expression if we have substitutions
+                if current_values:
+                    expr = expr.subs(current_values)
+                    
+            return expr
+        return None
+    
+    @_cdf_expr.setter
+    def _cdf_expr(self, value):
+        self._cdf_expr_internal = value
 
     def __str__(self):
         return self.__class__.__name__
@@ -182,39 +211,16 @@ class CoreCopula:
             interval_start, interval_end, left_open, right_open
         )
 
-    def _get_var_map(self):
+    def _get_cdf_expr(self):
         """
-        Get a mapping of common variable names to symbol objects.
-
-        Handles various naming conventions:
-        - u1, u2, ... (standard)
-        - u, v, w, ... (alternative for 2D/3D)
-        - x, y, z, ... (original expression variables)
+        Get the symbolic CDF expression with parameters substituted.
 
         Returns
         -------
-        dict
-            Dictionary mapping variable names to symbols.
+        sympy expression
+            The CDF expression with free symbols substituted.
         """
-        var_map = {}
-
-        # Standard u1, u2, ... mapping
-        for i, sym in enumerate(self.u_symbols):
-            var_map[f"u{i + 1}"] = sym
-
-        # Alternative u, v, w, ... mapping (for 2D/3D cases)
-        alternative_names = ["u", "v", "w", "r", "s", "t"]
-        for i, name in enumerate(alternative_names):
-            if i < self.dim:
-                var_map[name] = self.u_symbols[i]
-
-        # Original x, y, z, ... mapping if used in expression
-        original_names = ["x", "y", "z"]
-        for i, name in enumerate(original_names):
-            if i < self.dim:
-                var_map[name] = self.u_symbols[i]
-
-        return var_map
+        return CDFWrapper(self._cdf_expr)
 
     def cdf(self, *args, **kwargs):
         """
@@ -270,133 +276,57 @@ class CoreCopula:
         partial_cdf = copula.cdf(u1=0.3)  # Returns a function of u2
         value = partial_cdf(0.7)  # Evaluate at u2=0.7
         """
-        # Get the variable mapping
-        var_map = self._get_var_map()
+        cdf_expr = self._get_cdf_expr()
+        # Apply substitutions
+        cdf_expr = cdf_expr(**kwargs)
 
-        # Check if we have variable substitutions in kwargs
-        has_var_substitution = False
-        for k in kwargs.keys():
-            if k in var_map:
-                has_var_substitution = True
-                break
+        # If args are also provided, evaluate the resulting expression
+        if args:
+            # Get the remaining symbols in the expression
+            remaining_vars = [str(sym) for sym in self.u_symbols if cdf_expr.has(sym)]
+            remaining_dim = len(remaining_vars)
 
-        # If we have variable substitutions, process them
-        if has_var_substitution:
-            cdf_expr = self._cdf_expr
-            # Apply substitutions
-            for var_name, value in kwargs.items():
-                if var_name in var_map:
-                    symbol = var_map[var_name]
-                    cdf_expr = cdf_expr.subs(symbol, value)
-
-            # If args are also provided, evaluate the resulting expression
-            if args:
-                # Get the remaining symbols in the expression
-                remaining_vars = [sym for sym in self.u_symbols if cdf_expr.has(sym)]
-                remaining_dim = len(remaining_vars)
-
-                # Convert args to a point array for remaining variables
-                if len(args) == 1:
-                    arg = args[0]
-                    if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                        arr = np.asarray(arg, dtype=float)
-                        if arr.ndim == 1:
-                            if len(arr) != remaining_dim:
-                                raise ValueError(
-                                    f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
-                                )
-                            point = arr
-                        else:
+            # Convert args to a point array for remaining variables
+            if len(args) == 1:
+                arg = args[0]
+                if hasattr(arg, "ndim") and hasattr(arg, "shape"):
+                    arr = np.asarray(arg, dtype=float)
+                    if arr.ndim == 1:
+                        if len(arr) != remaining_dim:
                             raise ValueError(
-                                "Cannot mix variable substitution with multi-point evaluation"
+                                f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
                             )
-                    elif hasattr(arg, "__len__"):
-                        if len(arg) != remaining_dim:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
-                            )
-                        point = np.array(arg, dtype=float)
+                        point = arr
                     else:
-                        if remaining_dim != 1:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got 1"
-                            )
-                        point = np.array([arg], dtype=float)
-                else:
-                    if len(args) != remaining_dim:
                         raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
+                            "Cannot mix variable substitution with multi-point evaluation"
                         )
-                    point = np.array(args, dtype=float)
-
-                # Substitute the remaining values
-                for i, var in enumerate(remaining_vars):
-                    cdf_expr = cdf_expr.subs(var, point[i])
-
-                # Evaluate the fully substituted expression
-                return float(cdf_expr)
-
-            # Return a partially evaluated CDF
-            return CDFWrapper(cdf_expr)
-
-        # Handle different input formats (no variable substitution)
-        if len(args) == 0:
-            # Return the CDF function wrapper
-            return CDFWrapper(self._cdf_expr)
-
-        elif len(args) == 1:
-            # A single argument was provided - either a point or multiple points
-            arg = args[0]
-
-            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                # NumPy array or similar
-                arr = np.asarray(arg, dtype=float)
-
-                if arr.ndim == 1:
-                    # 1D array - single point
-                    if len(arr) != self.dim:
+                elif hasattr(arg, "__len__"):
+                    if len(arg) != remaining_dim:
                         raise ValueError(
-                            f"Expected point array of length {self.dim}, got {len(arr)}"
+                            f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
                         )
-                    return self._cdf_single_point(arr)
-
-                elif arr.ndim == 2:
-                    # 2D array - multiple points
-                    if arr.shape[1] != self.dim:
+                    point = np.array(arg, dtype=float)
+                else:
+                    if remaining_dim != 1:
                         raise ValueError(
-                            f"Expected points with {self.dim} dimensions, got {arr.shape[1]}"
+                            f"Expected {remaining_dim} remaining coordinates, got 1"
                         )
-                    return self._cdf_vectorized(arr)
-
-                else:
-                    raise ValueError(f"Expected 1D or 2D array, got {arr.ndim}D array")
-
-            elif hasattr(arg, "__len__"):
-                # List, tuple, or similar sequence
-                if len(arg) == self.dim:
-                    # Single point as a sequence
-                    return self._cdf_single_point(np.array(arg, dtype=float))
-                else:
-                    raise ValueError(
-                        f"Expected point with {self.dim} dimensions, got {len(arg)}"
-                    )
-
+                    point = np.array([arg], dtype=float)
             else:
-                # Single scalar value - only valid for 1D case
-                if self.dim == 1:
-                    return self._cdf_single_point(np.array([arg], dtype=float))
-                else:
+                if len(args) != remaining_dim:
                     raise ValueError(
-                        f"Single scalar provided but copula has {self.dim} dimensions"
+                        f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
                     )
+                point = np.array(args, dtype=float)
 
-        else:
-            # Multiple arguments provided
-            if len(args) == self.dim:
-                # Separate coordinates for a single point
-                return self._cdf_single_point(np.array(args, dtype=float))
-            else:
-                raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}")
+            # Substitute the remaining values
+            cdf_expr = cdf_expr(**{var: val for var, val in zip(remaining_vars, point)})
+            # Evaluate the fully substituted expression
+            return cdf_expr
+
+        # Return a partially evaluated CDF
+        return cdf_expr
 
     def _cdf_single_point(self, u):
         """
@@ -413,34 +343,8 @@ class CoreCopula:
             CDF value at the point.
         """
         # Get the CDF wrapper and evaluate
-        cdf_wrapper = CDFWrapper(self._cdf_expr)
+        cdf_wrapper = self._get_cdf_expr()
         return cdf_wrapper(*u)
-
-    def _cdf_vectorized(self, points):
-        """
-        Vectorized implementation of CDF for multiple points.
-
-        Parameters
-        ----------
-        points : numpy.ndarray
-            Array of shape (n_points, dim) where each row is a point.
-
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape (n_points,) with CDF values.
-        """
-        n_points = points.shape[0]
-        results = np.zeros(n_points)
-
-        # Get the CDF wrapper
-        cdf_wrapper = CDFWrapper(self._cdf_expr)
-
-        # Evaluate for each point
-        for i, point in enumerate(points):
-            results[i] = cdf_wrapper(*point)
-
-        return results
 
     def cond_distr(self, i, *args, **kwargs):
         """
@@ -499,136 +403,56 @@ class CoreCopula:
 
         # Get the conditional distribution expression
         cdf = self.cdf()
-        cond_expr = sympy.diff(cdf, self.u_symbols[i - 1])
+        cond_expr = cdf.diff(self.u_symbols[i - 1])
+        cond_expr = CDiWrapper(cond_expr, i)(**kwargs)
+        # If args are also provided, evaluate the resulting expression
+        if args:
+            remaining_vars = [str(sym) for sym in self.u_symbols if cond_expr.has(sym)]
+            remaining_dim = len(remaining_vars)
 
-        # Get the variable mapping
-        var_map = self._get_var_map()
-
-        # Check if we have variable substitutions in kwargs
-        has_var_substitution = False
-        for k in kwargs.keys():
-            if k in var_map:
-                has_var_substitution = True
-                break
-
-        # If we have variable substitutions, process them
-        if has_var_substitution:
-            # Apply substitutions
-            for var_name, value in kwargs.items():
-                if var_name in var_map:
-                    symbol = var_map[var_name]
-                    cond_expr = cond_expr.subs(symbol, value)
-
-            # If args are also provided, evaluate the resulting expression
-            if args:
-                remaining_vars = [sym for sym in self.u_symbols if cond_expr.has(sym)]
-                remaining_dim = len(remaining_vars)
-
-                # Convert args to a point array for remaining variables
-                if len(args) == 1:
-                    arg = args[0]
-                    if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                        arr = np.asarray(arg, dtype=float)
-                        if arr.ndim == 1:
-                            if len(arr) != remaining_dim:
-                                raise ValueError(
-                                    f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
-                                )
-                            point = arr
-                        else:
+            # Convert args to a point array for remaining variables
+            if len(args) == 1:
+                arg = args[0]
+                if hasattr(arg, "ndim") and hasattr(arg, "shape"):
+                    arr = np.asarray(arg, dtype=float)
+                    if arr.ndim == 1:
+                        if len(arr) != remaining_dim:
                             raise ValueError(
-                                "Cannot mix variable substitution with multi-point evaluation"
+                                f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
                             )
-                    elif hasattr(arg, "__len__"):
-                        if len(arg) != remaining_dim:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
-                            )
-                        point = np.array(arg, dtype=float)
+                        point = arr
                     else:
-                        if remaining_dim != 1:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got 1"
-                            )
-                        point = np.array([arg], dtype=float)
-                else:
-                    if len(args) != remaining_dim:
                         raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
+                            "Cannot mix variable substitution with multi-point evaluation"
                         )
-                    point = np.array(args, dtype=float)
-
-                # Create a mapping from remaining variables to values
-                sub_dict = {var: point[i] for i, var in enumerate(remaining_vars)}
-
-                # Substitute the remaining values
-                for var, val in sub_dict.items():
-                    cond_expr = cond_expr.subs(var, val)
-
-                # Evaluate the fully substituted expression
-                return float(cond_expr)
-
-            # Return a partially evaluated conditional distribution
-            return SymPyFuncWrapper(cond_expr)
-
-        # Handle different input formats (no variable substitution)
-        if len(args) == 0:
-            # Return the conditional distribution function
-            return SymPyFuncWrapper(cond_expr)
-
-        elif len(args) == 1:
-            # A single argument was provided - either a point or multiple points
-            arg = args[0]
-
-            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                # NumPy array or similar
-                arr = np.asarray(arg, dtype=float)
-
-                if arr.ndim == 1:
-                    # 1D array - single point
-                    if len(arr) != self.dim:
+                elif hasattr(arg, "__len__"):
+                    if len(arg) != remaining_dim:
                         raise ValueError(
-                            f"Expected point array of length {self.dim}, got {len(arr)}"
+                            f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
                         )
-                    return self._cond_distr_single(i, arr)
-
-                elif arr.ndim == 2:
-                    # 2D array - multiple points
-                    if arr.shape[1] != self.dim:
+                    point = np.array(arg, dtype=float)
+                else:
+                    if remaining_dim != 1:
                         raise ValueError(
-                            f"Expected points with {self.dim} dimensions, got {arr.shape[1]}"
+                            f"Expected {remaining_dim} remaining coordinates, got 1"
                         )
-                    return self._cond_distr_vectorized(i, arr)
-
-                else:
-                    raise ValueError(f"Expected 1D or 2D array, got {arr.ndim}D array")
-
-            elif hasattr(arg, "__len__"):
-                # List, tuple, or similar sequence
-                if len(arg) == self.dim:
-                    # Single point as a sequence
-                    return self._cond_distr_single(i, np.array(arg, dtype=float))
-                else:
-                    raise ValueError(
-                        f"Expected point with {self.dim} dimensions, got {len(arg)}"
-                    )
-
+                    point = np.array([arg], dtype=float)
             else:
-                # Single scalar value - only valid for 1D case
-                if self.dim == 1:
-                    return self._cond_distr_single(i, np.array([arg], dtype=float))
-                else:
+                if len(args) != remaining_dim:
                     raise ValueError(
-                        f"Single scalar provided but copula has {self.dim} dimensions"
+                        f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
                     )
+                point = np.array(args, dtype=float)
 
-        else:
-            # Multiple arguments provided
-            if len(args) == self.dim:
-                # Separate coordinates for a single point
-                return self._cond_distr_single(i, np.array(args, dtype=float))
-            else:
-                raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}")
+            # Create a mapping from remaining variables to values
+            sub_dict = {var: point[i] for i, var in enumerate(remaining_vars)}
+
+            # Substitute the remaining values
+            wrapper = CDiWrapper(cond_expr, i)
+            return wrapper(**sub_dict)
+
+        # Return a partially evaluated conditional distribution
+        return CDiWrapper(cond_expr, i)
 
     def _cond_distr_single(self, i, u):
         """
@@ -675,7 +499,7 @@ class CoreCopula:
 
         # Get the conditional distribution function
         cond_distr_func = SymPyFuncWrapper(
-            sympy.diff(self._cdf_expr, self.u_symbols[i - 1])
+            sympy.diff(self._get_cdf_expr(), self.u_symbols[i - 1])
         )
 
         # Evaluate for each point
@@ -767,138 +591,59 @@ class CoreCopula:
         value = partial_pdf(0.7)  # Evaluate at u2=0.7
         """
         # Get the PDF expression
-        pdf_expr = self._cdf_expr
+        pdf_expr = self._get_cdf_expr()
         for u_symbol in self.u_symbols:
-            pdf_expr = sympy.diff(pdf_expr, u_symbol)
+            pdf_expr = pdf_expr.diff(u_symbol)
 
-        # Get the variable mapping
-        var_map = self._get_var_map()
+        pdf_expr = pdf_expr(**kwargs)
 
-        # Check if we have variable substitutions in kwargs
-        has_var_substitution = False
-        for k in kwargs.keys():
-            if k in var_map:
-                has_var_substitution = True
-                break
+        # If args are also provided, evaluate the resulting expression
+        if args:
+            remaining_vars = [str(sym) for sym in self.u_symbols if pdf_expr.has(sym)]
+            remaining_dim = len(remaining_vars)
 
-        # If we have variable substitutions, process them
-        if has_var_substitution:
-            # Apply substitutions
-            for var_name, value in kwargs.items():
-                if var_name in var_map:
-                    symbol = var_map[var_name]
-                    pdf_expr = pdf_expr.subs(symbol, value)
-
-            # If args are also provided, evaluate the resulting expression
-            if args:
-                remaining_vars = [sym for sym in self.u_symbols if pdf_expr.has(sym)]
-                remaining_dim = len(remaining_vars)
-
-                # Convert args to a point array for remaining variables
-                if len(args) == 1:
-                    arg = args[0]
-                    if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                        arr = np.asarray(arg, dtype=float)
-                        if arr.ndim == 1:
-                            if len(arr) != remaining_dim:
-                                raise ValueError(
-                                    f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
-                                )
-                            point = arr
-                        else:
+            # Convert args to a point array for remaining variables
+            if len(args) == 1:
+                arg = args[0]
+                if hasattr(arg, "ndim") and hasattr(arg, "shape"):
+                    arr = np.asarray(arg, dtype=float)
+                    if arr.ndim == 1:
+                        if len(arr) != remaining_dim:
                             raise ValueError(
-                                "Cannot mix variable substitution with multi-point evaluation"
+                                f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
                             )
-                    elif hasattr(arg, "__len__"):
-                        if len(arg) != remaining_dim:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
-                            )
-                        point = np.array(arg, dtype=float)
+                        point = arr
                     else:
-                        if remaining_dim != 1:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got 1"
-                            )
-                        point = np.array([arg], dtype=float)
-                else:
-                    if len(args) != remaining_dim:
                         raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
+                            "Cannot mix variable substitution with multi-point evaluation"
                         )
-                    point = np.array(args, dtype=float)
-
-                # Create a mapping from remaining variables to values
-                sub_dict = {var: point[i] for i, var in enumerate(remaining_vars)}
-
-                # Substitute the remaining values
-                for var, val in sub_dict.items():
-                    pdf_expr = pdf_expr.subs(var, val)
-
-                # Evaluate the fully substituted expression
-                return float(pdf_expr)
-
-            # Return a partially evaluated PDF
-            return SymPyFuncWrapper(pdf_expr)
-
-        # Handle different input formats (no variable substitution)
-        if len(args) == 0:
-            # Return the PDF function
-            return SymPyFuncWrapper(pdf_expr)
-
-        elif len(args) == 1:
-            # A single argument was provided - either a point or multiple points
-            arg = args[0]
-
-            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                # NumPy array or similar
-                arr = np.asarray(arg, dtype=float)
-
-                if arr.ndim == 1:
-                    # 1D array - single point
-                    if len(arr) != self.dim:
+                elif hasattr(arg, "__len__"):
+                    if len(arg) != remaining_dim:
                         raise ValueError(
-                            f"Expected point array of length {self.dim}, got {len(arr)}"
+                            f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
                         )
-                    return self._pdf_single_point(arr)
-
-                elif arr.ndim == 2:
-                    # 2D array - multiple points
-                    if arr.shape[1] != self.dim:
+                    point = np.array(arg, dtype=float)
+                else:
+                    if remaining_dim != 1:
                         raise ValueError(
-                            f"Expected points with {self.dim} dimensions, got {arr.shape[1]}"
+                            f"Expected {remaining_dim} remaining coordinates, got 1"
                         )
-                    return self._pdf_vectorized(arr)
-
-                else:
-                    raise ValueError(f"Expected 1D or 2D array, got {arr.ndim}D array")
-
-            elif hasattr(arg, "__len__"):
-                # List, tuple, or similar sequence
-                if len(arg) == self.dim:
-                    # Single point as a sequence
-                    return self._pdf_single_point(np.array(arg, dtype=float))
-                else:
-                    raise ValueError(
-                        f"Expected point with {self.dim} dimensions, got {len(arg)}"
-                    )
-
+                    point = np.array([arg], dtype=float)
             else:
-                # Single scalar value - only valid for 1D case
-                if self.dim == 1:
-                    return self._pdf_single_point(np.array([arg], dtype=float))
-                else:
+                if len(args) != remaining_dim:
                     raise ValueError(
-                        f"Single scalar provided but copula has {self.dim} dimensions"
+                        f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
                     )
+                point = np.array(args, dtype=float)
 
-        else:
-            # Multiple arguments provided
-            if len(args) == self.dim:
-                # Separate coordinates for a single point
-                return self._pdf_single_point(np.array(args, dtype=float))
-            else:
-                raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}")
+            # Create a mapping from remaining variables to values
+            sub_dict = {var: point[i] for i, var in enumerate(remaining_vars)}
+
+            # Substitute the remaining values
+            return pdf_expr(**sub_dict)
+
+        # Return a partially evaluated PDF
+        return SymPyFuncWrapper(pdf_expr)
 
     def _pdf_single_point(self, u):
         """
@@ -915,7 +660,7 @@ class CoreCopula:
             PDF value at the point.
         """
         # Compute the PDF
-        term = self._cdf_expr
+        term = self._get_cdf_expr()
         for u_symbol in self.u_symbols:
             term = sympy.diff(term, u_symbol)
         pdf_func = SymPyFuncWrapper(term)
@@ -941,7 +686,7 @@ class CoreCopula:
         results = np.zeros(n_points)
 
         # Compute the PDF function
-        term = self._cdf_expr
+        term = self._get_cdf_expr()
         for u_symbol in self.u_symbols:
             term = sympy.diff(term, u_symbol)
         pdf_func = SymPyFuncWrapper(term)

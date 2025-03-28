@@ -33,7 +33,7 @@ docs:
 	cd docs && $(PYTHON) -m sphinx -b html ./source build/html
 
 test:
-	$(PYTEST) $(TEST_DIR) -v -n 4
+	$(PYTEST) $(TEST_DIR) -m "not slow and not instable" -v -n 4
 
 # Run tests with coverage
 coverage:

@@ -4,8 +4,6 @@ import sympy
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
-from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen2(BivArchimedeanCopula):

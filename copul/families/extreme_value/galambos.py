@@ -29,11 +29,11 @@ class Galambos(BivExtremeValueCopula):
         return True
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         u = self.u
         v = self.v
         delta = self.delta
-        base_expr = (
+        return (
             u
             * v
             * sympy.exp(
@@ -41,11 +41,6 @@ class Galambos(BivExtremeValueCopula):
                 ** (-1 / delta)
             )
         )
-        # When u==0 or v==0, return 0; otherwise, use the computed expression.
-        cdf_expr = sympy.Piecewise(
-            (0, sympy.Or(sympy.Eq(u, 0), sympy.Eq(v, 0))), (base_expr, True)
-        )
-        return CDFWrapper(cdf_expr)
 
     @property
     def pdf(self):

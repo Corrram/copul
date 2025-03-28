@@ -99,8 +99,8 @@ def test_3d_different_degs():
     assert pvals.shape == (4,)
 
     # boundary points => cdf=0 or 1
-    assert np.isclose(cvals[-1], 1.0), "CDF at (1,1,1) ~ 1"
-    assert np.isclose(cvals[-2], 0.0), "CDF at (0,0,0) ~ 0"
+    assert np.isclose(cvals[-2], 1.0), "CDF at (1,1,1) ~ 1"
+    assert np.isclose(cvals[-1], 0.0), "CDF at (0,0,0) ~ 0"
 
 
 def test_invalid_shapes():

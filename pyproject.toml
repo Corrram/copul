@@ -41,6 +41,7 @@ log_cli_level = "INFO"
 addopts = "-ra -q"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "instable: marks tests as instable (deselect with '-m \"not instable\"')",
 ]
 
 [project.optional-dependencies]

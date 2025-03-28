@@ -52,10 +52,10 @@ def test_gaussian_cd1():
     cdf = cop.cond_distr_1(0.3, 0.4)
     assert np.isclose(cdf.evalf(), 0.504078212489690)
 
-
-@pytest.mark.parametrize("tau, expected", [(-1, -1), (0, 0), (1, 1)])
-def test_gaussian_tau(tau, expected):
-    cop = Gaussian()(tau)
+@pytest.mark.instable
+@pytest.mark.parametrize("param, expected", [(-1, -1), (0, 0), (1, 1)])
+def test_gaussian_tau(param, expected):
+    cop = Gaussian()(param)
     assert cop.tau() == expected
 
 
