@@ -188,7 +188,7 @@ class BivCoreCopula:
         callable
             A callable (wrapped via CD1Wrapper) representing the conditional distribution.
         """
-        result = CD1Wrapper(sp.diff(self.cdf, self.u))
+        result = self.cdf.diff(self.u)
         return result(u, v)
 
     def cond_distr_2(self, u=None, v=None):
