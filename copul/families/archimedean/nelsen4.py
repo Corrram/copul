@@ -26,9 +26,7 @@ class GumbelHougaard(BivArchimedeanCopula):
         return sympy.exp(-(self.y ** (1 / self.theta)))
 
     @property
-    def cdf(self):
-        if self.u == 0 or self.v == 0:
-            return SymPyFuncWrapper(0)
+    def _cdf_expr(self):
         gen = sympy.exp(
             -(
                 (
@@ -38,7 +36,7 @@ class GumbelHougaard(BivArchimedeanCopula):
                 ** (1 / self.theta)
             )
         )
-        return CDFWrapper(gen)
+        return gen
 
     def lambda_L(self):
         return 0

@@ -38,12 +38,11 @@ class AliMikhailHaq(BivArchimedeanCopula):
         return (theta - 1) / (theta - sympy.exp(self.y))
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         u = self.u
         v = self.v
-        theta = self.theta
-        cdf = (u * v) / (1 - theta * (1 - u) * (1 - v))
-        return CDFWrapper(cdf)
+        cdf = (u * v) / (1 - self.theta * (1 - u) * (1 - v))
+        return cdf
 
     def cond_distr_1(self, u=None, v=None):
         theta = self.theta

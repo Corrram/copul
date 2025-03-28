@@ -31,13 +31,12 @@ class Nelsen20(HeavyComputeArch):
         return sympy.log(self.y + sympy.E) ** (-1 / self.theta)
 
     @property
-    def cdf(self):
-        cdf = sympy.log(
+    def _cdf_expr(self):
+        return sympy.log(
             sympy.exp(self.u ** (-self.theta))
             + sympy.exp(self.v ** (-self.theta))
             - np.e
         ) ** (-1 / self.theta)
-        return CDFWrapper(cdf)
 
     def cond_distr_2(self, u=None, v=None):
         theta = self.theta

@@ -27,11 +27,11 @@ class Nelsen22(BivArchimedeanCopula):
         return (1 - sympy.sin(self.y)) ** (1 / self.theta) * indicator
 
     @property
-    def cdf(self) -> SymPyFuncWrapper:
+    def _cdf_expr(self):
         u = self.u
         theta = self.theta
         v = self.v
-        cdf = sympy.Piecewise(
+        return sympy.Piecewise(
             (
                 (sympy.sin(sympy.asin(u**theta - 1) + sympy.asin(v**theta - 1)) + 1)
                 ** (1 / theta),
@@ -39,7 +39,6 @@ class Nelsen22(BivArchimedeanCopula):
             ),
             (0, True),
         )
-        return SymPyFuncWrapper(cdf)
 
     def compute_gen_max(self):
         return np.pi / 2

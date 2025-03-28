@@ -25,10 +25,9 @@ class Nelsen19(BivArchimedeanCopula):
         return self.theta / sympy.log(self.y + sympy.exp(self.theta))
 
     @property
-    def cdf(self):
-        cdf = self.theta / sympy.log(
+    def _cdf_expr(self):
+        return self.theta / sympy.log(
             -sympy.exp(self.theta)
             + sympy.exp(self.theta / self.u)
             + sympy.exp(self.theta / self.v)
         )
-        return CDFWrapper(cdf)

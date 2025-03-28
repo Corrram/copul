@@ -32,12 +32,12 @@ class Frank(BivArchimedeanCopula):
         ) / theta
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         """Cumulative distribution function of the copula"""
         theta = self.theta
         u = self.u
         v = self.v
-        cdf = (
+        return (
             -1
             / theta
             * sympy.log(
@@ -47,7 +47,6 @@ class Frank(BivArchimedeanCopula):
                 / (sympy.exp(-theta) - 1)
             )
         )
-        return SymPyFuncWrapper(cdf)
 
     def cond_distr_1(self, u=None, v=None):
         expr_u = sympy.exp(-self.theta * self.u)

@@ -182,20 +182,6 @@ class CoreCopula:
             interval_start, interval_end, left_open, right_open
         )
 
-    def _get_cdf_expr(self):
-        """
-        Get the symbolic CDF expression with parameters substituted.
-
-        Returns
-        -------
-        sympy expression
-            The CDF expression with free symbols substituted.
-        """
-        expr = self._cdf_expr
-        for key, value in self._free_symbols.items():
-            expr = expr.subs(value, getattr(self, key))
-        return expr
-
     def _get_var_map(self):
         """
         Get a mapping of common variable names to symbol objects.
@@ -296,7 +282,7 @@ class CoreCopula:
 
         # If we have variable substitutions, process them
         if has_var_substitution:
-            cdf_expr = self._get_cdf_expr()
+            cdf_expr = self._cdf_expr
             # Apply substitutions
             for var_name, value in kwargs.items():
                 if var_name in var_map:
@@ -356,7 +342,7 @@ class CoreCopula:
         # Handle different input formats (no variable substitution)
         if len(args) == 0:
             # Return the CDF function wrapper
-            return CDFWrapper(self._get_cdf_expr())
+            return CDFWrapper(self._cdf_expr)
 
         elif len(args) == 1:
             # A single argument was provided - either a point or multiple points
@@ -427,7 +413,7 @@ class CoreCopula:
             CDF value at the point.
         """
         # Get the CDF wrapper and evaluate
-        cdf_wrapper = CDFWrapper(self._get_cdf_expr())
+        cdf_wrapper = CDFWrapper(self._cdf_expr)
         return cdf_wrapper(*u)
 
     def _cdf_vectorized(self, points):
@@ -448,7 +434,7 @@ class CoreCopula:
         results = np.zeros(n_points)
 
         # Get the CDF wrapper
-        cdf_wrapper = CDFWrapper(self._get_cdf_expr())
+        cdf_wrapper = CDFWrapper(self._cdf_expr)
 
         # Evaluate for each point
         for i, point in enumerate(points):
@@ -689,7 +675,7 @@ class CoreCopula:
 
         # Get the conditional distribution function
         cond_distr_func = SymPyFuncWrapper(
-            sympy.diff(self._get_cdf_expr(), self.u_symbols[i - 1])
+            sympy.diff(self._cdf_expr, self.u_symbols[i - 1])
         )
 
         # Evaluate for each point
@@ -781,7 +767,7 @@ class CoreCopula:
         value = partial_pdf(0.7)  # Evaluate at u2=0.7
         """
         # Get the PDF expression
-        pdf_expr = self._get_cdf_expr()
+        pdf_expr = self._cdf_expr
         for u_symbol in self.u_symbols:
             pdf_expr = sympy.diff(pdf_expr, u_symbol)
 
@@ -929,7 +915,7 @@ class CoreCopula:
             PDF value at the point.
         """
         # Compute the PDF
-        term = self._get_cdf_expr()
+        term = self._cdf_expr
         for u_symbol in self.u_symbols:
             term = sympy.diff(term, u_symbol)
         pdf_func = SymPyFuncWrapper(term)
@@ -955,7 +941,7 @@ class CoreCopula:
         results = np.zeros(n_points)
 
         # Compute the PDF function
-        term = self._get_cdf_expr()
+        term = self._cdf_expr
         for u_symbol in self.u_symbols:
             term = sympy.diff(term, u_symbol)
         pdf_func = SymPyFuncWrapper(term)

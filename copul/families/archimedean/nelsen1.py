@@ -87,7 +87,7 @@ class BivClayton(BivArchimedeanCopula):
         return (self.theta * self.y + 1) ** (-1 / self.theta)
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         """
         Cumulative distribution function of the bivariate Clayton copula.
 
@@ -106,7 +106,7 @@ class BivClayton(BivArchimedeanCopula):
 
         # Regular formula for Clayton copula
         cdf = sympy.Max((u ** (-theta) + v ** (-theta) - 1), 0) ** (-1 / theta)
-        return CDFWrapper(cdf)
+        return cdf
 
     def cond_distr_1(self, u=None, v=None):
         """

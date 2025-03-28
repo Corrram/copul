@@ -27,12 +27,11 @@ class Joe(HeavyComputeArch):
         return 1 - (1 - sympy.exp(-self.y)) ** (1 / self.theta)
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         theta = self.theta
-        gen = 1 - (-((1 - self.u) ** theta - 1) * ((1 - self.v) ** theta - 1) + 1) ** (
+        return 1 - (-((1 - self.u) ** theta - 1) * ((1 - self.v) ** theta - 1) + 1) ** (
             1 / theta
         )
-        return CDFWrapper(gen)
 
     def cond_distr_1(self, u=None, v=None):
         theta = self.theta

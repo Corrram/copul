@@ -29,14 +29,13 @@ class Nelsen21(BivArchimedeanCopula):
         return (1 - (1 - (1 - self.y) ** self.theta) ** (1 / self.theta)) * indicator
 
     @property
-    def cdf(self) -> SymPyFuncWrapper:
+    def _cdf_expr(self):
         t = self.theta
         u = self.u
         v = self.v
         expr = (1 - (1 - u) ** t) ** (1 / t) + (1 - (1 - v) ** t) ** (1 / t) - 1
         sympy_max = sympy.Max(expr, 0)
-        cdf = 1 - (1 - sympy_max**t) ** (1 / t)
-        return SymPyFuncWrapper(cdf)
+        return 1 - (1 - sympy_max**t) ** (1 / t)
 
     def _cdf(self, u, v, t):
         return 1 - (

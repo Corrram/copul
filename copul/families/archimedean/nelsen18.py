@@ -29,8 +29,8 @@ class Nelsen18(BivArchimedeanCopula):
         return ind * (self.theta / sympy.log(self.y) + 1)
 
     @property
-    def cdf(self) -> SymPyFuncWrapper:
-        cdf = sympy.Max(
+    def _cdf_expr(self) -> SymPyFuncWrapper:
+        return sympy.Max(
             (
                 1
                 + (
@@ -51,7 +51,6 @@ class Nelsen18(BivArchimedeanCopula):
             ),
             0,
         )
-        return SymPyFuncWrapper(cdf)
 
     def cond_distr_2(self, u=None, v=None):
         cond_distr = (
