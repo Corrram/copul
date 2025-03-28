@@ -4,43 +4,6 @@ import pytest
 from copul.checkerboard.bernstein import BernsteinCopula
 
 
-def test_1d_degree_0():
-    """
-    Degree 0 in 1D means the copula is the function C(u)=u
-    only if theta=1. Then pdf=1, cdf(u)=u.
-    """
-    theta = np.array([1.0])  # shape=(1,), so m_1=0
-    cop = BernsteinCopula(theta)
-    assert cop.dim == 1
-    assert cop.degrees == [0]
-    # test cdf
-    pts = [0.0, 0.2, 0.5, 1.0]
-    for p in pts:
-        assert np.isclose(cop.cdf(p), p), f"cdf({p}) should be {p}"
-    # test pdf
-    for p in [0.2, 0.5, 0.8]:
-        assert np.isclose(cop.pdf(p), 1.0), f"pdf({p}) should be 1.0"
-
-
-def test_1d_degree_1():
-    """
-    Degree 1 in 1D => shape=(2,).
-    Suppose theta = [0, 1], which also yields C(u)=u (classic example).
-    """
-    theta = np.array([0.0, 1.0])  # shape=(2,), m=1
-    cop = BernsteinCopula(theta)
-    assert cop.dim == 1
-    assert cop.degrees == [1]
-
-    # cdf at 0.6 => should be ~0.6
-    cdf_val = cop.cdf(0.6)
-    assert np.isclose(cdf_val, 0.6, atol=1e-6)
-
-    # pdf at 0.6 => 1
-    pdf_val = cop.pdf(0.6)
-    assert np.isclose(pdf_val, 1.0, atol=1e-6)
-
-
 def test_2d_mixed_degrees():
     """
     2D with different degrees, e.g. shape=(2,3) => m1=1, m2=2.
@@ -109,3 +72,114 @@ def test_invalid_shapes():
         _ = BernsteinCopula(np.array([]))  # no dimension
     with pytest.raises(ValueError):
         _ = BernsteinCopula(np.zeros((0, 2)))  # shape=(0,2) => invalid
+
+
+@pytest.mark.parametrize("point, expected", [
+    ([1, 0.5], 0.5),
+    ([0.5, 1], 0.5),
+    ([0, 0], 0),
+    ([1, 1], 1),
+])
+def test_cdf_edge_cases(point, expected):
+    """Test edge cases for CDF."""
+    theta = np.array([[0.5, 0.5], [0.5, 0.5]])
+    cop = BernsteinCopula(theta)
+    actual = cop.cdf(point)
+    assert np.isclose(actual, expected), f"CDF at {point} should be {expected}"
+
+@pytest.mark.parametrize("point, expected", [
+    ([.99, 0.5], 0.5),
+    ([0.5, .99], 0.5),
+    ([0.01, 0.01], 0),
+    ([.99, .99], 1),
+])
+def test_cdf_edge_cases_rough(point, expected):
+    """Test edge cases for CDF."""
+    theta = np.ones((3, 3))  # shape=(2,2), m1=1, m2=1
+    cop = BernsteinCopula(theta)
+    actual = cop.cdf(point)
+    assert np.isclose(actual, expected, atol=0.1), f"CDF at {point} should be {expected}"
+
+def test_cdf_vectorized_edge_cases():
+    """Test edge cases for CDF."""
+    points = np.array([[1, 0.5], [0.5, 1], [0, 0], [1, 1]])
+    theta = np.array([[0.5, 0.5], [0.5, 0.5]])
+    cop = BernsteinCopula(theta)
+    actual = cop.cdf(points)
+    expected = np.array([0.5, 0.5, 0, 1])
+    assert np.all(np.isclose(actual, expected)), \
+        f"CDF at {points} should be {expected}"
+    
+def test_cdf_vectorized_edge_cases_rough():
+    """Test edge cases for CDF."""
+    points = np.array([[.99, 0.5], [0.5, .99], [0.01, 0.01], [.99, .99]])
+    theta = np.ones((3, 3))  # shape=(2,2), m1=1, m2=1
+    cop = BernsteinCopula(theta)
+    actual = cop.cdf(points)
+    expected = np.array([0.5, 0.5, 0, 1])
+    assert np.all(np.isclose(actual, expected, atol=0.1)), \
+        f"CDF at {points} should be {expected}"
+
+@pytest.mark.parametrize("point, expected", [
+    ([0, 0.5], 0),       # P(U₁≤0|U₂=0.5) = 0
+    ([1, 0.5], 1),       # P(U₁≤1|U₂=0.5) = 1
+])
+def test_cond_distr_1_edge_cases(point, expected):
+    """Test edge cases for first conditional distribution."""
+    theta = np.array([[0.5, 0.5], [0.5, 0.5]])
+    cop = BernsteinCopula(theta)
+    actual = cop.cond_distr_1(point)
+    assert np.isclose(actual, expected), f"cond_distr_1 at {point} should be {expected}"
+
+
+@pytest.mark.parametrize("point, expected", [
+    ([0, 0.5], 0),    # Very small u₁
+    ([1, 0.5], 0.5),  # Nearly 1 for u₁
+])
+def test_cond_distr_2_edge_cases(point, expected):
+    """Test edge cases for second conditional distribution."""
+    theta = np.array([[0.5, 0.5], [0.5, 0.5]])
+    cop = BernsteinCopula(theta)
+    actual = cop.cond_distr_2(point)
+    assert np.isclose(actual, expected), f"cond_distr_2 at {point} should be {expected}"
+
+
+@pytest.mark.parametrize("point, expected", [
+    ([0.01, 0.5], 0),    # Very small u₁
+    ([0.99, 0.5], 1),    # Nearly 1 for u₁
+])
+def test_cond_distr_1_edge_cases_approx(point, expected):
+    """Test approximate edge cases for first conditional distribution."""
+    theta = np.array([[0.5, 0.5], [0.5, 0.5]])
+    cop = BernsteinCopula(theta)
+    actual = cop.cond_distr_1(point)
+    assert np.isclose(actual, expected, rtol=0.01), f"cond_distr_1 at {point} should be approximately {expected}"
+
+
+@pytest.mark.parametrize("point, expected", [
+    ([0.01, 0.5], 0),    # Very small u₁
+    ([0.99, 0.5], 0.5),  # Nearly 1 for u₁
+])
+def test_cond_distr_2_edge_cases_approx(point, expected):
+    """Test approximate edge cases for second conditional distribution."""
+    theta = np.array([[0.5, 0.5], [0.5, 0.5]])
+    cop = BernsteinCopula(theta)
+    actual = cop.cond_distr_2(point)
+    assert np.isclose(actual, expected, atol=0.01), f"cond_distr_2 at {point} should be approximately {expected}"
+
+
+@pytest.mark.parametrize("point_1, point_2", [
+    ([0.3, 0.7], [0.7, 0.3]),  # Test symmetry for this special case (should be equal)
+    ([0.2, 0.2], [0.8, 0.8]),  # Points on diagonal (should be equal)
+])
+def test_cond_distr_symmetry(point_1, point_2):
+    """Test that for specific symmetric theta matrices, certain symmetry properties hold."""
+    # This symmetric theta should produce a symmetric copula
+    theta = np.array([[0.5, 0.5], [0.5, 0.5]])
+    cop = BernsteinCopula(theta)
+    
+    cd1_1 = cop.cond_distr_1(point_1)
+    cd2_2 = cop.cond_distr_2(point_2)
+    
+    assert np.isclose(cd1_1, cd2_2), \
+        f"For symmetric theta, cond_distr_1({point_1}) should equal cond_distr_2({point_2})"

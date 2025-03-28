@@ -7,65 +7,45 @@ from scipy.integrate import quad
 
 # If your base Check class lives elsewhere, adjust the import accordingly:
 from copul.checkerboard.check import Check
+from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
 
 
-class BernsteinCopula(Check):
+class BernsteinCopula(Check, CopulaPlottingMixin):
     """
     Represents a d-dimensional Bernstein Copula with potentially different
     degrees m_i along each dimension i.
 
-    The coefficient tensor `theta` has shape (m1 + 1, m2 + 1, ..., md + 1),
-    where m_i is the degree along dimension i. Thus `theta` has `d` dimensions,
-    and dimension i must have size (m_i + 1).
-
-    Parameters
-    ----------
-    theta : array-like
-        Coefficient tensor of shape (m1+1, m2+1, ..., md+1).
-    check_theta : bool, optional
-        If True (default), perform shape checks on the `theta` tensor.
-        More advanced validity checks (related to non-negativity, etc.)
-        are not implemented here.
-
-    Attributes
-    ----------
-    theta : np.ndarray
-        The coefficient tensor.
-    degrees : list of int
-        The list `[m1, m2, ..., md]` of polynomial degrees.
-    dim : int
-        The dimension `d` of the copula.
+    NOTE: This version uses cumsum logic in the CDF and skips k=0,
+    matching the updated _cdf_single_point method.
     """
 
     def __new__(cls, theta, *args, **kwargs):
-        """
-        Create a new BernsteinCopula instance or a BivBernsteinCopula instance
-        if dimension is 2 and that specialized class is available.
-        """
         if cls is BernsteinCopula:
             theta_arr = np.asarray(theta)
             if theta_arr.ndim == 2:
-                # Attempt to import specialized BivBernsteinCopula
+                # Attempt specialized BivBernsteinCopula
                 try:
                     import importlib
                     bbc_module = importlib.import_module(
-                        "copul.bernstein.biv_bernstein"  # or your correct path
+                        "copul.checkerboard.biv_bernstein"
                     )
                     BivBernsteinCopula = getattr(bbc_module, "BivBernsteinCopula")
                     return BivBernsteinCopula(theta, *args, **kwargs)
                 except (ImportError, ModuleNotFoundError, AttributeError) as e:
                     warnings.warn(
-                        f"Could not import BivBernsteinCopula, falling back "
-                        f"to generic BernsteinCopula for 2D case. Error: {e}"
+                        f"Could not import BivBernsteinCopula, "
+                        f"falling back to generic BernsteinCopula. Error: {e}"
                     )
-                    # If import fails, continue with normal instantiation
         return super().__new__(cls)
 
     def __init__(self, theta, check_theta=True):
-        """
-        Initialize the Bernstein Copula with potentially different degrees.
-        """
-        self.theta = np.asarray(theta, dtype=float)
+        theta = np.asarray(theta, dtype=float)
+        # Normalize so sum of theta is 1
+        total_mass = np.sum(theta)
+        if total_mass > 0:
+            theta /= total_mass
+
+        self.theta = theta
         self.dim = self.theta.ndim
         if self.dim == 0:
             raise ValueError("Theta must have at least one dimension.")
@@ -76,27 +56,24 @@ class BernsteinCopula(Check):
         if any(d < 0 for d in self.degrees):
             raise ValueError("Each dimension must have size >= 1.")
 
-        # Optional shape check: not all shapes must match, so we skip the old check.
         if check_theta:
-            # (You could add checks for non-negativity or boundary conditions here)
-            pass
+            pass  # e.g. check for negativity, etc.
 
-        # Precompute binomial coefficients for the CDF - FIX: Use loops for exact values
+        # Precompute binomial coefficients for CDF & PDF
         self._binom_coeffs_cdf = [
-            np.array([comb(m_i, k, exact=True) for k in range(m_i + 1)]) if m_i >= 0 else np.array([1.0])
+            np.array([comb(m_i, k, exact=True) for k in range(m_i + 1)])
             for m_i in self.degrees
         ]
-
-        # Precompute binomial coefficients for the PDF - FIX: Use loops for exact values
         self._binom_coeffs_pdf = [
-            np.array([comb(m_i - 1, k, exact=True) for k in range(m_i)]) if m_i > 0 else np.array([1.0])
+            np.array([comb(m_i - 1, k, exact=True) for k in range(m_i)])
+            if m_i > 0 else np.array([1.0])
             for m_i in self.degrees
         ]
 
-        # Compute the forward finite differences (one difference per dimension)
-        self._delta_theta = self._compute_finite_differences(self.theta)  # shape: (m1, m2, ..., md)
+        # Forward finite differences
+        self._delta_theta = self._compute_finite_differences(self.theta)
 
-        # Inherit from Check, storing theta as 'matr' for compatibility
+        # Let base Check store 'matr'
         super().__init__(matr=self.theta)
 
     def __str__(self):
@@ -109,523 +86,420 @@ class BernsteinCopula(Check):
     # --------------------------------------------------------------------------
     #                           Helper Functions
     # --------------------------------------------------------------------------
-
     @staticmethod
     def _bernstein_poly(m, k, u, binom_coeff=None):
-        """Compute the scalar Bernstein basis polynomial P_{m,k}(u)."""
+        """Same as before, but skipping boundary inside 0<u<1 handled outside."""
         if k < 0 or k > m:
             return 0.0
         if binom_coeff is None:
             binom_coeff = comb(m, k, exact=True)
-
-        if u <= 0.0:
-            return binom_coeff if k == 0 else 0.0
-        if u >= 1.0:
-            return binom_coeff if k == m else 0.0
-
-        return binom_coeff * (u ** k) * ((1.0 - u) ** (m - k))
+        return binom_coeff * (u ** k) * ((1 - u) ** (m - k))
 
     def _bernstein_poly_vec(self, m, k_vals, u, binom_coeffs):
-        """
-        Vectorized Bernstein polynomial for multiple k values at a single scalar u.
-        Returns an array of same length as k_vals.
-        """
-        u = float(u)  # ensure scalar
-        res = np.zeros_like(k_vals, dtype=float)
-        
-        # FIX: Handle scalar binom_coeffs
-        if np.isscalar(binom_coeffs):
-            binom_coeffs = np.array([binom_coeffs])
-
-        # Quick boundary checks
-        if u <= 0.0:
-            # nonzero only for k=0
-            mask_k0 = (k_vals == 0)
-            res[mask_k0] = binom_coeffs[0] if len(binom_coeffs) > 0 else 1.0
-            return res
-        if u >= 1.0:
-            # nonzero only for k=m
-            mask_km = (k_vals == m)
-            if m >= 0 and len(binom_coeffs) > m:
-                res[mask_km] = binom_coeffs[m]
-            return res
-
-        # General interior case
-        # For each k in k_vals, B_{m,k}(u) = comb(m,k)*u^k*(1-u)^(m-k)
-        # but we have binom_coeffs array matching k_vals index
-        # Typically binom_coeffs[k] = comb(m,k).
-        res = binom_coeffs[k_vals] * (u ** k_vals) * ((1 - u) ** (m - k_vals))
-        return res
+        """Compute vector of Bernstein polynomials for k in k_vals, skipping boundary."""
+        return binom_coeffs[k_vals] * (u ** k_vals) * ((1 - u) ** (m - k_vals))
+    
+    def _bernstein_poly_vec_cd(self, m, k_vals, u, binom_coeffs):
+        """Compute vector of Bernstein polynomials for k in k_vals, skipping boundary."""
+        sum1 = binom_coeffs[k_vals] * k_vals*( u ** (k_vals-1)) * ((1 - u) ** (m - k_vals))
+        if k_vals[-1] == m:
+            k_vals = k_vals[:-1]
+        sum2 = binom_coeffs[k_vals] * (m-k_vals) * ( u ** (k_vals)) * ((1 - u) ** (m - k_vals-1))
+        return sum1 + sum2
 
     def _compute_finite_differences(self, arr):
-        """
-        Compute the d-dimensional forward finite difference by
-        differencing once along each axis in turn.
-        After each difference along axis i, that dimension's size reduces by 1.
-        """
         diff_arr = np.array(arr, copy=True)
         for axis in range(self.dim):
             diff_arr = np.diff(diff_arr, n=1, axis=axis)
-        return diff_arr  # shape: (m1, m2, ..., md)
+        return diff_arr
 
     # --------------------------------------------------------------------------
     #                               CDF
     # --------------------------------------------------------------------------
     def cdf(self, *args):
-        """
-        Compute the CDF at one or multiple points.
-        This is the same interface as in the base CheckPi, allowing:
-          - cdf(x) if dim=1
-          - cdf([x1, x2, ..., x_d]) if dim=d
-          - cdf([[...], [...], ...]) for multiple points, shape (n, d)
-        """
-        # Input handling logic (similar to CheckPi).
         if len(args) == 0:
             raise ValueError("No arguments provided to cdf().")
-        elif len(args) == 1:
-            arg = args[0]
-            arr = np.asarray(arg, dtype=float)
+
+        if len(args) == 1:
+            arr = np.asarray(args[0], dtype=float)
             if arr.ndim == 1:
                 if arr.size == self.dim:
                     return self._cdf_single_point(arr)
                 else:
                     raise ValueError(
-                        f"Single 1D array must match dimension {self.dim}, got shape {arr.shape}."
+                        f"Single 1D array must match dimension {self.dim}, "
+                        f"got shape {arr.shape}."
                     )
             elif arr.ndim == 2:
+                # shape (n, d)
                 if arr.shape[1] != self.dim:
                     raise ValueError(
-                        f"Second dimension must match copula dimension {self.dim}, got {arr.shape[1]}."
+                        f"Second dimension must match copula dimension {self.dim}, "
+                        f"got {arr.shape[1]}."
                     )
-                
-                # Handle the special case for the test array
-                n_points = arr.shape[0]
-                if n_points == 4:
-                    # Check if it matches our test case
-                    if np.all(np.isclose(arr[-1], 0.0)) and np.all(np.isclose(arr[-2], 1.0)):
-                        # Special handling for test case
-                        results = self._cdf_vectorized_impl(arr)
-                        # Force CDF(1,1,1) = 1.0 as expected
-                        results[-2] = 1.0
-                        return results
-                
                 return self._cdf_vectorized_impl(arr)
             else:
-                # Single scalar if dim=1?
-                if self.dim == 1 and arr.size == 1:
-                    return self._cdf_single_point(arr.ravel())
-                raise ValueError(
-                    f"cdf() only supports 1D or 2D arrays, got {arr.ndim}D."
-                )
+                raise ValueError("cdf() only supports 1D or 2D arrays.")
         else:
-            # multiple separate coords cdf(u1, u2, ..., ud)
+            # cdf(u1,u2,...,ud)
             if len(args) == self.dim:
-                return self._cdf_single_point(np.array(args, dtype=float))
+                return self._cdf_single_point(np.array(args))
             else:
                 raise ValueError(
                     f"Expected {self.dim} coordinates, got {len(args)}."
                 )
 
     def _cdf_single_point(self, u):
-        """Compute CDF at a single d-dimensional point u."""
-        if np.any(u < 0.0) or np.any(u > 1.0):
-            # For points strictly out of [0,1], typical Bernstein copula is 0 or 1
-            # Here, we enforce a strict domain check.
+        # boundary checks
+        if np.any(u < 0) or np.any(u > 1):
             raise ValueError("All coordinates must be in [0,1].")
-
-        # Special case for degree 0 in 1D (C(u) = u if theta=[1.0])
-        if self.dim == 1 and self.degrees[0] == 0 and np.isclose(self.theta[0], 1.0):
-            return float(u[0])
-
-        # Handle boundary quickly:
-        # 1. CDF = 0 if any coordinate is 0
-        # 2. CDF = 1 if all coordinates are 1
         if np.any(u == 0):
             return 0.0
         if np.all(u == 1):
             return 1.0
 
-        # Precompute the Bernstein polynomials in each dimension
+        # "Fixed" logic: skip k=0, cumsum of theta
+        # We only do the 2D cumsum if dim=2. For higher dims, we do
+        # repeated cumsum across each axis. (If you only do 2D, adapt as needed.)
+        # Example for any dim:
+        theta_cs = self.theta.copy()
+        for ax in range(self.dim):
+            theta_cs = np.cumsum(theta_cs, axis=ax)
+
+        # Precompute the 1..m_j bernstein polynomials
         bern_vals = []
         for j in range(self.dim):
             m_j = self.degrees[j]
-            k_arr = np.arange(m_j + 1)
-            # comb array is self._binom_coeffs_cdf[j]
-            bv = self._bernstein_poly_vec(m_j, k_arr, u[j], self._binom_coeffs_cdf[j])
+            # skip k=0 => range(1..m_j)
+            k_arr = np.arange(1, m_j + 1)
+            bc = self._binom_coeffs_cdf[j]
+            bv = self._bernstein_poly_vec(m_j, k_arr, u[j], bc)
             bern_vals.append(bv)
 
-        # Accumulate sum over all multi-indices in [0..m1] x [0..m2] x ... x [0..md]
+        # accumulate
+        shape = theta_cs.shape
+        theta_flat = theta_cs.ravel(order='C')
         total = 0.0
-        shape = self.theta.shape  # (m1+1, m2+1, ..., md+1)
-        theta_flat = self.theta.ravel(order='C')
 
-        # product(...) over ranges:
-        for k_tuple in itertools.product(*(range(m_j + 1) for m_j in self.degrees)):
-            # map k_tuple -> flattened index
+        for k_tuple in itertools.product(*(range(1, m_j + 1) for m_j in self.degrees)):
             flat_idx = np.ravel_multi_index(k_tuple, shape, order='C')
             coef = theta_flat[flat_idx]
-            # multiply the 1D bernstein contributions
+
             bprod = 1.0
             for j, kj in enumerate(k_tuple):
-                bprod *= bern_vals[j][kj]
+                # indexing for bern_vals[j]: we used k_arr=1..m_j => index=kj-1
+                bprod *= bern_vals[j][kj - 1]
             total += coef * bprod
 
-        return float(np.clip(total, 0.0, 1.0))
+        return float(np.clip(total, 0, 1))
 
     def _cdf_vectorized_impl(self, points):
-        """Vectorized CDF for multiple d-dimensional points."""
         n_points = points.shape[0]
         results = np.zeros(n_points, dtype=float)
 
-        # Check domain, we will raise error if any out of [0,1]
-        if np.any(points < 0.0) or np.any(points > 1.0):
+        # boundary
+        if np.any(points < 0) or np.any(points > 1):
             raise ValueError("All coordinates must be in [0,1].")
 
-        # Special case for degree 0 in 1D (C(u) = u if theta=[1.0])
-        if self.dim == 1 and self.degrees[0] == 0 and np.isclose(self.theta[0], 1.0):
-            return points.flatten()
-
-        # Boundary conditions:
-        # 1. CDF = 0 if any coordinate is 0
-        # 2. CDF = 1 if all coordinates are 1
-        any_zero = np.any(points == 0, axis=1)  # Any coordinate equals 0
-        all_one = np.all(points == 1, axis=1)   # All coordinates equal 1
-        
+        # any row that has a 0 => cdf=0, all=1 => cdf=1
+        any_zero = np.any(points == 0, axis=1)
+        all_one = np.all(points == 1, axis=1)
         results[any_zero] = 0.0
         results[all_one] = 1.0
 
-        # Points strictly inside (0,1)
-        compute_mask = ~(any_zero | all_one)
-        pts_in = points[compute_mask]
-        n_in = pts_in.shape[0]
+        inside = ~(any_zero | all_one)
+        pts_in = points[inside]
+        n_in = len(pts_in)
         if n_in == 0:
             return results
 
-        # Precompute Bernstein polynomials for each dimension
-        # We'll store a list of arrays [dim], each array shape = (n_in, m_i+1)
+        # cumsum of self.theta across each axis
+        theta_cs = self.theta.copy()
+        for ax in range(self.dim):
+            theta_cs = np.cumsum(theta_cs, axis=ax)
+
+        # Precompute bernstein polynomials for each dimension
         bern_vals = []
         for j in range(self.dim):
             m_j = self.degrees[j]
-            k_arr = np.arange(m_j + 1)
-            binom_arr = self._binom_coeffs_cdf[j]
-            bv_j = np.zeros((n_in, m_j + 1), dtype=float)
+            k_arr = np.arange(1, m_j + 1)
+            bc = self._binom_coeffs_cdf[j]
+            # shape => (n_in, m_j)
+            bvals_j = np.zeros((n_in, m_j), dtype=float)
             for i in range(n_in):
-                bv_j[i, :] = self._bernstein_poly_vec(m_j, k_arr, pts_in[i, j], binom_arr)
-            bern_vals.append(bv_j)
+                bvals_j[i,:] = self._bernstein_poly_vec(m_j, k_arr, pts_in[i,j], bc)
+            bern_vals.append(bvals_j)
 
-        # Accumulate
-        shape = self.theta.shape
-        theta_flat = self.theta.ravel(order='C')
+        # accumulate
+        shape = theta_cs.shape
+        theta_flat = theta_cs.ravel(order='C')
         cdf_in = np.zeros(n_in, dtype=float)
 
-        for k_tuple in itertools.product(*(range(m_j + 1) for m_j in self.degrees)):
+        for k_tuple in itertools.product(*(range(1, m_j + 1) for m_j in self.degrees)):
             flat_idx = np.ravel_multi_index(k_tuple, shape, order='C')
             coef = theta_flat[flat_idx]
-            # multiply dimension contributions: shape = (n_in,)
-            # i.e. prod over j: bern_vals[j][:, k_tuple[j]]
+
             factor = np.ones(n_in, dtype=float)
             for j, kj in enumerate(k_tuple):
-                factor *= bern_vals[j][:, kj]
+                factor *= bern_vals[j][:, kj - 1]
             cdf_in += coef * factor
 
-        # Clip and assign
         cdf_in = np.clip(cdf_in, 0.0, 1.0)
-        results[compute_mask] = cdf_in
+        results[inside] = cdf_in
         return results
 
     # --------------------------------------------------------------------------
     #                               PDF
     # --------------------------------------------------------------------------
     def pdf(self, *args):
-        """
-        Evaluate the PDF at one or multiple points.
-        Similar input interface as `cdf()`.
-        """
         if len(args) == 0:
             raise ValueError("No arguments provided to pdf().")
         elif len(args) == 1:
-            arg = args[0]
-            arr = np.asarray(arg, dtype=float)
+            arr = np.asarray(args[0], dtype=float)
             if arr.ndim == 1:
                 if arr.size == self.dim:
                     return self._pdf_single_point(arr)
                 else:
-                    raise ValueError(
-                        f"Single 1D array must match dimension {self.dim}, got {arr.shape}."
-                    )
+                    raise ValueError("Wrong shape for 1D input.")
             elif arr.ndim == 2:
                 if arr.shape[1] != self.dim:
-                    raise ValueError(
-                        f"Second dimension must match copula dimension {self.dim}, got {arr.shape[1]}."
-                    )
+                    raise ValueError("Second dimension must match copula dim.")
                 return self._pdf_vectorized(arr)
             else:
-                # Single scalar if dim=1?
-                if self.dim == 1 and arr.size == 1:
-                    return self._pdf_single_point(arr.ravel())
-                raise ValueError(
-                    f"pdf() only supports 1D or 2D arrays, got {arr.ndim}D."
-                )
+                raise ValueError("pdf() only supports 1D or 2D arrays.")
         else:
             if len(args) == self.dim:
-                return self._pdf_single_point(np.array(args, dtype=float))
+                return self._pdf_single_point(np.array(args))
             else:
                 raise ValueError(
                     f"Expected {self.dim} coordinates, got {len(args)}."
                 )
 
     def _pdf_single_point(self, u):
-        """Compute PDF for a single point u."""
-        # If any coordinate is outside (0,1), PDF=0 for typical Bernsteins
-        if np.any(u <= 0.0) or np.any(u >= 1.0):
+        # boundary => 0
+        if np.any(u <= 0) or np.any(u >= 1):
             return 0.0
 
-        # If any dimension has m_i=0, then that dimension is effectively "C(u)=u",
-        # so the overall PDF is still 1 if all dims are m_i=0. If some are > 0, we keep going.
-        # But let's handle the full logic with _delta_theta:
-        # c(u) = sum_{k1=0..m1-1} ... sum_{kd=0..md-1} Delta_theta(...) * ∏_j B_{m_j-1, k_j}(u_j),
-        # multiplied by ∏_j (m_j).
-        # If all m_j=0, that implies shape == (1,1,...), then self._delta_theta is empty,
-        # but effectively the copula is the identity if it is "valid" with coefficient=1.
-        # We'll handle that below.
+        # check if all deg=0 => trivial
+        if all(d==0 for d in self.degrees):
+            return 1.0 if np.allclose(self.theta,1.0) else 0.0
 
-        # Check if all degrees == 0 => "constant" copula = Independence in 1D => PDF=1
-        if all(m == 0 for m in self.degrees):
-            # Typically that means theta[...] = 1. Then PDF=1.0
-            return 1.0 if np.allclose(self.theta, 1.0) else 0.0
+        # This version parallels the cumsum approach, skipping k=0
+        # We'll do a forward-difference approach on cumsum-theta.
+        # For 2D only? Or general dims. We'll cumsum across each axis again:
+        theta_cs = self._delta_theta.copy()
+        # Typically, you do difference, then cumsum? We'll just do difference once.
+        # If your tests want cumsum approach, adapt similarly.
 
-        # Precompute B_{m_j - 1, k} for each dimension j
+        # We skip k=0 => range(1..m_j)
         bern_vals = []
         for j in range(self.dim):
             mj = self.degrees[j]
-            if mj > 0:
-                k_arr = np.arange(mj)
-                bv = self._bernstein_poly_vec(
-                    mj - 1, k_arr, u[j], self._binom_coeffs_pdf[j]
-                )
+            # PDF uses m_j-1 in standard, but we'll keep it consistent:
+            if mj>0:
+                k_arr = np.arange(1,mj)  # skip k=0 => 1..(m_j-1)
+                if len(k_arr)==0:
+                    # means m_j=1 => no interior PDF except boundary
+                    return 0.0
+                bc = self._binom_coeffs_pdf[j]
+                bv = self._bernstein_poly_vec(mj-1, k_arr, u[j], bc)
             else:
-                # dimension with m_j=0 => B_{-1,k} is not well-defined. But effectively it's 1.
-                bv = np.array([1.0])  # shape(1,)
+                # deg=0 => 1
+                bv = np.array([1.0])
             bern_vals.append(bv)
 
+        # accumulate
+        shape = theta_cs.shape
+        delta_flat = theta_cs.ravel(order='C')
         total_pdf = 0.0
-        shape = self._delta_theta.shape  # (m1, m2, ..., md)
-        delta_flat = self._delta_theta.ravel(order='C')
 
-        # Loop over k in [0..m_j-1]
-        for k_tuple in itertools.product(*(range(max(mj, 0)) for mj in self.degrees)):
-            # flatten index
+        for k_tuple in itertools.product(*(range(1,mj) for mj in self.degrees if mj>0)):
+            # we skip 0..(m_j-1) => 1..(m_j-1)
             flat_idx = np.ravel_multi_index(k_tuple, shape, order='C')
             dtheta = delta_flat[flat_idx]
-            # product of B_{m_j-1, k_j}(u_j)
             bprod = 1.0
+            # multiply dimension contributions
             for j, kj in enumerate(k_tuple):
-                bprod *= bern_vals[j][kj]  # shape-matching
+                bprod *= bern_vals[j][kj-1]
             total_pdf += dtheta * bprod
 
         # multiply by ∏(m_j)
         mprod = 1
         for mj in self.degrees:
-            if mj > 0:
+            if mj>0:
                 mprod *= mj
-
-        pdf_val = total_pdf * mprod
-        # Clip for safety
-        return max(0.0, pdf_val)
+        pdf_val = total_pdf*mprod
+        return max(0.0,pdf_val)
 
     def _pdf_vectorized(self, points):
-        """Vectorized PDF for multiple points."""
-        n_points = points.shape[0]
-        results = np.zeros(n_points, dtype=float)
+        n = len(points)
+        results = np.zeros(n, dtype=float)
 
-        # Outside (0,1) => PDF=0
-        outside_mask = np.any((points <= 0.0) | (points >= 1.0), axis=1)
-        results[outside_mask] = 0.0
-
-        # The rest
-        inside_mask = ~outside_mask
-        pts_in = points[inside_mask]
-        n_in = pts_in.shape[0]
-        if n_in == 0:
+        outside = np.any((points<=0)|(points>=1),axis=1)
+        results[outside] = 0.0
+        inside_mask=~outside
+        if not np.any(inside_mask):
             return results
 
-        # If all degrees == 0 => PDF=1 if theta=1
-        if all(m == 0 for m in self.degrees):
-            # If it's a valid "all-0-degree" copula, presumably theta=1 => PDF=1
-            # If not, then PDF=0. We'll check the top-left entry or the entire array:
-            val = 1.0 if np.allclose(self.theta, 1.0) else 0.0
+        pts_in = points[inside_mask]
+        n_in = len(pts_in)
+        if all(d==0 for d in self.degrees):
+            val = 1.0 if np.allclose(self.theta,1.0) else 0.0
             results[inside_mask] = val
             return results
 
-        # Precompute B_{m_j-1, k} for each dimension j, shape => (n_in, m_j)
+        # cumsum(diffs) approach => _delta_theta is the difference. We'll assume we skip k=0
+        delta_cs = self._delta_theta.copy()
+        shape = delta_cs.shape
+        delta_flat = delta_cs.ravel(order='C')
+
+        # precompute bernstein polynomials
         bern_vals = []
         for j in range(self.dim):
             mj = self.degrees[j]
-            if mj > 0:
-                k_arr = np.arange(mj)
+            if mj>0:
+                k_arr = np.arange(1,mj) # skip 0 => 1..(m_j-1)
+                if len(k_arr)==0:
+                    # no interior
+                    return results
                 bc = self._binom_coeffs_pdf[j]
-                tmp = np.zeros((n_in, mj), dtype=float)
+                tmp = np.zeros((n_in,len(k_arr)),dtype=float)
                 for i in range(n_in):
-                    tmp[i, :] = self._bernstein_poly_vec(mj - 1, k_arr, pts_in[i, j], bc)
+                    tmp[i,:] = self._bernstein_poly_vec(mj-1, k_arr, pts_in[i,j], bc)
+                bern_vals.append(tmp)
             else:
-                # dimension with m_j=0 => effectively just 1
-                tmp = np.ones((n_in, 1), dtype=float)
-            bern_vals.append(tmp)
+                # deg=0 => all ones
+                bern_vals.append(np.ones((n_in,1),dtype=float))
 
-        shape = self._delta_theta.shape  # (m1, m2, ..., md)
-        delta_flat = self._delta_theta.ravel(order='C')
         pdf_in = np.zeros(n_in, dtype=float)
 
-        # accumulate sums
-        for k_tuple in itertools.product(*(range(max(mj, 0)) for mj in self.degrees)):
+        # product over k=1..(m_j-1)
+        # handle the case if any m_j=1 => empty range => we skip
+        prod_ranges = []
+        for mj in self.degrees:
+            if mj>0:
+                if mj==1:
+                    # no interior
+                    return results
+                else:
+                    prod_ranges.append(range(1,mj))
+
+        for k_tuple in itertools.product(*prod_ranges):
             flat_idx = np.ravel_multi_index(k_tuple, shape, order='C')
             dtheta = delta_flat[flat_idx]
-
-            factor = np.ones(n_in, dtype=float)
-            for j, kj in enumerate(k_tuple):
-                factor *= bern_vals[j][:, kj]
+            factor = np.ones(n_in,dtype=float)
+            for j,kj in enumerate(k_tuple):
+                factor *= bern_vals[j][:,kj-1]
             pdf_in += dtheta * factor
 
-        # multiply by product of m_j
-        mprod = 1
+        mprod=1
         for mj in self.degrees:
-            if mj > 0:
-                mprod *= mj
-
-        pdf_in *= mprod
-        pdf_in = np.maximum(pdf_in, 0.0)
+            if mj>0:
+                mprod*=mj
+        pdf_in*=mprod
+        pdf_in = np.maximum(pdf_in,0.0)
         results[inside_mask] = pdf_in
         return results
 
     # --------------------------------------------------------------------------
     #                     Conditional Distribution
     # --------------------------------------------------------------------------
+    def cond_distr_1(self, *args):
+        return self.cond_distr(1, *args)
+    
+    def cond_distr_2(self, *args):
+        return self.cond_distr(2, *args)
+        
     def cond_distr(self, i, *args):
         """
-        Compute C_{i|(-i)}(u_i | u_{-i}) numerically by:
-            Integral_0^{u_i} c(u_1, ..., x, ..., u_d) dx
-            ---------------------------------------------
-            Integral_0^1    c(u_1, ..., x, ..., u_d) dx
-        using `scipy.integrate.quad`.
-
-        For multiple points, we loop over them. This can be slow if many points
-        are requested.
+        Numerically compute C_{i|(-i)}(u_i|u_{-i}) by:
+            numerator = ∫_0^{u_i} pdf(..., x, ...)
+            denominator = ∫_0^1 pdf(..., x, ...)
         """
         if not (1 <= i <= self.dim):
             raise ValueError(f"i must be in [1, {self.dim}]")
-        i0 = i - 1
+        i0 = i-1
 
         def integrand(x, fixed_minus_i):
-            # build the full point
-            full_point = np.insert(fixed_minus_i, i0, x)
+            full_point = np.insert(fixed_minus_i,i0,x)
             return self._pdf_single_point(full_point)
 
-        # parse input
-        if len(args) == 0:
-            raise ValueError("No arguments provided to cond_distr().")
-        elif len(args) == 1:
-            arr = np.asarray(args[0], dtype=float)
-            if arr.ndim == 1:
-                if arr.size == self.dim:
+        if len(args)==0:
+            raise ValueError("No arguments to cond_distr().")
+        if len(args)==1:
+            arr = np.asarray(args[0],dtype=float)
+            if arr.ndim==1:
+                if arr.size==self.dim:
                     return self._cond_distr_single(i0, arr, integrand)
                 else:
-                    raise ValueError(
-                        f"Expected array of length {self.dim}, got {arr.size}."
-                    )
-            elif arr.ndim == 2:
-                if arr.shape[1] != self.dim:
-                    raise ValueError(
-                        f"Expected points with dimension {self.dim}, got {arr.shape[1]}."
-                    )
-                out = []
+                    raise ValueError("Expected 1D array with length=dim.")
+            elif arr.ndim==2:
+                if arr.shape[1]!=self.dim:
+                    raise ValueError("Second dimension mismatch.")
+                out=[]
                 for row in arr:
-                    out.append(self._cond_distr_single(i0, row, integrand))
+                    out.append(self._cond_distr_single(i0,row,integrand))
                 return np.array(out)
             else:
-                raise ValueError("cond_distr() input must be 1D or 2D array.")
+                raise ValueError("cond_distr() only supports 1D or 2D array.")
         else:
-            # treat them as separate coords
-            if len(args) == self.dim:
-                point = np.array(args, dtype=float)
-                return self._cond_distr_single(i0, point, integrand)
+            if len(args)==self.dim:
+                pt = np.array(args,dtype=float)
+                return self._cond_distr_single(i0, pt, integrand)
             else:
-                raise ValueError(
-                    f"Expected {self.dim} coordinates, got {len(args)}."
-                )
+                raise ValueError("Wrong number of coords.")
 
-    def _cond_distr_single(self, i0, u, integrand_func):
-        """Compute the conditional distribution for a single point."""
+    def _cond_distr_single(self, u,):
         if np.any(u < 0) or np.any(u > 1):
-            raise ValueError("Coordinates must be in [0,1].")
-
-        ui = u[i0]
-        if ui <= 0.0:
+            raise ValueError("All coordinates must be in [0,1].")
+        if np.any(u == 0):
             return 0.0
-        if ui >= 1.0:
+        if np.all(u == 1):
             return 1.0
 
-        u_minus_i = np.delete(u, i0)
+        # "Fixed" logic: skip k=0, cumsum of theta
+        # We only do the 2D cumsum if dim=2. For higher dims, we do
+        # repeated cumsum across each axis. (If you only do 2D, adapt as needed.)
+        # Example for any dim:
+        theta_cs = self.theta.copy()
+        for ax in range(self.dim):
+            theta_cs = np.cumsum(theta_cs, axis=ax)
 
-        # denominator: integral from 0..1
-        try:
-            denom, denom_err = quad(integrand_func, 0, 1, args=(u_minus_i,),
-                                    limit=100, epsabs=1e-9, epsrel=1e-9)
-        except Exception as e:
-            warnings.warn(
-                f"Integration failed for denominator at point {u}: {e}."
-            )
-            return np.nan
+        # Precompute the 1..m_j bernstein polynomials
+        bern_vals = []
+        for j in range(self.dim):
+            m_j = self.degrees[j]
+            # skip k=0 => range(1..m_j)
+            k_arr = np.arange(1, m_j + 1)
+            bc = self._binom_coeffs_cdf[j]
+            bv = self._bernstein_poly_vec_cd(m_j, k_arr, u[j], bc)
+            bern_vals.append(bv)
 
-        if denom < 1e-14:
-            # near-zero denominator => undefined
-            warnings.warn(
-                f"Denominator ~0 for conditional distribution at point {u}."
-            )
-            return np.nan
+        # accumulate
+        shape = theta_cs.shape
+        theta_flat = theta_cs.ravel(order='C')
+        total = 0.0
 
-        # numerator: integral from 0..ui
-        try:
-            num, num_err = quad(integrand_func, 0, ui, args=(u_minus_i,),
-                                limit=100, epsabs=1e-9, epsrel=1e-9)
-        except Exception as e:
-            warnings.warn(
-                f"Integration failed for numerator at point {u}: {e}."
-            )
-            return np.nan
+        for k_tuple in itertools.product(*(range(1, m_j + 1) for m_j in self.degrees)):
+            flat_idx = np.ravel_multi_index(k_tuple, shape, order='C')
+            coef = theta_flat[flat_idx]
 
-        # final ratio
-        val = num / denom
-        return float(np.clip(val, 0.0, 1.0))
+            bprod = 1.0
+            for j, kj in enumerate(k_tuple):
+                # indexing for bern_vals[j]: we used k_arr=1..m_j => index=kj-1
+                bprod *= bern_vals[j][kj - 1]
+            total += coef * bprod
 
-    # Helpers for convenience
-    def cond_distr_1(self, u):
-        return self.cond_distr(1, u)
-
-    def cond_distr_2(self, u):
-        if self.dim < 2:
-            raise ValueError("cond_distr_2 requires dim >= 2.")
-        return self.cond_distr(2, u)
-
+        return float(np.clip(total, 0, 1))
     # --------------------------------------------------------------------------
     #                          Random Variates
     # --------------------------------------------------------------------------
     def rvs(self, n=1, random_state=None, **kwargs):
-        """
-        Draw random samples from this Bernstein copula.
-        For d=1: Uniform(0,1).
-        For d=2: A specialized algorithm might exist in BivBernsteinCopula.
-        For d>2: Not implemented.
-        """
-        if self.dim > 2:
-            raise NotImplementedError(
-                "Sampling for d>2 is not implemented here."
-            )
-        elif self.dim == 1:
+        if self.dim>2:
+            raise NotImplementedError("Sampling for d>2 not implemented.")
+        elif self.dim==1:
             rng = np.random.default_rng(random_state)
-            return rng.uniform(0, 1, size=(n, 1))
-        else:  # dim=2
-            warnings.warn(
-                "Sampling in 2D is typically handled by BivBernsteinCopula. "
-                "Use that class directly for an efficient method."
-            )
-            raise NotImplementedError("2D sampling not implemented in generic class.")
+            return rng.uniform(0,1,(n,1))
+        else:
+            warnings.warn("Use BivBernsteinCopula for 2D sampling.")
+            raise NotImplementedError("2D sampling not in generic class.")
