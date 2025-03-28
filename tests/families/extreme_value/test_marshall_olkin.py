@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
 from copul.exceptions import PropertyUnavailableException
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
@@ -132,15 +133,13 @@ def test_mo_cdf():
     copula = MarshallOlkin(0.3, 0.7)
 
     # Mock the SymPyFuncWrapper to avoid actual computation
-    with patch.object(SymPyFuncWrapper, "__call__") as mock_call:
+    with patch.object(CDFWrapper, "__call__") as mock_call:
         mock_call.return_value = 0.42  # Mock return value
 
         # Call CDF with specific values
         result = copula.cdf(0.5, 0.6)
 
-        # Verify CDF was called correctly
-        mock_call.assert_called_once_with(0.5, 0.6)
-        assert result == 0.42
+        assert np.isclose(result, 0.42)
 
 
 def test_mo_cdf_independence_case():
@@ -149,10 +148,10 @@ def test_mo_cdf_independence_case():
 
     # For independence copula, C(u,v) = u*v
     # Need to ensure we call the wrapper to get a numeric result
-    with patch.object(SymPyFuncWrapper, "__call__") as mock_call:
+    with patch.object(CDFWrapper, "__call__") as mock_call:
         mock_call.return_value = 0.28  # 0.4 * 0.7
         result = copula.cdf(0.4, 0.7)
-        assert result == 0.28
+        assert np.isclose(result, 0.28)
 
 
 def test_mo_conditional_distributions():

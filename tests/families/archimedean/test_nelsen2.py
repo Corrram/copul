@@ -91,7 +91,8 @@ def test_nelsen2_boundary_conditions(theta):
 
     # C(u,0) should be 0
     for u in u_vals:
-        cdf_val = float(copula.cdf(u=u, v=0))
+        cdf = copula.cdf(u=u, v=0)
+        cdf_val = float(cdf)
         assert np.isclose(cdf_val, 0, rtol=1e-10, atol=1e-10)
 
     # C(0,v) should be 0

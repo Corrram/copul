@@ -370,19 +370,19 @@ def test_cdf_vectorized_basic():
     u_values = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
     v_values = np.array([0.2, 0.4, 0.6, 0.8, 0.7])
 
-    # Get the CDF as a callable function
-    cdf_func = copula.cdf.numpy_func
-
     # Calculate expected results using scalar CDF
     expected_results = np.array(
-        [cdf_func(u_values[i], v_values[i]) for i in range(len(u_values))]
+        [copula.cdf(u_values[i], v_values[i]) for i in range(len(u_values))]
     )
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_values, v_values)
 
     # Check that results match
-    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+    for i in range(len(u_values)):
+        actual = actual_results[i]
+        expected = expected_results[i]
+        assert np.isclose(actual, float(expected), rtol=1e-10)
 
 
 def test_cdf_vectorized_broadcasting():
@@ -407,30 +407,33 @@ def test_cdf_vectorized_broadcasting():
     u_scalar = 0.5
     v_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
 
-    # Get the CDF as a callable function
-    cdf_func = copula.cdf.numpy_func
-
     # Calculate expected results using scalar CDF
-    expected_results = np.array([cdf_func(u_scalar, v) for v in v_array])
+    expected_results = np.array([copula.cdf(u_scalar, v) for v in v_array])
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_scalar, v_array)
 
     # Check that results match
-    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+    for i in range(len(v_array)):
+        actual = float(actual_results[i])
+        expected = float(expected_results[i])
+        assert np.isclose(actual, expected, rtol=1e-10)
 
     # Test broadcasting: u is array, v is scalar
     u_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
     v_scalar = 0.5
 
     # Calculate expected results using scalar CDF
-    expected_results = np.array([cdf_func(u, v_scalar) for u in u_array])
+    expected_results = np.array([copula.cdf(u, v_scalar) for u in u_array])
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_array, v_scalar)
 
     # Check that results match
-    np.testing.assert_allclose(actual_results, expected_results, rtol=1e-10)
+    for i in range(len(u_array)):
+        actual = float(actual_results[i])
+        expected = float(expected_results[i])
+        assert np.isclose(actual, expected, rtol=1e-10)
 
 
 def test_cdf_vectorized_grid():
@@ -459,7 +462,7 @@ def test_cdf_vectorized_grid():
     U, V = np.meshgrid(u_grid, v_grid)
 
     # Get the CDF as a callable function
-    cdf_func = copula.cdf.numpy_func
+    cdf_func = copula.cdf
 
     # Calculate expected results using scalar CDF
     expected_results = np.zeros_like(U)

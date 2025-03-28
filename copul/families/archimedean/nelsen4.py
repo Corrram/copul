@@ -3,8 +3,6 @@ import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
-from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GumbelHougaard(BivArchimedeanCopula):
@@ -27,7 +25,7 @@ class GumbelHougaard(BivArchimedeanCopula):
 
     @property
     def _cdf_expr(self):
-        gen = sympy.exp(
+        return sympy.exp(
             -(
                 (
                     (-sympy.log(self.u)) ** self.theta
@@ -36,7 +34,6 @@ class GumbelHougaard(BivArchimedeanCopula):
                 ** (1 / self.theta)
             )
         )
-        return gen
 
     def lambda_L(self):
         return 0

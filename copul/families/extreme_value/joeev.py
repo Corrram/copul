@@ -106,8 +106,8 @@ class JoeEV(BivExtremeValueCopula):
         )
 
     @property
-    def cdf(self):
-        cdf = (
+    def _cdf_expr(self):
+        return (
             self.u
             * self.v
             * sympy.exp(
@@ -118,7 +118,6 @@ class JoeEV(BivExtremeValueCopula):
                 ** (-1 / self.delta)
             )
         )
-        return CDFWrapper(cdf)
 
     # @property
     # def pdf(self):

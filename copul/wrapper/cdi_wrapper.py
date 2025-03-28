@@ -49,7 +49,10 @@ class CDiWrapper(ConditionalWrapper):
         i = self.condition_index
 
         # Check all other variables first (priority for other variables being 0 or 1)
-        for j in range(1, 10):  # Assume reasonable max dimension of 10
+        # get max_dim from u_symbols
+        dimensions = [int(k[1:]) for k in u_symbols.keys() if k.startswith("u") and len(k) > 1]
+        max_dim = max(dimensions, default=0)
+        for j in range(1, max_dim):  # Assume reasonable max dimension of 10
             if j == i:
                 continue  # Skip the conditioning variable
 
@@ -94,7 +97,7 @@ class CDiWrapper(ConditionalWrapper):
                 return SymPyFuncWrapper(sympy.S.One)
 
         # Handle the bivariate special case
-        if i == 1 and "u" in u_symbols and "v" in u_symbols:
+        if i == 2 and "u" in u_symbols and "v" in u_symbols:
             # Check u (first variable)
             u_sym = u_symbols["u"]
             u_val = None
@@ -107,15 +110,9 @@ class CDiWrapper(ConditionalWrapper):
             if u_val == 0:
                 return SymPyFuncWrapper(sympy.S.Zero)
             elif u_val == 1:
-                # When u=1, CD1 returns v
-                v_sym = u_symbols["v"]
-                if v_sym in vars_dict:
-                    return SymPyFuncWrapper(vars_dict[v_sym])
-                elif "v" in kwargs:
-                    return SymPyFuncWrapper(kwargs["v"])
-                return SymPyFuncWrapper(sympy.symbols("v"))
+                return SymPyFuncWrapper(sympy.S.One)
 
-        elif i == 2 and "u" in u_symbols and "v" in u_symbols:
+        elif i == 1 and "u" in u_symbols and "v" in u_symbols:
             # Check v (second variable)
             v_sym = u_symbols["v"]
             v_val = None
@@ -128,13 +125,7 @@ class CDiWrapper(ConditionalWrapper):
             if v_val == 0:
                 return SymPyFuncWrapper(sympy.S.Zero)
             elif v_val == 1:
-                # When v=1, CD2 returns u
-                u_sym = u_symbols["u"]
-                if u_sym in vars_dict:
-                    return SymPyFuncWrapper(vars_dict[u_sym])
-                elif "u" in kwargs:
-                    return SymPyFuncWrapper(kwargs["u"])
-                return SymPyFuncWrapper(sympy.symbols("u"))
+                return SymPyFuncWrapper(sympy.S.One)
 
         return None
 

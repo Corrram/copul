@@ -89,11 +89,10 @@ class CuadrasAuge(BivExtremeValueCopula):
         return 1 - self.delta * sp.Min(1 - self.t, self.t)
 
     @property
-    def cdf(self):
-        cdf = sp.Min(self.u, self.v) ** self.delta * (self.u * self.v) ** (
+    def _cdf_expr(self):
+        return sp.Min(self.u, self.v) ** self.delta * (self.u * self.v) ** (
             1 - self.delta
         )
-        return SymPyFuncWrapper(cdf)
 
     @property
     def pdf(self):

@@ -55,12 +55,12 @@ class BB5(BivExtremeValueCopula):
         ) ** (1 / theta)
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         theta = self.theta
         u = self.u
         v = self.v
         delta = self.delta
-        cdf = sympy.exp(
+        return sympy.exp(
             -(
                 (
                     sympy.log(1 / v) ** theta
@@ -74,7 +74,6 @@ class BB5(BivExtremeValueCopula):
                 ** (1 / theta)
             )
         )
-        return CDFWrapper(cdf)
 
     # @property
     # def pdf(self):

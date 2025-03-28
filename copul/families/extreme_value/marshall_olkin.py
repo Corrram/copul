@@ -6,6 +6,7 @@ from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
@@ -53,13 +54,10 @@ class MarshallOlkin(BivExtremeValueCopula):
         return sympy.Max(1 - self.alpha_1 * (1 - self.t), 1 - self.alpha_2 * self.t)
 
     @property
-    def cdf(self):
-        if self.alpha_1 == self.alpha_2 == 0:
-            return SymPyFuncWrapper(self.u * self.v)
+    def _cdf_expr(self):
         arg1 = self.v * self.u ** (1 - self.alpha_1)
         arg2 = self.u * self.v ** (1 - self.alpha_2)
-        cdf = sympy.Min(arg1, arg2)
-        return SymPyFuncWrapper(cdf)
+        return sympy.Min(arg1, arg2)
 
     def cond_distr_1(self, u=None, v=None):
         alpha_1 = self.alpha_1

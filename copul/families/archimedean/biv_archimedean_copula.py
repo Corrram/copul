@@ -25,6 +25,10 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
     The bivariate Archimedean copula has the form: C(u,v) = φ⁻¹(φ(u) + φ(v))
     """
 
+    def __init__(self, *args, **kwargs):
+        ArchimedeanCopula.__init__(self, *args, **kwargs)
+        BivCoreCopula.__init__(self)
+
     @property
     def dim(self) -> int:
         """
@@ -46,7 +50,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         raise NotImplementedError("Subclasses must implement this property")
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         """
         Cumulative distribution function of the bivariate copula.
 
@@ -69,7 +73,6 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         # Apply inverse generator with proper handling of edge cases
         # Define special cases using Piecewise
         cdf = sympy.Piecewise(
-            (0, sympy.Or(self.u == 0, self.v == 0)),  # If either u or v is 0, CDF is 0
             (
                 sympy.Min(self.u, self.v),
                 sum_gen == 0,
@@ -77,7 +80,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
             (self.inv_generator.subs(self.y, sum_gen).func, True),  # Regular case
         )
 
-        return SymPyFuncWrapper(get_simplified_solution(cdf))
+        return get_simplified_solution(cdf)
 
     def cdf_vectorized(self, u, v):
         """
@@ -212,8 +215,8 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         sympy expression
             The PDF function c(u,v)
         """
-        first_diff = sympy.diff(self.cdf, self.u)
-        return sympy.diff(first_diff, self.v)
+        first_diff = self.cdf().diff(self.u)
+        return first_diff.diff(self.v)
 
     @property
     def first_deriv_of_inv_gen(self):
