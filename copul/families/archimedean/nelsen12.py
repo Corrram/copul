@@ -25,13 +25,12 @@ class Nelsen12(BivArchimedeanCopula):
         return 1 / (self.y ** (1 / self.theta) + 1)
 
     @property
-    def cdf(self):
-        cdf = (
+    def _cdf_expr(self):
+        return (
             1
             + ((self.u ** (-1) - 1) ** self.theta + (self.v ** (-1) - 1) ** self.theta)
             ** (1 / self.theta)
         ) ** (-1)
-        return CDFWrapper(cdf)
 
     def lambda_L(self):
         return 2 ** (-1 / self.theta)

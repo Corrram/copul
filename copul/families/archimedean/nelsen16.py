@@ -36,7 +36,7 @@ class Nelsen16(BivArchimedeanCopula):
         return (1 - theta - y + sympy.sqrt((theta + y - 1) ** 2 + 4 * theta)) / 2
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         th = self.theta
         v = self.v
         u = self.u
@@ -54,8 +54,7 @@ class Nelsen16(BivArchimedeanCopula):
         ) / (2 * u * v)
 
         # Use Piecewise to handle the edge cases
-        cdf = sympy.Piecewise((regular_case, sympy.And(u > 0, v > 0)), (0, True))
-        return CDFWrapper(cdf)
+        return sympy.Piecewise((regular_case, sympy.And(u > 0, v > 0)), (0, True))
 
     def first_deriv_of_ci_char(self):
         theta = self.theta

@@ -31,17 +31,16 @@ class Nelsen17(BivArchimedeanCopula):
         ) - 1
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         v = self.v
         u = self.u
         theta = self.theta
-        cdf = (
+        return (
             1
             + ((1 + u) ** (-theta) - 1)
             * ((1 + v) ** (-theta) - 1)
             / (2 ** (-theta) - 1)
         ) ** (-1 / theta) - 1
-        return SymPyFuncWrapper(cdf)
 
     @property
     def pdf(self):

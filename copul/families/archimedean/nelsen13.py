@@ -26,8 +26,8 @@ class Nelsen13(BivArchimedeanCopula):
         return sympy.exp(1 - (self.y + 1) ** (1 / self.theta))
 
     @property
-    def cdf(self):
-        cdf = sympy.exp(
+    def _cdf_expr(self):
+        return sympy.exp(
             1
             - (
                 (1 - sympy.log(self.u)) ** self.theta
@@ -36,7 +36,6 @@ class Nelsen13(BivArchimedeanCopula):
             )
             ** (1 / self.theta)
         )
-        return CDFWrapper(cdf)
 
     def lambda_L(self):
         return 0

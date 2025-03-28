@@ -4,6 +4,7 @@ import sympy
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -29,12 +30,11 @@ class Nelsen2(BivArchimedeanCopula):
         return sympy.Max(1 - self.y ** (1 / self.theta), 0)
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         expr = 1 - ((1 - self.u) ** self.theta + (1 - self.v) ** self.theta) ** (
             1 / self.theta
         )
-        gen = sympy.Max(0, expr)
-        return SymPyFuncWrapper(gen)
+        return sympy.Max(0, expr)
 
     def cond_distr_1(self, u=None, v=None):
         theta = self.theta

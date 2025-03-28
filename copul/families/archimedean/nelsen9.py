@@ -24,13 +24,12 @@ class GumbelBarnett(BivArchimedeanCopula):
         return sympy.exp((1 - sympy.exp(self.y)) / self.theta)
 
     @property
-    def cdf(self):
-        cdf = (
+    def _cdf_expr(self):
+        return (
             self.u
             * self.v
             * sympy.exp(-self.theta * sympy.log(self.u) * sympy.log(self.v))
         )
-        return SymPyFuncWrapper(cdf)
 
     def _xi_int_1(self, v):
         theta = self.theta

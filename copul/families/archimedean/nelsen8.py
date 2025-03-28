@@ -30,10 +30,10 @@ class Nelsen8(BivArchimedeanCopula):
         return (1 - self.y) / (self.theta * self.y - self.y + 1) * ind
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         num = self.theta**2 * self.u * self.v - (1 - self.u) * (1 - self.v)
         den = self.theta**2 - (self.theta - 1) ** 2 * (1 - self.u) * (1 - self.v)
-        return SymPyFuncWrapper(sympy.Max(num / den, 0))
+        return sympy.Max(num / den, 0)
 
     def cond_distr_1(self, u=None, v=None):
         theta = self.theta

@@ -29,8 +29,8 @@ class GenestGhoudi(BivArchimedeanCopula):
         return (1 - self.y ** (1 / self.theta)) ** self.theta * ind
 
     @property
-    def cdf(self):
-        cdf = (
+    def _cdf_expr(self):
+        return (
             sympy.Max(
                 1
                 - (
@@ -42,7 +42,6 @@ class GenestGhoudi(BivArchimedeanCopula):
             )
             ** self.theta
         )
-        return SymPyFuncWrapper(cdf)
 
     def lambda_L(self):
         return 0

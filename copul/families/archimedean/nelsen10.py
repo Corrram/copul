@@ -24,8 +24,8 @@ class Nelsen10(BivArchimedeanCopula):
         return (2 / (sympy.exp(self.y) + 1)) ** (1 / self.theta)
 
     @property
-    def cdf(self):  # ToDo check why this differs from Nelsen cdf
-        gen = (
+    def _cdf_expr(self):  # ToDo check why this differs from Nelsen cdf
+        return (
             2
             * self.u**self.theta
             * self.v**self.theta
@@ -34,4 +34,3 @@ class Nelsen10(BivArchimedeanCopula):
                 + (self.u**self.theta - 2) * (self.v**self.theta - 2)
             )
         ) ** (1 / self.theta)
-        return SymPyFuncWrapper(gen)

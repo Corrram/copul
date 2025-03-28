@@ -27,13 +27,12 @@ class Nelsen11(BivArchimedeanCopula):
         return (2 - sympy.exp(self.y)) ** (1 / self.theta) * ind
 
     @property
-    def cdf(self):
-        cdf = sympy.Max(
+    def _cdf_expr(self):
+        return sympy.Max(
             self.u**self.theta * self.v**self.theta
             - 2 * (1 - self.u**self.theta) * (1 - self.v**self.theta),
             0,
         ) ** (1 / self.theta)
-        return SymPyFuncWrapper(cdf)
 
     def _rho_int_1(self):
         u = self.u

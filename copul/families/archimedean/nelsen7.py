@@ -34,12 +34,11 @@ class Nelsen7(BivArchimedeanCopula):
         )
 
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         u = self.u
         v = self.v
         theta = self.theta
-        cdf = sympy.Max(theta * u * v + (1 - theta) * (u + v - 1), 0)
-        return SymPyFuncWrapper(cdf)
+        return sympy.Max(theta * u * v + (1 - theta) * (u + v - 1), 0)
 
     def xi(self, *args, **kwargs):
         self._set_params(args, kwargs)
