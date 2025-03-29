@@ -4,6 +4,7 @@ from copul.checkerboard.biv_check_min import BivCheckMin
 from copul.checkerboard.biv_check_w import BivCheckW
 from copul.checkerboard.check_min import CheckMin
 from copul.checkerboard.check_pi import CheckPi
+from copul.checkerboard.bernstein import BernsteinCopula, Bernstein
 from copul.checkerboard.checkerboarder import Checkerboarder, from_data
 from copul.families.archimedean import (
     AliMikhailHaq,
@@ -65,6 +66,8 @@ from copul.schur_order.cis_rearranger import CISRearranger
 __all__ = [
     "xi_ncalculate",
     # Checkerboard related objects
+    "Bernstein",
+    "BernsteinCopula",
     "BivCheckPi",
     "BivCheckMin",
     "BivCheckW",

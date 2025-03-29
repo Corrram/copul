@@ -135,10 +135,8 @@ class BivClayton(BivArchimedeanCopula):
             * (-1 + self.u ** (-theta) + self.v ** (-theta))
             * (-1 + self.u ** (-theta) + self.v ** (-theta)) ** (1 / theta)
         )
-        wrapped_cd1 = CD1Wrapper(cond_distr)
-        evaluated_cd1 = wrapped_cd1(u, v)
-        return evaluated_cd1
-
+        return CD1Wrapper(cond_distr)(u, v)
+    
     def cond_distr_2(self, u=None, v=None):
         """
         Second conditional distribution function: ∂C(u,v)/∂v

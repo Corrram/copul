@@ -607,8 +607,7 @@ class BivCoreCopula:
         matplotlib.figure.Figure
             The figure containing the 3D plot of the conditional distribution.
         """
-        free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
-        cond_distr_1 = self(**free_symbol_dict).cond_distr_1
+        cond_distr_1 = self.cond_distr_1
         title = CopulaGraphs(self).get_copula_title()
         return self._plot3d(
             cond_distr_1, title=title, zlabel="Conditional Distribution 1"
@@ -627,8 +626,7 @@ class BivCoreCopula:
         matplotlib.figure.Figure
             The figure containing the 3D plot of the conditional distribution.
         """
-        free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
-        cond_distr_2 = self(**free_symbol_dict).cond_distr_2
+        cond_distr_2 = self.cond_distr_2
         title = CopulaGraphs(self).get_copula_title()
         return self._plot3d(
             cond_distr_2, title=title, zlabel="Conditional Distribution 2"
