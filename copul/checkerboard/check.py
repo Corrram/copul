@@ -130,9 +130,12 @@ class Check:
         """Upper tail dependence (usually 0 for a checkerboard copula)."""
         return 0
 
-    def xi(self, n=100_000, seed=None):
-        samples = self.rvs(n, random_state=seed)
-        x = samples[:, 0]
-        z = samples[:, 1:3]
+    def xi(self, n=100_000, seed=None, i=1, samples=None):
+        i0 = i - 1  # Convert to zero-based index
+        if samples is None:
+            samples = self.rvs(n, random_state=seed)
+        x = samples[:, i0]
+        # exclude i0-th column
+        z = samples[:, np.arange(self.dim) != i0]
         xi = mfoci.codec(x, z)
         return xi

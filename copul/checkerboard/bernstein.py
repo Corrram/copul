@@ -31,6 +31,7 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
 
     def __init__(self, theta, check_theta=True):
         theta = np.asarray(theta, dtype=float)
+        matr = theta.copy()
         total_mass = np.sum(theta)
         if total_mass > 0:
             theta /= total_mass
@@ -55,7 +56,7 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
         ]
 
         # Let base Check store 'matr'
-        super().__init__(matr=self.theta)
+        super().__init__(matr=matr)
 
     def __str__(self):
         return f"BernsteinCopula(degrees={self.degrees}, dim={self.dim})"
@@ -77,11 +78,20 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
         term2 = binom_coeffs[k_vals] * (m - k_vals) * (u ** k_vals) * ((1 - u) ** (m - k_vals - 1))
         return term1 - term2
 
-    def _cumsum_theta(self):
-        """Return the cumulative sum of theta along each axis."""
+    def _cumsum_theta(self, with_zeros=False):
+        """Return the cumulative sum of theta along each axis.
+        
+        If with_zeros=True, add a leading zero row and column.
+        """
         theta_cs = self.theta.copy()
         for ax in range(self.dim):
             theta_cs = np.cumsum(theta_cs, axis=ax)
+            
+        if with_zeros:
+            # Add a zero row at the top and a zero column at the left.
+            # This pads the array with one row/column of zeros before the existing data.
+            theta_cs = np.pad(theta_cs, pad_width=((1, 0), (1, 0)), mode='constant', constant_values=0)
+        
         return theta_cs
 
     def _prepare_bern_vals(self, u, use_deriv=False, cond_index=None):
@@ -159,7 +169,7 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
         if np.all(u == 1):
             return 1.0
 
-        theta_cs = self._cumsum_theta()
+        theta_cs = self._cumsum_theta(with_zeros=False)
         bern_vals = self._prepare_bern_vals(u, use_deriv=False)
         return self._accumulate_value(bern_vals, theta_cs)
 

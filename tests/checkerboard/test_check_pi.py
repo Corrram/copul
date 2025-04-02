@@ -132,8 +132,8 @@ def test_multivar_checkerboard():
     assert copula.cdf(*u) == 0.125
     assert copula.cdf(*v) == 0.125 / 8
     assert copula.cdf(*w) == 0.75**3
-    assert copula.pdf(*u) == 0.125
-    assert copula.pdf(*v) == 0.125
+    assert copula.pdf(*u) == 1
+    assert copula.pdf(*v) == 1
     assert copula.cond_distr(1, u) == 0.25
     assert copula.cond_distr(2, u) == 0.25
     assert copula.cond_distr(3, u) == 0.25
@@ -270,10 +270,10 @@ def test_pdf_behavior():
     copula = CheckPi(matr)
 
     # Test at grid points - pdf returns the value at the cell containing the point
-    assert np.isclose(copula.pdf(0.25, 0.25), 0.1)
-    assert np.isclose(copula.pdf(0.25, 0.75), 0.2)
-    assert np.isclose(copula.pdf(0.75, 0.25), 0.3)
-    assert np.isclose(copula.pdf(0.75, 0.75), 0.4)
+    assert np.isclose(copula.pdf(0.25, 0.25), 0.1*4)
+    assert np.isclose(copula.pdf(0.25, 0.75), 0.2*4)
+    assert np.isclose(copula.pdf(0.75, 0.25), 0.3*4)
+    assert np.isclose(copula.pdf(0.75, 0.75), 0.4*4)
 
     # Test out of bounds
     assert copula.pdf(-0.1, 0.5) == 0
@@ -298,8 +298,8 @@ def test_higher_dimensional_cdf():
     assert np.isclose(copula.cdf(1, 1, 1), 1)
 
     # Test PDF
-    assert np.isclose(copula.pdf(1 / 6, 1 / 6, 1 / 6), 1 / 27)
-    assert np.isclose(copula.pdf(5 / 6, 5 / 6, 5 / 6), 1 / 27)
+    assert np.isclose(copula.pdf(1 / 6, 1 / 6, 1 / 6), 1)
+    assert np.isclose(copula.pdf(5 / 6, 5 / 6, 5 / 6), 1)
 
 
 def test_higher_dimensional_cdf_vectorized():
@@ -414,7 +414,7 @@ def test_cdf_consistency():
         + copula.pdf(0.75, 0.25)
         + copula.pdf(0.75, 0.75)
     )
-    assert np.isclose(total_pdf, 1.0)
+    assert np.isclose(total_pdf, 4)
 
 
 def test_random_points_cdf_2d():

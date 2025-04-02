@@ -573,7 +573,7 @@ class BivCoreCopula:
         plotter = RankCorrelationPlotter(self, log_cut_off, approximate)
         plotter.plot_rank_correlations(n_obs, n_params, params, plot_var, ylim)
 
-    def plot_pdf(self):
+    def plot_pdf(self, *args, **kwargs):
         """
         Plot the probability density function (PDF) of the copula.
 
@@ -592,7 +592,7 @@ class BivCoreCopula:
         else:
             pdf = self.pdf
         title = CopulaGraphs(self).get_copula_title()
-        return self._plot3d(pdf, title=title, zlabel="PDF")
+        return self._plot3d(pdf, title=title, zlabel="PDF", **kwargs)
 
     def plot_cond_distr_1(self):
         """

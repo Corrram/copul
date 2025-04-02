@@ -11,7 +11,7 @@ class CopulaPlottingMixin:
     """
 
     def scatter_plot(
-        self, n=1_000, approximate=False, figsize=(10, 8), alpha=0.6, colormap="viridis"
+        self, n=1_000, approximate=False, figsize=(10, 8), alpha=0.6, colormap="viridis", samples=None
     ):
         """
         Create a scatter plot of random variates from the copula.
@@ -29,13 +29,20 @@ class CopulaPlottingMixin:
             Transparency of points (0 to 1).
         colormap : str, optional
             Colormap to use for 3D plots.
+        samples : np.ndarray, optional
+            Pre-generated samples to plot. If provided, `n` is ignored.
 
         Returns
         -------
         None
         """
         if self.dim == 2:
-            data_ = self.rvs(n, approximate=approximate)
+            if samples is None:
+                # Generate samples
+                data_ = self.rvs(n, approximate=approximate)
+            else:
+                # Use provided samples
+                data_ = samples
             plt.figure(figsize=figsize)
             plt.scatter(data_[:, 0], data_[:, 1], s=rcParams["lines.markersize"] ** 2)
             title = CopulaGraphs(self).get_copula_title()
@@ -49,7 +56,10 @@ class CopulaPlottingMixin:
             plt.close()
         elif self.dim == 3:
             # Generate samples
-            data = self.rvs(n, approximate=approximate)
+            if samples is None:
+                data = self.rvs(n, approximate=approximate)
+            else:
+                data = samples
 
             # Create 3D figure and axes
             fig = plt.figure(figsize=figsize)
@@ -63,7 +73,7 @@ class CopulaPlottingMixin:
                 data[:, 0],  # x-coordinates (first margin)
                 data[:, 1],  # y-coordinates (second margin)
                 data[:, 2],  # z-coordinates (third margin)
-                c=colors,  # color by third dimension
+                c=colors,    # color by third dimension
                 cmap=colormap,
                 s=rcParams["lines.markersize"] ** 2,
                 alpha=alpha,
@@ -91,12 +101,18 @@ class CopulaPlottingMixin:
             # Add a view angle that shows the 3D structure well
             ax.view_init(elev=30, azim=45)
 
-            plt.tight_layout()
+            # Instead of tight_layout, adjust margins manually for 3D plots
+            fig.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9)
+
             plt.show()
             plt.close()
+
         else:
             # For higher dimensions, display scatter plot matrix
-            data = self.rvs(n, approximate=approximate)
+            if samples is None:
+                data = self.rvs(n, approximate=approximate)
+            else:
+                data = samples
 
             # Create scatter plot matrix
             fig, axs = plt.subplots(

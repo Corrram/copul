@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+import pytest
 from scipy import stats
 from copul.data_uniformer import DataUniformer
 
@@ -19,9 +20,10 @@ class TestDataUniformer:
             [[1.0, 2.0, 3.0], [1.0, 2.0, 4.0], [2.0, 2.0, 3.0], [3.0, 3.0, 3.0]]
         )
 
-    def test_basic_transformation(self):
+    @pytest.mark.parametrize("touch_boundaries", [True, False])
+    def test_basic_transformation(self, touch_boundaries):
         """Test basic data transformation to uniform distribution."""
-        transformed = self.uniformer.uniform(self.data_basic)
+        transformed = self.uniformer.uniform(self.data_basic, touch_boundaries=touch_boundaries)
 
         # Check shape preservation
         assert transformed.shape == self.data_basic.shape
@@ -29,11 +31,18 @@ class TestDataUniformer:
         # Check range of values
         assert np.all(transformed >= 0)
         assert np.all(transformed <= 1)
+        if touch_boundaries:
+            assert transformed.min() == 0
+            assert transformed.max() == 1
+        else:
+            # Check that values are not exactly 0 or 1
+            assert transformed.min() > 0
+            assert transformed.max() < 1
 
-        # Check specific transformation using the first column
-        col0 = self.data_basic[:, 0]
-        expected_ranks = stats.rankdata(col0, method="average") / (len(col0) + 1)
-        assert_array_almost_equal(transformed[:, 0], expected_ranks)
+            # Check specific transformation using the first column
+            col0 = self.data_basic[:, 0]
+            expected_ranks = stats.rankdata(col0, method="average") / (len(col0) + 1)
+            assert_array_almost_equal(transformed[:, 0], expected_ranks)
 
     def test_ties_handling(self):
         """Test handling of tied values."""
