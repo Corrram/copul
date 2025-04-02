@@ -61,9 +61,9 @@ def test_ccop_plotting(setup_checkerboard_copula, plotting_method):
 @pytest.mark.parametrize(
     "matr, point, expected",
     [
-        ([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], (0.5, 0.5), 0.0625),
-        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], (0.5, 0.5), 0.1),
-        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], (0.5, 1), 1 / 15),
+        ([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], (0.5, 0.5), 1),
+        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], (0.5, 0.5), 0.9),
+        ([[1, 5, 4], [5, 3, 2], [4, 2, 4]], (0.5, 1), 9 / 15),
     ],
 )
 def test_ccop_pdf(matr, point, expected):
@@ -378,3 +378,11 @@ def test_xi_equivalent_to_monte_carlo():
     ccop = BivCheckPi(matr)
     xi_value = ccop.xi()
     assert np.isclose(xi_value, 0.5, atol=0.02)
+
+def test_pdf():
+    matr = [[1, 5, 4], [5, 3, 2], [4, 2, 4]]
+    ccop = BivCheckPi(matr)
+    point = (0.1, 0.1)
+    expected_pdf = 1/30*9
+    actual_pdf = ccop.pdf(*point)
+    assert np.isclose(actual_pdf, expected_pdf, atol=1e-2), f"Expected {expected_pdf}, got {actual_pdf}"

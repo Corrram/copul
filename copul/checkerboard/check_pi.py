@@ -3,9 +3,10 @@ import itertools
 import numpy as np
 
 from copul.checkerboard.check import Check
+from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
 
 
-class CheckPi(Check):
+class CheckPi(Check, CopulaPlottingMixin):
     def __new__(cls, matr, *args, **kwargs):
         """
         Create a new CheckPi instance or a BivCheckPi instance if dimension is 2.
@@ -724,7 +725,7 @@ class CheckPi(Check):
             cell_idx.append(ix)
 
         # Return the cell's mass
-        return float(self.matr[tuple(cell_idx)])
+        return float(self.matr[tuple(cell_idx)])*np.prod(self.matr.shape)
 
     def _pdf_vectorized(self, points):
         """
@@ -740,6 +741,7 @@ class CheckPi(Check):
         numpy.ndarray
             Array of shape (n_points,) with PDF values.
         """
+        prod = np.prod(self.matr.shape)
         # Convert to numpy array
         points = np.asarray(points, dtype=float)
 
@@ -750,7 +752,7 @@ class CheckPi(Check):
         valid_mask = np.all((points >= 0) & (points <= 1), axis=1)
 
         if not np.any(valid_mask):
-            return results  # All points are outside [0,1]^d
+            return results*prod
 
         # Process only valid points
         valid_points = points[valid_mask]
@@ -766,7 +768,7 @@ class CheckPi(Check):
         for i, idx in enumerate(indices):
             results[valid_mask][i] = self.matr[tuple(idx)]
 
-        return results
+        return results*prod
 
     def rvs(self, n=1, random_state=None, **kwargs):
         """

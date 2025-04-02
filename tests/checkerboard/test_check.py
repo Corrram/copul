@@ -83,7 +83,7 @@ def test_xi(mock_codec):
 
     # Use a fixed seed to ensure deterministic mock samples
     np.random.seed(42)
-    mock_samples = np.random.random((10_000, 3))  # Create samples with 3 columns
+    mock_samples = np.random.random((10_000, 2))  # Create samples with 3 columns
     check.rvs = MagicMock(return_value=mock_samples)
 
     # Calculate Chatterjee's Xi

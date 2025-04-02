@@ -12,10 +12,8 @@ import warnings
 import sympy
 from copul.checkerboard.check_pi import CheckPi
 from copul.families.core.biv_core_copula import BivCoreCopula
-from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
 
-
-class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
+class BivCheckPi(CheckPi, BivCoreCopula):
     """
     Bivariate Checkerboard Copula class.
 
@@ -162,73 +160,3 @@ class BivCheckPi(CheckPi, BivCoreCopula, CopulaPlottingMixin):
         trace = np.trace(delta.T @ delta @ M)
         xi = 6 * m / n * trace - 2
         return xi
-
-    def xi_(self, condition_on_y: bool = False) -> float:
-        """
-        Compute Chatterjee's xi via a closed-form formula.
-
-        For each cell (i,j) define the "prior" as follows:
-        - If condition_on_y is True, let prior = sum_{r < i} p[r,j] (cumulative in rows).
-        - Otherwise, let prior = sum_{c < j} p[i,c] (cumulative in columns).
-
-        Then the cell's contribution is:
-            contribution = prior^2 + prior * p[i,j] + (1/3)*(p[i,j]**2).
-
-        Finally, xi = 6 * (sum of contributions) - 2.
-
-        This implementation uses vectorized cumulative sums.
-        """
-        p = np.asarray(self.matr, dtype=float)
-        m, n = p.shape
-
-        if condition_on_y:
-            # Cumulative sum along rows (for each column)
-            prior = np.vstack([np.zeros((1, n)), np.cumsum(p, axis=0)[:-1, :]])
-            contrib = prior**2 + prior * p + (p**2) / 3.0
-            result = 6 * np.sum(contrib) * n / m - 2
-        else:
-            # Cumulative sum along columns (for each row)
-            prior = np.hstack([np.zeros((m, 1)), np.cumsum(p, axis=1)[:, :-1]])
-            contrib = prior**2 + prior * p + (p**2) / 3.0
-            result = 6 * np.sum(contrib) * m / n - 2
-        return result
-
-
-if __name__ == "__main__":
-    # Example usage
-    matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
-    copul = BivCheckPi(matr)
-
-    # Basic properties
-    print(f"Copula: {copul}")
-    print(f"Is symmetric: {copul.is_symmetric}")
-
-    # Generate samples
-    samples = copul.sample(1000, random_state=42)
-
-    # Calculate dependence measures
-    print(f"Kendall's tau: {copul.tau():.4f}")
-    print(f"Spearman's rho: {copul.rho():.4f}")
-    print(f"Chatterjee's xi: {copul.xi(n_samples=10_000):.4f}")
-
-    # Visualize conditional distribution
-    try:
-        import matplotlib.pyplot as plt
-
-        # Plot samples
-        plt.figure(figsize=(10, 5))
-
-        plt.subplot(1, 2, 1)
-        plt.scatter(samples[:, 0], samples[:, 1], alpha=0.5, s=5)
-        plt.title("Samples from Checkerboard Copula")
-        plt.xlabel("U1")
-        plt.ylabel("U2")
-        plt.grid(True)
-
-        plt.subplot(1, 2, 2)
-        copul.plot_cond_distr_1()
-
-        plt.tight_layout()
-        plt.show()
-    except ImportError:
-        print("Matplotlib not available for visualization.")
