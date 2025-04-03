@@ -42,6 +42,13 @@ def test_rho_independence():
     rho = ccop.rho()
     assert np.isclose(rho, 0)
 
+def test_xi_independence():
+    """Test that xi is close to 0 for independence copula."""
+    np.random.seed(42)
+    matr = np.ones((4, 4))  # Uniform distribution represents independence
+    ccop = BivBernsteinCopula(matr)
+    xi = ccop.xi()
+    assert np.isclose(xi, 0)
 
 def test_tau_perfect_dependence():
     """Test tau for perfect positive and negative dependence."""
@@ -102,8 +109,40 @@ def test_rho_perfect_dependence():
     assert rho_low < -0.6
 
 
+def test_xi_perfect_dependence():
+    """Test xi for perfect positive and negative dependence."""
+    # Perfect positive dependence
+    matr_pos = np.zeros((2, 2))
+    np.fill_diagonal(matr_pos, 0.5)  # Place 1's on the main diagonal
+    ccop_pos = BivBernsteinCopula(matr_pos)
+    xi_pos = ccop_pos.xi()
+    matr_neg = np.zeros((2, 2))
+    for i in range(2):
+        matr_neg[i, 1 - i] = 0.5  # Place 1's on the opposite diagonal
+    ccop_neg = BivBernsteinCopula(matr_neg)
+    xi_neg = ccop_neg.xi()
+    assert 1 >= xi_pos >= 0, "xi_pos should be between 0 and 1"
+    assert 1 >= xi_neg >= 0, "xi_neg should be between 0 and 1"
+
+
+def test_xi_from_frechet():
+    bern_up = UpperFrechet().to_bernstein()
+    bern_low = LowerFrechet().to_bernstein()
+    xi_up = bern_up.xi()
+    xi_low = bern_low.xi()
+    bern_up_2 = UpperFrechet().to_bernstein(2)
+    bern_low_2 = LowerFrechet().to_bernstein(2)
+    xi_up_2 = bern_up_2.xi()
+    xi_low_2 = bern_low_2.xi()
+
+    # xi should be positive for positive dependence and negative for negative dependence
+    assert np.isclose(xi_up_2, 1/15)
+    assert np.isclose(xi_low_2, 1/15)
+    assert xi_up > 0.45
+    assert xi_low > 0.45
+
 def test_measures_of_association_with_rectangular_matrix():
-    """Test that tau and rho are consistent for a rectangular matrix."""
+    """Test that rho and tau are consistent for a rectangular matrix."""
     matr = [
         [
             0.258794517498538,
