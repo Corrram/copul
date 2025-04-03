@@ -20,7 +20,11 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         """
         Compute Spearman's rho for a bivariate checkerboard copula.
         """
-        return 12/(self.m*self.n) * np.trace(self.theta) - 3
+        cum_theta = self._cumsum_theta()
+        trace = np.sum(cum_theta)
+        factor = 12 / ((self.m+1) * (self.n+1))
+        rho = factor * trace - 3
+        return rho
 
     def tau(self) -> float:
         """
@@ -29,7 +33,7 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         Returns:
             float: The calculated tau coefficient.
         """
-        d = self._cumsum_theta(with_zeros=True)
+        d = self._cumsum_theta()
         theta_m = self._construct_theta(self.m)
         theta_n = self._construct_theta(self.n)
         return 1 - np.trace(theta_m @ d @ theta_n @ d.T)
@@ -42,22 +46,19 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
                     / [ (2m - (i+1) - (j+1)) * C(2m-1, (i+1) + (j+1) - 1 ) ]
         where i, j go from 0 to m-1 internally (which corresponds to 1..m in the formula).
         """
-        Theta = np.zeros((m+1, m+1), dtype=float)
-        for i in range(m+1):      # i = 0..m-1 corresponds to i+1 in {1..m}
-            for j in range(m+1):  # j = 0..m-1 corresponds to j+1 in {1..m}
+        Theta = np.zeros((m, m), dtype=float)
+        for i in range(1, m+1):      # i = 0..m-1 corresponds to i+1 in {1..m}
+            for j in range(1 ,m+1):  # j = 0..m-1 corresponds to j+1 in {1..m}
                 numerator = (i - j) * math.comb(m, i) * math.comb(m, j)
-                if i + j == 0:
-                    denom = 0
-                else:
-                    denom = (2*m - i - j) * math.comb(2*m - 1, i + j - 1)
+                denom = (2*m - i - j) * math.comb(2*m - 1, i + j - 1)
                 
                 # Check for zero in the denominator just in case
                 if denom == 0:
                     # Decide how you want to handle this case; 
                     # here we set to 0 if numerator is also 0, else np.nan
-                    Theta[i, j] = 0.0 if numerator == 0 else np.nan
+                    Theta[i-1, j-1] = 1
                 else:
-                    Theta[i, j] = numerator / denom
+                    Theta[i-1, j-1] = numerator / denom
         
         return Theta
 

@@ -62,14 +62,14 @@ class CopulaApproximatorMixin:
         checkerboarder = Checkerboarder(grid_size, self.dim, checkerboard_type)
         return checkerboarder.get_checkerboard_copula(self)
 
-    def to_bernstein(self, grid_size: tuple | int = 100):
+    def to_bernstein(self, grid_size: tuple | int = 10):
         """
         Convert the copula to a Bernstein copula.
 
         Parameters
         ----------
         grid_size : tuple or int, optional
-            Size of the grid for the Bernstein copula (default is 100).
+            Size of the grid for the Bernstein copula.
 
         Returns
         -------
