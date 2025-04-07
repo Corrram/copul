@@ -78,86 +78,91 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
     @staticmethod
     def _construct_omega(m: int) -> np.ndarray:
         """
-        Construct the m x m matrix Omega^(m) by explicitly treating the four subcases:
-        (i < m, r < m), (i < m, r = m), (i = m, r < m), (i = m, r = m).
-        Indices i, r go from 1..m in mathematical notation, corresponding to 0..(m-1) in Python.
+        Construct the m x m matrix Omega^(m) via the final, piecewise closed-form:
 
-        For 1 <= i < m, we have:
-            partial_1 B_{i,m}(u) = comb(m,i) * [i - m*u] * u^(i-1) * (1-u)^(m-i-1)
-        For i = m, we have:
-            partial_1 B_{m,m}(u) = m * u^(m-1).
+        Omega_{i,r} =
+        1) if 1 <= i < m and 1 <= r < m:
+           binom(m,i)*binom(m,r)
+           * [ ( (i+r-2)! * (2m-(i+r)-2)! ) / ( (2m-1)! ) ]
+           * [ (2m-1)(2m-2)*i*r  -  m(m-1)*(i+r)*((i+r)-1) ]
 
-        Then,
-        Omega_{i,r} = ∫ [∂_1 B_{i,m}(u)] [∂_1 B_{r,m}(u)] du
-        is split according to the four subcases.
+        2) if 1 <= i < m, r = m:
+           m * binom(m,i)
+           * [ ( (m + i -2)! * (m - i -1)! ) / ( (2m-1)! ) ]
+           * [ (m-1)*( i - m ) ]
 
-        This piecewise definition matches the Beta-integral approach from the proof.
+        3) if i = m, 1 <= r < m:
+           m * binom(m,r)
+           * [ ( (m + r -2)! * (m - r -1)! ) / ( (2m-1)! ) ]
+           * [ (m-1)*( r - m ) ]
+
+        4) if i = m, r = m:
+           m^2 / (2m - 1)
+
+        where i,r = 1..m in mathematical notation (i.e. Python indices i-1, r-1).
         """
 
         Omega = np.zeros((m, m), dtype=float)
 
-        # Small helper for factorial-based Beta integrals:
-        #     Beta(p, q) = ∫_0^1 x^p (1-x)^q dx = p! q! / (p+q+1)!
-        # returns 0 if p<0 or q<0.
-        def beta_int(p: int, q: int) -> float:
-            if p < 0 or q < 0:
-                return 0.0
-            return math.factorial(p) * math.factorial(q) / math.factorial(p + q + 1)
+        # Helper for binomial and factorial
+        def binom(n, k):
+            return math.comb(n, k)
 
-        # Binomial coefficient comb(m, i)
-        def binom(m_: int, k: int) -> int:
-            return math.comb(m_, k)
+        def factorial_nonneg(x):
+            # Return 0 if x < 0; otherwise factorial(x).
+            if x < 0:
+                return 0
+            return math.factorial(x)
 
-        for i in range(1, m + 1):     # i = 1..m
-            for r in range(1, m + 1): # r = 1..m
+        for i in range(1, m+1):      # i = 1..m
+            for r in range(1, m+1):  # r = 1..m
 
                 if i < m and r < m:
-                    # CASE (a): 1 <= i < m, 1 <= r < m
-                    # partial_1 B_{i,m}(u) * partial_1 B_{r,m}(u)
-                    # = comb(m,i)*comb(m,r)* [ (i - m*u)(r - m*u) ] * u^(i+r-2)*(1-u)^(2m-(i+r)-2)
-                    # Expand (i - m*u)(r - m*u) => i*r - m(i+r)u + m^2 u^2
-                    # => 3 Beta integrals
-                    bin_i = binom(m, i)
-                    bin_r = binom(m, r)
-                    # Term 1: i*r * Beta(i+r-2, 2m-(i+r)-2)
-                    t1 = i * r * beta_int(i + r - 2, 2*m - (i + r) - 2)
-                    # Term 2: m*(i+r) * Beta(i+r-1, 2m-(i+r)-2)
-                    t2 = m * (i + r) * beta_int(i + r - 1, 2*m - (i + r) - 2)
-                    # Term 3: m^2 * Beta(i+r, 2m-(i+r)-2)
-                    t3 = (m**2) * beta_int(i + r, 2*m - (i + r) - 2)
-                    val = bin_i * bin_r * (t1 - t2 + t3)
+                    # CASE 1
+                    # (i+r-2)! * (2m-(i+r)-2)!
+                    top_fact = factorial_nonneg(i + r - 2) * factorial_nonneg(2*m - (i + r) - 2)
+                    denom = factorial_nonneg(2*m - 1)
+                    bracket = ((2*m - 1)*(2*m - 2)*i*r) - (m*(m - 1)*(i + r)*((i + r) - 1))
+                    val = (
+                        binom(m, i)
+                        * binom(m, r)
+                        * (top_fact / denom if denom != 0 else 0.0)
+                        * bracket
+                    )
 
                 elif i < m and r == m:
-                    # CASE (b): 1 <= i < m, r = m
-                    # partial_1 B_{i,m}(u) = comb(m,i)*(i - m*u)*u^(i-1)*(1-u)^(m-i-1)
-                    # partial_1 B_{m,m}(u) = m * u^(m-1)
-                    # => 2-term integral:
-                    #
-                    #  Omega_{i,m} = m*comb(m,i) * ∫[ (i - m*u)* u^( (i-1)+(m-1) ) (1-u)^( (m-i-1) ) ] du
-                    #              = m*comb(m,i)* [ i * Beta(m+i-2, m-i-1) - m * Beta(m+i-1, m-i-1) ]
-                    bin_i = binom(m, i)
-                    tA = i * beta_int((m + i - 2), (m - i - 1))   # i * Beta(m+i-2, m-i-1)
-                    tB = m * beta_int((m + i - 1), (m - i - 1))   # m * Beta(m+i-1, m-i-1)
-                    val = m * bin_i * (tA - tB)
+                    # CASE 2
+                    # (m + i -2)! * (m - i -1)! / (2m-1)!
+                    top_fact = factorial_nonneg(m + i - 2) * factorial_nonneg(m - i - 1)
+                    denom = factorial_nonneg(2*m - 1)
+                    bracket = (m - 1)*(i - m)
+                    val = (
+                        m
+                        * binom(m, i)
+                        * (top_fact / denom if denom != 0 else 0.0)
+                        * bracket
+                    )
 
                 elif i == m and r < m:
-                    # CASE (c): i = m, 1 <= r < m
-                    # By symmetry, just swap i<->r in the formula of case (b).
-                    bin_r = binom(m, r)
-                    tA = r * beta_int((m + r - 2), (m - r - 1))
-                    tB = m * beta_int((m + r - 1), (m - r - 1))
-                    val = m * bin_r * (tA - tB)
+                    # CASE 3
+                    # (m + r -2)! * (m - r -1)! / (2m-1)!
+                    top_fact = factorial_nonneg(m + r - 2) * factorial_nonneg(m - r - 1)
+                    denom = factorial_nonneg(2*m - 1)
+                    bracket = (m - 1)*(r - m)
+                    val = (
+                        m
+                        * binom(m, r)
+                        * (top_fact / denom if denom != 0 else 0.0)
+                        * bracket
+                    )
 
                 else:
-                    # CASE (d): i = m, r = m
-                    # partial_1 B_{m,m}(u) = m*u^(m-1)
-                    # => Omega_{m,m} = ∫ [m*u^(m-1)]^2 du = m^2 ∫ u^(2m-2) du = m^2/(2m-1).
+                    # CASE 4: i = m, r = m
                     val = (m**2) / float(2*m - 1)
 
-                Omega[i - 1, r - 1] = val
+                Omega[i-1, r-1] = val
 
         return Omega
-
 
     @staticmethod
     def _construct_lambda(n: int) -> np.ndarray:
@@ -179,6 +184,18 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
                 val = bin_j * bin_s * (top / bottom)
                 Lambda[j-1, s-1] = val
         return Lambda
+    
+    def lambda_L(self):
+        """
+            Lower tail dependence is zero by 2016 Pfeifer, Tsatedem, Mändle and Girschig - Example 1
+        """
+        return 0
+    
+    def lambda_U(self):
+        """
+            Upper tail dependence is zero by 2016 Pfeifer, Tsatedem, Mändle and Girschig - Example 1
+        """
+        return 0
 
 
 BivBernstein: TypeAlias = BivBernsteinCopula

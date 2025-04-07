@@ -605,12 +605,18 @@ class BivCheckW(BivCheckPi):
         return out
 
     def lambda_L(self):
-        """Lower tail dependence (0 for W-copula)."""
+        """
+            Lower tail dependence (0 for W-copula).
+            Must be lower-equal to BivCheckPi(self.matr).lambda_L() = 0.
+        """
         return 0
 
     def lambda_U(self):
-        """Upper tail dependence (1 for W-copula)."""
-        return 1
+        """
+            Upper tail dependence (0 for W-copula).
+            Must be lower-equal to BivCheckPi(self.matr).lambda_U() = 0.
+        """
+        return 0
 
     @property
     def pdf(self):

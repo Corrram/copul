@@ -160,3 +160,4 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         trace = np.trace(delta.T @ delta @ M)
         xi = 6 * m / n * trace - 2
         return xi
+
