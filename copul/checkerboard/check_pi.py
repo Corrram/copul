@@ -827,3 +827,9 @@ class CheckPi(Check, CopulaPlottingMixin):
         multi_idx = [np.unravel_index(ix, shape) for ix in flat_indices]
         selected_elements = matrix[tuple(np.array(multi_idx).T)]
         return selected_elements, multi_idx
+
+    def lambda_L(self):
+        return 0
+    
+    def lambda_U(self):
+        return 0

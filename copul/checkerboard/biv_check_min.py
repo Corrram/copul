@@ -94,7 +94,13 @@ class BivCheckMin(CheckMin, BivCheckPi):
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
         return super().xi(condition_on_y) + m * np.trace(self.matr.T @ self.matr) / n
 
-
+        
+    def lambda_L(self):
+        return self.matr[0, 0] * np.min(self.m, self.n)
+    
+    def lambda_U(self):
+        return self.matr[-1, -1] * np.min(self.m, self.n)
+    
 if __name__ == "__main__":
     ccop = BivCheckMin([[1, 2], [2, 1]])
     ccop.plot_cdf()
