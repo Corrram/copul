@@ -386,3 +386,15 @@ def test_pdf():
     expected_pdf = 1/30*9
     actual_pdf = ccop.pdf(*point)
     assert np.isclose(actual_pdf, expected_pdf, atol=1e-2), f"Expected {expected_pdf}, got {actual_pdf}"
+
+def test_xi_with_small_m_and_large_n():
+    matr = np.array([[0.1]*10])
+    ccop = BivCheckPi(matr)
+    xi = ccop.xi()
+    assert np.isclose(xi, 0, atol=0.02)
+
+def test_xi_with_large_m_and_small_n():
+    matr = np.array([[0.1]*10]).T
+    ccop = BivCheckPi(matr)
+    xi = ccop.xi()
+    assert np.isclose(xi, 0, atol=0.02)
