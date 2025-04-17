@@ -4,7 +4,6 @@ from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopu
 from copul.families.other import BivIndependenceCopula, LowerFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Nelsen7(BivArchimedeanCopula):

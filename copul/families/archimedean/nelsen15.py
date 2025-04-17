@@ -3,7 +3,6 @@ import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.lower_frechet import LowerFrechet
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class GenestGhoudi(BivArchimedeanCopula):

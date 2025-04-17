@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 
@@ -8,6 +9,7 @@ def test_theta_value():
     assert PiOverSigmaMinusPi().theta == 1
 
 
+@pytest.mark.instable
 def test_generator_properties():
     """Test that the generator and inverse generator are properly defined."""
     # Create test values

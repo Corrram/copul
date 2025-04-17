@@ -108,8 +108,8 @@ class CISVerifier:
         tuple
             (is_ci, is_cd) - whether the copula is CI/CD
         """
-        is_ci = True
-        is_cd = True
+        is_cis = True
+        is_cds = True
 
         # Get the right conditional distribution method
         if self.cond_distr == 1:
@@ -122,7 +122,7 @@ class CISVerifier:
         try:
             # Try to get the symbolic function
             cond_method = cond_method().func
-        except TypeError:
+        except (TypeError, ValueError):
             # Method-based approach
             for v in points:
                 for u, next_u in zip(points[:-1], points[1:]):
@@ -135,14 +135,14 @@ class CISVerifier:
 
                     # CI: decreasing in u, CD: increasing in u
                     if val1 < val2:
-                        is_ci = False
+                        is_cis = False
                     if val1 > val2:
-                        is_cd = False
+                        is_cds = False
 
-                    if not is_ci and not is_cd:
+                    if not is_cis and not is_cds:
                         break
 
-                if not is_ci and not is_cd:
+                if not is_cis and not is_cds:
                     break
         else:
             # Symbolic function approach
@@ -154,14 +154,14 @@ class CISVerifier:
 
                     # CI: decreasing in u, CD: increasing in u
                     if eval_u < eval_next_u:
-                        is_ci = False
+                        is_cis = False
                     if eval_u > eval_next_u:
-                        is_cd = False
+                        is_cds = False
 
-                    if not is_ci and not is_cd:
+                    if not is_cis and not is_cds:
                         break
 
-                if not is_ci and not is_cd:
+                if not is_cis and not is_cds:
                     break
 
-        return is_ci, is_cd
+        return is_cis, is_cds

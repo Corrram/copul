@@ -275,6 +275,7 @@ def test_nelsen3_specific_values_adjusted(u, v, theta, expected_approx):
     cdf_val = float(copula.cdf(u=u, v=v))
     assert np.isclose(cdf_val, expected_approx, rtol=0.05)
 
+
 @pytest.mark.parametrize(
     "method_name, point, expected",
     [

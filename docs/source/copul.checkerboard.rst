@@ -4,6 +4,22 @@ copul.checkerboard package
 Submodules
 ----------
 
+copul.checkerboard.bernstein module
+-----------------------------------
+
+.. automodule:: copul.checkerboard.bernstein
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.checkerboard.biv\_bernstein module
+----------------------------------------
+
+.. automodule:: copul.checkerboard.biv_bernstein
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.checkerboard.biv\_check\_min module
 -----------------------------------------
 

@@ -50,7 +50,9 @@ class CDiWrapper(ConditionalWrapper):
 
         # Check all other variables first (priority for other variables being 0 or 1)
         # get max_dim from u_symbols
-        dimensions = [int(k[1:]) for k in u_symbols.keys() if k.startswith("u") and len(k) > 1]
+        dimensions = [
+            int(k[1:]) for k in u_symbols.keys() if k.startswith("u") and len(k) > 1
+        ]
         max_dim = max(dimensions, default=0)
         for j in range(1, max_dim):  # Assume reasonable max dimension of 10
             if j == i:

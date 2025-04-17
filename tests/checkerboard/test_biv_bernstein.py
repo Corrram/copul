@@ -1,5 +1,3 @@
-
-
 import numpy as np
 from copul.checkerboard.biv_bernstein import BivBernsteinCopula
 from copul.families.other.lower_frechet import LowerFrechet
@@ -16,6 +14,7 @@ def test_tau_example():
     assert -1 <= tau <= 1
     assert tau < 0
 
+
 def test_rho_example():
     """Test tau for the example matrix from the original code."""
     matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
@@ -26,6 +25,7 @@ def test_rho_example():
     assert -1 <= rho <= 1
     assert rho < 0
 
+
 def test_tau_independence():
     """Test that rho is close to 0 for independence copula."""
     np.random.seed(42)
@@ -33,6 +33,7 @@ def test_tau_independence():
     ccop = BivBernsteinCopula(matr)
     tau = ccop.tau()
     assert np.isclose(tau, 0)
+
 
 def test_rho_independence():
     """Test that rho is close to 0 for independence copula."""
@@ -42,6 +43,7 @@ def test_rho_independence():
     rho = ccop.rho()
     assert np.isclose(rho, 0)
 
+
 def test_xi_independence():
     """Test that xi is close to 0 for independence copula."""
     np.random.seed(42)
@@ -49,6 +51,7 @@ def test_xi_independence():
     ccop = BivBernsteinCopula(matr)
     xi = ccop.xi()
     assert np.isclose(xi, 0)
+
 
 def test_tau_perfect_dependence():
     """Test tau for perfect positive and negative dependence."""
@@ -75,12 +78,13 @@ def test_tau_perfect_dependence():
     tau_low_2 = bern_low_2.tau()
 
     # tau should be positive for positive dependence and negative for negative dependence
-    assert np.isclose(tau_pos, 2/9)
-    assert np.isclose(tau_neg, -2/9)
-    assert np.isclose(tau_up_2, 2/9)
-    assert np.isclose(tau_low_2, -2/9)
+    assert np.isclose(tau_pos, 2 / 9)
+    assert np.isclose(tau_neg, -2 / 9)
+    assert np.isclose(tau_up_2, 2 / 9)
+    assert np.isclose(tau_low_2, -2 / 9)
     assert tau_up > 0.6
     assert tau_low < -0.6
+
 
 def test_rho_perfect_dependence():
     """Test rho for perfect positive and negative dependence."""
@@ -98,8 +102,8 @@ def test_rho_perfect_dependence():
     rho_neg = ccop_neg.rho()
 
     # Rho should be positive for positive dependence and negative for negative dependence
-    assert np.isclose(rho_pos, 1/3)
-    assert np.isclose(rho_neg, -1/3)
+    assert np.isclose(rho_pos, 1 / 3)
+    assert np.isclose(rho_neg, -1 / 3)
 
     bern_up = UpperFrechet().to_bernstein(5)
     bern_low = LowerFrechet().to_bernstein(5)
@@ -136,10 +140,11 @@ def test_xi_from_frechet():
     xi_low_2 = bern_low_2.xi()
 
     # xi should be positive for positive dependence and negative for negative dependence
-    assert np.isclose(xi_up_2, 1/15)
-    assert np.isclose(xi_low_2, 1/15)
+    assert np.isclose(xi_up_2, 1 / 15)
+    assert np.isclose(xi_low_2, 1 / 15)
     assert xi_up > 0.45
     assert xi_low > 0.45
+
 
 def test_measures_of_association_with_rectangular_matrix():
     """Test that rho and tau are consistent for a rectangular matrix."""

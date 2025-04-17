@@ -236,6 +236,7 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
         """
         self._set_params(args, kwargs)
         return (self.theta - 1) / self.theta
+
     def cdf_vectorized(self, *args):
         """
         Vectorized implementation of the CDF for the Gumbel-Hougaard copula.
@@ -259,13 +260,13 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
 
         # Ensure all arrays have compatible shapes
         shape = np.broadcast(*arrays).shape
-        
+
         # Create arrays with small epsilon to avoid log(0)
         adjusted_arrays = []
         for arr in arrays:
             # Add a small epsilon to avoid zeros that cause problems
             adjusted_arrays.append(np.maximum(arr, 1e-10))
-        
+
         result = np.zeros(shape)
 
         # Get theta value
@@ -280,12 +281,13 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
 
         # Calculate CDF values
         result = np.exp(-((neg_log_sum) ** (1 / theta_val)))
-        
+
         # Check if we have all zeros (or very small values)
         if np.all(result < 1e-8):
             # Ensure there's at least one positive value for sampling
             result.flat[0] = 1e-6
-        
-        return result# Define alias
-        
+
+        return result  # Define alias
+
+
 MultivariateGumbelHougaardEV: TypeAlias = MultivariateGumbelHougaard

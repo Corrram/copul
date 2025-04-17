@@ -2,8 +2,6 @@ import copy
 import numpy as np
 import sympy
 
-from copul.wrapper.cd1_wrapper import CD1Wrapper
-from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.cdi_wrapper import CDiWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -18,7 +16,9 @@ class CoreCopula:
     params = []
     intervals = {}
     log_cut_off = 4
-    _cdf_expr_internal = None  # Renamed from _cdf to avoid confusion with the new method
+    _cdf_expr_internal = (
+        None  # Renamed from _cdf to avoid confusion with the new method
+    )
     _free_symbols = {}
 
     @property
@@ -27,22 +27,22 @@ class CoreCopula:
         if self._cdf_expr_internal is not None:
             # Make a deep copy to avoid modifying the original
             expr = self._cdf_expr_internal
-            
+
             # Apply any symbol updates if _free_symbols is available
-            if hasattr(self, '_free_symbols') and self._free_symbols:
+            if hasattr(self, "_free_symbols") and self._free_symbols:
                 current_values = {}
                 for symbol_name, symbol_obj in self._free_symbols.items():
                     # Get the current value from the object
                     if hasattr(self, symbol_name):
                         current_values[symbol_obj] = getattr(self, symbol_name)
-                
+
                 # Only create a new expression if we have substitutions
                 if current_values:
                     expr = expr.subs(current_values)
-                    
+
             return expr
         return None
-    
+
     @_cdf_expr.setter
     def _cdf_expr(self, value):
         self._cdf_expr_internal = value

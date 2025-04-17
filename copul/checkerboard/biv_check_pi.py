@@ -12,6 +12,8 @@ import warnings
 import sympy
 from copul.checkerboard.check_pi import CheckPi
 from copul.families.core.biv_core_copula import BivCoreCopula
+from copul.families.cis_verifier import CISVerifier
+
 
 class BivCheckPi(CheckPi, BivCoreCopula):
     """
@@ -113,6 +115,18 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         """
         return True
 
+    def is_cis(self) -> bool:
+        """
+        Check if the copula is cis.
+        """
+        return CISVerifier(1).is_cis(self)
+
+    def transpose(self):
+        """
+        Transpose the checkerboard matrix.
+        """
+        return BivCheckPi(self.matr.T)
+
     def cond_distr_1(self, *args):
         return self.cond_distr(1, *args)
 
@@ -161,3 +175,13 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         xi = 6 * m / n * trace - 2
         return xi
 
+
+if __name__ == "__main__":
+    matr2 = [[5, 1, 5, 1], [5, 1, 5, 1], [1, 5, 1, 5], [1, 5, 1, 5]]
+    ccop = BivCheckPi(matr2)
+    xi = ccop.xi()
+    # ccop.plot_cond_distr_1()
+    # ccop.transpose().plot_cond_distr_1()
+    is_cis, is_cds = ccop.is_cis()
+    transpose_is_cis, transpose_is_cds = ccop.transpose().is_cis()
+    print(f"CIS: {is_cis}")

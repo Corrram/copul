@@ -11,7 +11,6 @@ from copul.families.cis_verifier import CISVerifier
 from copul.families.copula_graphs import CopulaGraphs
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.tp2_verifier import TP2Verifier
-from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 

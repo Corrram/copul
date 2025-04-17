@@ -25,7 +25,7 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         # D is the m x n "cumulated" checkerboard matrix
         d = self._cumsum_theta()
         trace_sum = np.sum(d)  # sum of all D_{i,j}
-        factor = 12.0 / ((self.m+1) * (self.n+1))
+        factor = 12.0 / ((self.m + 1) * (self.n + 1))
         rho_val = factor * trace_sum - 3.0
         return rho_val
 
@@ -64,15 +64,15 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         for i,j in {0,...,m-1}.
         """
         Theta = np.zeros((m, m), dtype=float)
-        for i in range(1, m+1):      # i from 1..m
-            for j in range(1, m+1):  # j from 1..m
+        for i in range(1, m + 1):  # i from 1..m
+            for j in range(1, m + 1):  # j from 1..m
                 numerator = (i - j) * math.comb(m, i) * math.comb(m, j)
-                denom = (2*m - i - j) * math.comb(2*m - 1, i + j - 1)
+                denom = (2 * m - i - j) * math.comb(2 * m - 1, i + j - 1)
                 if denom == 0:
                     # By convention 0/0 = 1, or handle as needed
-                    Theta[i-1, j-1] = 0.0 if (numerator != 0) else 1.0
+                    Theta[i - 1, j - 1] = 0.0 if (numerator != 0) else 1.0
                 else:
-                    Theta[i-1, j-1] = numerator / denom
+                    Theta[i - 1, j - 1] = numerator / denom
         return Theta
 
     @staticmethod
@@ -114,15 +114,18 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
                 return 0
             return math.factorial(x)
 
-        for i in range(1, m+1):      # i = 1..m
-            for r in range(1, m+1):  # r = 1..m
-
+        for i in range(1, m + 1):  # i = 1..m
+            for r in range(1, m + 1):  # r = 1..m
                 if i < m and r < m:
                     # CASE 1
                     # (i+r-2)! * (2m-(i+r)-2)!
-                    top_fact = factorial_nonneg(i + r - 2) * factorial_nonneg(2*m - (i + r) - 2)
-                    denom = factorial_nonneg(2*m - 1)
-                    bracket = ((2*m - 1)*(2*m - 2)*i*r) - (m*(m - 1)*(i + r)*((i + r) - 1))
+                    top_fact = factorial_nonneg(i + r - 2) * factorial_nonneg(
+                        2 * m - (i + r) - 2
+                    )
+                    denom = factorial_nonneg(2 * m - 1)
+                    bracket = ((2 * m - 1) * (2 * m - 2) * i * r) - (
+                        m * (m - 1) * (i + r) * ((i + r) - 1)
+                    )
                     val = (
                         binom(m, i)
                         * binom(m, r)
@@ -134,8 +137,8 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
                     # CASE 2
                     # (m + i -2)! * (m - i -1)! / (2m-1)!
                     top_fact = factorial_nonneg(m + i - 2) * factorial_nonneg(m - i - 1)
-                    denom = factorial_nonneg(2*m - 1)
-                    bracket = (m - 1)*(i - m)
+                    denom = factorial_nonneg(2 * m - 1)
+                    bracket = (m - 1) * (i - m)
                     val = (
                         m
                         * binom(m, i)
@@ -147,8 +150,8 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
                     # CASE 3
                     # (m + r -2)! * (m - r -1)! / (2m-1)!
                     top_fact = factorial_nonneg(m + r - 2) * factorial_nonneg(m - r - 1)
-                    denom = factorial_nonneg(2*m - 1)
-                    bracket = (m - 1)*(r - m)
+                    denom = factorial_nonneg(2 * m - 1)
+                    bracket = (m - 1) * (r - m)
                     val = (
                         m
                         * binom(m, r)
@@ -158,9 +161,9 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
 
                 else:
                     # CASE 4: i = m, r = m
-                    val = (m**2) / float(2*m - 1)
+                    val = (m**2) / float(2 * m - 1)
 
-                Omega[i-1, r-1] = val
+                Omega[i - 1, r - 1] = val
 
         return Omega
 
@@ -175,25 +178,25 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         for j,s in {0,...,n-1}.
         """
         Lambda = np.zeros((n, n), dtype=float)
-        for j in range(1, n+1):      # j from 1..n
-            for s in range(1, n+1):  # s from 1..n
+        for j in range(1, n + 1):  # j from 1..n
+            for s in range(1, n + 1):  # s from 1..n
                 bin_j = math.comb(n, j)
                 bin_s = math.comb(n, s)
-                top = math.factorial(j + s) * math.factorial(2*n - (j + s))
-                bottom = math.factorial(2*n + 1)
+                top = math.factorial(j + s) * math.factorial(2 * n - (j + s))
+                bottom = math.factorial(2 * n + 1)
                 val = bin_j * bin_s * (top / bottom)
-                Lambda[j-1, s-1] = val
+                Lambda[j - 1, s - 1] = val
         return Lambda
-    
+
     def lambda_L(self):
         """
-            Lower tail dependence is zero by 2016 Pfeifer, Tsatedem, Mändle and Girschig - Example 1
+        Lower tail dependence is zero by 2016 Pfeifer, Tsatedem, Mändle and Girschig - Example 1
         """
         return 0
-    
+
     def lambda_U(self):
         """
-            Upper tail dependence is zero by 2016 Pfeifer, Tsatedem, Mändle and Girschig - Example 1
+        Upper tail dependence is zero by 2016 Pfeifer, Tsatedem, Mändle and Girschig - Example 1
         """
         return 0
 

@@ -8,7 +8,6 @@ from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.exceptions import PropertyUnavailableException
 from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 
 

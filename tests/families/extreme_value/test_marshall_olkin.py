@@ -6,7 +6,6 @@ from unittest.mock import patch
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
 from copul.exceptions import PropertyUnavailableException
 from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 

@@ -5,7 +5,6 @@ from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValu
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
 

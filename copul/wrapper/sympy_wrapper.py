@@ -213,7 +213,7 @@ class SymPyFuncWrapper:
             A new SymPyFuncWrapper with the factored expression.
         """
         return SymPyFuncWrapper(sympy.factor(self._func))
-    
+
     def has(self, *args, **kwargs) -> bool:
         """
         Check if the expression has a certain property.

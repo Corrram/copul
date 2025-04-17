@@ -55,6 +55,12 @@ class BivCheckW(BivCheckPi):
             return False
         return np.allclose(self.matr, self.matr.T)
 
+    def transpose(self):
+        """
+        Transpose the checkerboard matrix.
+        """
+        return BivCheckW(self.matr.T)
+
     def cdf(self, *args):
         """
         Compute the CDF at one or multiple points using the W-fraction approach.
@@ -606,15 +612,15 @@ class BivCheckW(BivCheckPi):
 
     def lambda_L(self):
         """
-            Lower tail dependence (0 for W-copula).
-            Must be lower-equal to BivCheckPi(self.matr).lambda_L() = 0.
+        Lower tail dependence (0 for W-copula).
+        Must be lower-equal to BivCheckPi(self.matr).lambda_L() = 0.
         """
         return 0
 
     def lambda_U(self):
         """
-            Upper tail dependence (0 for W-copula).
-            Must be lower-equal to BivCheckPi(self.matr).lambda_U() = 0.
+        Upper tail dependence (0 for W-copula).
+        Must be lower-equal to BivCheckPi(self.matr).lambda_U() = 0.
         """
         return 0
 
