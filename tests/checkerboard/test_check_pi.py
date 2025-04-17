@@ -270,10 +270,10 @@ def test_pdf_behavior():
     copula = CheckPi(matr)
 
     # Test at grid points - pdf returns the value at the cell containing the point
-    assert np.isclose(copula.pdf(0.25, 0.25), 0.1*4)
-    assert np.isclose(copula.pdf(0.25, 0.75), 0.2*4)
-    assert np.isclose(copula.pdf(0.75, 0.25), 0.3*4)
-    assert np.isclose(copula.pdf(0.75, 0.75), 0.4*4)
+    assert np.isclose(copula.pdf(0.25, 0.25), 0.1 * 4)
+    assert np.isclose(copula.pdf(0.25, 0.75), 0.2 * 4)
+    assert np.isclose(copula.pdf(0.75, 0.25), 0.3 * 4)
+    assert np.isclose(copula.pdf(0.75, 0.75), 0.4 * 4)
 
     # Test out of bounds
     assert copula.pdf(-0.1, 0.5) == 0

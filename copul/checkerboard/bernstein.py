@@ -20,6 +20,7 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
         if cls is BernsteinCopula and theta_arr.ndim == 2:
             try:
                 import importlib
+
                 bbc_module = importlib.import_module("copul.checkerboard.biv_bernstein")
                 BivBernsteinCopula = getattr(bbc_module, "BivBernsteinCopula")
                 return BivBernsteinCopula(theta, *args, **kwargs)
@@ -70,28 +71,40 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
     @staticmethod
     def _bernstein_poly_vec(m, k_vals, u, binom_coeffs):
         """Compute vector [B_{m,k}(u)] for k in k_vals."""
-        return binom_coeffs[k_vals] * (u ** k_vals) * ((1 - u) ** (m - k_vals))
+        return binom_coeffs[k_vals] * (u**k_vals) * ((1 - u) ** (m - k_vals))
 
     def _bernstein_poly_vec_cd(self, m, k_vals, u, binom_coeffs):
         """Compute derivative vector for [B_{m,k}(u)] for k in k_vals."""
-        term1 = binom_coeffs[k_vals] * k_vals * (u ** (k_vals - 1)) * ((1 - u) ** (m - k_vals))
-        term2 = binom_coeffs[k_vals] * (m - k_vals) * (u ** k_vals) * ((1 - u) ** (m - k_vals - 1))
+        term1 = (
+            binom_coeffs[k_vals]
+            * k_vals
+            * (u ** (k_vals - 1))
+            * ((1 - u) ** (m - k_vals))
+        )
+        term2 = (
+            binom_coeffs[k_vals]
+            * (m - k_vals)
+            * (u**k_vals)
+            * ((1 - u) ** (m - k_vals - 1))
+        )
         return term1 - term2
 
     def _cumsum_theta(self, with_zeros=False):
         """Return the cumulative sum of theta along each axis.
-        
+
         If with_zeros=True, add a leading zero row and column.
         """
         theta_cs = self.theta.copy()
         for ax in range(self.dim):
             theta_cs = np.cumsum(theta_cs, axis=ax)
-            
+
         if with_zeros:
             # Add a zero row at the top and a zero column at the left.
             # This pads the array with one row/column of zeros before the existing data.
-            theta_cs = np.pad(theta_cs, pad_width=((1, 0), (1, 0)), mode='constant', constant_values=0)
-        
+            theta_cs = np.pad(
+                theta_cs, pad_width=((1, 0), (1, 0)), mode="constant", constant_values=0
+            )
+
         return theta_cs
 
     def _prepare_bern_vals(self, u, use_deriv=False, cond_index=None):
@@ -124,11 +137,11 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
         cumulative theta and Bernstein polynomial values.
         """
         shape = theta_cs.shape
-        theta_flat = theta_cs.ravel(order='C')
+        theta_flat = theta_cs.ravel(order="C")
         total = 0.0
         ranges = [range(m) for m in self.degrees]
         for k_tuple in itertools.product(*ranges):
-            flat_idx = np.ravel_multi_index(k_tuple, shape, order='C')
+            flat_idx = np.ravel_multi_index(k_tuple, shape, order="C")
             coef = theta_flat[flat_idx]
             prod = 1.0
             for j, kj in enumerate(k_tuple):

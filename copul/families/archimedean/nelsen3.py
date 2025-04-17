@@ -5,7 +5,6 @@ from typing import TypeAlias
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
-from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 
 
@@ -52,7 +51,7 @@ class AliMikhailHaq(BivArchimedeanCopula):
             / (theta * (self.u - 1) * (self.v - 1) - 1) ** 2
         )
         return CD1Wrapper(cond_distr_1)(u, v)
-    
+
     def cond_distr_2(self, u=None, v=None):
         theta = self.theta
         cond_distr_2 = (

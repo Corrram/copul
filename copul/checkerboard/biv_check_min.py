@@ -52,6 +52,12 @@ class BivCheckMin(CheckMin, BivCheckPi):
         """Return string representation of the instance."""
         return f"CheckMin(m={self.m}, n={self.n})"
 
+    def transpose(self):
+        """
+        Transpose the checkerboard matrix.
+        """
+        return BivCheckMin(self.matr.T)
+
     @property
     def is_symmetric(self) -> bool:
         """Check if the matrix is symmetric.
@@ -94,13 +100,21 @@ class BivCheckMin(CheckMin, BivCheckPi):
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
         return super().xi(condition_on_y) + m * np.trace(self.matr.T @ self.matr) / n
 
-        
     def lambda_L(self):
         return self.matr[0, 0] * np.min(self.m, self.n)
-    
+
     def lambda_U(self):
         return self.matr[-1, -1] * np.min(self.m, self.n)
-    
+
+
 if __name__ == "__main__":
-    ccop = BivCheckMin([[1, 2], [2, 1]])
-    ccop.plot_cdf()
+    matr1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    matr2 = [[5, 1, 5, 1], [5, 1, 5, 1], [1, 5, 1, 5], [1, 5, 1, 5]]
+    ccop = BivCheckMin(matr2)
+    xi = ccop.xi()
+    ccop.plot_cond_distr_1()
+    ccop.transpose().plot_cond_distr_1()
+    is_cis, is_cds = ccop.is_cis()
+    transpose_is_cis, transpose_is_cds = ccop.transpose().is_cis()
+    print(f"Is cis: {is_cis}, Is cds: {is_cds}")
+    print(f"Is cis: {transpose_is_cis}, Is cds: {transpose_is_cds}")

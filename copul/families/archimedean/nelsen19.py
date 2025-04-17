@@ -3,7 +3,6 @@ import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
-from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 class Nelsen19(BivArchimedeanCopula):

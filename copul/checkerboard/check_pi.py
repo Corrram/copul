@@ -4,9 +4,10 @@ import numpy as np
 
 from copul.checkerboard.check import Check
 from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
+from copul.families.core.copula_approximator_mixin import CopulaApproximatorMixin
 
 
-class CheckPi(Check, CopulaPlottingMixin):
+class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
     def __new__(cls, matr, *args, **kwargs):
         """
         Create a new CheckPi instance or a BivCheckPi instance if dimension is 2.
@@ -725,7 +726,7 @@ class CheckPi(Check, CopulaPlottingMixin):
             cell_idx.append(ix)
 
         # Return the cell's mass
-        return float(self.matr[tuple(cell_idx)])*np.prod(self.matr.shape)
+        return float(self.matr[tuple(cell_idx)]) * np.prod(self.matr.shape)
 
     def _pdf_vectorized(self, points):
         """
@@ -752,7 +753,7 @@ class CheckPi(Check, CopulaPlottingMixin):
         valid_mask = np.all((points >= 0) & (points <= 1), axis=1)
 
         if not np.any(valid_mask):
-            return results*prod
+            return results * prod
 
         # Process only valid points
         valid_points = points[valid_mask]
@@ -768,7 +769,7 @@ class CheckPi(Check, CopulaPlottingMixin):
         for i, idx in enumerate(indices):
             results[valid_mask][i] = self.matr[tuple(idx)]
 
-        return results*prod
+        return results * prod
 
     def rvs(self, n=1, random_state=None, **kwargs):
         """
@@ -830,6 +831,6 @@ class CheckPi(Check, CopulaPlottingMixin):
 
     def lambda_L(self):
         return 0
-    
+
     def lambda_U(self):
         return 0

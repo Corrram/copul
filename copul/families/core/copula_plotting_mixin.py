@@ -11,7 +11,13 @@ class CopulaPlottingMixin:
     """
 
     def scatter_plot(
-        self, n=1_000, approximate=False, figsize=(10, 8), alpha=0.6, colormap="viridis", samples=None
+        self,
+        n=1_000,
+        approximate=False,
+        figsize=(10, 8),
+        alpha=0.6,
+        colormap="viridis",
+        samples=None,
     ):
         """
         Create a scatter plot of random variates from the copula.
@@ -73,7 +79,7 @@ class CopulaPlottingMixin:
                 data[:, 0],  # x-coordinates (first margin)
                 data[:, 1],  # y-coordinates (second margin)
                 data[:, 2],  # z-coordinates (third margin)
-                c=colors,    # color by third dimension
+                c=colors,  # color by third dimension
                 cmap=colormap,
                 s=rcParams["lines.markersize"] ** 2,
                 alpha=alpha,

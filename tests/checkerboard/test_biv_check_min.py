@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 from copul.checkerboard.biv_check_min import BivCheckMin
-from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.exceptions import PropertyUnavailableException
 
 
@@ -330,14 +329,16 @@ def test_measures_of_assiciation_with_rectangular_matrix():
     assert 1 > tau > -1
     assert 1 > rho > -1
 
+
 def test_xi_with_small_m_and_large_n():
-    matr = np.array([[0.1]*10])
+    matr = np.array([[0.1] * 10])
     ccop = BivCheckMin(matr)
     xi = ccop.xi()
     assert np.isclose(xi, 0.01, atol=0.02)
 
+
 def test_xi_with_large_m_and_small_n():
-    matr = np.array([[0.1]*10]).T
+    matr = np.array([[0.1] * 10]).T
     ccop = BivCheckMin(matr)
     xi = ccop.xi()
     assert np.isclose(xi, 1, atol=0.02)

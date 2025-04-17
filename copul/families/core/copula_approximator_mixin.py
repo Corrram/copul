@@ -1,4 +1,4 @@
-from copul import Checkerboarder
+from copul.checkerboard.checkerboarder import Checkerboarder
 
 
 class CopulaApproximatorMixin:
@@ -77,4 +77,3 @@ class CopulaApproximatorMixin:
             A BernsteinCopula object representing the copula.
         """
         return self.to_checkerboard(grid_size, checkerboard_type="Bernstein")
-    

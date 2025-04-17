@@ -6,8 +6,6 @@ from copul.exceptions import PropertyUnavailableException
 from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
-from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
 

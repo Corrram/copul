@@ -59,7 +59,9 @@ class DataUniformer:
 
         # Serial transformation
         for j in range(n_features):
-            transformed_data[:, j] = self._transform_column(data[:, j], touch_boundaries)
+            transformed_data[:, j] = self._transform_column(
+                data[:, j], touch_boundaries
+            )
 
         return transformed_data
 
@@ -93,7 +95,7 @@ class DataUniformer:
         ranks = stats.rankdata(column, method="average")
 
         if touch_boundaries:
-            # Map ranks to [0,1]: 
+            # Map ranks to [0,1]:
             # smallest rank (1) -> 0.0, largest rank (n_samples) -> 1.0
             return (ranks - 1.0) / (n_samples - 1.0)
         else:

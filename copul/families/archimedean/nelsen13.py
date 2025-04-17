@@ -3,7 +3,6 @@ import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
-from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

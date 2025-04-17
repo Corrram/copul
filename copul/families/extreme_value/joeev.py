@@ -7,7 +7,6 @@ from copul.families.extreme_value.biv_extreme_value_copula import BivExtremeValu
 from copul.families.extreme_value.galambos import Galambos
 from copul.families.extreme_value.marshall_olkin import MarshallOlkin
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
-from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 class JoeEV(BivExtremeValueCopula):
