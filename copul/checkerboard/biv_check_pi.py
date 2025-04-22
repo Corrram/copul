@@ -177,11 +177,75 @@ class BivCheckPi(CheckPi, BivCoreCopula):
 
 
 if __name__ == "__main__":
-    matr2 = [[5, 1, 5, 1], [5, 1, 5, 1], [1, 5, 1, 5], [1, 5, 1, 5]]
-    ccop = BivCheckPi(matr2)
+    matr3 = [[1, 0, 1, 0], [1, 0, 1, 0], [0, 1, 0, 1], [0, 1, 0, 1]]
+
+    def make_adjacent_ones(n: int) -> np.ndarray:
+        """
+        Return an n×n 0/1‐matrix where each row has exactly two consecutive 1’s
+        and each column also sums to 2.
+        """
+        assert n % 2 == 0, "n must be even"
+        mat = np.zeros((n, n), dtype=int)
+        distinct_positions = n // 2  # number of possible start‐positions
+        for i in range(n):
+            start = (i % distinct_positions) * 2
+            mat[i, start : start + 2] = 1
+        return mat
+
+    def make_16x16_adjacent_ones() -> np.ndarray:
+        return make_adjacent_ones(16)
+
+    def make_32x32_adjacent_ones() -> np.ndarray:
+        return make_adjacent_ones(32)
+
+    def make_64x64_adjacent_ones() -> np.ndarray:
+        return make_adjacent_ones(64)
+
+    def make_9x9_subblock_matrix():
+        D = np.diag([1, 1, 1])  # 3×3 diagonal
+        OO = np.ones((3, 3), dtype=int) / 3  # 3×3 ones
+        Z = np.zeros((3, 3), dtype=int)  # 3×3 zeros
+
+        top = np.hstack([D, Z, Z])
+        middle = np.hstack([Z, OO, Z])
+        bottom = np.hstack([Z, Z, D])
+
+        return np.vstack([top, middle, bottom])
+
+    def make_6x6_subblock_matrix():
+        D = np.diag([1, 1])  # 2×2 diagonal
+        OO = np.ones((2, 2), dtype=int) / 2  # 2×2 ones
+        Z = np.zeros((2, 2), dtype=int)  # 2×2 zeros
+
+        top = np.hstack([D, Z, Z])
+        middle = np.hstack([Z, OO, Z])
+        bottom = np.hstack([Z, Z, D])
+
+        return np.vstack([top, middle, bottom])
+
+    M = make_6x6_subblock_matrix().T / 6
+    n=6
+    T = np.ones(n) - np.tri(n)
+    M_xi = T @ T.T + T.T + 1 / 3 * np.eye(n)
+    print(np.trace(M@M.T@M_xi))
+    print("Row sums:", np.unique(M.sum(axis=1)))
+    print("Col sums:", np.unique(M.sum(axis=0)))
+    M = [[1, 0, 0, 0], [0, 0.5, 0.5, 0], [0, 0.5, 0.5, 0], [0, 0, 0, 1]]
+    ccop = BivCheckPi(M)
     xi = ccop.xi()
     # ccop.plot_cond_distr_1()
     # ccop.transpose().plot_cond_distr_1()
     is_cis, is_cds = ccop.is_cis()
+    is_tp2 = ccop.is_tp2()
     transpose_is_cis, transpose_is_cds = ccop.transpose().is_cis()
-    print(f"CIS: {is_cis}")
+    transpose_is_tp2 = ccop.transpose().is_tp2()
+    check_min = ccop.to_check_min((2, 2))
+    print(check_min.matr)
+    check_min_xi = check_min.xi()
+    check_min_44_xi = ccop.to_check_min((4, 4)).xi()
+    print(
+        f"Xi: {xi}, 2x2-CheckMin Xi: {check_min_xi}, 4x4-CheckMin Xi: {check_min_44_xi}"
+    )
+    print(f"CIS: {is_cis}, Transpose CIS: {transpose_is_cis}")
+    print(f"CDS: {is_cds}, Transpose CDS: {transpose_is_cds}")
+    print(f"TP2: {is_tp2}, Transpose TP2: {transpose_is_tp2}")

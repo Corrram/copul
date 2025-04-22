@@ -88,7 +88,7 @@ class Checkerboarder:
         cdf_lu = copula.cdf_vectorized(X_lower, Y_upper)
 
         cmatr = cdf_uu - cdf_ul - cdf_lu + cdf_ll
-        cmatr = np.clip(cmatr, 0, 1)
+        # cmatr = np.clip(cmatr, 0, 1)
         return self._get_checkerboard_copula_for(cmatr)
 
     def _compute_checkerboard_parallel(self, copula, n_jobs):
@@ -127,6 +127,7 @@ class Checkerboarder:
                 sign = (-1) ** (bin(corner).count("1") + self.d)
                 ie_sum += sign * get_cached_cdf(corner_point)
             cmatr[idx] = ie_sum
+        # cmatr = np.clip(cmatr, 0, 1)
         return self._get_checkerboard_copula_for(cmatr)
 
     def _process_cell(self, idx, copula):
