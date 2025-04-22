@@ -50,11 +50,11 @@ class CISVerifier:
         except IndexError:
             is_ci, is_cd = self._is_copula_cis(copul, linspace)
             if is_ci:
-                print("CI True for param: None")
+                log.debug("CI True for param: None")
             elif is_cd:
-                print("CD True for param: None")
+                log.debug("CD True for param: None")
             else:
-                print("False for param: None")
+                log.debug("False for param: None")
             return is_ci, is_cd
 
         # Handle parameters and their ranges
@@ -83,11 +83,11 @@ class CISVerifier:
             final_is_ci, final_is_cd = is_ci, is_cd
 
             if is_ci:
-                print(f"CI True for param: {param_value}")
+                log.debug(f"CI True for param: {param_value}")
             elif is_cd:
-                print(f"CD True for param: {param_value}")
+                log.debug(f"CD True for param: {param_value}")
             else:
-                print(f"False for param: {param_value}")
+                log.debug(f"False for param: {param_value}")
 
         # Return the last result
         return final_is_ci, final_is_cd
@@ -134,9 +134,9 @@ class CISVerifier:
                         val2 = cond_method(v, next_u)
 
                     # CI: decreasing in u, CD: increasing in u
-                    if val1 < val2:
+                    if val1 < val2 - 1e-10:
                         is_cis = False
-                    if val1 > val2:
+                    if val1 > val2 + 1e-10:
                         is_cds = False
 
                     if not is_cis and not is_cds:

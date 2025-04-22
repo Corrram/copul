@@ -98,7 +98,9 @@ class BivCheckMin(CheckMin, BivCheckPi):
         condition_on_y: bool = False,
     ) -> float:
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
-        return super().xi(condition_on_y) + m * np.trace(self.matr.T @ self.matr) / n
+        check_pi_xi = super().xi(condition_on_y)
+        add_on = m * np.trace(self.matr.T @ self.matr) / n
+        return check_pi_xi + add_on
 
     def lambda_L(self):
         return self.matr[0, 0] * np.min(self.m, self.n)
