@@ -7,8 +7,6 @@ from typing import TypeAlias
 
 
 class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
-    params: list = []
-    intervals: dict = {}
 
     def __init__(self, theta, check_theta=True):
         BernsteinCopula.__init__(self, theta, check_theta)

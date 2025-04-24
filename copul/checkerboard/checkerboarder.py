@@ -69,7 +69,7 @@ class Checkerboarder:
         else:
             return self._compute_checkerboard_serial(copula)
 
-    def _compute_checkerboard_vectorized(self, copula):
+    def _compute_checkerboard_vectorized(self, copula, tol=1e-12):
         if self.d != 2:
             warnings.warn("Vectorized computation only supported for 2D case.")
             return self._compute_checkerboard_serial(copula)
@@ -88,6 +88,17 @@ class Checkerboarder:
         cdf_lu = copula.cdf_vectorized(X_lower, Y_upper)
 
         cmatr = cdf_uu - cdf_ul - cdf_lu + cdf_ll
+        neg_mask = cmatr < 0
+        if np.any(neg_mask):
+            min_val = cmatr[neg_mask].min()
+            # if it’s more negative than our tolerance, warn
+            if min_val < -tol:
+                raise ValueError(
+                    f"cmatr has {np.sum(neg_mask)} entries < -{tol:.1e}; "
+                    f"most extreme = {min_val:.3e}"
+                )
+            # zero out *all* negatives (small or large)
+            cmatr[neg_mask] = 0.0
         # cmatr = np.clip(cmatr, 0, 1)
         return self._get_checkerboard_copula_for(cmatr)
 

@@ -40,6 +40,8 @@ class BivCoreCopula:
     u, v = sp.symbols("u v", nonnegative=True)
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
+    params: list = []
+    intervals: dict = {}
 
     def __init__(self):
         """

@@ -32,6 +32,7 @@ class VerificationResult:
         violations: List of parameter values where TP2 property is violated
         tested_params: List of parameter values that were tested
     """
+
     is_tp2: bool
     violations: List[Dict[str, float]]
     tested_params: List[Dict[str, float]]
@@ -95,7 +96,9 @@ class TP2Verifier:
         # Determine parameter ranges
         parameter_ranges = self._get_parameter_ranges(copula)
         if not parameter_ranges:
-            log.debug("No parameter ranges detected—treating as a single 'unique' copula")
+            log.debug(
+                "No parameter ranges detected—treating as a single 'unique' copula"
+            )
 
         # Grid of evaluation points
         test_points = np.linspace(0.0001, 0.9999, 20)
