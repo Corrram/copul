@@ -224,10 +224,10 @@ if __name__ == "__main__":
         return np.vstack([top, middle, bottom])
 
     M = make_6x6_subblock_matrix().T / 6
-    n=6
+    n = 6
     T = np.ones(n) - np.tri(n)
     M_xi = T @ T.T + T.T + 1 / 3 * np.eye(n)
-    print(np.trace(M@M.T@M_xi))
+    print(np.trace(M @ M.T @ M_xi))
     print("Row sums:", np.unique(M.sum(axis=1)))
     print("Col sums:", np.unique(M.sum(axis=0)))
     M = [[1, 0, 0, 0], [0, 0.5, 0.5, 0], [0, 0.5, 0.5, 0], [0, 0, 0, 1]]
@@ -243,8 +243,12 @@ if __name__ == "__main__":
     print(check_min.matr)
     check_min_xi = check_min.xi()
     check_min_44_xi = ccop.to_check_min((4, 4)).xi()
+    M2 = [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]
+    ccop2 = BivCheckPi(M2).to_check_min((4, 4))
+    check_min_44_xi = ccop2.xi()
+    check_min_22_xi = ccop2.to_check_min((2, 2)).xi()
     print(
-        f"Xi: {xi}, 2x2-CheckMin Xi: {check_min_xi}, 4x4-CheckMin Xi: {check_min_44_xi}"
+        f"4x4 Xi: {xi}, 2x2-CheckMin Xi: {check_min_xi}, 4x4-CheckMin Xi: {check_min_44_xi}, 2x2-CheckMin Xi2: {check_min_22_xi}"
     )
     print(f"CIS: {is_cis}, Transpose CIS: {transpose_is_cis}")
     print(f"CDS: {is_cds}, Transpose CDS: {transpose_is_cds}")
