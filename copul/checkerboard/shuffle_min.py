@@ -355,7 +355,6 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
         if self.n <= 1: return np.nan
 
         if self.is_identity: return 1.0
-        if self.is_reverse: return -1.0
 
         # Correct calculation using 0-based indexing internally for pi0
         pi0_temp = self.pi0 # Use precomputed 0-based perm
@@ -363,7 +362,8 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
                     if pi0_temp[i] > pi0_temp[j])
         # Denominator n*(n-1)/2 is the total number of pairs
         # Tau = 1 - 2 * (N_inv / (n*(n-1)/2)) = 1 - 4*N_inv/(n*(n-1))
-        return 1.0 - 4.0 * N_inv / (self.n * (self.n - 1))
+        tau = 1.0 - 4.0 * N_inv / (self.n ** 2)
+        return tau
 
 
     def spearman_rho(self) -> float:
@@ -372,7 +372,6 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
         if self.n <= 1: return np.nan
 
         if self.is_identity: return 1.0
-        if self.is_reverse: return -1.0
 
         # Ranks for u are essentially 1, 2, ..., n based on segment index
         # Ranks for v are pi(1), pi(2), ..., pi(n)
@@ -380,7 +379,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
         pi_ranks = self.pi # Use 1-based perm for rank difference calculation
         d_sq = np.sum((i_ranks - pi_ranks) ** 2)
         # Rho = 1 - 6 * sum(d^2) / (n * (n^2 - 1))
-        return 1.0 - 6.0 * d_sq / (self.n * (self.n ** 2 - 1))
+        return 1.0 - 6.0 * d_sq / self.n ** 3
 
 
     def chatterjee_xi(self) -> float:
