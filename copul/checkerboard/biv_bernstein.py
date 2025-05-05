@@ -7,7 +7,6 @@ from typing import TypeAlias
 
 
 class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
-
     def __init__(self, theta, check_theta=True):
         BernsteinCopula.__init__(self, theta, check_theta)
         BivCoreCopula.__init__(self)
@@ -76,90 +75,42 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
     @staticmethod
     def _construct_omega(m: int) -> np.ndarray:
         """
-        Construct the m x m matrix Omega^(m) via the final, piecewise closed-form:
-
-        Omega_{i,r} =
-        1) if 1 <= i < m and 1 <= r < m:
-           binom(m,i)*binom(m,r)
-           * [ ( (i+r-2)! * (2m-(i+r)-2)! ) / ( (2m-1)! ) ]
-           * [ (2m-1)(2m-2)*i*r  -  m(m-1)*(i+r)*((i+r)-1) ]
-
-        2) if 1 <= i < m, r = m:
-           m * binom(m,i)
-           * [ ( (m + i -2)! * (m - i -1)! ) / ( (2m-1)! ) ]
-           * [ (m-1)*( i - m ) ]
-
-        3) if i = m, 1 <= r < m:
-           m * binom(m,r)
-           * [ ( (m + r -2)! * (m - r -1)! ) / ( (2m-1)! ) ]
-           * [ (m-1)*( r - m ) ]
-
-        4) if i = m, r = m:
-           m^2 / (2m - 1)
-
-        where i,r = 1..m in mathematical notation (i.e. Python indices i-1, r-1).
+        Construct the m x m matrix Omega^(m) using the simplified closed‐forms.
         """
-
         Omega = np.zeros((m, m), dtype=float)
+        comb = math.comb
 
-        # Helper for binomial and factorial
-        def binom(n, k):
-            return math.comb(n, k)
+        # Precompute constants
+        denom1 = 2 * m - 3
+        denom2 = (2 * m - 1) * (2 * m - 2)
+        p = m * (m - 1) / denom2  # = m(m-1)/((2m-1)(2m-2))
+        mm_sq = m * m
+        two_m_minus_1 = 2 * m - 1
 
-        def factorial_nonneg(x):
-            # Return 0 if x < 0; otherwise factorial(x).
-            if x < 0:
-                return 0
-            return math.factorial(x)
-
-        for i in range(1, m + 1):  # i = 1..m
-            for r in range(1, m + 1):  # r = 1..m
+        for i in range(1, m + 1):
+            for r in range(1, m + 1):
                 if i < m and r < m:
-                    # CASE 1
-                    # (i+r-2)! * (2m-(i+r)-2)!
-                    top_fact = factorial_nonneg(i + r - 2) * factorial_nonneg(
-                        2 * m - (i + r) - 2
-                    )
-                    denom = factorial_nonneg(2 * m - 1)
-                    bracket = ((2 * m - 1) * (2 * m - 2) * i * r) - (
-                        m * (m - 1) * (i + r) * ((i + r) - 1)
-                    )
-                    val = (
-                        binom(m, i)
-                        * binom(m, r)
-                        * (top_fact / denom if denom != 0 else 0.0)
-                        * bracket
-                    )
+                    # CASE 1: 1 <= i,r < m
+                    num = comb(m, i) * comb(m, r)
+                    d = denom1 * comb(2 * m - 4, i + r - 2)
+                    bracket = i * r - p * (i + r) * (i + r - 1)
+                    val = num * bracket / d
 
                 elif i < m and r == m:
-                    # CASE 2
-                    # (m + i -2)! * (m - i -1)! / (2m-1)!
-                    top_fact = factorial_nonneg(m + i - 2) * factorial_nonneg(m - i - 1)
-                    denom = factorial_nonneg(2 * m - 1)
-                    bracket = (m - 1) * (i - m)
-                    val = (
-                        m
-                        * binom(m, i)
-                        * (top_fact / denom if denom != 0 else 0.0)
-                        * bracket
-                    )
+                    # CASE 2: 1 <= i < m, r = m
+                    num = m * (m - 1) * comb(m, i) * (i - m)
+                    d = denom2 * comb(2 * m - 3, m + i - 2)
+                    val = num / d
 
                 elif i == m and r < m:
-                    # CASE 3
-                    # (m + r -2)! * (m - r -1)! / (2m-1)!
-                    top_fact = factorial_nonneg(m + r - 2) * factorial_nonneg(m - r - 1)
-                    denom = factorial_nonneg(2 * m - 1)
-                    bracket = (m - 1) * (r - m)
-                    val = (
-                        m
-                        * binom(m, r)
-                        * (top_fact / denom if denom != 0 else 0.0)
-                        * bracket
-                    )
+                    # CASE 3: i = m, 1 <= r < m
+                    num = m * (m - 1) * comb(m, r) * (r - m)
+                    d = denom2 * comb(2 * m - 3, m + r - 2)
+                    val = num / d
 
                 else:
                     # CASE 4: i = m, r = m
-                    val = (m**2) / float(2 * m - 1)
+                    val = mm_sq / float(two_m_minus_1)
 
                 Omega[i - 1, r - 1] = val
 

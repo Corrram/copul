@@ -1,5 +1,4 @@
-import numpy as np
-from typing import Sequence, TypeAlias, Union, Tuple
+from typing import Union, Tuple
 
 # Assuming the provided ShuffleOfMin class is in a file named shuffle_of_min.py
 # Adjust the import path if necessary
@@ -12,6 +11,7 @@ class CopulaApproximatorMixin:
     A mixin class providing methods to approximate a copula using various
     checkerboard-based structures.
     """
+
     # Assume the class this mixin is added to has a 'dim' attribute
     # representing the dimensionality of the copula.
     dim: int
@@ -33,9 +33,11 @@ class CopulaApproximatorMixin:
         """
         # Assuming CheckPi corresponds to BivCheckPi or a generalized version
         # handled by Checkerboarder based on self.dim
-        checkerboard_type = "CheckPi" # Keep it generic, let Checkerboarder decide Biv/Multi
+        checkerboard_type = (
+            "CheckPi"  # Keep it generic, let Checkerboarder decide Biv/Multi
+        )
         if self.dim == 2:
-             checkerboard_type = "BivCheckPi"
+            checkerboard_type = "BivCheckPi"
         # Add logic here if a multivariate CheckPi exists and needs a different type name
 
         return self.to_checkerboard(grid_size, checkerboard_type=checkerboard_type)
@@ -88,7 +90,9 @@ class CopulaApproximatorMixin:
         return self.to_checkerboard(grid_size, checkerboard_type=checkerboard_type)
 
     def to_checkerboard(
-        self, grid_size: Union[Tuple[int, ...], int] = 100, checkerboard_type: str = "BivCheckPi"
+        self,
+        grid_size: Union[Tuple[int, ...], int] = 100,
+        checkerboard_type: str = "BivCheckPi",
     ):
         """
         Generic method to convert the copula to a specified checkerboard type.
@@ -110,8 +114,10 @@ class CopulaApproximatorMixin:
             the original copula.
         """
         # Ensure self has a 'dim' attribute
-        if not hasattr(self, 'dim'):
-            raise AttributeError("The object using CopulaApproximatorMixin must have a 'dim' attribute.")
+        if not hasattr(self, "dim"):
+            raise AttributeError(
+                "The object using CopulaApproximatorMixin must have a 'dim' attribute."
+            )
 
         checkerboarder = Checkerboarder(grid_size, self.dim, checkerboard_type)
         # The checkerboarder uses the original copula (self) to calculate
@@ -165,12 +171,16 @@ class CopulaApproximatorMixin:
             If the object using the mixin doesn't have a 'dim' attribute.
         """
         # Ensure self has a 'dim' attribute before checking its value
-        if not hasattr(self, 'dim'):
-            raise AttributeError("The object using CopulaApproximatorMixin must have a 'dim' attribute.")
+        if not hasattr(self, "dim"):
+            raise AttributeError(
+                "The object using CopulaApproximatorMixin must have a 'dim' attribute."
+            )
 
         # ShuffleOfMin is strictly bivariate based on the provided class definition
         if self.dim != 2:
-            raise ValueError(f"ShuffleOfMin approximation requires a bivariate copula (dim=2), but got dim={self.dim}.")
+            raise ValueError(
+                f"ShuffleOfMin approximation requires a bivariate copula (dim=2), but got dim={self.dim}."
+            )
 
         # Pass grid_size (which is 'n' for ShuffleOfMin) and the type string.
         # The Checkerboarder implementation is assumed to know how to handle

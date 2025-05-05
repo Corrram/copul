@@ -1,9 +1,5 @@
-from typing import Sequence, TypeAlias, Union
+from typing import Sequence, Union
 import numpy as np
-import pytest
-import matplotlib.pyplot as plt
-import matplotlib
-from scipy.stats import kstest, pearsonr, kendalltau, spearmanr
 
 from copul.families.core.biv_core_copula import BivCoreCopula
 from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
@@ -37,7 +33,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
             raise ValueError("pi must be a 1-D permutation array.")
         self.n = len(self.pi)
         if self.n == 0:
-             raise ValueError("Permutation cannot be empty.")
+            raise ValueError("Permutation cannot be empty.")
         # Check if it's a valid permutation of 1..n
         if sorted(self.pi.tolist()) != list(range(1, self.n + 1)):
             raise ValueError("pi must be a permutation of 1..n")
@@ -50,15 +46,16 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
         else:
             self.pi0_inv = np.array([], dtype=int)
 
-
         # Check if this is identity or reverse permutation (for optimized calculations)
         self.is_identity = np.array_equal(self.pi, np.arange(1, self.n + 1))
         self.is_reverse = np.array_equal(self.pi, np.arange(self.n, 0, -1))
-        BivCoreCopula.__init__(self) # Sets self.dim = 2
+        BivCoreCopula.__init__(self)  # Sets self.dim = 2
 
     # ---------- helper -------------------------------------------------------
 
-    def _process_args(self, args) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+    def _process_args(
+        self, args
+    ) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
         """
         Process arguments to extract u and v coordinates.
 
@@ -124,15 +121,15 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
 
         # --- Optimization for identity permutation ---
         if self.is_identity:
-             # For identity, CDF is simply min(u, v)
-             result = np.minimum(u_arr, v_arr)
-             return result.item() if input_is_scalar else result
+            # For identity, CDF is simply min(u, v)
+            result = np.minimum(u_arr, v_arr)
+            return result.item() if input_is_scalar else result
 
         # Initialize output array with the same shape as broadcast inputs
         out = np.zeros_like(u_arr, dtype=float)
 
         # --- Handle boundary conditions using masks ---
-        tol = 1e-9 # Tolerance for floating point comparisons
+        tol = 1e-9  # Tolerance for floating point comparisons
         mask_u0 = np.abs(u_arr) < tol
         mask_v0 = np.abs(v_arr) < tol
         mask_u1 = np.abs(u_arr - 1.0) < tol
@@ -161,8 +158,8 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
             # --- Vectorized calculation for interior points ---
             nu = self.n * u_in[:, None]
             nv = self.n * v_in[:, None]
-            i_idx = np.arange(self.n)[None, :] # Segment indices (0 to n-1)
-            pi_i_0based = self.pi0[None, :]    # 0-based permutation values
+            i_idx = np.arange(self.n)[None, :]  # Segment indices (0 to n-1)
+            pi_i_0based = self.pi0[None, :]  # 0-based permutation values
 
             # Calculate contribution from each segment:
             # min(max(0, min(nu-(i-1), nv-(pi(i)-1))), 1)
@@ -189,8 +186,9 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
         """
         The straight shuffle-of-Min copula is singular ⇒ density is 0 a.e.
         """
-        raise NotImplementedError("The straight shuffle-of-Min copula is singular. PDF does not exist.")
-
+        raise NotImplementedError(
+            "The straight shuffle-of-Min copula is singular. PDF does not exist."
+        )
 
     # ---------- Conditional Distribution -------------------------------------
     def cond_distr_1(self, *args) -> Union[float, np.ndarray]:
@@ -214,7 +212,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
         Calculates:
         - C_1(v|u) if i=1: conditional of V given U=u
         - C_2(u|v) if i=2: conditional of U given V=v
-        
+
         For a fixed conditioning value, the conditional CDF is a step
         function that jumps from 0 to 1 at the corresponding value on the
         copula's support segment. At boundaries (u/v = 0 or 1), it's uniform.
@@ -257,7 +255,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
             mask_u0 = np.abs(u_arr) < tol
             mask_u1 = np.abs(u_arr - 1.0) < tol
             mask_boundary = mask_u0 | mask_u1
-            mask_in = ~mask_boundary # Interior u values
+            mask_in = ~mask_boundary  # Interior u values
 
             # Apply boundary condition
             out[mask_boundary] = v_arr[mask_boundary]
@@ -278,11 +276,13 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
 
                 # Find the corresponding v0 on the segment's diagonal
                 # v0 = (pi(i+1)-1 + t) / n = (pi0[i_idx] + t) / n
-                pi_i_0based = self.pi0[i_idx] # Get pi(i+1)-1 using 0-based index
+                pi_i_0based = self.pi0[i_idx]  # Get pi(i+1)-1 using 0-based index
                 v0 = (pi_i_0based + t) / self.n
 
                 # Conditional CDF is 1 if v >= v0, else 0
-                out[mask_in] = (v_in >= v0 - tol).astype(float) # Add tol for comparison robustness
+                out[mask_in] = (v_in >= v0 - tol).astype(
+                    float
+                )  # Add tol for comparison robustness
 
         # --- C_2(u|v): Conditional of U given V=v ---
         elif i == 2:
@@ -290,7 +290,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
             mask_v0 = np.abs(v_arr) < tol
             mask_v1 = np.abs(v_arr - 1.0) < tol
             mask_boundary = mask_v0 | mask_v1
-            mask_in = ~mask_boundary # Interior v values
+            mask_in = ~mask_boundary  # Interior v values
 
             # Apply boundary condition
             out[mask_boundary] = u_arr[mask_boundary]
@@ -317,8 +317,9 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
                 u0 = (k_idx + t) / self.n
 
                 # Conditional CDF is 1 if u >= u0, else 0
-                out[mask_in] = (u_in >= u0 - tol).astype(float) # Add tol for comparison robustness
-
+                out[mask_in] = (u_in >= u0 - tol).astype(
+                    float
+                )  # Add tol for comparison robustness
 
         # Return scalar if input was scalar, otherwise return the array
         if input_is_scalar:
@@ -329,7 +330,6 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
     # ---------- utilities ----------------------------------------------------
     def __str__(self):
         return f"ShuffleOfMin(order={self.n}, pi={self.pi.tolist()})"
-
 
     # simple generators for simulation / plotting -----------------------------
     def rvs(self, size: int) -> np.ndarray:
@@ -347,61 +347,70 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
 
         return np.column_stack([u, v])
 
-
     # --- Association measures ------------------------------------------------
     def kendall_tau(self) -> float:
         """Population Kendall's tau via inversion count."""
         # Handle n=1 case first
-        if self.n <= 1: return np.nan
+        if self.n <= 1:
+            return np.nan
 
-        if self.is_identity: return 1.0
+        if self.is_identity:
+            return 1.0
 
         # Correct calculation using 0-based indexing internally for pi0
-        pi0_temp = self.pi0 # Use precomputed 0-based perm
-        N_inv = sum(1 for i in range(self.n) for j in range(i+1, self.n)
-                    if pi0_temp[i] > pi0_temp[j])
+        pi0_temp = self.pi0  # Use precomputed 0-based perm
+        N_inv = sum(
+            1
+            for i in range(self.n)
+            for j in range(i + 1, self.n)
+            if pi0_temp[i] > pi0_temp[j]
+        )
         # Denominator n*(n-1)/2 is the total number of pairs
         # Tau = 1 - 2 * (N_inv / (n*(n-1)/2)) = 1 - 4*N_inv/(n*(n-1))
-        tau = 1.0 - 4.0 * N_inv / (self.n ** 2)
+        tau = 1.0 - 4.0 * N_inv / (self.n**2)
         return tau
-
 
     def spearman_rho(self) -> float:
         """Population Spearman's rho via squared rank differences."""
         # Handle n=1 case first
-        if self.n <= 1: return np.nan
+        if self.n <= 1:
+            return np.nan
 
-        if self.is_identity: return 1.0
+        if self.is_identity:
+            return 1.0
 
         # Ranks for u are essentially 1, 2, ..., n based on segment index
         # Ranks for v are pi(1), pi(2), ..., pi(n)
         i_ranks = np.arange(1, self.n + 1)
-        pi_ranks = self.pi # Use 1-based perm for rank difference calculation
+        pi_ranks = self.pi  # Use 1-based perm for rank difference calculation
         d_sq = np.sum((i_ranks - pi_ranks) ** 2)
         # Rho = 1 - 6 * sum(d^2) / (n * (n^2 - 1))
-        return 1.0 - 6.0 * d_sq / self.n ** 3
-
+        return 1.0 - 6.0 * d_sq / self.n**3
 
     def chatterjee_xi(self) -> float:
         """Chatterjee's xi = 1 for any straight shuffle-of-Min (functional dependence)."""
         # V is a piecewise linear function of U, so xi should be 1.
         # For n=1, dependence is perfect, so 1 seems reasonable, though ranks are trivial.
-        if self.n == 0: return np.nan # Or raise error?
+        if self.n == 0:
+            return np.nan  # Or raise error?
         return 1.0
 
     def tail_lower(self) -> float:
         """Lower tail dependence: positive only if first segment is on diagonal."""
-        if self.n == 0: return np.nan
+        if self.n == 0:
+            return np.nan
         return 1.0 if self.pi[0] == 1 else 0.0
 
     def tail_upper(self) -> float:
         """Upper tail dependence: positive only if last segment is on diagonal."""
-        if self.n == 0: return np.nan
+        if self.n == 0:
+            return np.nan
         return 1.0 if self.pi[-1] == self.n else 0.0
+
 
 if __name__ == "__main__":
     # Example usage
-    copula = ShuffleOfMin([2,1,3])
+    copula = ShuffleOfMin([2, 1, 3])
     copula.plot_cdf()
     copula.plot_cond_distr_1()
     copula.plot_cond_distr_2()

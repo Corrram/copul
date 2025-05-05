@@ -3,6 +3,7 @@ import pytest
 import matplotlib.pyplot as plt
 import matplotlib
 from scipy.stats import kstest, pearsonr, kendalltau, spearmanr
+
 matplotlib.use("Agg")  # Use the 'Agg' backend to suppress plot pop-ups
 
 # Assuming ShuffleOfMin is importable from the correct path
@@ -11,12 +12,12 @@ matplotlib.use("Agg")  # Use the 'Agg' backend to suppress plot pop-ups
 from copul.checkerboard.shuffle_min import ShuffleOfMin
 
 
-
 # --- Start of Pytest Suite ---
 # (The test functions remain exactly the same as in the previous artifact)
 # --------------------------------------------------------------------------- #
 #                           Basic construction tests                          #
 # --------------------------------------------------------------------------- #
+
 
 def test_constructor_validation():
     """Test constructor validation of permutation input."""
@@ -59,9 +60,10 @@ def test_cdf_values():
     assert cop.cond_distr_1(0.25, 0.4) == 0.0
     assert cop.cond_distr_1(0.25, 0.6) == 1.0
 
+
 def test_cdf_argument_forms():
     """Test that all the different calling conventions for cdf() work correctly."""
-    cop = ShuffleOfMin([2, 1]) # n=2, reverse
+    cop = ShuffleOfMin([2, 1])  # n=2, reverse
 
     # Calculate expected value for (0.3, 0.4) using formula
     # n=2, pi=[2,1], pi0=[1,0]. u=0.3, v=0.4. nu=0.6, nv=0.8
@@ -106,14 +108,14 @@ def test_cdf_argument_forms():
 
 def test_cond_distr_argument_forms():
     """Test that all the different calling conventions for cond_distr() work correctly."""
-    cop = ShuffleOfMin([1, 2]) # n=2, identity
+    cop = ShuffleOfMin([1, 2])  # n=2, identity
 
     # Calculate expected C(u|v) for (0.3, 0.4)
     # Identity: u=0.3, v=0.4. v=0.4 -> j=0. pi0_inv[0]=0 -> k=0. t=2*0.4-0=0.8. u0=(0+0.8)/2=0.4. u=0.3 < 0.4 -> C(u|v)=0.
     expected_val1 = 0.0
 
     # Scalar arguments
-    val1 = cop.cond_distr_2(0.3, 0.4) # C(u|v)
+    val1 = cop.cond_distr_2(0.3, 0.4)  # C(u|v)
     assert np.isclose(val1, expected_val1)
 
     # 2D array argument (single point)
@@ -128,13 +130,13 @@ def test_cond_distr_argument_forms():
     # Array arguments
     u = np.array([0.3, 0.5])
     v = np.array([0.4, 0.6])
-    val4 = cop.cond_distr_2(u, v) # C(u|v)
+    val4 = cop.cond_distr_2(u, v)  # C(u|v)
     assert isinstance(val4, np.ndarray) and val4.shape == (2,)
     assert np.allclose(val4, [expected_val1, expected_val_p2])
 
     # 2D array with multiple points
     points = np.array([[0.3, 0.4], [0.5, 0.6]])
-    val5 = cop.cond_distr_2(points) # C(u|v)
+    val5 = cop.cond_distr_2(points)  # C(u|v)
     assert isinstance(val5, np.ndarray) and val5.shape == (2,)
     assert np.allclose(val5, [expected_val1, expected_val_p2])
 
@@ -144,7 +146,7 @@ def test_cond_distr_argument_forms():
     val6 = cop.cond_distr(1, [0.3, 0.4])
     val7 = cop.cond_distr_1([0.3, 0.4])
     assert np.isclose(val6, expected_val6)
-    assert np.isclose(val7, expected_val6) # cond_distr(2, ...) == cond_distr_2(...)
+    assert np.isclose(val7, expected_val6)  # cond_distr(2, ...) == cond_distr_2(...)
 
 
 def test_invalid_arguments():
@@ -157,13 +159,11 @@ def test_invalid_arguments():
     with pytest.raises(ValueError, match="No arguments provided"):
         cop.cond_distr(1)
 
-
     # Too many arguments for cdf/pdf/cond_distr(i, u, v)
     with pytest.raises(ValueError, match="Expected 1 or 2 arguments"):
-         cop.cdf(0.3, 0.4, 0.5)
+        cop.cdf(0.3, 0.4, 0.5)
     with pytest.raises(ValueError, match="Expected 1 or 2 arguments"):
-         cop.cond_distr(1, 0.3, 0.4, 0.5)
-
+        cop.cond_distr(1, 0.3, 0.4, 0.5)
 
     # Wrong shape for 1D array
     with pytest.raises(ValueError, match="1D input must have length 2"):
@@ -171,13 +171,11 @@ def test_invalid_arguments():
     with pytest.raises(ValueError, match="1D input must have length 2"):
         cop.cond_distr(1, [0.3, 0.4, 0.5])
 
-
     # Wrong shape for 2D array
     with pytest.raises(ValueError, match="2D input must have 2 columns"):
         cop.cdf([[0.3, 0.4, 0.5]])
     with pytest.raises(ValueError, match="2D input must have 2 columns"):
         cop.cond_distr(1, [[0.3, 0.4, 0.5]])
-
 
     # Out of bounds
     with pytest.raises(ValueError, match="u, v must lie in"):
@@ -200,6 +198,7 @@ def test_invalid_arguments():
 #                           Basic functionality tests                         #
 # --------------------------------------------------------------------------- #
 
+
 def test_identity_permutation():
     """Order-4 shuffle with identity permutation behaves like M(u,v)=min(u,v) (perfect concordance)."""
     cop = ShuffleOfMin([1, 2, 3, 4])
@@ -209,7 +208,9 @@ def test_identity_permutation():
     assert cop.is_identity
 
     # CDF should equal min(u,v); try a few points
-    pts = np.array([[0.2, 0.9], [0.8, 0.1], [0.5, 0.7], [1.0, 1.0], [0.0, 0.0], [0.6, 0.6]])
+    pts = np.array(
+        [[0.2, 0.9], [0.8, 0.1], [0.5, 0.7], [1.0, 1.0], [0.0, 0.0], [0.6, 0.6]]
+    )
     expected = np.minimum(pts[:, 0], pts[:, 1])
 
     # Test using 2D array
@@ -222,9 +223,9 @@ def test_identity_permutation():
 
     # Test using individual points
     for i in range(len(pts)):
-        actual3 = cop.cdf(pts[i]) # Pass point as [u, v]
+        actual3 = cop.cdf(pts[i])  # Pass point as [u, v]
         assert np.isclose(actual3, expected[i])
-        actual4 = cop.cdf(pts[i, 0], pts[i, 1]) # Pass as u, v
+        actual4 = cop.cdf(pts[i, 0], pts[i, 1])  # Pass as u, v
         assert np.isclose(actual4, expected[i])
 
 
@@ -263,12 +264,13 @@ def test_reverse_permutation():
     assert np.isclose(cop.cdf(0.9, 0.1), 0.1)
 
     # PDF is zero everywhere (singular copula)
-    grid = np.linspace(0, 1, 11)
+    np.linspace(0, 1, 11)
 
 
 # --------------------------------------------------------------------------- #
 #                               Edge-case CDF                                 #
 # --------------------------------------------------------------------------- #
+
 
 @pytest.mark.parametrize(
     "point, expected",
@@ -278,20 +280,20 @@ def test_reverse_permutation():
         ((1.0, 1.0), 1.0),
         ((0.0, 0.5), 0.0),
         ((0.5, 0.0), 0.0),
-        ((1.0, 0.5), 0.5), # C(1,v)=v
-        ((0.5, 1.0), 0.5), # C(u,1)=u
+        ((1.0, 0.5), 0.5),  # C(1,v)=v
+        ((0.5, 1.0), 0.5),  # C(u,1)=u
         # Interior points for pi=[3,2,1], n=3. pi0=[2,1,0]
         # (0.1, 0.1): nu=0.3, nv=0.3 -> CDF=0.
         ((0.1, 0.1), 0.0),
         # (0.5, 0.5): nu=1.5, nv=1.5 -> CDF=0.5/3
-        ((0.5, 0.5), 0.5/3),
+        ((0.5, 0.5), 0.5 / 3),
         # (0.8, 0.8): nu=2.4, nv=2.4 -> CDF=(0.4+1.0+0.4)/3 = 0.6
         ((0.8, 0.8), 0.6),
     ],
 )
 def test_cdf_boundaries_and_interior(point, expected):
-    """ Test CDF at boundaries and some interior points. """
-    cop = ShuffleOfMin([3, 2, 1])    # n=3 reverse
+    """Test CDF at boundaries and some interior points."""
+    cop = ShuffleOfMin([3, 2, 1])  # n=3 reverse
     u, v = point
     actual = cop.cdf(u, v)
     assert np.isclose(actual, expected, atol=1e-9)
@@ -306,9 +308,10 @@ def test_cdf_boundaries_and_interior(point, expected):
 #                         Conditional distribution                          #
 # --------------------------------------------------------------------------- #
 
+
 def test_cond_distr_step_function():
     """Test conditional distribution behaves as a step function."""
-    cop = ShuffleOfMin([2, 1]) # n=2, pi0=[1,0], pi0_inv=[1,0]
+    cop = ShuffleOfMin([2, 1])  # n=2, pi0=[1,0], pi0_inv=[1,0]
 
     # Test C(v|u) for fixed u=0.4 (Interior)
     # u=0.4 -> i=0. t=2*0.4-0=0.8. pi0[0]=1. v0=(1+0.8)/2=0.9.
@@ -333,18 +336,18 @@ def test_cond_distr_step_function():
 
     # Test C(v|u) for boundary u=0 and u=1 (Uniform)
     v_vals = np.array([0.1, 0.5, 0.9])
-    assert np.allclose(cop.cond_distr_1(0.0, v_vals), v_vals) # C(v|0)=v
-    assert np.allclose(cop.cond_distr_1(1.0, v_vals), v_vals) # C(v|1)=v
+    assert np.allclose(cop.cond_distr_1(0.0, v_vals), v_vals)  # C(v|0)=v
+    assert np.allclose(cop.cond_distr_1(1.0, v_vals), v_vals)  # C(v|1)=v
 
     # Test C(u|v) for boundary v=0 and v=1 (Uniform)
     u_vals = np.array([0.1, 0.5, 0.9])
-    assert np.allclose(cop.cond_distr_2(u_vals, 0.0), u_vals) # C(u|0)=u
-    assert np.allclose(cop.cond_distr_2(u_vals, 1.0), u_vals) # C(u|1)=u
+    assert np.allclose(cop.cond_distr_2(u_vals, 0.0), u_vals)  # C(u|0)=u
+    assert np.allclose(cop.cond_distr_2(u_vals, 1.0), u_vals)  # C(u|1)=u
 
 
 def test_cond_distr_on_segment_corrected():
     """Test conditional distribution for points exactly on segments and one off segment."""
-    cop = ShuffleOfMin([2, 1]) # n=2, pi0=[1,0], pi0_inv=[1,0]
+    cop = ShuffleOfMin([2, 1])  # n=2, pi0=[1,0], pi0_inv=[1,0]
 
     # Point on segment 0: i=0. t=0.5. u=(0+0.5)/2=0.25, v=(pi0[0]+t)/2=(1+0.5)/2=0.75
     u0, v0 = 0.25, 0.75
@@ -372,10 +375,11 @@ def test_cond_distr_on_segment_corrected():
 #                           Simulation / rvs checks                           #
 # --------------------------------------------------------------------------- #
 
+
 def test_rvs_marginals_uniform():
     """Test that both marginals are uniformly distributed."""
     np.random.seed(123)
-    cop = ShuffleOfMin([4, 1, 3, 2])       # some arbitrary permutation
+    cop = ShuffleOfMin([4, 1, 3, 2])  # some arbitrary permutation
     n_samples = 2000
     uv = cop.rvs(size=n_samples)
 
@@ -391,11 +395,12 @@ def test_rvs_marginals_uniform():
 def test_tau_reverse():
     assert ShuffleOfMin([3, 2, 1]).kendall_tau() > -1
     assert ShuffleOfMin([1, 2, 3]).kendall_tau() == 1
-    
+
 
 def test_rho_reverse():
     assert ShuffleOfMin([3, 2, 1]).spearman_rho() > -1
     assert ShuffleOfMin([1, 2, 3]).spearman_rho() == 1
+
 
 def test_rvs_expected_correlation_matches_tau():
     """
@@ -404,26 +409,30 @@ def test_rvs_expected_correlation_matches_tau():
     """
     np.random.seed(42)
     n = 6
-    perm = list(range(n, 0, -1))             # maximal inversions
+    perm = list(range(n, 0, -1))  # maximal inversions
     cop = ShuffleOfMin(perm)
 
     # The theoretical tau for reverse permutation is -1.0
     tau_theory = cop.kendall_tau()
-    assert np.isclose(tau_theory, -2/3)
+    assert np.isclose(tau_theory, -2 / 3)
 
     uv = cop.rvs(size=4000)
     tau_emp, _ = kendalltau(uv[:, 0], uv[:, 1])
 
     # Relax tolerance: Sample tau for finite n shuffle might not be exactly -1
-    print(f"\n[INFO] n={n} Reverse Permutation: Theoretical Tau={tau_theory:.4f}, Sample Tau={tau_emp:.4f}")
-    assert np.isclose(tau_emp, tau_theory, atol=0.035) # Relaxed from 0.05
+    print(
+        f"\n[INFO] n={n} Reverse Permutation: Theoretical Tau={tau_theory:.4f}, Sample Tau={tau_emp:.4f}"
+    )
+    assert np.isclose(tau_emp, tau_theory, atol=0.035)  # Relaxed from 0.05
 
     # Check Spearman's rho as well (should also be -1 theoretically)
     rho_theory = cop.spearman_rho()
     rho_emp, _ = spearmanr(uv[:, 0], uv[:, 1])
-    print(f"[INFO] n={n} Reverse Permutation: Theoretical Rho={rho_theory:.4f}, Sample Rho={rho_emp:.4f}")
+    print(
+        f"[INFO] n={n} Reverse Permutation: Theoretical Rho={rho_theory:.4f}, Sample Rho={rho_emp:.4f}"
+    )
     # Sample Spearman Rho might also deviate for finite n
-    assert np.isclose(rho_emp, rho_theory, atol=0.01) # Relaxed tolerance
+    assert np.isclose(rho_emp, rho_theory, atol=0.01)  # Relaxed tolerance
 
 
 def test_rvs_conditional_functional():
@@ -441,7 +450,7 @@ def test_rvs_conditional_functional():
     n = cop.n
     tol = 1e-9
     seg_indices = np.floor(n * u - tol).astype(int)
-    seg_indices = np.clip(seg_indices, 0, n - 1) # Clip potential -1 or n
+    seg_indices = np.clip(seg_indices, 0, n - 1)  # Clip potential -1 or n
 
     # compute Pearson r within each strip; should be ~ +1
     for seg_idx in range(n):
@@ -452,9 +461,13 @@ def test_rvs_conditional_functional():
             print("[WARN] Skipping segment due to insufficient points.")
             continue
         # Handle case where all points in segment are identical (can happen with low n_samples)
-        if np.allclose(u[seg_mask], u[seg_mask][0]) or np.allclose(v[seg_mask], v[seg_mask][0]):
-             print("[WARN] Skipping segment due to constant values (correlation undefined).")
-             continue
+        if np.allclose(u[seg_mask], u[seg_mask][0]) or np.allclose(
+            v[seg_mask], v[seg_mask][0]
+        ):
+            print(
+                "[WARN] Skipping segment due to constant values (correlation undefined)."
+            )
+            continue
         r, p_val = pearsonr(u[seg_mask], v[seg_mask])
         print(f"  Pearson r = {r:.4f}, p-value = {p_val:.4f}")
         assert r > 0.99, f"Correlation in segment {seg_idx} is too low ({r})"
@@ -468,7 +481,7 @@ def test_rvs_empirical_cdf():
     samples = cop.rvs(n_samples)
 
     # Create a grid of points
-    grid_size = 15 # Reduced grid size for faster test
+    grid_size = 15  # Reduced grid size for faster test
     u_grid = np.linspace(0.05, 0.95, grid_size)
     v_grid = np.linspace(0.05, 0.95, grid_size)
     uu, vv = np.meshgrid(u_grid, v_grid)
@@ -480,7 +493,9 @@ def test_rvs_empirical_cdf():
     # Calculate empirical CDF values
     empirical_cdf = np.zeros(len(grid_points))
     for i, point in enumerate(grid_points):
-        empirical_cdf[i] = np.mean((samples[:, 0] <= point[0]) & (samples[:, 1] <= point[1]))
+        empirical_cdf[i] = np.mean(
+            (samples[:, 0] <= point[0]) & (samples[:, 1] <= point[1])
+        )
 
     # Check that theoretical and empirical CDFs are close
     mae = np.mean(np.abs(theoretical_cdf - empirical_cdf))
@@ -492,28 +507,29 @@ def test_rvs_empirical_cdf():
 #                           Association measures tests                        #
 # --------------------------------------------------------------------------- #
 
+
 @pytest.mark.parametrize(
     "n, expected_tau, expected_rho",
     [
-        (1, np.nan, np.nan), # n=1 case
-        (2, 1.0, 1.0),   # identity permutation
+        (1, np.nan, np.nan),  # n=1 case
+        (2, 1.0, 1.0),  # identity permutation
         (3, 1.0, 1.0),
         (5, 1.0, 1.0),
-    ]
+    ],
 )
 def test_association_identity(n, expected_tau, expected_rho):
     """Test association measures for identity permutation of different sizes."""
-    cop = ShuffleOfMin(list(range(1, n+1)))
+    cop = ShuffleOfMin(list(range(1, n + 1)))
     if n == 1:
         assert np.isnan(cop.kendall_tau())
         assert np.isnan(cop.spearman_rho())
-        assert np.isclose(cop.chatterjee_xi(), 1.0) # Functional dependence still holds
-        assert np.isclose(cop.tail_lower(), 1.0) # Based on pi[0]==1
-        assert np.isclose(cop.tail_upper(), 1.0) # Based on pi[-1]==n
+        assert np.isclose(cop.chatterjee_xi(), 1.0)  # Functional dependence still holds
+        assert np.isclose(cop.tail_lower(), 1.0)  # Based on pi[0]==1
+        assert np.isclose(cop.tail_upper(), 1.0)  # Based on pi[-1]==n
     else:
         assert np.isclose(cop.kendall_tau(), expected_tau)
         assert np.isclose(cop.spearman_rho(), expected_rho)
-        assert np.isclose(cop.chatterjee_xi(), 1.0) # Functional dependence
+        assert np.isclose(cop.chatterjee_xi(), 1.0)  # Functional dependence
         assert np.isclose(cop.tail_lower(), 1.0)
         assert np.isclose(cop.tail_upper(), 1.0)
 
@@ -521,11 +537,11 @@ def test_association_identity(n, expected_tau, expected_rho):
 @pytest.mark.parametrize(
     "n, expected_tau, expected_rho",
     [
-        (1, np.nan, np.nan), # n=1 case (same as identity for n=1)
+        (1, np.nan, np.nan),  # n=1 case (same as identity for n=1)
         (2, -1.0, -1.0),  # reverse permutation
         (3, -1.0, -1.0),
         (5, -1.0, -1.0),
-    ]
+    ],
 )
 def test_association_reverse(n, expected_tau, expected_rho):
     """Test association measures for reverse permutation of different sizes."""
@@ -537,15 +553,15 @@ def test_association_reverse(n, expected_tau, expected_rho):
         assert np.isnan(cop.kendall_tau())
         assert np.isnan(cop.spearman_rho())
         assert np.isclose(cop.chatterjee_xi(), 1.0)
-        assert np.isclose(cop.tail_lower(), 1.0) # pi[0]=1
-        assert np.isclose(cop.tail_upper(), 1.0) # pi[-1]=1
+        assert np.isclose(cop.tail_lower(), 1.0)  # pi[0]=1
+        assert np.isclose(cop.tail_upper(), 1.0)  # pi[-1]=1
     else:
         assert np.isclose(cop.kendall_tau(), expected_tau)
         assert np.isclose(cop.spearman_rho(), expected_rho)
-        assert np.isclose(cop.chatterjee_xi(), 1.0) # Still functional dependence
+        assert np.isclose(cop.chatterjee_xi(), 1.0)  # Still functional dependence
         # Tail dependence for reverse: pi[0]=n, pi[-1]=1
-        assert np.isclose(cop.tail_lower(), 0.0) # pi[0] != 1
-        assert np.isclose(cop.tail_upper(), 0.0) # pi[-1] != n
+        assert np.isclose(cop.tail_lower(), 0.0)  # pi[0] != 1
+        assert np.isclose(cop.tail_upper(), 0.0)  # pi[-1] != n
 
 
 def test_random_permutation_tau():
@@ -554,12 +570,13 @@ def test_random_permutation_tau():
     n = 8
     # Generate 0-based permutation first, then convert to 1-based for copula
     perm0 = np.random.permutation(n)
-    perm1 = perm0 + 1 # 1-based permutation for ShuffleOfMin
-    cop = ShuffleOfMin(perm1) # Use 1-based perm here
+    perm1 = perm0 + 1  # 1-based permutation for ShuffleOfMin
+    cop = ShuffleOfMin(perm1)  # Use 1-based perm here
 
     # Calculate inversions manually using 0-based logic
-    inversions = sum(1 for i in range(n) for j in range(i+1, n)
-                     if perm0[i] > perm0[j]) # Use 0-based perm here
+    inversions = sum(
+        1 for i in range(n) for j in range(i + 1, n) if perm0[i] > perm0[j]
+    )  # Use 0-based perm here
 
     # Calculate expected tau
     tau_expected = 1.0 - 4.0 * inversions / (n * (n - 1))
@@ -578,8 +595,8 @@ def test_random_permutation_tau():
 def test_identity_vs_reverse_tau():
     """Test that identity and reverse permutations have opposite tau values."""
     n = 5
-    id_cop = ShuffleOfMin(list(range(1, n+1)))      # identity
-    rev_cop = ShuffleOfMin(list(range(n, 0, -1)))    # reverse
+    id_cop = ShuffleOfMin(list(range(1, n + 1)))  # identity
+    rev_cop = ShuffleOfMin(list(range(n, 0, -1)))  # reverse
 
     assert id_cop.kendall_tau() == pytest.approx(1.0)
     assert rev_cop.kendall_tau() == pytest.approx(-1.0)
@@ -588,6 +605,7 @@ def test_identity_vs_reverse_tau():
 # --------------------------------------------------------------------------- #
 #                           Tail dependence tests                             #
 # --------------------------------------------------------------------------- #
+
 
 def test_tail_dependence_identity():
     """Test tail dependence for identity permutation."""
@@ -606,45 +624,46 @@ def test_tail_dependence_reverse():
 def test_tail_dependence_mixed():
     """Test tail dependence for mixed permutation."""
     # Lower tail dependence if pi[0] = 1
-    cop1 = ShuffleOfMin([1, 3, 2]) # n=3
+    cop1 = ShuffleOfMin([1, 3, 2])  # n=3
     assert cop1.tail_lower() == 1.0
     assert cop1.tail_upper() == 0.0  # pi[-1]=2 != 3
 
     # Upper tail dependence if pi[-1] = n
-    cop2 = ShuffleOfMin([2, 1, 3]) # n=3
+    cop2 = ShuffleOfMin([2, 1, 3])  # n=3
     assert cop2.tail_lower() == 0.0  # pi[0]=2 != 1
     assert cop2.tail_upper() == 1.0
 
     # Neither
-    cop3 = ShuffleOfMin([2, 3, 1]) # n=3
-    assert cop3.tail_lower() == 0.0 # pi[0]=2 != 1
-    assert cop3.tail_upper() == 0.0 # pi[-1]=1 != 3
+    cop3 = ShuffleOfMin([2, 3, 1])  # n=3
+    assert cop3.tail_lower() == 0.0  # pi[0]=2 != 1
+    assert cop3.tail_upper() == 0.0  # pi[-1]=1 != 3
 
 
 # --------------------------------------------------------------------------- #
 #                           Visualization tests (Manual Check)                #
 # --------------------------------------------------------------------------- #
 
+
 # @pytest.mark.skip(reason="Visual inspection only, disable for automated runs")
 def test_scatter_plot():
     """Test scatter plot visualization of random samples. (Manual check recommended)"""
     np.random.seed(42)
-    cop = ShuffleOfMin([3, 1, 4, 2]) # n=4
+    cop = ShuffleOfMin([3, 1, 4, 2])  # n=4
     uv = cop.rvs(size=500)
 
     plt.figure(figsize=(6, 6))
-    plt.scatter(uv[:, 0], uv[:, 1], alpha=0.5, s=10) # Smaller points
+    plt.scatter(uv[:, 0], uv[:, 1], alpha=0.5, s=10)  # Smaller points
     # Add theoretical segments
     t_plot = np.linspace(0, 1, 50)
     for i in range(cop.n):
         u_seg = (i + t_plot) / cop.n
         v_seg = (cop.pi0[i] + t_plot) / cop.n
-        plt.plot(u_seg, v_seg, 'r-', lw=2, alpha=0.7)
+        plt.plot(u_seg, v_seg, "r-", lw=2, alpha=0.7)
 
     plt.title(f"Scatter Plot of ShuffleOfMin({cop.pi.tolist()})")
     plt.xlabel("U")
     plt.ylabel("V")
-    plt.grid(True, linestyle='--', alpha=0.6)
+    plt.grid(True, linestyle="--", alpha=0.6)
     plt.xlim(-0.05, 1.05)
     plt.ylim(-0.05, 1.05)
     # Save plot instead of showing
@@ -656,6 +675,7 @@ def test_scatter_plot():
 # --------------------------------------------------------------------------- #
 #                           String representation                             #
 # --------------------------------------------------------------------------- #
+
 
 def test_str_representation():
     """Test the string representation of ShuffleOfMin."""
