@@ -86,10 +86,21 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         """
         Return a detailed string representation for debugging.
 
+        If the matrix is larger than 5x5, only the top-left 5x5 block is shown.
+
         Returns:
-            str: Detailed representation including matrix information.
+            str: A string representation of the object, including matrix info.
         """
-        return f"BivCheckPi(matr={self.matr.tolist()}, m={self.m}, n={self.n})"
+        rows, cols = self.matr.shape
+        if rows > 5 and cols > 5:
+            matr_preview = np.array2string(
+                self.matr[:5, :5], max_line_width=80, suppress_small=True
+            ).replace("\n", " ")
+            matr_str = f"{matr_preview} (top-left 5x5 block)"
+        else:
+            matr_str = self.matr.tolist()
+
+        return f"BivCheckPi(matr={matr_str}, m={self.m}, n={self.n})"
 
     @property
     def is_symmetric(self) -> bool:

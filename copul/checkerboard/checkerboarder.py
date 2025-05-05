@@ -93,13 +93,13 @@ class Checkerboarder:
             min_val = cmatr[neg_mask].min()
             # if it’s more negative than our tolerance, warn
             if min_val < -tol:
-                raise ValueError(
+                log.warning(
                     f"cmatr has {np.sum(neg_mask)} entries < -{tol:.1e}; "
                     f"most extreme = {min_val:.3e}"
                 )
             # zero out *all* negatives (small or large)
             cmatr[neg_mask] = 0.0
-        # cmatr = np.clip(cmatr, 0, 1)
+        cmatr = np.clip(cmatr, 0, 1)
         return self._get_checkerboard_copula_for(cmatr)
 
     def _compute_checkerboard_parallel(self, copula, n_jobs):

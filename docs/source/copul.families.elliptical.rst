@@ -9,53 +9,53 @@ copul.families.elliptical.elliptical\_copula module
 
 .. automodule:: copul.families.elliptical.elliptical_copula
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.families.elliptical.gaussian module
 -----------------------------------------
 
 .. automodule:: copul.families.elliptical.gaussian
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.families.elliptical.laplace module
 ----------------------------------------
 
 .. automodule:: copul.families.elliptical.laplace
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.families.elliptical.multivar\_elliptical\_copula module
 -------------------------------------------------------------
 
 .. automodule:: copul.families.elliptical.multivar_elliptical_copula
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.families.elliptical.multivar\_gaussian module
 ---------------------------------------------------
 
 .. automodule:: copul.families.elliptical.multivar_gaussian
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.families.elliptical.student\_t module
 -------------------------------------------
 
 .. automodule:: copul.families.elliptical.student_t
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
 
 .. automodule:: copul.families.elliptical
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:

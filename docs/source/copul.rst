@@ -21,53 +21,53 @@ copul.basictools module
 
 .. automodule:: copul.basictools
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.chatterjee module
 -----------------------
 
 .. automodule:: copul.chatterjee
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.copula\_sampler module
 ----------------------------
 
 .. automodule:: copul.copula_sampler
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.data\_uniformer module
 ----------------------------
 
 .. automodule:: copul.data_uniformer
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.exceptions module
 -----------------------
 
 .. automodule:: copul.exceptions
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 copul.family\_list module
 -------------------------
 
 .. automodule:: copul.family_list
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
 
 .. automodule:: copul
    :members:
-   :show-inheritance:
    :undoc-members:
+   :show-inheritance:

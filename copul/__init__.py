@@ -138,6 +138,5 @@ __all__ = [
     "UpperFrechet",
     # Miscellaneous
     "CISRearranger",
-    "ShuffleMin",
-    "ShuffleMinCopula",
+    "ShuffleOfMin",
 ]
