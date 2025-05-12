@@ -44,6 +44,12 @@ markers = [
     "instable: marks tests as instable (deselect with '-m \"not instable\"')",
 ]
 
+[dependency-groups]
+dev = [
+    "cvxpy>=1.6.5",
+    "ecos>=2.0.14",
+]
+
 [project.optional-dependencies]
 dev = [
     "black>=24.8",

@@ -20,53 +20,53 @@ copul.families.cis\_verifier module
 
 .. automodule:: copul.families.cis_verifier
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 copul.families.copula\_builder module
 -------------------------------------
 
 .. automodule:: copul.families.copula_builder
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 copul.families.copula\_graphs module
 ------------------------------------
 
 .. automodule:: copul.families.copula_graphs
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 copul.families.helpers module
 -----------------------------
 
 .. automodule:: copul.families.helpers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 copul.families.rank\_correlation\_plotter module
 ------------------------------------------------
 
 .. automodule:: copul.families.rank_correlation_plotter
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 copul.families.tp2\_verifier module
 -----------------------------------
 
 .. automodule:: copul.families.tp2_verifier
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: copul.families
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
