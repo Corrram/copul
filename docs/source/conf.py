@@ -23,6 +23,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
     # "autoapi.extension",
 ]
 templates_path = ["_templates"]

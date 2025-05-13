@@ -44,9 +44,9 @@ format:
 	$(UV) run ruff check --fix --unsafe-fixes .
 	$(UV) run ruff format .
 
-# Build package
-build:
+build: clean
 	$(UV) build
+	twine check dist/*
 	uv pip install -e .
 
 publish: clean build
