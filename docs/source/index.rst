@@ -271,6 +271,7 @@ Extreme-value copulas are characterized by a pickands dependence function, which
    overview
    custom_copulas
    modules
+   approximating_copulas
 
 Indices and tables
 ==================

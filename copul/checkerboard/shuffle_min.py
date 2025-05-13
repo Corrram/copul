@@ -332,7 +332,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
         return f"ShuffleOfMin(order={self.n}, pi={self.pi.tolist()})"
 
     # simple generators for simulation / plotting -----------------------------
-    def rvs(self, size: int) -> np.ndarray:
+    def rvs(self, size: int, **kwargs) -> np.ndarray:
         """Generate `size` iid samples from C_{\\pi}."""
         # Choose a random segment index (0 to n-1) for each sample
         seg_idx = np.random.randint(0, self.n, size=size)

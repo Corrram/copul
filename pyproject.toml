@@ -4,14 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "copul"
-version = "0.2.1"
+version = "0.2.2"
 description = "Risk analysis with copulas."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    {name = "Marcus Rockel", email = "marcus.rockel@finance.uni-freiburg.de"},
-    {name = "Eva Lütkebohmert-Holtz", email = "eva.luetkebohmert@finance.uni-freiburg.de"},
-    {name = "Jonathan Ansari", email = "jonathan.ansari@plus.ac.at"},
+    {name = "Marcus Rockel", email = "marcus.rockel@finance.uni-freiburg.de"}
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -44,12 +42,6 @@ markers = [
     "instable: marks tests as instable (deselect with '-m \"not instable\"')",
 ]
 
-[dependency-groups]
-dev = [
-    "cvxpy>=1.6.5",
-    "ecos>=2.0.14",
-]
-
 [project.optional-dependencies]
 dev = [
     "black>=24.8",
@@ -58,7 +50,6 @@ dev = [
     "mypy>=1.0.0",
     "pylint>=2.17.0",
     "pytest-cov>=5.0.0",
-    "pytest-pycharm>=0.7.0",
     "pytest-xdist>=3.6.1",
     "sphinx-rtd-theme>=2.0",
     "sphinx>=7.4",
