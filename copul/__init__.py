@@ -64,6 +64,7 @@ from copul.families.other.upper_frechet import UpperFrechet
 
 from copul.family_list import Families
 from copul.schur_order.cis_rearranger import CISRearranger
+from copul.schur_order.cis_verifier import CISVerifier
 
 __all__ = [
     "xi_ncalculate",
@@ -138,5 +139,6 @@ __all__ = [
     "UpperFrechet",
     # Miscellaneous
     "CISRearranger",
+    "CISVerifier",
     "ShuffleOfMin",
 ]

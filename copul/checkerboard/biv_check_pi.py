@@ -12,7 +12,7 @@ import warnings
 import sympy
 from copul.checkerboard.check_pi import CheckPi
 from copul.families.core.biv_core_copula import BivCoreCopula
-from copul.families.cis_verifier import CISVerifier
+from copul.schur_order.cis_verifier import CISVerifier
 
 
 class BivCheckPi(CheckPi, BivCoreCopula):

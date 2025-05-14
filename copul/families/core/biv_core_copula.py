@@ -7,7 +7,7 @@ import numpy as np
 import sympy as sp
 from matplotlib import pyplot as plt
 
-from copul.families.cis_verifier import CISVerifier
+from copul.schur_order.cis_verifier import CISVerifier
 from copul.families.copula_graphs import CopulaGraphs
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.tp2_verifier import TP2Verifier
