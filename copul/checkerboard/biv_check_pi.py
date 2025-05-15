@@ -126,11 +126,11 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         """
         return True
 
-    def is_cis(self) -> bool:
+    def is_cis(self, i=1) -> bool:
         """
         Check if the copula is cis.
         """
-        return CISVerifier(1).is_cis(self)
+        return CISVerifier(i).is_cis(self)
 
     def transpose(self):
         """
