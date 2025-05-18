@@ -2,11 +2,12 @@ from typing import Sequence, Union
 import numpy as np
 
 from copul.families.core.biv_core_copula import BivCoreCopula
+from copul.families.core.copula_approximator_mixin import CopulaApproximatorMixin
 from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
 
 
 # --- Start of ShuffleOfMin Class Definition ---
-class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
+class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
     r"""
     Straight shuffle-of-Min copula C_\pi of order n.
 
@@ -35,6 +36,8 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin):
         if self.n == 0:
             raise ValueError("Permutation cannot be empty.")
         # Check if it's a valid permutation of 1..n
+        if sorted(self.pi.tolist()) == list(range(0, self.n)):
+            self.pi += 1  # Convert to 1-based permutation
         if sorted(self.pi.tolist()) != list(range(1, self.n + 1)):
             raise ValueError("pi must be a permutation of 1..n")
 

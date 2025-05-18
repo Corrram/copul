@@ -15,14 +15,6 @@ Subpackages
 Submodules
 ----------
 
-copul.families.cis\_verifier module
------------------------------------
-
-.. automodule:: copul.families.cis_verifier
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 copul.families.copula\_builder module
 -------------------------------------
 
