@@ -1,8 +1,5 @@
 from typing import Union, Tuple
 
-# Assuming the provided ShuffleOfMin class is in a file named shuffle_of_min.py
-# Adjust the import path if necessary
-from copul.checkerboard.shuffle_min import ShuffleOfMin
 from copul.checkerboard.checkerboarder import Checkerboarder
 
 
@@ -142,7 +139,7 @@ class CopulaApproximatorMixin:
         # Bernstein copula is another type handled by the checkerboard framework
         return self.to_checkerboard(grid_size, checkerboard_type="Bernstein")
 
-    def to_shuffle_of_min(self, grid_size: int = 100) -> ShuffleOfMin:
+    def to_shuffle_of_min(self, grid_size: int = 100):
         """
         Approximate the copula using a ShuffleOfMin copula.
 

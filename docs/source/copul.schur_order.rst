@@ -12,6 +12,14 @@ copul.schur\_order.cis\_rearranger module
    :show-inheritance:
    :undoc-members:
 
+copul.schur\_order.cis\_verifier module
+---------------------------------------
+
+.. automodule:: copul.schur_order.cis_verifier
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.schur\_order.schur\_order\_verifier module
 ------------------------------------------------
 

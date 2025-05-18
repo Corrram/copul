@@ -99,7 +99,7 @@ def test_is_tp2(mock_is_tp2, copula_fam):
     mock_is_tp2.assert_called_once_with(copula)
 
 
-@patch("copul.families.cis_verifier.CISVerifier.is_cis")
+@patch("copul.families.core.biv_core_copula.CISVerifier.is_cis")
 def test_is_cis(mock_is_cis, copula_fam):
     """Test CIS property verification"""
     copula = copula_fam(0.5)
