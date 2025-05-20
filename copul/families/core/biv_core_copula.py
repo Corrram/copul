@@ -655,6 +655,7 @@ class BivCoreCopula:
         -------
         None
         """
+        intervals = {k:v for k, v in self.intervals.items()}
         try:
             parameters = inspect.signature(func).parameters
         except TypeError:
@@ -686,6 +687,7 @@ class BivCoreCopula:
             ax.set_zlim(*zlim)
         plt.title(title)
         plt.show()
+        self.intervals = intervals  # otherwise it may have been modified by the plot
 
     def lambda_L(self):
         """
