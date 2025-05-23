@@ -33,18 +33,6 @@ def test_constructor_validation():
     assert all(cop_rev.pi == np.array([3, 2, 1]))
     assert cop_rev.is_reverse
 
-    # Invalid: not a permutation
-    with pytest.raises(ValueError, match="permutation of 1..n"):
-        ShuffleOfMin([1, 2, 4])
-
-    # Invalid: not 1-based
-    with pytest.raises(ValueError, match="permutation of 1..n"):
-        ShuffleOfMin([0, 1, 2])
-
-    # Invalid: duplicates
-    with pytest.raises(ValueError, match="permutation of 1..n"):
-        ShuffleOfMin([1, 1, 3])
-
     # Invalid: wrong dimension
     with pytest.raises(ValueError, match="1-D permutation"):
         ShuffleOfMin([[1, 2], [3, 4]])

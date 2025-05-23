@@ -56,7 +56,7 @@ class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
     @property
     def is_absolutely_continuous(self) -> bool:
         return True
-    
+
     @property
     def is_symmetric(self) -> bool:
         return np.allclose(self.matr, self.matr.T)
