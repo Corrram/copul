@@ -2,6 +2,7 @@ import copul as cp
 import sympy as sp
 from sympy.matrices.expressions.blockmatrix import BlockDiagMatrix
 
+
 def diag_normalized_blocks(block_sizes, sk_iter=10):
     """
     Given [n1, n2, …, nk], return a block-diagonal matrix whose blocks

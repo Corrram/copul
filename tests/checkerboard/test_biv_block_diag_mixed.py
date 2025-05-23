@@ -47,13 +47,13 @@ def make_block_diag_delta(block_sizes: list[int]) -> np.ndarray:
 @pytest.mark.parametrize(
     "sign_val, base_cls",
     [
-        (0, BivCheckPi),    # independence
+        (0, BivCheckPi),  # independence
         (+1, BivCheckMin),  # perfect + dependence
-        (-1, BivCheckW),    # perfect – dependence
+        (-1, BivCheckW),  # perfect – dependence
     ],
 )
 def test_constant_sign_matches_base(sign_val, base_cls):
-    sizes = [2, 2]                       # d = 4
+    sizes = [2, 2]  # d = 4
     Δ = make_block_diag_delta(sizes)
     S = np.full_like(Δ, sign_val, dtype=int)
 
@@ -79,27 +79,27 @@ def test_constant_sign_matches_base(sign_val, base_cls):
 # 2)  Mixed pattern: check per-block delegation and measures           #
 # -------------------------------------------------------------------- #
 def test_mixed_block_pattern():
-    sizes = [1, 2, 1]        # blocks of size 1,2,1  → d = 4
+    sizes = [1, 2, 1]  # blocks of size 1,2,1  → d = 4
     Δ = make_block_diag_delta(sizes)
 
     # blocks: 0 → Π, 1 → Min, 2 → W
     S = np.zeros_like(Δ, dtype=int)
-    S[0, 0] = 0                  # block 0  (size 1)
-    S[1:3, 1:3] = +1             # block 1  (size 2)
-    S[3, 3] = -1                 # block 2  (size 1)
+    S[0, 0] = 0  # block 0  (size 1)
+    S[1:3, 1:3] = +1  # block 1  (size 2)
+    S[3, 3] = -1  # block 2  (size 1)
 
     cop = BivBlockDiagMixed(sizes, sign=S)
 
     # build reference copulas for each pure regime
-    pi  = BivCheckPi(Δ)
-    cm  = BivCheckMin(Δ)
-    cw  = BivCheckW(Δ)
+    pi = BivCheckPi(Δ)
+    cm = BivCheckMin(Δ)
+    cw = BivCheckW(Δ)
 
     tests = [
-        ((0.1, 0.1), pi),        # block 0
-        ((0.3, 0.3), cm),        # block 1
-        ((0.3, 0.7), cm),        # block 1
-        ((0.9, 0.9), cw),        # block 2
+        ((0.1, 0.1), pi),  # block 0
+        ((0.3, 0.3), cm),  # block 1
+        ((0.3, 0.7), cm),  # block 1
+        ((0.9, 0.9), cw),  # block 2
     ]
     for (u, v), ref in tests:
         assert np.isclose(cop.cdf(u, v), ref.cdf(u, v))
@@ -121,13 +121,13 @@ def test_agrees_with_general_class():
     Δ = make_block_diag_delta(sizes)
 
     S = np.zeros_like(Δ, dtype=int)
-    S[:3, :3] = +1   # first block = Min
+    S[:3, :3] = +1  # first block = Min
     # last block remains 0 (= Π)
 
     from copul.checkerboard.biv_check_mixed import BivCheckMixed
 
     cop_general = BivCheckMixed(Δ, sign=S)
-    cop_block   = BivBlockDiagMixed(sizes, sign=S)
+    cop_block = BivBlockDiagMixed(sizes, sign=S)
     assert hasattr(cop_block, "scatter_plot")
 
     xi = cop_general.xi()
@@ -135,7 +135,7 @@ def test_agrees_with_general_class():
     rho = cop_general.rho()
     assert np.isclose(tau, cop_block.tau())
     assert np.isclose(rho, cop_block.rho())
-    assert np.isclose(xi,  cop_block.xi())
+    assert np.isclose(xi, cop_block.xi())
     assert xi == tau <= rho
 
 
@@ -144,9 +144,8 @@ def test_agrees_with_general_class():
 # -------------------------------------------------------------------- #
 @pytest.fixture
 def small_block_mixed():
-    Δ = make_block_diag_delta([1, 1])
-    S = np.array([[0, 0],
-                  [0, 1]])
+    make_block_diag_delta([1, 1])
+    S = np.array([[0, 0], [0, 1]])
     return BivBlockDiagMixed([1, 1], sign=S)
 
 
@@ -161,7 +160,7 @@ def small_block_mixed():
 def test_plotting_runs(plot_fun, small_block_mixed):
     try:
         plot_fun(small_block_mixed)
-    except Exception as exc:          # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         pytest.fail(f"plot raised {exc}")
     finally:
         plt.close("all")

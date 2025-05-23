@@ -48,8 +48,8 @@ class BivBlockDiagMixed(BivCheckMixed):
             raise ValueError("all block sizes must be positive integers")
 
         self.sizes: List[int] = list(map(int, sizes))
-        self.k: int = len(self.sizes)          # number of blocks
-        self.d: int = sum(self.sizes)          # total dimension
+        self.k: int = len(self.sizes)  # number of blocks
+        self.d: int = sum(self.sizes)  # total dimension
         self._offsets = np.concatenate(([0], np.cumsum(self.sizes)))[:-1]
 
         # ---- build the canonical block-diagonal Δ -------------------- #
@@ -61,7 +61,7 @@ class BivBlockDiagMixed(BivCheckMixed):
     # ------------------------------------------------------------------ #
     # readable repr / str                                                #
     # ------------------------------------------------------------------ #
-    def __str__(self) -> str:              # pragma: no cover
+    def __str__(self) -> str:  # pragma: no cover
         return f"BivBlockDiagMixed(sizes={self.sizes})"
 
     __repr__ = __str__
@@ -108,18 +108,18 @@ class BivBlockDiagMixed(BivCheckMixed):
     def xi(self, *, condition_on_y: bool = False) -> float:  # noqa: D401
         S_r, P_r, B2 = self._block_sums()
         d = self.d
-        term_blocks = sum(P / n_r ** 2 for P, n_r in zip(P_r, self.sizes))
-        return 1.0 - B2 / d ** 2 + term_blocks / d ** 2
+        term_blocks = sum(P / n_r**2 for P, n_r in zip(P_r, self.sizes))
+        return 1.0 - B2 / d**2 + term_blocks / d**2
 
     # --------------  Kendall’s τ  ------------------------------------- #
     def tau(self) -> float:
         S_r, _, B2 = self._block_sums()
         d = self.d
-        term_blocks = sum(S / n_r ** 2 for S, n_r in zip(S_r, self.sizes))
-        return 1.0 - B2 / d ** 2 + term_blocks / d ** 2
+        term_blocks = sum(S / n_r**2 for S, n_r in zip(S_r, self.sizes))
+        return 1.0 - B2 / d**2 + term_blocks / d**2
 
     # --------------  Spearman’s ρ  ------------------------------------ #
-# --- inside BivBlockDiagMixed -----------------------------------------
+    # --- inside BivBlockDiagMixed -----------------------------------------
 
     # --------------  Spearman’s ρ  ------------------------------------ #
     def rho(self) -> float:
@@ -135,7 +135,7 @@ class BivBlockDiagMixed(BivCheckMixed):
         # --- checkerboard part --------------------------------------- #
         num = 0.0
         for a_r, n_r in zip(self._offsets, self.sizes):
-            num += n_r * (2 * d - 2 * a_r - n_r) ** 2          # ❶ no “−2”
+            num += n_r * (2 * d - 2 * a_r - n_r) ** 2  # ❶ no “−2”
         core = (3.0 / d**3) * num - 3.0
 
         # --- sign-contribution  -------------------------------------- #
@@ -144,17 +144,16 @@ class BivBlockDiagMixed(BivCheckMixed):
         return core + extra
 
 
-
-if __name__ == "__main__":            # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     sizes = [1, 1, 2, 1]
     Δ = BivBlockDiagMixed.make_block_diag_delta(sizes)
     S = np.zeros_like(Δ, dtype=int)
-    S[:2, :2] = +1 
+    S[:2, :2] = +1
     S[0, 0] = 0
     S[2, 3] = 1
     S[3, 2] = 1
     S[4, 4] = 1
-    cop_block   = BivBlockDiagMixed(sizes, sign=S)
+    cop_block = BivBlockDiagMixed(sizes, sign=S)
     cop_block.scatter_plot()
     xi = cop_block.xi()
     tau = cop_block.tau()

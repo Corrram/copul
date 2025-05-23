@@ -655,7 +655,7 @@ class BivCoreCopula:
         -------
         None
         """
-        intervals = {k:v for k, v in self.intervals.items()}
+        intervals = {k: v for k, v in self.intervals.items()}
         try:
             parameters = inspect.signature(func).parameters
         except TypeError:

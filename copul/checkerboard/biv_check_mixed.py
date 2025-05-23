@@ -57,13 +57,13 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
         if not np.isin(sign, (-1, 0, 1)).all():
             raise ValueError("`sign` entries must be −1, 0, or +1")
 
-        self.matr = matr          # probability matrix  Δ
-        self.sign = sign          # sign selector      S
+        self.matr = matr  # probability matrix  Δ
+        self.sign = sign  # sign selector      S
 
         # instantiate base copulas once
-        self._pi  = BivCheckPi(matr,  **kwargs)
+        self._pi = BivCheckPi(matr, **kwargs)
         self._min = BivCheckMin(matr, **kwargs)
-        self._w   = BivCheckW(matr,   **kwargs)
+        self._w = BivCheckW(matr, **kwargs)
 
         super().__init__()
 
@@ -151,7 +151,7 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
         Xi_m = self._xi_matrix(self.m)
         Xi_n = self._xi_matrix(self.n)
         core = np.trace(Xi_m @ self.matr @ Xi_n @ self.matr.T)
-        extra = np.sum(self.sign * (self.matr ** 2))
+        extra = np.sum(self.sign * (self.matr**2))
         return 1.0 - core + extra
 
     def xi(self, *, condition_on_y: bool = False) -> float:
@@ -160,7 +160,7 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
 
         # scaling m/n depends on conditioning
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
-        extra = (m / n) * np.sum(np.abs(self.sign) * (self.matr ** 2))
+        extra = (m / n) * np.sum(np.abs(self.sign) * (self.matr**2))
         return base + extra
 
     def rho(self) -> float:
@@ -191,7 +191,9 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
     # ------------------------------------------------------------------ #
     #                            sampling                                #
     # ------------------------------------------------------------------ #
-    def rvs(self, n: int = 1, *, random_state: int | None = None, **kwargs) -> np.ndarray:
+    def rvs(
+        self, n: int = 1, *, random_state: int | None = None, **kwargs
+    ) -> np.ndarray:
         """
         Draw *n* i.i.d. samples from the mixed checkerboard copula.
 
@@ -211,10 +213,10 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
 
         # ------ 1) pick the cell for every sample  -------------------- #
         flat_Δ = self.matr.ravel()
-        probs  = flat_Δ / flat_Δ.sum()          # should already sum to 1
+        probs = flat_Δ / flat_Δ.sum()  # should already sum to 1
         flat_idx = rng.choice(flat_Δ.size, size=n, p=probs)
 
-        i_idx, j_idx = np.unravel_index(flat_idx, self.matr.shape)   # (n,)
+        i_idx, j_idx = np.unravel_index(flat_idx, self.matr.shape)  # (n,)
 
         # ------ 2) draw location *inside* the selected cell ----------- #
         u = np.empty(n)
@@ -222,8 +224,8 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
 
         # split into the three regimes once; then fill the vectors
         for s_val, mask in (
-            (0,  self.sign[i_idx, j_idx] == 0),   # Π   (independence)
-            (1,  self.sign[i_idx, j_idx] == 1),   # ↗   (check-min)
+            (0, self.sign[i_idx, j_idx] == 0),  # Π   (independence)
+            (1, self.sign[i_idx, j_idx] == 1),  # ↗   (check-min)
             (-1, self.sign[i_idx, j_idx] == -1),  # ↘   (check-w)
         ):
             if not mask.any():
@@ -231,19 +233,19 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
             ii = i_idx[mask]
             jj = j_idx[mask]
 
-            if s_val == 0:                       # uniform on the rectangle
+            if s_val == 0:  # uniform on the rectangle
                 u[mask] = (ii + rng.random(mask.sum())) / self.m
                 v[mask] = (jj + rng.random(mask.sum())) / self.n
 
-            elif s_val == 1:                     # perfect + dependence ↗
+            elif s_val == 1:  # perfect + dependence ↗
                 t = rng.random(mask.sum())
                 u[mask] = (ii + t) / self.m
                 v[mask] = (jj + t) / self.n
 
-            else:                                # perfect – dependence ↘
+            else:  # perfect – dependence ↘
                 t = rng.random(mask.sum())
-                u[mask] = (ii + t)          / self.m
-                v[mask] = (jj + 1 - t)      / self.n   # descending line
+                u[mask] = (ii + t) / self.m
+                v[mask] = (jj + 1 - t) / self.n  # descending line
 
         return np.column_stack((u, v))
 

@@ -59,11 +59,10 @@ def simulate2():
     n = np.random.randint(1, 1_000)
     unif_u = np.random.uniform()
     permutation = generate_permutations(n, 1)[0]
-    grid_size = int(np.ceil(n**(unif_u)))
+    grid_size = int(np.ceil(n ** (unif_u)))
     ccop = cp.ShuffleOfMin(permutation).to_check_pi(grid_size)
     ccop_r_matr = cp.CISRearranger().rearrange_checkerboard(ccop)
     ccop_r = cp.BivCheckPi(ccop_r_matr)
-    is_symmetric = ccop_r.is_symmetric
     # ccop_r.scatter_plot()
     cis, cds = ccop_r.is_cis()
     assert cis
