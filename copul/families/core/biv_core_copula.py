@@ -11,7 +11,9 @@ from copul.schur_order.cis_verifier import CISVerifier
 from copul.families.copula_graphs import CopulaGraphs
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 from copul.families.tp2_verifier import TP2Verifier
+from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cdi_wrapper import CDiWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
@@ -592,7 +594,10 @@ class BivCoreCopula:
             pdf = self(**free_symbol_dict).pdf
         else:
             pdf = self.pdf
-        title = CopulaGraphs(self).get_copula_title()
+        if "title" in kwargs:
+            title = kwargs.pop("title")
+        else:
+            title = CopulaGraphs(self).get_copula_title()
         return self._plot3d(pdf, title=title, zlabel="PDF", **kwargs)
 
     def plot_cond_distr_1(self):
@@ -657,13 +662,13 @@ class BivCoreCopula:
         """
         intervals = {k: v for k, v in self.intervals.items()}
         try:
-            parameters = inspect.signature(func).parameters
+            _parameters = inspect.signature(func).parameters
         except TypeError:
             pass
         else:
-            if isinstance(func, types.MethodType) and len(parameters) == 0:
+            if isinstance(func, types.MethodType):  #  and len(parameters) == 0:
                 func = func()
-        if isinstance(func, SymPyFuncWrapper):
+        if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
             f = sp.lambdify((self.u, self.v), func.func)
         elif isinstance(func, sp.Expr):
             f = sp.lambdify((self.u, self.v), func)

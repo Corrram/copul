@@ -112,8 +112,9 @@ class DiagonalBandCopula(BivCopula):
 
 if __name__ == "__main__":
     # Example usage
-    copula = DiagonalBandCopula()
-    copula.plot_cdf()
-    copula.plot_cond_distr_1()
-    copula.plot_cond_distr_2()
-    copula.plot_pdf()
+    x = 0.05
+    copula = DiagonalBandCopula(x)
+    # copula.plot_cdf()
+    # copula.plot_cond_distr_1()
+    # copula.plot_cond_distr_2()
+    copula.plot_pdf(title=f"Diagonal Band Copula (delta={x})")
