@@ -198,3 +198,12 @@ class Frank(BivArchimedeanCopula):
 Nelsen5 = Frank
 
 # B3 = Frank
+
+if __name__ == "__main__":
+    copula = Nelsen5(theta=4.0)
+    print("Spearman's rho:", copula.rho())
+    print("Kendall's tau:", copula.tau())
+    ccop = copula.to_check_pi()
+    print("Check Pi xi:", ccop.xi())
+    print("Done!")
+    
