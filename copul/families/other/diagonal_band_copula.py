@@ -91,13 +91,13 @@ class DiagonalBandCopula(BivCopula):
     # CDF   C(u,v)  (symbolic integration w.r.t. first coordinate)
     # ------------------------------------------------------------------
     @property
-    def cdf(self):
+    def _cdf_expr(self):
         t = sp.symbols("t", nonnegative=True)
         g = self.pdf.func  # underlying sympy Expr from wrapper
         # substitute u -> t to integrate over the first coordinate
         g_sub = g.subs(self.u, t)
         expr = sp.integrate(g_sub, (t, 0, self.u))
-        return SymPyFuncWrapper(sp.simplify(expr))
+        return expr
 
     # ------------------------------------------------------------------
     # Conditional  F_{U|V}(u|v)
@@ -109,7 +109,6 @@ class DiagonalBandCopula(BivCopula):
         return SymPyFuncWrapper(sp.simplify(cd2))(u, v)
 
 
-
 if __name__ == "__main__":
     # Example usage
     x = 0.05
@@ -117,4 +116,8 @@ if __name__ == "__main__":
     # copula.plot_cdf()
     # copula.plot_cond_distr_1()
     # copula.plot_cond_distr_2()
-    copula.plot_pdf(title=f"Diagonal Band Copula (delta={x})")
+    # copula.scatter_plot()
+    copula.plot_pdf(title=f"Diagonal Band Copula (delta={x})", plot_type="contour")
+    copula.survival_copula().plot_pdf(
+        title=f"Diagonal Band Survival Copula (delta={x})", plot_type="contour"
+    )
