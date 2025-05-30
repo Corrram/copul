@@ -6,6 +6,7 @@ import types
 import numpy as np
 import sympy as sp
 from matplotlib import pyplot as plt
+from matplotlib import colors as mcolors 
 
 from copul.schur_order.cis_verifier import CISVerifier
 from copul.families.copula_graphs import CopulaGraphs
@@ -473,35 +474,6 @@ class BivCoreCopula:
             plt.draw()
             plt.close()
 
-    def plot_cdf(self, data=None, title=None, zlabel=None):
-        """
-        Plot the cumulative distribution function (CDF) of the copula.
-
-        If external data is provided, a 3D surface plot is created from that data;
-        otherwise, the internal CDF function is plotted.
-
-        Parameters
-        ----------
-        data : np.ndarray, optional
-            External data to plot a CDF from (default is None).
-        title : str, optional
-            Title for the plot; if None, the copula title is used.
-        zlabel : str, optional
-            Label for the z-axis (default is an empty string).
-
-        Returns
-        -------
-        The result of the internal 3D plot function.
-        """
-        if title is None:
-            title = CopulaGraphs(self).get_copula_title()
-        if zlabel is None:
-            zlabel = ""
-        if data is None:
-            return self._plot3d(self.cdf, title=title, zlabel=zlabel, zlim=(0, 1))
-        else:
-            self._plot_cdf_from_data(data)
-
     @staticmethod
     def _plot_cdf_from_data(data):
         """
@@ -576,67 +548,69 @@ class BivCoreCopula:
         plotter = RankCorrelationPlotter(self, log_cut_off, approximate)
         plotter.plot_rank_correlations(n_obs, n_params, params, plot_var, ylim)
 
-    def plot_pdf(self, *args, **kwargs):
-        """
-        Plot the probability density function (PDF) of the copula.
+    def plot_cdf(self, data=None, title=None, zlabel=None, *, plot_type="3d", log_z=False, **kwargs):
+        """Plot the cumulative distribution function (CDF).
 
-        This method evaluates the copula's PDF and generates a 3D plot using the
-        internal helper method `_plot3d`. The PDF is computed based on the current
-        free parameters of the copula.
-
-        Returns
-        -------
-        matplotlib.figure.Figure
-            The figure containing the 3D plot of the PDF.
+        Parameters
+        ----------
+        plot_type : {"3d", "contour"}
+            Choose visualisation style.
+        log_z : bool, optional (contour only)
+            Use logarithmic colour scaling (``matplotlib.colors.LogNorm``).
         """
-        free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
-        if free_symbol_dict:
-            pdf = self(**free_symbol_dict).pdf
-        else:
-            pdf = self.pdf
-        if "title" in kwargs:
-            title = kwargs.pop("title")
-        else:
+        if plot_type not in {"3d", "contour"}:
+            raise ValueError("plot_type must be '3d' or 'contour'")
+
+        if title is None:
             title = CopulaGraphs(self).get_copula_title()
-        return self._plot3d(pdf, title=title, zlabel="PDF", **kwargs)
+        if zlabel is None:
+            zlabel = ""
 
-    def plot_cond_distr_1(self):
+        if data is not None and plot_type == "contour":
+            raise ValueError("Contour plots from external data are not supported – set plot_type='3d' or omit *data*.")
+
+        if data is None:
+            if plot_type == "3d":
+                return self._plot3d(self.cdf, title=title, zlabel=zlabel, zlim=(0, 1))
+            return self._plot_contour(self.cdf, title=title, zlabel=zlabel, zlim=(0, 1), log_z=log_z, **kwargs)
+        return self._plot_cdf_from_data(data)
+
+    def plot_pdf(self, *args, plot_type="3d", log_z=False, **kwargs):
+        """Plot the probability density function (PDF).
+
+        Parameters
+        ----------
+        plot_type : {"3d", "contour"}
+        log_z : bool, optional (contour only)
         """
-        Plot the conditional distribution function F_{U_{-1}|U_1}.
+        if plot_type not in {"3d", "contour"}:
+            raise ValueError("plot_type must be '3d' or 'contour'")
 
-        This method computes the conditional distribution function for the first variable,
-        and then produces a 3D plot using the helper method `_plot3d`. This represents the
-        probability distribution of the remaining variables given the first variable.
+        free_symbol_dict = {str(s): getattr(self, str(s)) for s in self.params}
+        pdf = self(**free_symbol_dict).pdf if free_symbol_dict else self.pdf
+        title = kwargs.pop("title", CopulaGraphs(self).get_copula_title())
 
-        Returns
-        -------
-        matplotlib.figure.Figure
-            The figure containing the 3D plot of the conditional distribution.
-        """
+        if plot_type == "3d":
+            return self._plot3d(pdf, title=title, zlabel="PDF", **kwargs)
+        return self._plot_contour(pdf, title=title, zlabel="PDF", log_z=log_z, **kwargs)
+
+    def plot_cond_distr_1(self, *, plot_type="3d", log_z=False, **kwargs):
+        if plot_type not in {"3d", "contour"}:
+            raise ValueError("plot_type must be '3d' or 'contour'")
         cond_distr_1 = self.cond_distr_1
         title = CopulaGraphs(self).get_copula_title()
-        return self._plot3d(
-            cond_distr_1, title=title, zlabel="Conditional Distribution 1"
-        )
+        if plot_type == "3d":
+            return self._plot3d(cond_distr_1, title=title, zlabel="Conditional Distribution 1")
+        return self._plot_contour(cond_distr_1, title=title, zlabel="Conditional Distribution 1", log_z=log_z, **kwargs)
 
-    def plot_cond_distr_2(self):
-        """
-        Plot the conditional distribution function F_{U_{-2}|U_2}.
-
-        This method computes the conditional distribution function for the second variable,
-        and then produces a 3D plot using the helper method `_plot3d`. This represents the
-        probability distribution of the remaining variables given the second variable.
-
-        Returns
-        -------
-        matplotlib.figure.Figure
-            The figure containing the 3D plot of the conditional distribution.
-        """
+    def plot_cond_distr_2(self, *, plot_type="3d", log_z=False, **kwargs):
+        if plot_type not in {"3d", "contour"}:
+            raise ValueError("plot_type must be '3d' or 'contour'")
         cond_distr_2 = self.cond_distr_2
         title = CopulaGraphs(self).get_copula_title()
-        return self._plot3d(
-            cond_distr_2, title=title, zlabel="Conditional Distribution 2"
-        )
+        if plot_type == "3d":
+            return self._plot3d(cond_distr_2, title=title, zlabel="Conditional Distribution 2")
+        return self._plot_contour(cond_distr_2, title=title, zlabel="Conditional Distribution 2", log_z=log_z, **kwargs)
 
     def _plot3d(self, func, title, zlabel, zlim=None):
         """
@@ -693,6 +667,71 @@ class BivCoreCopula:
         plt.title(title)
         plt.show()
         self.intervals = intervals  # otherwise it may have been modified by the plot
+
+
+    def _plot_contour(self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs):
+        r"""Create a filled contour plot.
+
+        If ``log_z`` is *True*, the colour map is based on
+        :math:`\log(1+z)` (simply `numpy.log1p`).  This means zeros map to
+        *exactly* 0 on the log scale instead of being excluded.  The colour bar
+        still shows the **original values** (by subtracting 1 again in its tick
+        labels) so that the legend remains interpretable in the natural scale.
+        """
+        intervals_backup = dict(self.intervals)
+        # Resolve callable --------------------------------------------------
+        try:
+            _ = inspect.signature(func).parameters
+            if isinstance(func, types.MethodType):
+                func = func()
+        except TypeError:
+            pass
+        if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
+            f = sp.lambdify((self.u, self.v), func.func)
+        elif isinstance(func, sp.Expr):
+            f = sp.lambdify((self.u, self.v), func)
+        else:
+            f = func
+        # Evaluate grid -----------------------------------------------------
+        if "grid_size" in kwargs:
+            grid_size = kwargs.pop("grid_size")
+        else:
+            grid_size = 100
+        x = np.linspace(0.005, 0.995, grid_size)
+        y = np.linspace(0.005, 0.995, grid_size)
+        X, Y = np.meshgrid(x, y)
+        Z = np.vectorize(f)(X, Y)
+        if zlim is not None:
+            Z = np.clip(Z, zlim[0], zlim[1])
+        # Colour scaling ----------------------------------------------------
+        cmap = plt.cm.get_cmap("viridis").copy()
+        if log_z:
+            # mask negatives, shift by +1 for log1p
+            Z_mask = np.ma.masked_less(Z, 0.0)
+            Z_for_norm = np.ma.masked_less(Z_mask + 1.0, 1e-12)
+            vmin = (zlim[0] + 1) if zlim else Z_for_norm.min()
+            vmax = (zlim[1] + 1) if zlim else Z_for_norm.max()
+            norm = mcolors.LogNorm(vmin=vmin, vmax=vmax)
+            # use more levels for smoother transitions
+            if isinstance(levels, int):
+                levels = np.geomspace(vmin, vmax, levels * 5)
+            cf = plt.contourf(X, Y, Z_for_norm, levels=levels, cmap=cmap, norm=norm)
+            cbar = plt.colorbar(cf)
+            ticks = cbar.get_ticks()
+            cbar.set_ticks(ticks)
+            cbar.set_ticklabels([f"{t - 1:g}" for t in ticks])
+        else:
+            if isinstance(levels, int):
+                levels = levels
+            cf = plt.contourf(X, Y, Z, levels=levels, cmap=cmap)
+            cbar = plt.colorbar(cf)
+        cbar.set_label(zlabel)
+        plt.xlabel("u")
+        plt.ylabel("v")
+        plt.title(title)
+        plt.show()
+        self.intervals = intervals_backup
+
 
     def lambda_L(self):
         """

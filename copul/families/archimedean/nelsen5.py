@@ -206,4 +206,3 @@ if __name__ == "__main__":
     ccop = copula.to_check_pi()
     print("Check Pi xi:", ccop.xi())
     print("Done!")
-    

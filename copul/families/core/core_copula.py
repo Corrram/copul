@@ -696,3 +696,72 @@ class CoreCopula:
             results[i] = pdf_func(*point)
 
         return results
+
+    # ------------------------------------------------------------------
+    # Copula transforms
+    # ------------------------------------------------------------------
+    def survival_copula(self):
+        """
+        Return the survival (upper–tail) copula 𝑪̂ corresponding to *self*.
+
+        In d dimensions the survival copula is given by the inclusion–
+        exclusion formula  
+            𝑪̂(u) = Σ_{J⊆{1,…,d}} (−1)^{|J|} C(u_J^c),  
+        where *u_J^c* replaces u_j by 1 for j∈J.
+
+        Returns
+        -------
+        CoreCopula
+            A new copula object whose CDF expression is the survival copula
+            of the current one.
+        """
+        from itertools import combinations
+
+        if self._cdf_expr is None:
+            raise ValueError("CDF expression is not set for this copula.")
+
+        expr = 0
+        # Inclusion–exclusion over all coordinate subsets
+        for k in range(self.dim + 1):
+            for J in combinations(range(self.dim), k):
+                subs = {self.u_symbols[j]: 1 for j in J}
+                expr += (-1) ** k * self._cdf_expr.subs(subs)
+
+        new_copula = copy.copy(self)
+        new_copula._cdf_expr = sympy.simplify(expr)
+        return new_copula
+
+    def vertical_reflection(self, margin: int = 2):
+        """
+        Return the vertical reflection C^{∨} of *self* with respect to one
+        margin.
+
+        By default (margin=2) and for the bivariate case this is  
+            C^{∨}(u,v) = u − C(u, 1−v).
+
+        For arbitrary `margin = j` (1 ≤ j ≤ dim) the definition is  
+            C^{∨}(u) = u_j − C(u_1,…,u_{j−1}, 1−u_j, u_{j+1},…,u_d).
+
+        Parameters
+        ----------
+        margin : int, optional (default=2)
+            The coordinate index (1-based) that is reflected.
+
+        Returns
+        -------
+        CoreCopula
+            A new copula object whose CDF expression is the vertical
+            reflection of the current one.
+        """
+        if not (1 <= margin <= self.dim):
+            raise ValueError(f"margin must be in 1..{self.dim}")
+
+        if self._cdf_expr is None:
+            raise ValueError("CDF expression is not set for this copula.")
+
+        uj = self.u_symbols[margin - 1]
+        reflected_expr = sympy.simplify(uj - self._cdf_expr.subs({uj: 1 - uj}))
+
+        new_copula = copy.copy(self)
+        new_copula._cdf_expr = reflected_expr
+        return new_copula
