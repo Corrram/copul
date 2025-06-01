@@ -1,63 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Apply a style for a cleaner look
-plt.style.use("seaborn-v0_8-whitegrid")
-# You can also try to set a global font if you have a specific preference
-# and know it's available on your system, e.g.:
-# plt.rcParams['font.family'] = 'sans-serif'
-# plt.rcParams['font.sans-serif'] = ['Arial'] # Or 'DejaVu Sans', 'Helvetica' etc.
-
-
-# --- Define b(x) functions (same as before) ---
-def b_from_x_regime1(x_val):
-    """
-    Calculates b(x) for x in (3/10, 1).
-    This is for b > 1.
-    """
-    if x_val == 1.0:  # As x -> 1, b -> infinity
+# ------------------------- Helper functions ------------------------- #
+def b_from_x_regime1(x_val: float) -> float:
+    """b(x) for x in (3/10, 1]  with b > 1."""
+    if np.isclose(x_val, 1.0):
         return np.inf
-    if x_val <= 3 / 10:  # Should be handled by regime 2
-        if np.isclose(x_val, 3 / 10):
-            return 1.0
-        return np.nan
-
-    discriminant_term = 5 * (6 * x_val - 1)
-    numerator = 5 + np.sqrt(discriminant_term)
-    denominator = 10 * (1 - x_val)
-    if denominator == 0:
-        return np.inf
-    return numerator / denominator
+    if x_val <= 3 / 10:
+        return 1.0 if np.isclose(x_val, 3 / 10) else np.nan
+    numer = 5 + np.sqrt(5 * (6 * x_val - 1))
+    denom = 10 * (1 - x_val)
+    return np.inf if denom == 0 else numer / denom
 
 
-def b_from_x_regime2(x_val):
-    """
-    Calculates b(x) for x in (0, 3/10].
-    This is for 0 < b <= 1.
-    """
-    if x_val == 0:
+def b_from_x_regime2(x_val: float) -> float:
+    """b(x) for x in (0, 3/10]  with 0 < b ≤ 1."""
+    if np.isclose(x_val, 0):
         return 0.0
     if x_val > 3 / 10:
-        if np.isclose(x_val, 3 / 10):
-            return 1.0
-        return np.nan
-
-    term_inside_arccos = 1 - (108 / 25) * x_val
-    term_inside_arccos = np.clip(term_inside_arccos, -1.0, 1.0)
-
-    theta = (1 / 3) * np.arccos(term_inside_arccos)
-    cos_term = np.cos(theta - (2 * np.pi / 3))
-
-    b_val = (5 / 6) + (5 / 3) * cos_term
-    return np.clip(b_val, 0.0, 1.0)
+        return 1.0 if np.isclose(x_val, 3 / 10) else np.nan
+    theta = (1 / 3) * np.arccos(np.clip(1 - (108 / 25) * x_val, -1.0, 1.0))
+    return np.clip((5 / 6) + (5 / 3) * np.cos(theta - 2 * np.pi / 3), 0.0, 1.0)
 
 
-# --- Define M_x (upper bound for rho) with corrected formula (same as before) ---
-def M_x_upper_bound_corrected(x_val):
-    """
-    Calculates M_x based on the *corrected* derived formulas.
-    x_val here represents xi.
-    """
+def M_x_upper_bound_corrected(x_val: float) -> float:
+    """Corrected upper bound M_x."""
     if x_val < 0 or x_val > 1:
         return np.nan
     if np.isclose(x_val, 0):
@@ -65,119 +32,90 @@ def M_x_upper_bound_corrected(x_val):
     if np.isclose(x_val, 1):
         return 1.0
 
-    x_threshold = 3 / 10
+    x_thresh = 3 / 10
+    if x_val < x_thresh and not np.isclose(x_val, x_thresh):
+        b = b_from_x_regime2(x_val)
+        return b - (3 * b**2) / 10
 
-    if x_val < x_threshold and not np.isclose(x_val, x_threshold):
-        b_val = b_from_x_regime2(x_val)
-        m_x = b_val - (3 * b_val**2) / 10
-    elif x_val > x_threshold and not np.isclose(x_val, x_threshold):
-        b_val = b_from_x_regime1(x_val)
-        if b_val == np.inf:
-            m_x = 1.0
-        elif np.isnan(b_val) or b_val == 0:
-            m_x = np.nan
-        else:
-            m_x = 1 - (1 / (2 * b_val**2)) + (1 / (5 * b_val**3))
-            # m_x = 12*(1/3-1/(24*b_val**2)+1/(60*b_val**3)) -3
-    elif np.isclose(x_val, x_threshold):
-        b_val = 1.0
-        m_x = b_val - (3 * b_val**2) / 10
-    else:
-        return np.nan
-    return m_x
+    if x_val > x_thresh and not np.isclose(x_val, x_thresh):
+        b = b_from_x_regime1(x_val)
+        if b in (np.inf, 0) or np.isnan(b):
+            return 1.0 if b == np.inf else np.nan
+        return 1 - 1 / (2 * b**2) + 1 / (5 * b**3)
+
+    if np.isclose(x_val, x_thresh):           # x = 3/10
+        b = 1.0
+        return b - (3 * b**2) / 10
+
+    return np.nan
 
 
-# --- Generate xi values for plotting (same as before) ---
-epsilon = 1e-9
-xi_coords = np.linspace(0.0, 3 / 10 - epsilon, 150)
-xi_coords = np.append(xi_coords, np.linspace(3 / 10 - epsilon, 3 / 10 + epsilon, 50))
-xi_coords = np.append(xi_coords, np.linspace(3 / 10 + epsilon, 1.0, 150))
-xi_coords_full = np.unique(np.clip(xi_coords, 0.0, 1.0))
+# ----------------------------- Data --------------------------------- #
+eps = 1e-9
+xi = np.concatenate([
+    np.linspace(0.0, 3 / 10 - eps, 150),
+    np.linspace(3 / 10 - eps, 3 / 10 + eps, 50),
+    np.linspace(3 / 10 + eps, 1.0, 150),
+])
+xi = np.unique(np.clip(xi, 0.0, 1.0))
 
-# --- Calculate rho_upper (M_x) and rho_lower (mirrored) values (same as before) ---
-rho_upper_corrected = np.array([M_x_upper_bound_corrected(xi) for xi in xi_coords_full])
-valid_indices = ~np.isnan(rho_upper_corrected)
-xi_coords_valid = xi_coords_full[valid_indices]
-rho_upper_valid = rho_upper_corrected[valid_indices]
-rho_lower_mirrored = -rho_upper_valid
+rho_up = np.array([M_x_upper_bound_corrected(x) for x in xi])
+valid = ~np.isnan(rho_up)
+xi_v, rho_up_v = xi[valid], rho_up[valid]
+rho_lo_v = -rho_up_v
 
-# --- Create the plot ---
-fig, ax = plt.subplots(
-    figsize=(6, 8)
-)  # Adjusted figsize to be taller, closer to example
+# ----------------------------- Plot --------------------------------- #
+BLUE = "#00529B"
+FILL = "#D6EAF8"
 
-# Plot the corrected M_x upper bound
-ax.plot(
-    xi_coords_valid,
-    rho_upper_valid,
-    color="#00529B",
-    linewidth=2.5,
-    label=r"$\pm M_\xi$"        # Gemeinsamer Label‐Eintrag
-)
-ax.plot(
-    xi_coords_valid,
-    rho_lower_mirrored,
-    color="#00529B",
-    linewidth=2.5               # Solid line statt '--'
-)
+fig, ax = plt.subplots(figsize=(6, 8))
 
-# Mark key points (without text labels as in example)
-key_points_xi = [0, 1, 0]
-key_points_rho = [0, 1, -1]
-ax.scatter(
-    key_points_xi, key_points_rho, color="black", s=60, zorder=5
-)  # Slightly smaller points
+# Envelope ±M_x
+ax.plot(xi_v, rho_up_v, color=BLUE, lw=2.5, label=r"$\pm M_\xi$")
+ax.plot(xi_v, rho_lo_v, color=BLUE, lw=2.5)
 
-# Fill the attainable region between -M_x and M_x
+# Main attainable region
 ax.fill_between(
-    xi_coords_valid,
-    rho_lower_mirrored,
-    rho_upper_valid,
-    where=rho_upper_valid >= rho_lower_mirrored,
-    color="#D6EAF8",
-    alpha=0.7,
-    interpolate=True,
-    label=r"Attainable Region",
-    zorder=1,
-)  # Adjusted color and alpha
+    xi_v, rho_lo_v, rho_up_v,
+    where=rho_up_v >= rho_lo_v,
+    color=FILL, alpha=0.7, zorder=0,
+    label="Attainable region",
+)
 
+# Hatched parts (steeper = vertical stripes)
+mask_top = rho_up_v > xi_v
+mask_bottom = rho_lo_v < -xi_v
+ax.fill_between(
+    xi_v, np.maximum(xi_v, rho_lo_v), rho_up_v,
+    where=mask_top,
+    facecolor="none", hatch="||", edgecolor=BLUE, linewidth=0,
+)
+ax.fill_between(
+    xi_v, rho_lo_v, np.minimum(-xi_v, rho_up_v),
+    where=mask_bottom,
+    facecolor="none", hatch="||", edgecolor=BLUE, linewidth=0,
+)
 
-# --- Plot settings to match example image ---
-# ax.set_title(r"Attainable Region for (Chatterjee's $\xi$, Spearman's $\rho$)", fontsize=18, pad=20, fontweight='bold') # Title removed
-ax.set_xlabel(r"Chatterjee's $\xi$", fontsize=16, labelpad=10)
-ax.set_ylabel(r"Spearman's $\rho$", fontsize=16, labelpad=10)
+# Key points
+ax.scatter([0, 1, 1], [0, 1, -1], s=60, color="black", zorder=5)
 
-ax.set_xlim([-0.05, 1.05])
-ax.set_ylim([-1.05, 1.05])
+# Reference lines y = x and y = −x
+ax.plot([0, 1], [0, 1], color="black", lw=0.8, linestyle="--")
+ax.plot([0, 1], [0, -1], color="black", lw=0.8, linestyle="--")
 
-# Customize ticks
-ax.tick_params(axis="both", which="major", labelsize=13)
+# Labels, ticks, grid
+ax.set_xlabel(r"Chatterjee's $\xi$", fontsize=16)
+ax.set_ylabel(r"Spearman's $\rho$", fontsize=16)
+ax.set_xlim(-0.05, 1.05)
+ax.set_ylim(-1.05, 1.05)
 ax.xaxis.set_major_locator(plt.MultipleLocator(0.25))
 ax.yaxis.set_major_locator(plt.MultipleLocator(0.25))
+ax.tick_params(axis="both", labelsize=13)
+ax.grid(True, linestyle=":", alpha=0.6)
+ax.axhline(0, color="black", lw=0.8)
 
+# Legend
+ax.legend(loc="center", fontsize=12, frameon=True)
 
-# Grid appearance
-ax.grid(True, linestyle=":", alpha=0.6, color="darkgray", zorder=0)  # Darker grid
-
-# Axes lines
-ax.axhline(0, color="black", linewidth=0.8, zorder=2)
-ax.axvline(0, color="black", linewidth=0.8, zorder=2)
-
-# Legend inside the plot
-legend = ax.legend(
-    loc="center",
-    ncol=1,
-    fontsize=12,
-    frameon=True,
-    fancybox=False,
-    shadow=False,
-    borderpad=0.5,
-)
-legend.get_frame().set_edgecolor("black")
-legend.get_frame().set_facecolor("white")
-
-
-# ax.set_aspect('equal', adjustable='box') # Removed to allow figsize to dictate shape more like example
-fig.tight_layout(rect=[0, 0, 1, 1])  # Adjust layout to make space for legend and title
-
+fig.tight_layout()
 plt.show()

@@ -1,155 +1,214 @@
-# file: copul/families/diagonal_band.py
+# file: copul/families/diagonal_band_b_inverse_reflected.py
 import sympy as sp
 
 from copul.families.core.biv_copula import BivCopula
+from copul.families.other.biv_independence_copula import BivIndependenceCopula
+from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class RhoMinusXiMaximalCopula(BivCopula):
     r"""
-    Optimal–$\rho$ diagonal-band copula family
+    Optimal–ρ diagonal–band copula, parametrised by b_new so that the original
+    scale‐parameter b_old = 1/|b_new|.  For b_new < 0, we use the reflection
+    identity
     \[
-      \bigl\{C_x : 0<x<1\bigr\},
+      C_{b_{\rm new}}^{\downarrow}(u,v) \;=\; v \;-\; 
+      C_{|b_{\rm new}|}^{\uparrow}(1 - u,\,v)\,.
     \]
-    now with
-    \[
-      b_x =
-      \begin{cases}
-        \frac{2}{\sqrt{6x}}
-          \cos\!\Bigl(\tfrac13\arccos\!\bigl(-\tfrac{3\sqrt{6x}}{5}\bigr)\Bigr),
-          & 0<x\le 0.3,\\[1ex]
-        \frac{5-\sqrt{5(6x-1)}}{3}, & 0.3< x <1,
-      \end{cases}
-    \]
-    and
-    \[
-      M_x =
-      \begin{cases}
-        \displaystyle
-        \frac{1}{b_x} - \frac{3}{10\,b_x^2}, & x\le 0.3,\\[1ex]
-        1 - \frac{b_x^2}{2} + \frac{b_x^3}{5}, & x>0.3.
-      \end{cases}
-    \]
-    The max‐ and min‐band parameters are
-    \[
-      s_v = 
-      \begin{cases}
-        \sqrt{2vb_x}, & \text{region 1},\\
-        v+\tfrac{b_x}{2}, & \text{region 2},\\
-        1 + b_x - \sqrt{2b_x(1-v)}, & \text{region 3},
-      \end{cases}
-      \quad
-      a_v = s_v - b_x,
-    \]
-    and
-    \[
-      C_x(u,v) =
-      \begin{cases}
-        u, & u\le a_v,\\
-        a_v + \frac{2s_v(u-a_v)-u^2 - a_v^2}{2\,b_x}, & a_v < u \le s_v,\\
-        v, & u>s_v.
-      \end{cases}
-    \]
+
+    -----------------
+    Parameter b_new
+    -----------------
+    b_new ∈ ℝ \ {0}.  For b_new > 0, b_old = 1/b_new > 0; for b_new < 0,
+    we treat |b_new| just as above and apply the “down‐reflection.”
+
+    --------
+    Formulas
+    --------
+    1. Maximal Spearman’s ρ:
+      Let b := b_new.  Then b_old = 1/|b|.  Equivalently, one can write
+      M(b) piecewise in terms of |b| just as in the “b_old‐param” version.
+      We keep the same form, but with |b_old| ≤ 1 ↔ |b| ≥ 1, etc.  In symbolic
+      form:
+      \[
+        M(b) \;=\;
+        \begin{cases}
+          b - \frac{3\,b^2}{10}, 
+            & |b|\ge 1, \\[1ex]
+          1 - \frac{1}{2\,b^2} + \frac{1}{5\,b^3}, 
+            & |b| < 1.
+        \end{cases}
+      \]
+      (Here b_old = 1/b_new simply swaps the roles of “small‐b_old” vs. “large‐b_old.”)
+
+    2. Shift s_v(b):
+      Define b_old = 1/|b|.  Then for |b_old| ≤ 1 (i.e. |b| ≥ 1):
+      \[
+        \begin{cases}
+          s_v = \sqrt{2\,v\,b_{\text{old}}}, 
+            & v \le \tfrac{b_{\text{old}}}{2},\\
+          s_v = v + \tfrac{b_{\text{old}}}{2}, 
+            & v \in (\tfrac{b_{\text{old}}}{2},\,1 - \tfrac{b_{\text{old}}}{2}],\\
+          s_v = 1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)}, 
+            & v > 1 - \tfrac{b_{\text{old}}}{2}.
+        \end{cases}
+      \]
+      For |b_old| > 1 (i.e. |b| < 1):
+      \[
+        \begin{cases}
+          s_v = \sqrt{2\,v\,b_{\text{old}}}, 
+            & v \le \tfrac{1}{2\,b_{\text{old}}},\\
+          s_v = v\,b_{\text{old}} + \tfrac12, 
+            & v \in (\tfrac{1}{2\,b_{\text{old}}},\,1 - \tfrac{1}{2\,b_{\text{old}}}],\\
+          s_v = 1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)}, 
+            & v > 1 - \tfrac{1}{2\,b_{\text{old}}}.
+        \end{cases}
+      \]
+
+    3. Copula CDF:
+      For b_new > 0, use the usual triangle‐band formula with b_old = 1/b_new:
+      \[
+        \;a_v \;=\; s_v - b_{\text{old}}, 
+        \quad
+        C(u,v) = 
+        \begin{cases}
+          u, 
+            & u \le a_v,\\[0.6ex]
+          a_v + \frac{2\,s_v\,(u - a_v) \;-\; u^2 + a_v^2}{2\,b_{\text{old}}},
+            & a_v < u \le s_v,\\[1ex]
+          v, & u > s_v.
+        \end{cases}
+      \]
+      For b_new < 0, one sets
+      \[
+        C_{b_{\rm new}}(u,v) \;=\;
+        v \;-\; C_{|b_{\rm new}|}\bigl(1 - u,\,v\bigr).
+      \]
     """
 
     # symbolic parameter & admissible interval
-    x = sp.symbols("x", positive=True)
-    params = [x]
-    intervals = {"x": sp.Interval.open(0, 1)}
+    b = sp.symbols("b", real=True)
+    params = [b]
+    intervals = {"b": sp.Interval(-sp.oo, 0).union(sp.Interval(0, sp.oo))}
+    special_cases = {0: BivIndependenceCopula}
 
     # convenience symbols
     u, v = sp.symbols("u v", positive=True)
 
+    def __new__(cls, *args, **kwargs):
+        if args and len(args) == 1:
+            kwargs["b"] = args[0]
+        if "b" in kwargs and kwargs["b"] in cls.special_cases:
+            special_case_cls = cls.special_cases[kwargs["b"]]
+            del kwargs["b"]  # Remove b before creating special case
+            return special_case_cls()
+        return super().__new__(cls)
+
     def __init__(self, *args, **kwargs):
         if args and len(args) == 1:
-            kwargs["x"] = args[0]
-        self._validate_x(kwargs.get("x", self.x))
+            kwargs["b"] = args[0]
         super().__init__(**kwargs)
 
     def __call__(self, *args, **kwargs):
         if args and len(args) == 1:
-            kwargs["x"] = args[0]
-        if "x" in kwargs:
-            self._validate_x(kwargs["x"])
+            kwargs["b"] = args[0]
+        if "b" in kwargs and kwargs["b"] in self.special_cases:
+            special_case_cls = self.special_cases[kwargs["b"]]
+            del kwargs["b"]  # Remove b before creating special case
+            return special_case_cls()
         return super().__call__(**kwargs)
 
+    # -------- Maximal Spearman’s rho M(b) -------- #
     @staticmethod
-    def _validate_x(x_val):
-        if not (0 < x_val < 1):
-            raise ValueError(f"Parameter x must be in (0,1), got {x_val}")
-
-    @staticmethod
-    def _b_expr(x):
-        """Piece‐wise explicit scale parameter b_x as in (2.10)."""
-        xt = sp.Rational(3, 10)
-        # Regime B: 0<x<=0.3
-        b_B = (2 / sp.sqrt(6 * x)) * sp.cos(
-            sp.Rational(1, 3) * sp.acos(-3 * sp.sqrt(6 * x) / 5)
+    def _M_expr(b):
+        """Piecewise maximal Spearman’s ρ in terms of b_new."""
+        # When |b| ≥ 1, then b_old = 1/|b| ≤ 1 → formula b_old‐small → inverts to:
+        M_when_abs_b_ge_1 = b - sp.Rational(3, 10) * b**2
+        # When |b| < 1, then b_old = 1/|b| > 1 → formula b_old‐large → inverts to:
+        M_when_abs_b_lt_1 = 1 - 1 / (2 * b**2) + 1 / (5 * b**3)
+        return sp.Piecewise(
+            (M_when_abs_b_ge_1, sp.Abs(b) >= 1),
+            (M_when_abs_b_lt_1, True),
         )
-        # Regime A: 0.3 < x < 1
-        b_A = (5 - sp.sqrt(5 * (6 * x - 1))) / 3
-        return sp.Piecewise((b_B, x <= xt), (b_A, True))
 
-    @staticmethod
-    def _M_expr(x):
-        """Maximal Spearman's rho M_x for a given x as in (2.11)."""
-        xt = sp.Rational(3, 10)
-        b = RhoMinusXiMaximalCopula._b_expr(x)
-        M_B = 1 / b - sp.Rational(3, 10) / b**2
-        M_A = 1 - b**2 / 2 + b**3 / 5
-        return sp.Piecewise((M_B, x <= xt), (M_A, True))
-
+    # -------- Shift s_v(b) -------- #
     @staticmethod
     def _s_expr(v, b):
-        """Shift s_v (max‐band) as in (2.12)."""
-        # small‐b region: b <= 1
-        v1_s = b / 2
-        s1_s = sp.sqrt(2 * v * b)
-        s2_s = v + b / 2
-        s3_s = 1 + b - sp.sqrt(2 * b * (1 - v))
+        """
+        Compute s_v for given v and new parameter b_new, where b_old = 1/|b|.
+        """
+        b_old = 1 / sp.Abs(b)
+
+        # Region “small‐b_old”: |b_old| ≤ 1  ⇔  |b| ≥ 1
+        v1_s_s = b_old / 2
+        s1_s_s = sp.sqrt(2 * v * b_old)
+        s2_s_s = v + b_old / 2
+        s3_s_s = 1 + b_old - sp.sqrt(2 * b_old * (1 - v))
         s_small = sp.Piecewise(
-            (s1_s, v <= v1_s),
-            (s2_s, v <= 1 - v1_s),
-            (s3_s, True),
+            (s1_s_s, v <= v1_s_s),
+            (s2_s_s, v <= 1 - v1_s_s),
+            (s3_s_s, True),
         )
 
-        # large‐b region: b > 1
-        v1_L = 1 / (2 * b)
-        s1_L = sp.sqrt(2 * v * b)
-        s2_L = v * b + sp.Rational(1, 2)
-        s3_L = 1 + b - sp.sqrt(2 * b * (1 - v))
+        # Region “large‐b_old”: |b_old| > 1  ⇔  |b| < 1
+        v1_s_L = 1 / (2 * b_old)
+        s1_s_L = sp.sqrt(2 * v * b_old)
+        s2_s_L = v * b_old + sp.Rational(1, 2)
+        s3_s_L = 1 + b_old - sp.sqrt(2 * b_old * (1 - v))
         s_large = sp.Piecewise(
-            (s1_L, v <= v1_L),
-            (s2_L, v <= 1 - v1_L),
-            (s3_L, True),
+            (s1_s_L, v <= v1_s_L),
+            (s2_s_L, v <= 1 - v1_s_L),
+            (s3_s_L, True),
         )
 
-        return sp.Piecewise((s_small, b <= 1), (s_large, True))
+        return sp.Piecewise(
+            (s_small, sp.Abs(b) >= 1),
+            (s_large, True),
+        )
 
-    @property
-    def cdf(self):
-        u, v, x = self.u, self.v, self.x
-        b = self._b_expr(x)
-        s = self._s_expr(v, b)
-        a = sp.Max(s - b, 0)      # a_v = s_v - b_x
-        t = s                     # triangle tip
-        middle = a + (2 * s * (u - a) - u**2 - a**2) / (2 * b)
+    # -------- Base‐CDF for b > 0 -------- #
+    @staticmethod
+    def _base_cdf_expr(u, v, b):
+        """
+        The “upright” CDF formula valid when b_new > 0.  Here b_old = 1/b_new.
+        """
+        b_old = 1 / b
+        s = RhoMinusXiMaximalCopula._s_expr(v, b)
+        a = sp.Max(s - b_old, 0)
+        t = s
+        middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
 
-        C = sp.Piecewise(
-            (u, u <= a),
+        return sp.Piecewise(
+            (u,      u <= a),
             (middle, u <= t),
-            (v, True),
+            (v,      True),
         )
 
-        # cache for subsequent differentiation
-        self._cdf_expr = C
-        return SymPyFuncWrapper(C)
+    # -------- CDF / PDF definitions -------- #
+    @property
+    def _cdf_expr(self):
+        b, u, v = self.b, self.u, self.v
 
-    def pdf(self):
+        # The “upright” expression for b > 0:
+        C_pos = self._base_cdf_expr(u, v, b)
+
+        # For b < 0, we reflect:  C_neg(u,v) = v - C_pos(1-u, v) with b → |b|
+        C_reflected = v - self._base_cdf_expr(1 - u, v, sp.Abs(b))
+
+        # Piecewise: choose C_pos if b > 0, else reflection
+        C_full = sp.Piecewise(
+            (C_pos, b > 0),
+            (C_reflected, True),
+        )
+        return C_full
+
+    def _pdf_expr(self):
         """Joint density c(u,v) = ∂²C/∂u∂v."""
         expr = self.cdf.func.diff(self.u).diff(self.v)
         return SymPyFuncWrapper(expr)
 
+    # -------- Metadata -------- #
     @property
     def is_absolutely_continuous(self) -> bool:
         return True
@@ -159,12 +218,13 @@ class RhoMinusXiMaximalCopula(BivCopula):
         return True
 
 
+# ---------------- Demo ---------------- #
 if __name__ == "__main__":
-    x_val = 0.1
-    C = RhoMinusXiMaximalCopula(x_val)
-
-    # Example: evaluate CDF, PDF, or plot
-    print("b(x) =", C._b_expr(x_val))
-    print("M(x) =", C._M_expr(x_val))
-    print("CDF at (0.5,0.5) =", C.cdf(0.5, 0.5))
-    C.plot_pdf(title=f"Contour of PDF for x={x_val}", plot_type="contour", log_z=True, grid_size=200)
+    # Example usage: pick any nonzero b_new
+    for b_val in [0.5, 1, 5]:
+        C = RhoMinusXiMaximalCopula(b_val)
+        print(C.cdf(0.1, 0.1))
+        # C.plot_pdf(plot_type="contour", log_z=True, grid_size=2000)
+        C.plot_cond_distr_1(plot_type="functions", title=None, zlabel=None)
+    # Optionally, contour‐plot the PDF for a given b_new:
+    # C.plot_pdf(title=f"Contour of PDF for b={b_val}", plot_type="contour", log_z=True, grid_size=200)
