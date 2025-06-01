@@ -2,11 +2,12 @@ import numpy as np
 import sympy as sp
 
 from copul.families.core.copula import Copula
+from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class IndependenceCopula(Copula):
+class IndependenceCopula(Copula, CopulaPlottingMixin):
     """
     Multivariate Independence Copula implementation.
 
@@ -23,7 +24,7 @@ class IndependenceCopula(Copula):
 
     params = []  # No parameters needed for independence copula
     intervals = {}  # No parameter intervals
-
+    
     def __init__(self, dimension=2, **kwargs):
         """
         Initialize a multivariate independence copula.

@@ -595,13 +595,24 @@ class BivCoreCopula:
         return self._plot_contour(pdf, title=title, zlabel="PDF", log_z=log_z, **kwargs)
 
     def plot_cond_distr_1(self, *, plot_type="3d", log_z=False, **kwargs):
-        if plot_type not in {"3d", "contour"}:
-            raise ValueError("plot_type must be '3d' or 'contour'")
+        if plot_type not in {"3d", "contour", "functions"}:
+            raise ValueError("plot_type must be '3d', 'contour', or 'functions'")
         cond_distr_1 = self.cond_distr_1
-        title = CopulaGraphs(self).get_copula_title()
+        if "title" not in kwargs:
+            title = CopulaGraphs(self).get_copula_title()
+        else:
+            title = kwargs.pop("title")
+        if "zlabel" not in kwargs:
+            zlabel = "Conditional Distribution 1"
+        else:
+            zlabel = kwargs.pop("zlabel")
         if plot_type == "3d":
-            return self._plot3d(cond_distr_1, title=title, zlabel="Conditional Distribution 1")
-        return self._plot_contour(cond_distr_1, title=title, zlabel="Conditional Distribution 1", log_z=log_z, **kwargs)
+            return self._plot3d(cond_distr_1, title=title, zlabel=zlabel)
+        elif plot_type == "functions":
+            return self._plot_functions(
+                cond_distr_1, title=title, zlabel=zlabel, **kwargs
+            )
+        return self._plot_contour(cond_distr_1, title=title, zlabel=zlabel, log_z=log_z, **kwargs)
 
     def plot_cond_distr_2(self, *, plot_type="3d", log_z=False, **kwargs):
         if plot_type not in {"3d", "contour"}:
@@ -667,6 +678,54 @@ class BivCoreCopula:
         plt.title(title)
         plt.show()
         self.intervals = intervals  # otherwise it may have been modified by the plot
+
+    def _plot_functions(self, func, title, zlabel, **kwargs):
+        """
+        Evaluate the given bivariate function at v = 0.1, 0.2, ..., 0.9 and
+        plot the resulting one-dimensional curves (u vs. func(u, v_i)) in
+        a single figure.
+        """
+        # Resolve the callable similarly to _plot3d/_plot_contour
+        try:
+            sig = inspect.signature(func).parameters
+            if isinstance(func, types.MethodType):
+                func = func()
+        except (ValueError, TypeError):
+            pass
+
+        # If wrapped by a SymPyFuncWrapper or CD wrappers, extract the underlying Expr
+        if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
+            f = sp.lambdify((self.u, self.v), func.func, "numpy")
+        elif isinstance(func, sp.Expr):
+            f = sp.lambdify((self.u, self.v), func, "numpy")
+        else:
+            # Assume func is already a numpy-friendly callable of two arguments
+            f = func
+
+        # Prepare a grid of u values
+        u_vals = np.linspace(0.01, 0.99, 200)
+
+        # Choose a set of v-values: 0.1, 0.2, …, 0.9
+        v_vals = np.linspace(0.1, 0.9, 9)
+
+        plt.figure()
+        for v_i in v_vals:
+            # Compute func(u, v_i) over u_vals
+            try:
+                y_vals = f(v_i, u_vals)
+            except Exception:
+                # In case f expects scalar inputs, vectorize
+                y_vals = np.array([f(u, v_i) for u in u_vals])
+            plt.plot(u_vals, y_vals, label=f"u = {v_i:.1f}", **kwargs)
+
+        if title is not None:
+            plt.title(f"{title} — {zlabel}")
+        plt.xlabel("v")
+        if zlabel is not None:
+            plt.ylabel(zlabel)
+        plt.legend()
+        plt.grid(True)
+        plt.show()
 
 
     def _plot_contour(self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs):
