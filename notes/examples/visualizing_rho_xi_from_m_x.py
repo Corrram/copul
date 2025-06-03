@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 # ------------------------- Helper functions ------------------------- #
 def b_from_x_regime1(x_val: float) -> float:
     """b(x) for x in (3/10, 1]  with b > 1."""
@@ -43,7 +44,7 @@ def M_x_upper_bound_corrected(x_val: float) -> float:
             return 1.0 if b == np.inf else np.nan
         return 1 - 1 / (2 * b**2) + 1 / (5 * b**3)
 
-    if np.isclose(x_val, x_thresh):           # x = 3/10
+    if np.isclose(x_val, x_thresh):  # x = 3/10
         b = 1.0
         return b - (3 * b**2) / 10
 
@@ -52,11 +53,13 @@ def M_x_upper_bound_corrected(x_val: float) -> float:
 
 # ----------------------------- Data --------------------------------- #
 eps = 1e-9
-xi = np.concatenate([
-    np.linspace(0.0, 3 / 10 - eps, 150),
-    np.linspace(3 / 10 - eps, 3 / 10 + eps, 50),
-    np.linspace(3 / 10 + eps, 1.0, 150),
-])
+xi = np.concatenate(
+    [
+        np.linspace(0.0, 3 / 10 - eps, 150),
+        np.linspace(3 / 10 - eps, 3 / 10 + eps, 50),
+        np.linspace(3 / 10 + eps, 1.0, 150),
+    ]
+)
 xi = np.unique(np.clip(xi, 0.0, 1.0))
 
 rho_up = np.array([M_x_upper_bound_corrected(x) for x in xi])
@@ -76,9 +79,13 @@ ax.plot(xi_v, rho_lo_v, color=BLUE, lw=2.5)
 
 # Main attainable region
 ax.fill_between(
-    xi_v, rho_lo_v, rho_up_v,
+    xi_v,
+    rho_lo_v,
+    rho_up_v,
     where=rho_up_v >= rho_lo_v,
-    color=FILL, alpha=0.7, zorder=0,
+    color=FILL,
+    alpha=0.7,
+    zorder=0,
     label="Attainable region",
 )
 
@@ -86,14 +93,24 @@ ax.fill_between(
 mask_top = rho_up_v > xi_v
 mask_bottom = rho_lo_v < -xi_v
 ax.fill_between(
-    xi_v, np.maximum(xi_v, rho_lo_v), rho_up_v,
+    xi_v,
+    np.maximum(xi_v, rho_lo_v),
+    rho_up_v,
     where=mask_top,
-    facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0,
+    facecolor="none",
+    hatch="..",
+    edgecolor=BLUE,
+    linewidth=0,
 )
 ax.fill_between(
-    xi_v, rho_lo_v, np.minimum(-xi_v, rho_up_v),
+    xi_v,
+    rho_lo_v,
+    np.minimum(-xi_v, rho_up_v),
     where=mask_bottom,
-    facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0,
+    facecolor="none",
+    hatch="..",
+    edgecolor=BLUE,
+    linewidth=0,
 )
 
 # Key points

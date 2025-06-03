@@ -20,6 +20,14 @@ copul.families.other.biv\_independence\_copula module
    :show-inheritance:
    :undoc-members:
 
+copul.families.other.diagonal\_band\_copula module
+--------------------------------------------------
+
+.. automodule:: copul.families.other.diagonal_band_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.other.farlie\_gumbel\_morgenstern module
 -------------------------------------------------------
 
@@ -84,10 +92,26 @@ copul.families.other.raftery module
    :show-inheritance:
    :undoc-members:
 
+copul.families.other.rho\_minus\_xi\_maximal\_copula module
+-----------------------------------------------------------
+
+.. automodule:: copul.families.other.rho_minus_xi_maximal_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.other.upper\_frechet module
 ------------------------------------------
 
 .. automodule:: copul.families.other.upper_frechet
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.other.xi\_max\_rho\_s\_copula module
+---------------------------------------------------
+
+.. automodule:: copul.families.other.xi_max_rho_s_copula
    :members:
    :show-inheritance:
    :undoc-members:

@@ -24,7 +24,7 @@ class IndependenceCopula(Copula, CopulaPlottingMixin):
 
     params = []  # No parameters needed for independence copula
     intervals = {}  # No parameter intervals
-    
+
     def __init__(self, dimension=2, **kwargs):
         """
         Initialize a multivariate independence copula.

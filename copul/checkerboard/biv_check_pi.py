@@ -244,23 +244,4 @@ if __name__ == "__main__":
     M = [[1, 0, 0, 0], [0, 0.5, 0.5, 0], [0, 0.5, 0.5, 0], [0, 0, 0, 1]]
     ccop = BivCheckPi(M)
     xi = ccop.xi()
-    # ccop.plot_cond_distr_1()
-    # ccop.transpose().plot_cond_distr_1()
-    is_cis, is_cds = ccop.is_cis()
-    is_tp2 = ccop.is_tp2()
-    transpose_is_cis, transpose_is_cds = ccop.transpose().is_cis()
-    transpose_is_tp2 = ccop.transpose().is_tp2()
-    check_min = ccop.to_check_min((2, 2))
-    print(check_min.matr)
-    check_min_xi = check_min.xi()
-    check_min_44_xi = ccop.to_check_min((4, 4)).xi()
-    M2 = [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]
-    ccop2 = BivCheckPi(M2).to_check_min((4, 4))
-    check_min_44_xi = ccop2.xi()
-    check_min_22_xi = ccop2.to_check_min((2, 2)).xi()
-    print(
-        f"4x4 Xi: {xi}, 2x2-CheckMin Xi: {check_min_xi}, 4x4-CheckMin Xi: {check_min_44_xi}, 2x2-CheckMin Xi2: {check_min_22_xi}"
-    )
-    print(f"CIS: {is_cis}, Transpose CIS: {transpose_is_cis}")
-    print(f"CDS: {is_cds}, Transpose CDS: {transpose_is_cds}")
-    print(f"TP2: {is_tp2}, Transpose TP2: {transpose_is_tp2}")
+    ccop.plot_cdf()
