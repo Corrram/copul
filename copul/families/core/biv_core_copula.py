@@ -712,15 +712,15 @@ class BivCoreCopula:
         for v_i in v_vals:
             # Compute func(u, v_i) over u_vals
             try:
-                y_vals = f(v_i, u_vals)
+                y_vals = f(u_vals, v_i)
             except Exception:
                 # In case f expects scalar inputs, vectorize
                 y_vals = np.array([f(u, v_i) for u in u_vals])
-            plt.plot(u_vals, y_vals, label=f"u = {v_i:.1f}", **kwargs)
+            plt.plot(u_vals, y_vals, label=f"v = {v_i:.1f}", **kwargs)
 
         if title is not None:
             plt.title(f"{title} — {zlabel}")
-        plt.xlabel("v")
+        plt.xlabel("u")
         if zlabel is not None:
             plt.ylabel(zlabel)
         plt.legend()

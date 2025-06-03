@@ -50,7 +50,7 @@ def main(b0, v_line):
 
     # 5) build grid
     n = 400
-    u = np.linspace(0, 1, n)
+    u = np.linspace(-1, 2, n)
     v = np.linspace(0, 1, n)
     U, V = np.meshgrid(u, v)
 
@@ -60,7 +60,7 @@ def main(b0, v_line):
         sv = s_func(vi)
         av = a_of_v(vi)
         dsv = ds_func(vi)
-        mask = (U[i, :] >= av) & (U[i, :] <= sv)
+        mask = (U[i, :] >= av) & (U[i, :] <= sv) & (U[i, :] >= 0) & (U[i, :] <= 1)
         C[i, mask] = dsv / b0
 
     # largest finite C value
@@ -80,8 +80,10 @@ def main(b0, v_line):
     v_curve = np.linspace(0, 1, 400)
     a_curve = np.array([a_of_v(vi) for vi in v_curve])
     s_curve = np.array([s_func(vi) for vi in v_curve])
-    ax.plot(a_curve, v_curve, 'k-', lw=1.2)
-    ax.plot(s_curve, v_curve, 'k-', lw=1.2)
+    inner_are_color = "white"  # color for the inner area
+    outer_area_color = "white"
+    ax.plot(a_curve, v_curve, 'k-', lw=1.2, color=inner_are_color)
+    ax.plot(s_curve, v_curve, 'k-', lw=1.2, color=inner_are_color)
 
     # 10) set x-axis limits to show support around v_line
     lower_bound = min(0, a_v - 0.1)
@@ -90,23 +92,27 @@ def main(b0, v_line):
 
     # 11) horizontal line at v_line
     if a_v < 0:
-        ax.hlines(v_line, a_v, 0, colors='black', linestyles='--', linewidth=1.5)
+        ax.hlines(v_line, a_v, 0, colors=outer_area_color, linestyles='--', linewidth=1.5)
     # middle segment (inside support)
     ax.hlines(v_line, 0, 1, colors='white', linestyles='--', linewidth=1.5)
     # right segment (outside support)
     if s_v > 1:
-        ax.hlines(v_line, 1, s_v, colors='black', linestyles='--', linewidth=1.5)
+        ax.hlines(v_line, 1, s_v, colors=outer_area_color, linestyles='--', linewidth=1.5)
 
     # 12) markers & labels
     ax.scatter([a_v, s_v], [v_line, v_line],
-            c='white', edgecolor='black', zorder=3)
+            c='white', edgecolor=outer_area_color, zorder=3)
     for x_pt, label in [(a_v, r'$a_v$'), (s_v, r'$s_v$')]:
-        col = 'white' if (0 <= x_pt <= 1) else 'black'
+        col = 'white' if (0 <= x_pt <= 1) else outer_area_color
         ax.text(x_pt, v_line + 0.02, label,
                 ha='center', color=col, fontsize=14, zorder=3)
 
-    # 13) finalize
-    ax.set_xlabel(f'$u~~~(b={b_inv},~v={v_line}$)')
+    # 13) dashed vertical bars at u = 0 and u = 1 (in white)
+    ax.vlines(0, 0, 1, colors='white', linestyles='--', linewidth=1.5)
+    ax.vlines(1, 0, 1, colors='white', linestyles='--', linewidth=1.5)
+
+    # 14) finalize
+    ax.set_xlabel(f'$u$')  #~~~(b={b_inv},~v={v_line}$)')
     ax.set_ylabel('$v$')
     # ax.set_title(
     #     # f'Contour of $c(u,v)$ for $b_{{inv}}={b_inv}$ (so $b=1/b_{{inv}}={b0:.3f}$)\n'
@@ -117,7 +123,7 @@ def main(b0, v_line):
 
 if __name__ == "__main__":
     # 1) Parameter: now using b_inv so that b0 = 1 / b_inv
-    b_inv = 0.5    # choose b_inv ≠ 0; then b0 = 1/b_inv
+    b_inv = 0.5 # choose b_inv ≠ 0; then b0 = 1/b_inv
     b0 = 1.0 / b_inv
     v_line = 0.6
     main(b0, v_line)

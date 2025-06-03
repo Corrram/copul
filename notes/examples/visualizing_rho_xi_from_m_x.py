@@ -88,20 +88,20 @@ mask_bottom = rho_lo_v < -xi_v
 ax.fill_between(
     xi_v, np.maximum(xi_v, rho_lo_v), rho_up_v,
     where=mask_top,
-    facecolor="none", hatch="||", edgecolor=BLUE, linewidth=0,
+    facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0,
 )
 ax.fill_between(
     xi_v, rho_lo_v, np.minimum(-xi_v, rho_up_v),
     where=mask_bottom,
-    facecolor="none", hatch="||", edgecolor=BLUE, linewidth=0,
+    facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0,
 )
 
 # Key points
 ax.scatter([0, 1, 1], [0, 1, -1], s=60, color="black", zorder=5)
 
 # Reference lines y = x and y = −x
-ax.plot([0, 1], [0, 1], color="black", lw=0.8, linestyle="--")
-ax.plot([0, 1], [0, -1], color="black", lw=0.8, linestyle="--")
+# ax.plot([0, 1], [0, 1], color="black", lw=0.8, linestyle="--")
+# ax.plot([0, 1], [0, -1], color="black", lw=0.8, linestyle="--")
 
 # Labels, ticks, grid
 ax.set_xlabel(r"Chatterjee's $\xi$", fontsize=16)
