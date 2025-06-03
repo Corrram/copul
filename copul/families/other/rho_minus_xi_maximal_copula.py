@@ -3,7 +3,6 @@ import sympy as sp
 
 from copul.families.core.biv_copula import BivCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
-from copul.families.other.independence_copula import IndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -180,9 +179,9 @@ class RhoMinusXiMaximalCopula(BivCopula):
         middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
 
         return sp.Piecewise(
-            (u,      u <= a),
+            (u, u <= a),
             (middle, u <= t),
-            (v,      True),
+            (v, True),
         )
 
     # -------- CDF / PDF definitions -------- #
@@ -225,6 +224,6 @@ if __name__ == "__main__":
         C = RhoMinusXiMaximalCopula(b_val)
         print(C.cdf(0.1, 0.1))
         # C.plot_pdf(plot_type="contour", log_z=True, grid_size=2000)
-        C.plot_cond_distr_1(plot_type="functions", title=None, zlabel=None)
+        C.plot_cond_distr_1(plot_type="functions", title=None, zlabel=None, xlabel="t")
     # Optionally, contour‐plot the PDF for a given b_new:
     # C.plot_pdf(title=f"Contour of PDF for b={b_val}", plot_type="contour", log_z=True, grid_size=200)

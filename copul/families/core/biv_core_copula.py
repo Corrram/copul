@@ -6,7 +6,7 @@ import types
 import numpy as np
 import sympy as sp
 from matplotlib import pyplot as plt
-from matplotlib import colors as mcolors 
+from matplotlib import colors as mcolors
 
 from copul.schur_order.cis_verifier import CISVerifier
 from copul.families.copula_graphs import CopulaGraphs
@@ -548,7 +548,16 @@ class BivCoreCopula:
         plotter = RankCorrelationPlotter(self, log_cut_off, approximate)
         plotter.plot_rank_correlations(n_obs, n_params, params, plot_var, ylim)
 
-    def plot_cdf(self, data=None, title=None, zlabel=None, *, plot_type="3d", log_z=False, **kwargs):
+    def plot_cdf(
+        self,
+        data=None,
+        title=None,
+        zlabel=None,
+        *,
+        plot_type="3d",
+        log_z=False,
+        **kwargs,
+    ):
         """Plot the cumulative distribution function (CDF).
 
         Parameters
@@ -567,12 +576,16 @@ class BivCoreCopula:
             zlabel = ""
 
         if data is not None and plot_type == "contour":
-            raise ValueError("Contour plots from external data are not supported – set plot_type='3d' or omit *data*.")
+            raise ValueError(
+                "Contour plots from external data are not supported – set plot_type='3d' or omit *data*."
+            )
 
         if data is None:
             if plot_type == "3d":
                 return self._plot3d(self.cdf, title=title, zlabel=zlabel, zlim=(0, 1))
-            return self._plot_contour(self.cdf, title=title, zlabel=zlabel, zlim=(0, 1), log_z=log_z, **kwargs)
+            return self._plot_contour(
+                self.cdf, title=title, zlabel=zlabel, zlim=(0, 1), log_z=log_z, **kwargs
+            )
         return self._plot_cdf_from_data(data)
 
     def plot_pdf(self, *args, plot_type="3d", log_z=False, **kwargs):
@@ -606,13 +619,20 @@ class BivCoreCopula:
             zlabel = "Conditional Distribution 1"
         else:
             zlabel = kwargs.pop("zlabel")
+        if "xlabel" in kwargs:
+            xlabel = kwargs.pop("xlabel")
+        else:
+            xlabel = "u"
+
         if plot_type == "3d":
             return self._plot3d(cond_distr_1, title=title, zlabel=zlabel)
         elif plot_type == "functions":
             return self._plot_functions(
-                cond_distr_1, title=title, zlabel=zlabel, **kwargs
+                cond_distr_1, title=title, zlabel=zlabel, xlabel=xlabel, **kwargs
             )
-        return self._plot_contour(cond_distr_1, title=title, zlabel=zlabel, log_z=log_z, **kwargs)
+        return self._plot_contour(
+            cond_distr_1, title=title, zlabel=zlabel, log_z=log_z, **kwargs
+        )
 
     def plot_cond_distr_2(self, *, plot_type="3d", log_z=False, **kwargs):
         if plot_type not in {"3d", "contour"}:
@@ -620,8 +640,16 @@ class BivCoreCopula:
         cond_distr_2 = self.cond_distr_2
         title = CopulaGraphs(self).get_copula_title()
         if plot_type == "3d":
-            return self._plot3d(cond_distr_2, title=title, zlabel="Conditional Distribution 2")
-        return self._plot_contour(cond_distr_2, title=title, zlabel="Conditional Distribution 2", log_z=log_z, **kwargs)
+            return self._plot3d(
+                cond_distr_2, title=title, zlabel="Conditional Distribution 2"
+            )
+        return self._plot_contour(
+            cond_distr_2,
+            title=title,
+            zlabel="Conditional Distribution 2",
+            log_z=log_z,
+            **kwargs,
+        )
 
     def _plot3d(self, func, title, zlabel, zlim=None):
         """
@@ -679,7 +707,7 @@ class BivCoreCopula:
         plt.show()
         self.intervals = intervals  # otherwise it may have been modified by the plot
 
-    def _plot_functions(self, func, title, zlabel, **kwargs):
+    def _plot_functions(self, func, title, zlabel, xlabel="u", **kwargs):
         """
         Evaluate the given bivariate function at v = 0.1, 0.2, ..., 0.9 and
         plot the resulting one-dimensional curves (u vs. func(u, v_i)) in
@@ -687,7 +715,7 @@ class BivCoreCopula:
         """
         # Resolve the callable similarly to _plot3d/_plot_contour
         try:
-            sig = inspect.signature(func).parameters
+            inspect.signature(func).parameters
             if isinstance(func, types.MethodType):
                 func = func()
         except (ValueError, TypeError):
@@ -727,8 +755,9 @@ class BivCoreCopula:
         plt.grid(True)
         plt.show()
 
-
-    def _plot_contour(self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs):
+    def _plot_contour(
+        self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs
+    ):
         r"""Create a filled contour plot.
 
         If ``log_z`` is *True*, the colour map is based on
@@ -790,7 +819,6 @@ class BivCoreCopula:
         plt.title(title)
         plt.show()
         self.intervals = intervals_backup
-
 
     def lambda_L(self):
         """

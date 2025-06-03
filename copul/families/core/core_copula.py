@@ -705,8 +705,8 @@ class CoreCopula:
         Return the survival (upper–tail) copula 𝑪̂ corresponding to *self*.
 
         In d dimensions the survival copula is given by the inclusion–
-        exclusion formula  
-            𝑪̂(u) = Σ_{J⊆{1,…,d}} (−1)^{|J|} C(u_J^c),  
+        exclusion formula
+            𝑪̂(u) = Σ_{J⊆{1,…,d}} (−1)^{|J|} C(u_J^c),
         where *u_J^c* replaces u_j by 1 for j∈J.
 
         Returns
@@ -736,10 +736,10 @@ class CoreCopula:
         Return the vertical reflection C^{∨} of *self* with respect to one
         margin.
 
-        By default (margin=2) and for the bivariate case this is  
+        By default (margin=2) and for the bivariate case this is
             C^{∨}(u,v) = u − C(u, 1−v).
 
-        For arbitrary `margin = j` (1 ≤ j ≤ dim) the definition is  
+        For arbitrary `margin = j` (1 ≤ j ≤ dim) the definition is
             C^{∨}(u) = u_j − C(u_1,…,u_{j−1}, 1−u_j, u_{j+1},…,u_d).
 
         Parameters
