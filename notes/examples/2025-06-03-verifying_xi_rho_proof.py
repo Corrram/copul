@@ -389,7 +389,7 @@ print(
 )  # Text: $(3-2b-b^2)/12$
 
 # (iii) $1-b/2 \le v \le 1$. $s_v = 1+b-\sqrt{2(1-v)/b}$, $a_v = s_v-1/b$. $h_v(t)$ is 1 then $b(s_v-t)$.
-s_v_K_b_le_1_z3 = 1 + b - sqrt(2 * (1 - v) / b)
+s_v_K_b_le_1_z3 = 1 + 1/b - sqrt(2 * (1 - v) / b)
 a_v_K_b_le_1_z3 = s_v_K_b_le_1_z3 - 1 / b
 int_K_b_le_1_z3_dt_part1 = integrate((1 - t) * 1, (t, 0, a_v_K_b_le_1_z3))
 int_K_b_le_1_z3_dt_part2 = integrate(
