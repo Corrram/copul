@@ -222,7 +222,6 @@ if __name__ == "__main__":
     # Example usage: pick any nonzero b_new
     for b_val in [0.5, 1, 5]:
         C = RhoMinusXiMaximalCopula(b_val)
-        print(C.cdf(0.1, 0.1))
         # C.plot_pdf(plot_type="contour", log_z=True, grid_size=2000)
         C.plot_cond_distr_1(plot_type="functions", title=None, zlabel=None, xlabel="t")
     # Optionally, contour‐plot the PDF for a given b_new:

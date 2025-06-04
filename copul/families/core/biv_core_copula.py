@@ -748,7 +748,7 @@ class BivCoreCopula:
 
         if title is not None:
             plt.title(f"{title} — {zlabel}")
-        plt.xlabel("u")
+        plt.xlabel(xlabel)
         if zlabel is not None:
             plt.ylabel(zlabel)
         plt.legend()
