@@ -114,7 +114,15 @@ ax.fill_between(
 )
 
 # Key points
+# Key points with fine-tuned label positions
 ax.scatter([0, 1, 1], [0, 1, -1], s=60, color="black", zorder=5)
+ax.annotate(r"$\Pi$", (0, 0), xytext=(10, 0), textcoords="offset points",
+            fontsize=18, ha="left", va="center")
+ax.annotate(r"$M$", (1, 1), xytext=(0, -5), textcoords="offset points",
+            fontsize=18, ha="right", va="top")
+ax.annotate(r"$W$", (1, -1), xytext=(0, 5), textcoords="offset points",
+            fontsize=18, ha="right", va="bottom")
+
 
 # Reference lines y = x and y = −x
 # ax.plot([0, 1], [0, 1], color="black", lw=0.8, linestyle="--")
