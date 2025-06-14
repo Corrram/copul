@@ -680,7 +680,10 @@ class BivCoreCopula:
             pass
         else:
             if isinstance(func, types.MethodType):  #  and len(parameters) == 0:
-                func = func()
+                try:
+                    func = func()
+                except ValueError:
+                    pass
         if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
             f = sp.lambdify((self.u, self.v), func.func)
         elif isinstance(func, sp.Expr):

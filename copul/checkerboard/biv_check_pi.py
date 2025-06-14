@@ -245,3 +245,4 @@ if __name__ == "__main__":
     ccop = BivCheckPi(M)
     xi = ccop.xi()
     ccop.plot_cdf()
+    ccop.plot_pdf()
