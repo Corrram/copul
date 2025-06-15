@@ -29,10 +29,10 @@ h_v_t_pa1 = (
 
 # Subcase s_v <= 1:
 integral_v_pa1 = integrate(h_v_t_pa1, (t, 0, s_v))
-print(f"Integral for v (s_v <= 1): integral((s_v-t)/mu, (t,0,s_v)) = {integral_v_pa1}")
+print(rf"Integral for v (s_v <= 1): integral((s_v-t)/mu, (t,0,s_v)) = {integral_v_pa1}")
 # Expected: s_v**2 / (2*mu)
 s_v_solution_pa1 = solve(integral_v_pa1 - v, s_v)
-print(f"Solutions for s_v when s_v**2/(2*mu) = v: {s_v_solution_pa1}")
+print(rf"Solutions for s_v when s_v**2/(2*mu) = v: {s_v_solution_pa1}")
 # We pick the positive root: sqrt(2*v*mu)
 
 # Subcase s_v > 1 (but still s_v <= mu):
@@ -43,9 +43,9 @@ integral_v_pa2 = integrate(
 # If s_v > 1, the integral is effectively $\int_0^1 \frac{s_v-t}{\mu} dt$ assuming $h_v(t)$ is not zeroed out by clamp.
 # The text formulation is $\int_0^{s_v \wedge 1}$ means $\int_0^1 \frac{s_v-t}{\mu} dt$ if $s_v > 1$.
 integral_v_pa2_text = (2 * s_v - 1) / (2 * mu)
-print(f"Integral for v (s_v > 1, from text): (2*s_v-1)/(2*mu) = {integral_v_pa2_text}")
+print(rf"Integral for v (s_v > 1, from text): (2*s_v-1)/(2*mu) = {integral_v_pa2_text}")
 s_v_solution_pa2 = solve(integral_v_pa2_text - v, s_v)
-print(f"Solutions for s_v when (2*s_v-1)/(2*mu) = v: {s_v_solution_pa2}")
+print(rf"Solutions for s_v when (2*s_v-1)/(2*mu) = v: {s_v_solution_pa2}")
 # Expected: v*mu + 1/2
 
 # Case (b) Plateau + triangle: mu <= s_v <= 1
@@ -56,10 +56,10 @@ print(f"Solutions for s_v when (2*s_v-1)/(2*mu) = v: {s_v_solution_pa2}")
 print("\nCase (b) Plateau + triangle, mu <= s_v <= 1:")
 # a_v_def_b = s_v - mu
 integral_v_pb = integrate(1, (t, 0, a_v)) + integrate((s_v - t) / mu, (t, a_v, s_v))
-print(f"Integral for v (plateau): {simplify(integral_v_pb.subs(a_v, s_v - mu))}")
+print(rf"Integral for v (plateau): {simplify(integral_v_pb.subs(a_v, s_v - mu))}")
 # Expected: s_v - mu/2
 s_v_solution_pb = solve(integral_v_pb.subs(a_v, s_v - mu) - v, s_v)
-print(f"Solutions for s_v when s_v - mu/2 = v: {s_v_solution_pb}")
+print(rf"Solutions for s_v when s_v - mu/2 = v: {s_v_solution_pb}")
 # Expected: v + mu/2
 
 # Case (c) Truncated at t=1: s_v >= 1
@@ -74,7 +74,7 @@ print("\nCase (c) Truncated at t=1, s_v >= 1:")
 # Assume a_v < 1 for this calculation.
 integral_v_pc = integrate(1, (t, 0, a_v)) + integrate((s_v - t) / mu, (t, a_v, 1))
 integral_v_pc_sub = integral_v_pc.subs(a_v, s_v - mu)
-print(f"Integral for v (truncated): {simplify(integral_v_pc_sub)}")
+print(rf"Integral for v (truncated): {simplify(integral_v_pc_sub)}")
 # Expected from text: a_v + (2*s_v*(1-a_v) - 1 + a_v**2) / (2*mu)
 # After subbing a_v = s_v - mu: (s_v**2 - (s_v-1)**2 - mu**2 + 2*mu*s_v - 2*mu) / (2*mu)
 # which simplifies to (2*s_v - 1 - mu**2 + 2*mu*s_v - 2*mu) / (2*mu)
@@ -82,7 +82,7 @@ print(f"Integral for v (truncated): {simplify(integral_v_pc_sub)}")
 eq_sc = s_v**2 / mu - 2 * (1 / mu + 1) * s_v + (1 / mu + mu + 2 * v)
 s_v_solution_pc = solve(eq_sc, s_v)
 print(
-    f"Solutions for s_v from quadratic s_v^2/mu - 2(1/mu+1)s_v + (1/mu+mu+2v) = 0: {s_v_solution_pc}"
+    rf"Solutions for s_v from quadratic s_v^2/mu - 2(1/mu+1)s_v + (1/mu+mu+2v) = 0: {s_v_solution_pc}"
 )
 # Expected: 1 + mu +/- sqrt(2*mu*(1-v)) after simplification (the roots are ( (1+mu) +/- sqrt((1+mu)**2 - mu*(1/mu+mu+2*v)) ) / 1 but need to match text)
 # Let's check: ( (1+mu) +/- sqrt(1+2*mu+mu**2 - (1+mu**2+2*v*mu)) ) = 1+mu +/- sqrt(2*mu - 2*v*mu) = 1+mu +/- sqrt(2*mu*(1-v))
@@ -103,14 +103,14 @@ s_v_sym = Symbol("s_v_sym")  # To avoid clash with global s_v
 # Integral h_v(t)^2 dt = integral_0^s_v ((s_v-t)/mu)^2 dt
 int_h_sq_A1_integrand = ((s_v_sym - t) / mu) ** 2
 int_h_sq_A1_dt = integrate(int_h_sq_A1_integrand, (t, 0, s_v_sym))
-print(f"Integral h_v(t)^2 dt (Zone A1, s_v <= 1): {int_h_sq_A1_dt}")
+print(rf"Integral h_v(t)^2 dt (Zone A1, s_v <= 1): {int_h_sq_A1_dt}")
 # Expected: s_v_sym**3 / (3*mu**2)
 # Substitute s_v_sym = sqrt(2*v*mu):
 int_h_sq_A1_v = int_h_sq_A1_dt.subs(s_v_sym, sqrt(2 * v * mu))
-print(f"Integral h_v(t)^2 dt (Zone A1, s_v=sqrt(2vmu)): {simplify(int_h_sq_A1_v)}")
+print(rf"Integral h_v(t)^2 dt (Zone A1, s_v=sqrt(2vmu)): {simplify(int_h_sq_A1_v)}")
 # Expected: (2*sqrt(2)/ (3*sqrt(mu))) * v**(3/2)
 I_A1 = integrate(int_h_sq_A1_v, (v, 0, mu / 2))
-print(f"I_A1 = integral_0^(mu/2) of ({simplify(int_h_sq_A1_v)}) dv = {simplify(I_A1)}")
+print(rf"I_A1 = integral_0^(mu/2) of ({simplify(int_h_sq_A1_v)}) dv = {simplify(I_A1)}")
 # Expected: mu**2/15
 
 # Zone 2: mu/2 <= v <= 1 - mu/2. s_v = v + mu/2, a_v = v - mu/2
@@ -124,11 +124,11 @@ a_v_A2 = v - mu / 2
 int_h_sq_A2_dt = integrate(1**2, (t, 0, a_v_A2)) + integrate(
     ((s_v_A2 - t) / mu) ** 2, (t, a_v_A2, s_v_A2)
 )
-print(f"Integral h_v(t)^2 dt (Zone A2): {simplify(int_h_sq_A2_dt)}")
+print(rf"Integral h_v(t)^2 dt (Zone A2): {simplify(int_h_sq_A2_dt)}")
 # Expected: a_v + mu/3 = (v - mu/2) + mu/3 = v - mu/6
 I_A2 = integrate(simplify(int_h_sq_A2_dt), (v, mu / 2, 1 - mu / 2))
 print(
-    f"I_A2 = integral_(mu/2)^(1-mu/2) of ({simplify(int_h_sq_A2_dt)}) dv = {simplify(I_A2)}"
+    rf"I_A2 = integral_(mu/2)^(1-mu/2) of ({simplify(int_h_sq_A2_dt)}) dv = {simplify(I_A2)}"
 )
 # Expected: 1/2 - 2*mu/3 + mu**2/6
 
@@ -144,7 +144,7 @@ a_v_A3 = 1 - sqrt(2 * mu * (1 - v))  # which is s_v_A3 - mu
 # = a_v + (mu^3 - (s_v-1)^3)/(3*mu^2) = a_v + mu/3 - (s_v-1)^3/(3*mu^2)
 int_h_sq_A3_dt_formula = a_v_A3 + mu / 3 - (s_v_A3 - 1) ** 3 / (3 * mu**2)
 int_h_sq_A3_dt_simplified = simplify(int_h_sq_A3_dt_formula)
-print(f"Integral h_v(t)^2 dt (Zone A3 formula): {int_h_sq_A3_dt_simplified}")
+print(rf"Integral h_v(t)^2 dt (Zone A3 formula): {int_h_sq_A3_dt_simplified}")
 # Text has: $1 - \sqrt{2\mu(1-v)} + \tfrac{\mu}3 - \tfrac{(\mu - \sqrt{2\mu(1-v)})^3}{3\mu^2}$
 # This is $a_v + \mu/3 - (s_v-a_v - \sqrt{2\mu(1-v)})^3 / (3\mu^2)$ NO.
 # The text is $a_v + \mu/3 - (\text{term related to } (s_v-1)^3 / (3\mu^2))$.
@@ -160,16 +160,16 @@ integrand_A3_u = (
 )
 I_A3 = integrate(integrand_A3_u, (u_sub, 0, mu / 2))
 print(
-    f"I_A3 = integral_0^(mu/2) of (integrand for Zone A3 with u=1-v) du = {simplify(I_A3)}"
+    rf"I_A3 = integral_0^(mu/2) of (integrand for Zone A3 with u=1-v) du = {simplify(I_A3)}"
 )
 # Expected: mu/2 - 11*mu**2/60
 
 I_A_mu = simplify(I_A1 + I_A2 + I_A3)
-print(f"I_A(mu) = I_A1 + I_A2 + I_A3 = {I_A_mu}")
+print(rf"I_A(mu) = I_A1 + I_A2 + I_A3 = {I_A_mu}")
 # Expected: mu**2/20 - mu/6 + 1/2
 
 x_A_mu = simplify(6 * I_A_mu - 2)
-print(f"x_A(mu) = 6*I_A(mu) - 2 = {x_A_mu}")
+print(rf"x_A(mu) = 6*I_A(mu) - 2 = {x_A_mu}")
 # Expected: 1 - mu + 3*mu**2/10
 # Range for x_A(mu) for 0 < mu <= 1:
 # x_A(0) = 1. x_A(1) = 1 - 1 + 3/10 = 3/10.
@@ -179,7 +179,7 @@ print(f"x_A(mu) = 6*I_A(mu) - 2 = {x_A_mu}")
 # Solve x_A(mu) = x for mu:
 eq_mu_A = x_A_mu - x
 mu_solutions_A = solve(eq_mu_A, mu)
-print(f"Solutions for mu from 3*mu^2/10 - mu + (1-x) = 0: {mu_solutions_A}")
+print(rf"Solutions for mu from 3*mu^2/10 - mu + (1-x) = 0: {mu_solutions_A}")
 # Expected: (5 +/- sqrt(5*(6*x-1)))/3. For mu <= 1, take the '-' root.
 
 # Case B: mu >= 1
@@ -189,7 +189,7 @@ print("\nCase B: mu >= 1")
 I_B1 = integrate(
     (2 * sqrt(2) / (3 * sqrt(mu))) * v ** Rational(3, 2), (v, 0, 1 / (2 * mu))
 )
-print(f"I_B1 = {simplify(I_B1)}")
+print(rf"I_B1 = {simplify(I_B1)}")
 # Expected: 1/(15*mu**3)
 
 # Zone 2: 1/(2*mu) <= v <= 1 - 1/(2*mu).
@@ -199,10 +199,10 @@ print(f"I_B1 = {simplify(I_B1)}")
 # Integral h_v(t)^2 dt = integral_0^1 ((s_v-t)/mu)^2 dt = (s_v^3 - (s_v-1)^3)/(3*mu^2)
 s_v_B2 = v * mu + Rational(1, 2)
 int_h_sq_B2_dt = (s_v_B2**3 - (s_v_B2 - 1) ** 3) / (3 * mu**2)
-print(f"Integral h_v(t)^2 dt (Zone B2): {simplify(int_h_sq_B2_dt)}")
+print(rf"Integral h_v(t)^2 dt (Zone B2): {simplify(int_h_sq_B2_dt)}")
 # Expected: v**2 + 1/(12*mu**2)
 I_B2 = integrate(simplify(int_h_sq_B2_dt), (v, 1 / (2 * mu), 1 - 1 / (2 * mu)))
-print(f"I_B2 = {simplify(I_B2)}")
+print(rf"I_B2 = {simplify(I_B2)}")
 # Expected: 1/3 - 1/(2*mu) + 1/(3*mu**2) - 1/(6*mu**3)
 
 # Zone 3: 1 - 1/(2*mu) <= v <= 1. s_v = 1 + mu - sqrt(2*mu*(1-v)), a_v = 1 - sqrt(2*mu*(1-v))
@@ -213,15 +213,15 @@ integrand_B3_u = (
     (1 - sqrt(2 * mu * u_sub)) + mu / 3 - (mu - sqrt(2 * mu * u_sub)) ** 3 / (3 * mu**2)
 )  # same as A3 integrand
 I_B3 = integrate(integrand_B3_u, (u_sub, 0, 1 / (2 * mu)))
-print(f"I_B3 = {simplify(I_B3)}")
+print(rf"I_B3 = {simplify(I_B3)}")
 # Expected: 1/(2*mu) - 1/(4*mu**2) + 1/(15*mu**3) -- Note: text has 1/(15*mu^3), not 1/(30*mu^3) for its expression of I_B,3 before summing
 
 I_B_mu = simplify(I_B1 + I_B2 + I_B3)
-print(f"I_B(mu) = I_B1 + I_B2 + I_B3 = {I_B_mu}")
+print(rf"I_B(mu) = I_B1 + I_B2 + I_B3 = {I_B_mu}")
 # Expected: 1/3 + 1/(12*mu**2) - 1/(30*mu**3)
 
 x_B_mu = simplify(6 * I_B_mu - 2)
-print(f"x_B(mu) = 6*I_B(mu) - 2 = {x_B_mu}")
+print(rf"x_B(mu) = 6*I_B(mu) - 2 = {x_B_mu}")
 
 # Define symbols
 x, mu, theta = symbols('x mu theta', positive=True)
@@ -236,7 +236,7 @@ f = 10*x*mu**3 - 5*mu + 2
 res = simplify(f.subs(mu, mu_expr))
 
 # Verify that the result is zero
-print(f"Verification of mu(x): f(mu(x)) = {res}")
+print(rf"Verification of mu(x): f(mu(x)) = {res}")
 # Expected: 1/(2*mu**2) - 1/(5*mu**3)
 
 # Solve x_B(mu) = x for mu:
@@ -270,11 +270,11 @@ print("\n--- Part 3: Explicit forms of C_b(u,v) ---")
 
 # Case 1: 0 <= u <= a_v
 C_b_c1 = integrate(1, (t, 0, u))
-print(f"C_b(u,v) for 0 <= u <= a_v: {C_b_c1}")  # Expected: u
+print(rf"C_b(u,v) for 0 <= u <= a_v: {C_b_c1}")  # Expected: u
 
 # Case 2: a_v < u <= s_v
 C_b_c2 = integrate(1, (t, 0, a_v)) + integrate(b * (s_v - t), (t, a_v, u))
-print(f"C_b(u,v) for a_v < u <= s_v: {simplify(C_b_c2)}")
+print(rf"C_b(u,v) for a_v < u <= s_v: {simplify(C_b_c2)}")
 # Expected: a_v + b*(s_v*(u-a_v) - (u**2-a_v**2)/2) which is a_v + b*s_v*u - b*s_v*a_v - b*u**2/2 + b*a_v**2/2
 
 # Case 3: s_v < u <= 1
@@ -284,7 +284,7 @@ C_b_c3 = (
     + integrate(0, (t, s_v, u))
 )
 # The integral up to s_v is v by definition of s_v.
-print(f"C_b(u,v) for s_v < u <= 1, from calculation: {simplify(C_b_c3)}")
+print(rf"C_b(u,v) for s_v < u <= 1, from calculation: {simplify(C_b_c3)}")
 # Expected: v. Check: a_v + b(s_v*s_v - s_v**2/2 - s_v*a_v + a_v**2/2)
 # = a_v + b(s_v**2/2 - s_v*a_v + a_v**2/2) = a_v + b/2 * (s_v**2 - 2*s_v*a_v + a_v**2)
 # = a_v + b/2 * (s_v-a_v)**2. Substitute a_v = s_v - 1/b
@@ -302,7 +302,7 @@ int_h_sq_chat = integrate(1, (t, 0, a_v)) + integrate(
 int_h_sq_chat_simplified = simplify(
     int_h_sq_chat.subs(a_v, s_v - 1 / b)
 )  # Using s_v-a_v = 1/b
-print(f"Integral h_v(t)^2 dt for Chatterjee xi: {int_h_sq_chat_simplified}")
+print(rf"Integral h_v(t)^2 dt for Chatterjee xi: {int_h_sq_chat_simplified}")
 # Expected: a_v + 1/(3b)
 
 print("\n--- Part 5: Spearman's rho M_x ---")
@@ -331,10 +331,10 @@ integrand_KA1_dt = Bk * (s_v_KA1 - t) * (1 - t)  # h_v(t) * (1-t)
 int_KA1_dt = simplify(
     integrate(integrand_KA1_dt, (t, 0, s_v_KA1))
 )  # Assuming s_v_KA1 <= 1
-print(f"Inner integral for K(Bk) Case A(i): {int_KA1_dt}")
+print(rf"Inner integral for K(Bk) Case A(i): {int_KA1_dt}")
 # Expected from text: v - (sqrt(2/Bk)*v^(3/2))/3
 I1_Bk_KA = simplify(integrate(int_KA1_dt, (v, 0, Bk / 2)))  # v_1 = Bk/2
-print(f"I1(Bk) for K(Bk) Case A(i): {I1_Bk_KA}")
+print(rf"I1(Bk) for K(Bk) Case A(i): {I1_Bk_KA}")
 # Expected: 11*Bk**2/120
 
 # Case A(ii): Bk/2 <= v <= 1-Bk/2. Text says $s_v = v*Bk + 1/2$. This is $s_v = v/\mu_{eff} + 1/2$.
@@ -372,7 +372,7 @@ int_K_b_le_1_z1_dt = simplify(
 # Result: $v - \frac{\sqrt{2} v^{3/2}}{3\sqrt{b}}$
 I1_K_b_le_1 = simplify(integrate(int_K_b_le_1_z1_dt, (v, 0, b / 2)))  # $v_1=b/2$
 print(
-    f"K(b) Case $b \le 1$, Zone 1 (v in [0, b/2]), I1_K: {I1_K_b_le_1}"
+    rf"K(b) Case $b \le 1$, Zone 1 (v in [0, b/2]), I1_K: {I1_K_b_le_1}"
 )  # Text: $11b^2/120$
 
 # (ii) $b/2 \le v \le 1-b/2$. $s_v = vb+1/2$. This is confusing. $s_v = v/b+1/2$ if $b$ is $\mu$.
@@ -385,7 +385,7 @@ int_K_b_le_1_z2_dt = simplify(integrand_K_b_le_1_z2_dt)
 # Result: $v/2 + b/12$
 I2_K_b_le_1 = simplify(integrate(int_K_b_le_1_z2_dt, (v, b / 2, 1 - b / 2)))
 print(
-    f"K(b) Case $b \le 1$, Zone 2 (v in [b/2, 1-b/2]), I2_K: {I2_K_b_le_1}"
+    rf"K(b) Case $b \le 1$, Zone 2 (v in [b/2, 1-b/2]), I2_K: {I2_K_b_le_1}"
 )  # Text: $(3-2b-b^2)/12$
 
 # (iii) $1-b/2 \le v \le 1$. $s_v = 1+b-\sqrt{2(1-v)/b}$, $a_v = s_v-1/b$. $h_v(t)$ is 1 then $b(s_v-t)$.
@@ -400,12 +400,12 @@ int_K_b_le_1_z3_dt_part2 = integrate(
 int_K_b_le_1_z3_dt_from_text = Rational(1, 2) - ((1 - v) * sqrt(2 * (1 - v) / b)) / 3
 I3_K_b_le_1 = simplify(integrate(int_K_b_le_1_z3_dt_from_text, (v, 1 - b / 2, 1)))
 print(
-    f"K(b) Case $b \le 1$, Zone 3 (v in [1-b/2, 1]), I3_K: {I3_K_b_le_1}"
+    rf"K(b) Case $b \le 1$, Zone 3 (v in [1-b/2, 1]), I3_K: {I3_K_b_le_1}"
 )  # Text: $(15b-2b^2)/60$
 
 K_b_le_1_sum = simplify(I1_K_b_le_1 + I2_K_b_le_1 + I3_K_b_le_1)
 print(
-    f"Sum for K(b) when $b \le 1$: {K_b_le_1_sum}"
+    rf"Sum for K(b) when $b \le 1$: {K_b_le_1_sum}"
 )  # Text: $1/4+b/12-b^2/40$ (This is actually K for $b \ge 1$ in summary).
 # The text summary for K(b) has $b \le 1$ for $1/4+b/12-b^2/40$.
 # The text $M_x$ formula for $x \in (0, 3/10]$ (which implies $b \le 1$ or $\mu \ge 1$) is $b-3b^2/10$.
@@ -421,7 +421,7 @@ I1_K_b_ge_1 = simplify(
     integrate(v - (sqrt(2) * v ** Rational(3, 2)) / (3 * sqrt(b)), (v, 0, 1 / (2 * b)))
 )
 print(
-    f"K(b) Case $b \ge 1$, Zone 1 (v in [0, 1/(2b)]), I1_K: {I1_K_b_ge_1}"
+    rf"K(b) Case $b \ge 1$, Zone 1 (v in [0, 1/(2b)]), I1_K: {I1_K_b_ge_1}"
 )  # Text: $1/(8b^2)-1/(30b^3)$
 
 # (ii) $1/(2b) \le v \le 1-1/(2b)$. $s_v=v+1/(2b)$, $a_v=v-1/(2b)$. $h_v(t)$ is 1 then ramp.
@@ -439,7 +439,7 @@ I2_K_b_ge_1 = simplify(
     integrate(int_K_b_ge_1_z2_dt_from_text, (v, 1 / (2 * b), 1 - 1 / (2 * b)))
 )
 print(
-    f"K(b) Case $b \ge 1$, Zone 2 (v in [1/(2b), 1-1/(2b)]), I2_K: {I2_K_b_ge_1}"
+    rf"K(b) Case $b \ge 1$, Zone 2 (v in [1/(2b), 1-1/(2b)]), I2_K: {I2_K_b_ge_1}"
 )  # Text: $1/3-1/(2b)+1/(12b^3)$ (text has error in middle term, should be $1/(24b^2)$ related, my derivation $1/3 -1/(3b) + 1/(24*b**2)$ when integrating $v-v^2/2-v/(24b^2)$ )
 # The text $1/3-1/(24b^2)+1/(12b^3)$ looks like it's integrating $(v-v^2/2-C/v)$ or constant $C$. The integrand given is $v-v^2/2 - 1/(24b^2)$.
 # $\int (v-v^2/2-1/(24b^2)) dv = v^2/2 - v^3/6 - v/(24b^2)$.
@@ -454,14 +454,14 @@ int_K_b_ge_1_z3_dt_from_text = Rational(1, 2) - (
 ) / (3 * sqrt(b))
 I3_K_b_ge_1 = simplify(integrate(int_K_b_ge_1_z3_dt_from_text, (v, 1 - 1 / (2 * b), 1)))
 print(
-    f"K(b) Case $b \ge 1$, Zone 3 (v in [1-1/(2b), 1]), I3_K: {I3_K_b_ge_1}"
+    rf"K(b) Case $b \ge 1$, Zone 3 (v in [1-1/(2b), 1]), I3_K: {I3_K_b_ge_1}"
 )  # Text: $1/(8b^2)-1/(30b^3)$ (Same as I1_K_b_ge_1 by symmetry)
 
 K_b_ge_1_sum = simplify(
     I1_K_b_ge_1 + I2_K_b_ge_1 + I3_K_b_ge_1
 )  # Needs correct I2_K_b_ge_1
 print(
-    f"Sum for K(b) when $b \ge 1$ (using text's I2): {simplify(I1_K_b_ge_1 + (Rational(1, 3) - 1 / (24 * b**2) + 1 / (12 * b**3)) + I3_K_b_ge_1)}"
+    rf"Sum for K(b) when $b \ge 1$ (using text's I2): {simplify(I1_K_b_ge_1 + (Rational(1, 3) - 1 / (24 * b**2) + 1 / (12 * b**3)) + I3_K_b_ge_1)}"
 )
 # Text sum: $1/3-1/(24b^2)+1/(60b^3)$. (The $1/(12b^3)$ from $I_2(b)$ plus $2*(-1/(30b^3))$ from $I_1,I_3$ makes $ (5-2)/60 = 3/60 = 1/20$? )
 # $I1+I3 = 1/(4b^2) - 1/(15b^3)$.

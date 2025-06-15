@@ -413,7 +413,8 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
 
 if __name__ == "__main__":
     # Example usage
-    copula = ShuffleOfMin([2, 1, 3])
+    copula = ShuffleOfMin([1, 3, 2])
+    copula.plot_c_over_u()
     copula.plot_cdf()
     copula.plot_cond_distr_1()
     copula.plot_cond_distr_2()

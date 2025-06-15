@@ -65,6 +65,8 @@ from copul.families.other.upper_frechet import UpperFrechet
 from copul.family_list import Families
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.schur_order.cis_verifier import CISVerifier
+from copul.schur_order.ltd_verifier import LTDVerifier
+from copul.schur_order.plod_verifier import PLODVerifier
 
 __all__ = [
     "xi_ncalculate",
@@ -140,5 +142,7 @@ __all__ = [
     # Miscellaneous
     "CISRearranger",
     "CISVerifier",
+    "LTDVerifier",
+    "PLODVerifier",
     "ShuffleOfMin",
 ]

@@ -216,14 +216,54 @@ class RhoMinusXiMaximalCopula(BivCopula):
     def is_symmetric(self) -> bool:
         return True
 
+    def xi(self):
+        """
+        Closed-form ξ(b_new).  Recall b_old = 1/|b_new|, so the ‘≤ 1 / ≥ 1’
+        conditions in Prop. 3.4 are swapped when we work in the new scale.
 
+            • |b_new| ≥ 1  (⇔ |b_old| ≤ 1):
+                  ξ = (1 / 10|b|²) · (5 − 2/|b|)
+
+            • |b_new| < 1   (⇔ |b_old| ≥ 1):
+                  ξ = 1 − |b| + (3/10) |b|²
+        """
+        b = 1/self.b
+        xi_large  = (sp.Rational(1, 10) / sp.Abs(b)**2) * (5 - 2 / sp.Abs(b))
+        xi_small  = 1 - sp.Abs(b) + sp.Rational(3, 10) * sp.Abs(b)**2
+        return sp.Piecewise(
+            (xi_large, sp.Abs(b) >= 1),   # |b_new| ≥ 1
+            (xi_small, True),             # |b_new|  < 1
+        )
+
+    # -------- ρ(b)   (Spearman’s rho) ----------------------------------- #
+    def rho(self):
+        """
+        Closed-form ρ(b_new).  From Prop. 3.4 with the same change of
+        parameter as above (b_old = 1/|b_new|):
+
+            • |b_new| ≥ 1  (⇔ |b_old| ≤ 1):
+                  ρ = sgn(b)·( 1/|b| − 3/(10|b|²) )
+
+            • |b_new| < 1   (⇔ |b_old| ≥ 1):
+                  ρ = sgn(b)·( 1 − |b|²/2 ) + |b|³/5
+        """
+        b = self.b
+        rho_large = sp.sign(b) * (1 / sp.Abs(b) - sp.Rational(3, 10) / sp.Abs(b)**2)
+        rho_small = sp.sign(b) * (1 - sp.Abs(b)**2 / 2) + sp.Abs(b)**3 / 5
+        return sp.Piecewise(
+            (rho_large, sp.Abs(b) >= 1),  # |b_new| ≥ 1
+            (rho_small, True),            # |b_new|  < 1
+        )
 # ---------------- Demo ---------------- #
 if __name__ == "__main__":
     # Example usage: pick any nonzero b_new
-    for b_val in [0.5, 1, 5]:
+    for b_val in [0.5, 0.8, 1, 1.3, 5]:
         C = RhoMinusXiMaximalCopula(b_val)
+        xi = C.xi()
+        rho = C.rho()
+        print(f"b_new = {b_val}, xi = {xi}, rho = {rho}")
         # C.plot_pdf(plot_type="contour", log_z=True, grid_size=2000)
         # C.plot_cond_distr_1(plot_type="functions", title=None, zlabel=None, xlabel="t")
-        C.scatter_plot()
+        # C.scatter_plot()
     # Optionally, contour‐plot the PDF for a given b_new:
     # C.plot_pdf(title=f"Contour of PDF for b={b_val}", plot_type="contour", log_z=True, grid_size=200)

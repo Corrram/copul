@@ -8,6 +8,7 @@ class CISVerifier:
     """
     Verifier for Comprehensive Increasing/Decreasing Stochasticity (CIS) property
     of copulas.
+    Also known as stochastically increasing/decreasing copulas (CI/CD).
     """
 
     def __init__(self, cond_distr=1):

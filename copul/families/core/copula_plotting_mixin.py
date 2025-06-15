@@ -1,6 +1,7 @@
 from matplotlib import rcParams
 import matplotlib.pyplot as plt
 import numpy as np
+import sympy as sp
 from copul.families.copula_graphs import CopulaGraphs
 
 
@@ -464,3 +465,84 @@ class CopulaPlottingMixin:
             return self.scatter_plot(
                 n=n, figsize=figsize, colormap=colormap, style=style, dpi=dpi
             )
+
+    def plot_c_over_u(self, *, plot_type="3d", log_z=False, **kwargs):
+        """
+        Plot the ratio  C(u,v) / u  on (0,1)².
+
+        Works whether ``cdf`` is a SymPy expression/wrapper *or* a numeric
+        Python function (e.g. in ``ShuffleOfMin``).
+
+        Parameters
+        ----------
+        plot_type : {"3d", "contour", "functions"}, optional
+            - "3d"      : surface plot (default)  
+            - "contour" : filled contour plot  
+            - "functions": 9 one-dimensional slices  v = 0.1,…,0.9
+        log_z : bool, optional
+            Log–colour scale for the contour plot.
+        **kwargs  : forwarded to the internal plotting routine.
+        """
+        # ------------------------------------------------------------------
+        # Build a callable / SymPy expression for C(u,v)/u
+        # ------------------------------------------------------------------
+        ratio_obj = None
+        if hasattr(self.cdf, "func"):                      # SymPy wrapper
+            ratio_obj = sp.simplify(self.cdf.func / self.u)
+        elif isinstance(self.cdf, sp.Expr):                # bare SymPy Expr
+            ratio_obj = sp.simplify(self.cdf / self.u)
+        else:                                              # numeric callable
+            ratio_obj = lambda u, v: self.cdf(u, v) / u
+
+        title  = kwargs.pop(
+            "title",
+            f"{CopulaGraphs(self).get_copula_title()}  –  C(u,v)/u",
+        )
+        zlabel = kwargs.pop("zlabel", r"$C(u,v)/u$")
+
+        if plot_type == "3d":
+            return self._plot3d(ratio_obj, title=title, zlabel=zlabel, **kwargs)
+        if plot_type == "contour":
+            return self._plot_contour(
+                ratio_obj, title=title, zlabel=zlabel, log_z=log_z, **kwargs
+            )
+        if plot_type == "functions":
+            return self._plot_functions(
+                ratio_obj, title=title, zlabel=zlabel, xlabel="u", **kwargs
+            )
+        raise ValueError("plot_type must be '3d', 'contour', or 'functions'.")
+
+    def plot_c_over_v(self, *, plot_type="3d", log_z=False, **kwargs):
+        """
+        Plot the ratio  C(u,v) / v  on (0,1)².
+
+        The interface is identical to ``plot_c_over_u``.
+        """
+        # ------------------------------------------------------------------
+        # Build a callable / SymPy expression for C(u,v)/v
+        # ------------------------------------------------------------------
+        ratio_obj = None
+        if hasattr(self.cdf, "func"):                      # SymPy wrapper
+            ratio_obj = sp.simplify(self.cdf.func / self.v)
+        elif isinstance(self.cdf, sp.Expr):                # bare SymPy Expr
+            ratio_obj = sp.simplify(self.cdf / self.v)
+        else:                                              # numeric callable
+            ratio_obj = lambda u, v: self.cdf(u, v) / v
+
+        title  = kwargs.pop(
+            "title",
+            f"{CopulaGraphs(self).get_copula_title()}  –  C(u,v)/v",
+        )
+        zlabel = kwargs.pop("zlabel", r"$C(u,v)/v$")
+
+        if plot_type == "3d":
+            return self._plot3d(ratio_obj, title=title, zlabel=zlabel, **kwargs)
+        if plot_type == "contour":
+            return self._plot_contour(
+                ratio_obj, title=title, zlabel=zlabel, log_z=log_z, **kwargs
+            )
+        if plot_type == "functions":
+            return self._plot_functions(
+                ratio_obj, title=title, zlabel=zlabel, xlabel="u", **kwargs
+            )
+        raise ValueError("plot_type must be '3d', 'contour', or 'functions'.")

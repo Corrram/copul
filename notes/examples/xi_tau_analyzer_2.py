@@ -73,7 +73,7 @@ def simulate2():
         print(f"xi > tau: {xi} > {tau}; is cis {cis}; for the matrix:\n{matr}")
 
 
-def simulate_one(n, rearranger):
+def simulate_one(n):
     # 1) draw n permutations all at once via argsort of uniforms
     perms = np.argsort(np.random.rand(n, n), axis=1)  # shape (n,n)
     # 2) draw n exponential random variables
@@ -92,23 +92,35 @@ def simulate_one(n, rearranger):
     np.add.at(M, (rows.ravel(), cols.ravel()), weights.ravel())
 
     # 4) feed into copul
-    ccop = cp.BivCheckPi(M)
-    ccop_r_matr = rearranger.rearrange_checkerboard(ccop)
-    ccop_r = cp.BivCheckPi(ccop_r_matr)
-    return ccop_r
+    return cp.BivCheckPi(M)
 
 
 def main(num_iters=1_000_000):
-    rearranger = cp.CISRearranger()  # instantiate once
+    # rearranger = cp.CISRearranger() 
+    n_max = 10
+    ltd_counter = 0
     for i in range(1, num_iters + 1):
-        n = np.random.randint(1, 51)
-        ccop_r = simulate_one(n, rearranger)
+        n = np.random.randint(2, n_max)
+        ccop = simulate_one(n)
+        # ccop_r_matr = rearranger.rearrange_checkerboard(ccop)
+        # ccop_r = cp.BivCheckPi(ccop_r_matr)
         # ccop_r.scatter_plot()
-        xi = ccop_r.xi()
-        tau = ccop_r.tau()
-        cis, cds = ccop_r.is_cis()
-        if xi > tau:
-            print(f"xi > tau: {xi:.4f} > {tau:.4f}; cis: {cis}; matr:\n{ccop_r.matr}")
+        is_ltd = cp.LTDVerifier().is_ltd(ccop)
+        is_plod = cp.PLODVerifier().is_plod(ccop)
+        if not is_ltd:
+            # print(f"Iteration {i}: LTD property violated for n={n}.")
+            if i % 10_000 == 0:
+                print(f"Iteration {i} completed.")
+            continue
+        ltd_counter += 1
+        xi = ccop.xi()
+        tau = ccop.tau()
+        rho = ccop.rho()
+        if rho < xi:
+            print(f"Iteration {i}: tau={tau:.4f}, xi={xi:.4f}, rho={rho:.4f} for n={n}.")
+            print(f"Matrix:\n{ccop.matr}")
+            cis, cds = ccop.is_cis()
+            print(f"CIS: {cis}, CDS: {cds}, LTD: {is_ltd}, PLOD: {is_plod}")
 
         if i % 10_000 == 0:
             print(f"Iteration {i} completed.")
