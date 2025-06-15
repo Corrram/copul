@@ -188,61 +188,10 @@ class BivCheckPi(CheckPi, BivCoreCopula):
 
 
 if __name__ == "__main__":
-    matr3 = [[1, 0, 1, 0], [1, 0, 1, 0], [0, 1, 0, 1], [0, 1, 0, 1]]
-
-    def make_adjacent_ones(n: int) -> np.ndarray:
-        """
-        Return an n×n 0/1‐matrix where each row has exactly two consecutive 1’s
-        and each column also sums to 2.
-        """
-        assert n % 2 == 0, "n must be even"
-        mat = np.zeros((n, n), dtype=int)
-        distinct_positions = n // 2  # number of possible start‐positions
-        for i in range(n):
-            start = (i % distinct_positions) * 2
-            mat[i, start : start + 2] = 1
-        return mat
-
-    def make_16x16_adjacent_ones() -> np.ndarray:
-        return make_adjacent_ones(16)
-
-    def make_32x32_adjacent_ones() -> np.ndarray:
-        return make_adjacent_ones(32)
-
-    def make_64x64_adjacent_ones() -> np.ndarray:
-        return make_adjacent_ones(64)
-
-    def make_9x9_subblock_matrix():
-        D = np.diag([1, 1, 1])  # 3×3 diagonal
-        OO = np.ones((3, 3), dtype=int) / 3  # 3×3 ones
-        Z = np.zeros((3, 3), dtype=int)  # 3×3 zeros
-
-        top = np.hstack([D, Z, Z])
-        middle = np.hstack([Z, OO, Z])
-        bottom = np.hstack([Z, Z, D])
-
-        return np.vstack([top, middle, bottom])
-
-    def make_6x6_subblock_matrix():
-        D = np.diag([1, 1])  # 2×2 diagonal
-        OO = np.ones((2, 2), dtype=int) / 2  # 2×2 ones
-        Z = np.zeros((2, 2), dtype=int)  # 2×2 zeros
-
-        top = np.hstack([D, Z, Z])
-        middle = np.hstack([Z, OO, Z])
-        bottom = np.hstack([Z, Z, D])
-
-        return np.vstack([top, middle, bottom])
-
-    M = make_6x6_subblock_matrix().T / 6
-    n = 6
-    T = np.ones(n) - np.tri(n)
-    M_xi = T @ T.T + T.T + 1 / 3 * np.eye(n)
-    print(np.trace(M @ M.T @ M_xi))
-    print("Row sums:", np.unique(M.sum(axis=1)))
-    print("Col sums:", np.unique(M.sum(axis=0)))
-    M = [[1, 0, 0, 0], [0, 0.5, 0.5, 0], [0, 0.5, 0.5, 0], [0, 0, 0, 1]]
-    ccop = BivCheckPi(M)
+    matr = [[3,0,0],[0,2,1],[0,1,2]]
+    ccop = BivCheckPi(matr)
+    ccop.plot_c_over_u()
+    ccop.plot_cond_distr_1()
     xi = ccop.xi()
-    ccop.plot_cdf()
-    ccop.plot_pdf()
+    # ccop.plot_cdf()
+    # ccop.plot_pdf()

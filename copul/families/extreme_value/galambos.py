@@ -110,3 +110,11 @@ class Galambos(BivExtremeValueCopula):
 
 
 # B7 = Galambos
+
+if __name__ == "__main__":
+    copul = Galambos(delta=1)
+    copul.plot_pdf()
+    ccop = copul.to_checkerboard()
+    xi = ccop.xi()
+    rho = ccop.rho()
+    print(f"xi: {xi}, rho: {rho}")
