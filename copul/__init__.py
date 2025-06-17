@@ -61,12 +61,14 @@ from copul.families.other.mardia import Mardia
 from copul.families.other.plackett import Plackett
 from copul.families.other.raftery import Raftery
 from copul.families.other.upper_frechet import UpperFrechet
+from copul.families.other.rho_minus_xi_maximal_copula import RhoMinusXiMaximalCopula
 
 from copul.family_list import Families
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.schur_order.cis_verifier import CISVerifier
 from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.schur_order.plod_verifier import PLODVerifier
+from copul.star_product import star_product
 
 __all__ = [
     "xi_ncalculate",
@@ -138,6 +140,7 @@ __all__ = [
     "Mardia",
     "Plackett",
     "Raftery",
+    "RhoMinusXiMaximalCopula",
     "UpperFrechet",
     # Miscellaneous
     "CISRearranger",
@@ -145,4 +148,5 @@ __all__ = [
     "LTDVerifier",
     "PLODVerifier",
     "ShuffleOfMin",
+    "star_product",
 ]

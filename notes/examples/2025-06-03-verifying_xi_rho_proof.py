@@ -292,7 +292,7 @@ print(rf"C_b(u,v) for s_v < u <= 1, from calculation: {simplify(C_b_c3)}")
 # This should be equal to v. s_v was solved from integral h_v(t)dt = v.
 # E.g. in plateau case (b) Part 1: s_v - mu/2 = v. Here mu=1/b, so s_v - 1/(2b) = v. Matches.
 
-print("\n--- Part 4: Chatterjee's xi ---")
+print(r"\n--- Part 4: Chatterjee's xi ---")
 # int_0^1 (d1 C_x(u,v))^2 du = int_0^1 h_v(t)^2 dt
 # h_v(t) from (eq:Hshape)
 # int_0^{a_v} 1^2 dt + int_{a_v}^{s_v} (b(s_v-t))^2 dt assuming s_v <= 1
@@ -305,10 +305,10 @@ int_h_sq_chat_simplified = simplify(
 print(rf"Integral h_v(t)^2 dt for Chatterjee xi: {int_h_sq_chat_simplified}")
 # Expected: a_v + 1/(3b)
 
-print("\n--- Part 5: Spearman's rho M_x ---")
+print(r"\n--- Part 5: Spearman's rho M_x ---")
 # K(b) = iint (1-t)*h_v(t) dt dv
 # Case A in K(b) proof: b <= 1 (means mu >= 1)
-print("\nK(b) Case $b \le 1$ (corresponds to $\mu \ge 1$)")
+print(r"\nK(b) Case $b \le 1$ (corresponds to $\mu \ge 1$)")
 # Breakpoints v1=1/(2b), v2=1-1/(2b) in the text for $K(b)$ Case B: $b \ge 1$.
 # The text for $K(b)$ has Case A: $b \le 1$ using breakpoints $v_1=b/2, v_2=1-b/2$.
 # This is very confusing. Let's follow K(b) structure directly.
@@ -352,7 +352,7 @@ s_v_KA2 = v * Bk + Rational(
 
 # Re-evaluating K(b) with $b$ as $1/\mu_x$.
 # Case A in K(b) proof: $b_param \le 1$. (This $b_param$ is $b_x$ from $C_b$)
-print("\nRe-evaluating K(b_param) Case A: b_param <= 1 (corresponds to $\mu_x \ge 1$)")
+print(r"\nRe-evaluating K(b_param) Case A: b_param <= 1 (corresponds to $\mu_x \ge 1$)")
 # (i) $0 \le v \le v_1 = \frac{1}{2 b_param}$ (This must be $v_1=1/(2\mu)$ with $\mu=b_param$. This seems wrong. $v_1$ for $\mu \ge 1$ is $1/(2\mu)$).
 # The conditions for $s_v$ in (eqs_vcase3) use $\mu$. $b=1/\mu$.
 # If $b \le 1 \implies \mu \ge 1$.
@@ -412,7 +412,7 @@ print(
 # $12 * (1/4+b/12-b^2/40) - 3 = 3 + b - 3b^2/10 - 3 = b - 3b^2/10$. This matches.
 
 # Case B in K(b) proof: $b_param \ge 1$. (corresponds to $\mu_x \le 1$)
-print("\nK(b_param) Case B: b_param >= 1 (corresponds to $\mu_x \le 1$)")
+print(r"\nK(b_param) Case B: b_param >= 1 (corresponds to $\mu_x \le 1$)")
 # $v_1 = 1/(2b)$, $v_2 = 1-1/(2b)$.
 # (i) $0 \le v \le 1/(2b)$. $s_v=\sqrt{2v/b}$. $h_v(t)=b(s_v-t)$ on $[0,s_v]$.
 # $s_v=\sqrt{2v/b} \le \sqrt{2(1/(2b))/b} = 1/b$. This is $\le 1$ since $b \ge 1$. So $s_v \le 1$.

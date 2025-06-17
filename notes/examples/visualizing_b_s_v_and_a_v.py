@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import PowerNorm
-
+import matplotlib.patheffects as pe      #  <<< add at the top with the other imports
 
 # 2) piecewise s(v) and derivative, defined in terms of b0
 def s_small(v, b):
@@ -99,32 +99,43 @@ def main(b0, v_line):
     ax.plot(s_curve, v_curve, "k-", lw=1.2, color=inner_are_color)
 
     # 10) set x-axis limits to show support around v_line
-    lower_bound = min(0, a_v - 0.1)
-    upper_bound = max(1, s_v + 0.1)
+    lower_bound = min(0, a_v - 0.2)
+    upper_bound = max(1, s_v + 0.2)
     ax.set_xlim(lower_bound, upper_bound)
 
     # 11) horizontal line at v_line
-    if a_v < 0:
-        ax.hlines(
-            v_line, a_v, 0, colors=outer_area_color, linestyles="--", linewidth=1.5
-        )
-    # middle segment (inside support)
-    ax.hlines(v_line, 0, 1, colors="white", linestyles="--", linewidth=1.5)
-    # right segment (outside support)
-    if s_v > 1:
-        ax.hlines(
-            v_line, 1, s_v, colors=outer_area_color, linestyles="--", linewidth=1.5
-        )
+    ax.hlines(v_line, -5, 5, colors="white", linestyles=":", linewidth=1.5)
+    # for x_pt in (a_v, s_v):
+    #     col = "white" if 0 <= x_pt <= 1 else outer_area_color
+    #     ax.vlines(x_pt, 0, v_line, colors=col, linestyles=":", linewidth=1.5)
 
-    # 12) markers & labels
-    ax.scatter(
-        [a_v, s_v], [v_line, v_line], c="white", edgecolor=outer_area_color, zorder=3
-    )
-    for x_pt, label in [(a_v, r"$a_v$"), (s_v, r"$s_v$")]:
-        col = "white" if (0 <= x_pt <= 1) else outer_area_color
-        ax.text(
-            x_pt, v_line + 0.02, label, ha="center", color=col, fontsize=14, zorder=3
-        )
+    # 12) markers on the horizontal slice v = v_line
+    ax.scatter([a_v, s_v], [v_line, v_line],
+               c="white", edgecolor=outer_area_color, zorder=3)
+
+    # text next to that slice
+    for x_pt, lbl in [(a_v, r"$(a_v,v)$"), (s_v, r"$(s_v,v)$")]:
+        txt = ax.text(x_pt, v_line + 0.02, lbl,
+                      ha="center", color="white", fontsize=14, zorder=3)
+        txt.set_path_effects([pe.Stroke(linewidth=2, foreground="black"),
+                              pe.Normal()])
+    # --- NEW: make a_v and s_v proper x-axis ticks --------------------
+    # keep the existing ticks and append the two new ones
+    xticks = list(ax.get_xticks()) + [a_v, s_v]
+    # remove duplicates and sort
+    xticks = sorted(set(np.round(xticks, 6)))
+    ax.set_xticks(xticks)
+
+    # custom labels: use LaTeX names for the special ticks
+    xtick_labels = []
+    for t in xticks:
+        if np.isclose(t, a_v):
+            xtick_labels.append(r"$a_v$")
+        elif np.isclose(t, s_v):
+            xtick_labels.append(r"$s_v$")
+        else:
+            xtick_labels.append(f"{t:g}")
+    ax.set_xticklabels(xtick_labels)
 
     # 13) dashed vertical bars at u = 0 and u = 1 (in white)
     ax.vlines(0, 0, 1, colors="white", linestyles="--", linewidth=1.5)
@@ -142,8 +153,5 @@ def main(b0, v_line):
 
 
 if __name__ == "__main__":
-    # 1) Parameter: now using b_inv so that b0 = 1 / b_inv
-    b_inv = 0.5  # choose b_inv ≠ 0; then b0 = 1/b_inv
-    b0 = 1.0 / b_inv
-    v_line = 0.6
-    main(b0, v_line)
+    for b in [0.5, 1, 5]:
+        main(1/b, 0.6)

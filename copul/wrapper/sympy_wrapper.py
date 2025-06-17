@@ -59,7 +59,7 @@ class SymPyFuncWrapper:
         if isinstance(result, sympy.Number):
             return float(result)
 
-        raise TypeError(f"Cannot convert expression '{self._func}' to float")
+        _
 
     def __repr__(self) -> str:
         """Return a string representation of the wrapped expression.
