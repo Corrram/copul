@@ -557,7 +557,7 @@ class BivCoreCopula:
         plot_type="3d",
         log_z=False,
         **kwargs,
-    ):
+    ) -> plt.Figure:
         """Plot the cumulative distribution function (CDF).
 
         Parameters
@@ -588,7 +588,7 @@ class BivCoreCopula:
             )
         return self._plot_cdf_from_data(data)
 
-    def plot_pdf(self, *args, plot_type="3d", log_z=False, **kwargs):
+    def plot_pdf(self, *args, plot_type="3d", log_z=False, **kwargs) -> plt.Figure:
         """Plot the probability density function (PDF).
 
         Parameters
@@ -607,7 +607,7 @@ class BivCoreCopula:
             return self._plot3d(pdf, title=title, zlabel="PDF", **kwargs)
         return self._plot_contour(pdf, title=title, zlabel="PDF", log_z=log_z, **kwargs)
 
-    def plot_cond_distr_1(self, *, plot_type="3d", log_z=False, **kwargs):
+    def plot_cond_distr_1(self, *, plot_type="3d", log_z=False, **kwargs) -> plt.Figure:
         if plot_type not in {"3d", "contour", "functions"}:
             raise ValueError("plot_type must be '3d', 'contour', or 'functions'")
         cond_distr_1 = self.cond_distr_1
@@ -651,7 +651,7 @@ class BivCoreCopula:
             **kwargs,
         )
 
-    def _plot3d(self, func, title, zlabel, zlim=None):
+    def _plot3d(self, func, title, zlabel, zlim=None) -> plt.Figure:
         """
         Generate a 3D plot of a given function of two variables.
 
@@ -671,7 +671,8 @@ class BivCoreCopula:
 
         Returns
         -------
-        None
+        plt.Figure
+            The generated 3D plot figure.
         """
         intervals = {k: v for k, v in self.intervals.items()}
         try:
@@ -709,14 +710,14 @@ class BivCoreCopula:
         plt.title(title)
         plt.show()
         self.intervals = intervals  # otherwise it may have been modified by the plot
+        return fig
 
-    def _plot_functions(self, func, title, zlabel, xlabel="u", **kwargs):
+    def _plot_functions(self, func, title, zlabel, xlabel="u", **kwargs) -> plt.Figure:
         """
-        Evaluate the given bivariate function at v = 0.1, 0.2, ..., 0.9 and
-        plot the resulting one-dimensional curves (u vs. func(u, v_i)) in
-        a single figure.
+        Evaluate the given bivariate function at v = 0.1, 0.2, …, 0.9 and
+        draw the resulting 1-D curves in one (square) figure.
         """
-        # Resolve the callable similarly to _plot3d/_plot_contour
+        # -------- resolve `func` exactly as in the original -----------------
         try:
             inspect.signature(func).parameters
             if isinstance(func, types.MethodType):
@@ -724,43 +725,48 @@ class BivCoreCopula:
         except (ValueError, TypeError):
             pass
 
-        # If wrapped by a SymPyFuncWrapper or CD wrappers, extract the underlying Expr
         if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
             f = sp.lambdify((self.u, self.v), func.func, "numpy")
         elif isinstance(func, sp.Expr):
             f = sp.lambdify((self.u, self.v), func, "numpy")
-        else:
-            # Assume func is already a numpy-friendly callable of two arguments
+        else:                                     # already callable
             f = func
 
-        # Prepare a grid of u values
-        u_vals = np.linspace(0.01, 0.99, 200)
+        # -------------------------------------------------------------------
+        u_vals = np.linspace(0.01, 0.99, 200)       # x grid
+        v_vals = np.linspace(0.1, 0.9, 9)           # the fixed v’s
 
-        # Choose a set of v-values: 0.1, 0.2, …, 0.9
-        v_vals = np.linspace(0.1, 0.9, 9)
+        # --- make a square figure and explicit axes ------------------------
+        fig, ax = plt.subplots(figsize=(6, 6))      # width = height
 
-        plt.figure()
         for v_i in v_vals:
-            # Compute func(u, v_i) over u_vals
             try:
                 y_vals = f(u_vals, v_i)
-            except Exception:
-                # In case f expects scalar inputs, vectorize
+            except Exception:                       # scalar-only function
                 y_vals = np.array([f(u, v_i) for u in u_vals])
-            plt.plot(u_vals, y_vals, label=f"v = {v_i:.1f}", **kwargs)
+            ax.plot(u_vals, y_vals, label=f"$v = {v_i:.1f}$", linewidth=2.5, **kwargs)
 
-        if title is not None:
-            plt.title(f"{title} — {zlabel}")
-        plt.xlabel(xlabel)
+        # labels, grid, title ------------------------------------------------
+        ax.set_xlabel(xlabel)
         if zlabel is not None:
-            plt.ylabel(zlabel)
-        plt.legend()
-        plt.grid(True)
+            ax.set_ylabel(zlabel)
+        if title is not None:
+            ax.set_title(f"{title} — {zlabel}")
+
+        ax.grid(True)
+        # legend *outside* the axes to keep the square uncluttered
+        leg = ax.legend(loc="upper right", frameon=True, fontsize=10)
+        leg.get_frame().set_facecolor("white")
+        leg.get_frame().set_alpha(0.8)
+
+        fig.tight_layout()                          # respect the outside legend
         plt.show()
+        return fig
+
 
     def _plot_contour(
         self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs
-    ):
+    ) -> plt.Figure:
         r"""Create a filled contour plot.
 
         If ``log_z`` is *True*, the colour map is based on
@@ -775,7 +781,7 @@ class BivCoreCopula:
             _ = inspect.signature(func).parameters
             if isinstance(func, types.MethodType):
                 func = func()
-        except TypeError:
+        except (TypeError, ValueError):
             pass
         if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
             f = sp.lambdify((self.u, self.v), func.func)
@@ -796,6 +802,7 @@ class BivCoreCopula:
             Z = np.clip(Z, zlim[0], zlim[1])
         # Colour scaling ----------------------------------------------------
         cmap = plt.cm.get_cmap("viridis").copy()
+        fig = plt.figure()
         if log_z:
             # mask negatives, shift by +1 for log1p
             Z_mask = np.ma.masked_less(Z, 0.0)
@@ -806,22 +813,23 @@ class BivCoreCopula:
             # use more levels for smoother transitions
             if isinstance(levels, int):
                 levels = np.geomspace(vmin, vmax, levels * 5)
-            cf = plt.contourf(X, Y, Z_for_norm, levels=levels, cmap=cmap, norm=norm)
-            cbar = plt.colorbar(cf)
+            cf = fig.contourf(X, Y, Z_for_norm, levels=levels, cmap=cmap, norm=norm)
+            cbar = fig.colorbar(cf)
             ticks = cbar.get_ticks()
             cbar.set_ticks(ticks)
             cbar.set_ticklabels([f"{t - 1:g}" for t in ticks])
         else:
             if isinstance(levels, int):
                 levels = levels
-            cf = plt.contourf(X, Y, Z, levels=levels, cmap=cmap)
-            cbar = plt.colorbar(cf)
+            cf = fig.contourf(X, Y, Z, levels=levels, cmap=cmap)
+            cbar = fig.colorbar(cf)
         cbar.set_label(zlabel)
-        plt.xlabel("u")
-        plt.ylabel("v")
-        plt.title(title)
-        plt.show()
+        fig.xlabel("u")
+        fig.ylabel("v")
+        fig.title(title)
+        fig.show()
         self.intervals = intervals_backup
+        return fig
 
     def lambda_L(self):
         """
