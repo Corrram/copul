@@ -20,6 +20,22 @@ copul.schur\_order.cis\_verifier module
    :show-inheritance:
    :undoc-members:
 
+copul.schur\_order.ltd\_verifier module
+---------------------------------------
+
+.. automodule:: copul.schur_order.ltd_verifier
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.schur\_order.plod\_verifier module
+----------------------------------------
+
+.. automodule:: copul.schur_order.plod_verifier
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.schur\_order.schur\_order\_verifier module
 ------------------------------------------------
 

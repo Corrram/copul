@@ -34,13 +34,13 @@ class LTDVerifier:
         Returns
         -------
         bool
-            ``True``  – LTD holds for every parameter tested  
+            ``True``  – LTD holds for every parameter tested
             ``False`` – at least one parameter violates LTD
         """
         range_min = -10 if range_min is None else range_min
-        range_max =  10 if range_max is None else range_max
-        n_interpolate = 20                     # grid on parameter axis
-        grid = np.linspace(0.001, 0.999, 40)   # grid on (u,v)
+        range_max = 10 if range_max is None else range_max
+        n_interpolate = 20  # grid on parameter axis
+        grid = np.linspace(0.001, 0.999, 40)  # grid on (u,v)
 
         # ---------- 1)  If *no* parameter → check directly ------------- #
         try:
@@ -64,7 +64,7 @@ class LTDVerifier:
             C = copul(**{param_name: p})
             is_ltd = self._copula_is_ltd(C, grid)
             log.debug("param %s = %.4g → LTD %s", param_name, p, is_ltd)
-            is_ltd_final &= is_ltd           # stop *only* if we find a counter-example
+            is_ltd_final &= is_ltd  # stop *only* if we find a counter-example
             if not is_ltd_final:
                 break
 
@@ -80,7 +80,7 @@ class LTDVerifier:
         tol = 1e-10
         # Try the symbolic route first (much faster if available) --------
         try:
-            C_expr = C.cdf.func            # SymPy expression
+            C_expr = C.cdf.func  # SymPy expression
             u_sym, v_sym = C.u, C.v
             frac = C_expr / u_sym
             for v in grid:
@@ -90,7 +90,7 @@ class LTDVerifier:
                         return False
         # … fall back to numeric evaluation ------------------------------
         except Exception:
-            cdf = C.cdf                    # SymPyFuncWrapper → callable
+            cdf = C.cdf  # SymPyFuncWrapper → callable
             for v in grid:
                 prev = None
                 for u in grid:

@@ -64,6 +64,14 @@ copul.family\_list module
    :show-inheritance:
    :undoc-members:
 
+copul.star\_product module
+--------------------------
+
+.. automodule:: copul.star_product
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

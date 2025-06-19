@@ -154,8 +154,10 @@ if __name__ == "__main__":  # pragma: no cover
     S[3, 2] = 1
     S[4, 4] = 1
     cop_block = BivBlockDiagMixed(sizes, sign=S)
+    cop_block.plot_cdf()
     cop_block.scatter_plot()
     xi = cop_block.xi()
     tau = cop_block.tau()
     rho = cop_block.rho()
+    beta = cop_block.blomqvists_beta()
     print(f"xi = {xi:.3f}, tau = {tau:.3f}")

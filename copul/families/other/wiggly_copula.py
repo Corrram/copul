@@ -1,6 +1,5 @@
 import sympy as sp
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.stats import spearmanr
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
@@ -79,7 +78,9 @@ class WigglyMixtureCopula(BivCopula):
         """
         The private generating function for the singular "wiggly" component.
         """
-        return (u_values + self.epsilon_val * np.sin(self.k_val * 2 * np.pi * u_values)) % 1
+        return (
+            u_values + self.epsilon_val * np.sin(self.k_val * 2 * np.pi * u_values)
+        ) % 1
 
     def sample(self, n=1000):
         """
@@ -156,7 +157,6 @@ class WigglyMixtureCopula(BivCopula):
         return False
 
 
-
 # ---------------- Demo ---------------- #
 if __name__ == "__main__":
     # 1. Instantiate the copula with parameters designed to meet the criteria
@@ -168,4 +168,3 @@ if __name__ == "__main__":
     print(f"Spearman's Rho: {wiggly_copula.get_rho()}")
     print(f"Chatterjee's Xi: {wiggly_copula.get_xi()}")
     print("Done!")
-

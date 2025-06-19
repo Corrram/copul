@@ -108,6 +108,14 @@ copul.families.other.upper\_frechet module
    :show-inheritance:
    :undoc-members:
 
+copul.families.other.wiggly\_copula module
+------------------------------------------
+
+.. automodule:: copul.families.other.wiggly_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.other.xi\_max\_rho\_s\_copula module
 ---------------------------------------------------
 

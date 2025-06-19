@@ -729,20 +729,20 @@ class BivCoreCopula:
             f = sp.lambdify((self.u, self.v), func.func, "numpy")
         elif isinstance(func, sp.Expr):
             f = sp.lambdify((self.u, self.v), func, "numpy")
-        else:                                     # already callable
+        else:  # already callable
             f = func
 
         # -------------------------------------------------------------------
-        u_vals = np.linspace(0.01, 0.99, 200)       # x grid
-        v_vals = np.linspace(0.1, 0.9, 9)           # the fixed v’s
+        u_vals = np.linspace(0.01, 0.99, 200)  # x grid
+        v_vals = np.linspace(0.1, 0.9, 9)  # the fixed v’s
 
         # --- make a square figure and explicit axes ------------------------
-        fig, ax = plt.subplots(figsize=(6, 6))      # width = height
+        fig, ax = plt.subplots(figsize=(6, 6))  # width = height
 
         for v_i in v_vals:
             try:
                 y_vals = f(u_vals, v_i)
-            except Exception:                       # scalar-only function
+            except Exception:  # scalar-only function
                 y_vals = np.array([f(u, v_i) for u in u_vals])
             ax.plot(u_vals, y_vals, label=f"$v = {v_i:.1f}$", linewidth=2.5, **kwargs)
 
@@ -759,10 +759,9 @@ class BivCoreCopula:
         leg.get_frame().set_facecolor("white")
         leg.get_frame().set_alpha(0.8)
 
-        fig.tight_layout()                          # respect the outside legend
+        fig.tight_layout()  # respect the outside legend
         plt.show()
         return fig
-
 
     def _plot_contour(
         self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs
@@ -887,3 +886,9 @@ class BivCoreCopula:
             True if the copula is CIS, False otherwise.
         """
         return CISVerifier(cond_distr).is_cis(self)
+
+    def blomqvists_beta(self) -> float:
+        """
+        Blomqvist’s β   :=  4·C(½,½) – 1
+        """
+        return 4.0 * self.cdf(0.5, 0.5) - 1.0

@@ -185,13 +185,101 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         trace = np.trace(delta.T @ delta @ M)
         xi = 6 * m / n * trace - 2
         return xi
+    
+    def footrule(self) -> float:
+        """
+        Compute Spearman's Footrule (psi) for a bivariate checkerboard copula.
 
+        This method correctly implements the analytical integral of C(u,u).
+        It is implemented for square checkerboard matrices.
+        
+        Returns:
+            float: The value of Spearman's Footrule.
+        """
+        if self.m != self.n:
+            warnings.warn("Footrule analytical formula is implemented for square matrices only.")
+            return np.nan
 
+        p = np.asarray(self.matr, dtype=float)
+        n = self.m
+        
+        total_integral_diag = 0
+        # Loop through each diagonal cell I_kk (using 0-based index k_0)
+        for k_0 in range(n):
+            # Cumulative sum of the box to the top-left of the current diagonal cell
+            sum_box = np.sum(p[:k_0, :k_0]) if k_0 > 0 else 0
+            
+            # Sum of the column elements above the diagonal element in the same column
+            sum_col_above = np.sum(p[:k_0, k_0]) if k_0 > 0 else 0
+            
+            # Sum of the row elements left of the diagonal element in the same row
+            sum_row_left = np.sum(p[k_0, :k_0]) if k_0 > 0 else 0
+            
+            # The diagonal element itself
+            diag_element = p[k_0, k_0]
+            
+            # Integral over the diagonal segment within cell (k_0, k_0)
+            cell_integral = (1/n) * (sum_box + 0.5 * (sum_col_above + sum_row_left) + (1/3) * diag_element)
+            total_integral_diag += cell_integral
+
+        return 6 * total_integral_diag - 2
+
+    def ginis_gamma(self) -> float:
+        """
+        Compute Gini's Gamma for a bivariate checkerboard copula.
+
+        This method correctly implements the analytical integrals of C(u,u) and C(u,1-u).
+        It is implemented for square checkerboard matrices.
+
+        Returns:
+            float: The value of Gini's Gamma.
+        """
+        if self.m != self.n:
+            warnings.warn("Gini's Gamma analytical formula is implemented for square matrices only.")
+            return np.nan
+
+        p = np.asarray(self.matr, dtype=float)
+        n = self.m
+
+        # 1. Calculate the integral over the main diagonal C(u,u)
+        total_integral_diag = (self.footrule() + 2) / 6
+
+        # 2. Calculate the integral over the anti-diagonal C(u, 1-u)
+        total_integral_antidiag = 0
+        # Loop through each cell (k, n-1-k) that the anti-diagonal passes through
+        for k_0 in range(n):
+            # j_0 = n - 1 - k_0 is the column index for the anti-diagonal cell
+            j_0 = n - 1 - k_0
+            
+            # Cumulative sum of the box top-left of the anti-diagonal cell
+            sum_box = np.sum(p[:k_0, :j_0]) if (k_0 > 0 and j_0 > 0) else 0
+            
+            # Sum of elements in the same column, above the anti-diagonal cell
+            sum_col_above = np.sum(p[:k_0, j_0]) if k_0 > 0 else 0
+            
+            # Sum of elements in the same row, left of the anti-diagonal cell
+            sum_row_left = np.sum(p[k_0, :j_0]) if j_0 > 0 else 0
+            
+            # The anti-diagonal element itself
+            antidiag_element = p[k_0, j_0]
+
+            # Integral over the anti-diagonal segment within cell (k_0, j_0)
+            cell_integral = (1/n) * (sum_box + 0.5 * (sum_col_above + sum_row_left) + (1/3) * antidiag_element)
+            total_integral_antidiag += cell_integral
+            
+        return 4 * total_integral_diag + 4 * total_integral_antidiag - 2
+    
+    
 if __name__ == "__main__":
-    matr = [[3,0,0],[0,2,1],[0,1,2]]
+    matr = [[3, 0, 0], [0, 2, 1], [0, 1, 2]]
     ccop = BivCheckPi(matr)
-    ccop.plot_c_over_u()
-    ccop.plot_cond_distr_1()
+    # ccop.plot_c_over_u()
+    # ccop.plot_cond_distr_1()
     xi = ccop.xi()
+    rho = ccop.rho()
+    footrule = ccop.footrule()
+    gini = ccop.ginis_gamma()
+    beta = ccop.blomqvists_beta()
     # ccop.plot_cdf()
     # ccop.plot_pdf()
+    print(f"xi = {xi:.3f}, rho = {rho:.3f}, footrule = {footrule:.3f}, gini = {gini:.3f}, beta = {beta:.3f}")

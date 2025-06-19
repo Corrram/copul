@@ -65,6 +65,10 @@ class Plackett(BivCopula):
         return (theta + 1) / (theta - 1) - 2 * theta * sympy.log(theta) / (
             theta - 1
         ) ** 2
+    
+    def blomqvist(self, *args, **kwargs):
+        """Nelsen Exercise 5.18"""
+        return (sympy.sqrt(self.theta) - 1) / (sympy.sqrt(self.theta) + 1)
 
     def get_density_of_density(self):
         # D_vu(pdf)

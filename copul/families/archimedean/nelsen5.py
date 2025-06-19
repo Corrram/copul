@@ -194,6 +194,8 @@ class Frank(BivArchimedeanCopula):
     def lambda_U(self):
         return 0
 
+    def blomqvist(self):
+        return 4/self.theta*sympy.log(sympy.cosh(self.theta/4))
 
 Nelsen5 = Frank
 
