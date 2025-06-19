@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import PowerNorm
-import matplotlib.patheffects as pe      #  <<< add at the top with the other imports
+import matplotlib.patheffects as pe  #  <<< add at the top with the other imports
+
 
 # 2) piecewise s(v) and derivative, defined in terms of b0
 def s_small(v, b):
@@ -110,15 +111,16 @@ def main(b0, v_line):
     #     ax.vlines(x_pt, 0, v_line, colors=col, linestyles=":", linewidth=1.5)
 
     # 12) markers on the horizontal slice v = v_line
-    ax.scatter([a_v, s_v], [v_line, v_line],
-               c="white", edgecolor=outer_area_color, zorder=3)
+    ax.scatter(
+        [a_v, s_v], [v_line, v_line], c="white", edgecolor=outer_area_color, zorder=3
+    )
 
     # text next to that slice
     for x_pt, lbl in [(a_v, r"$(a_v,v)$"), (s_v, r"$(s_v,v)$")]:
-        txt = ax.text(x_pt, v_line + 0.02, lbl,
-                      ha="center", color="white", fontsize=14, zorder=3)
-        txt.set_path_effects([pe.Stroke(linewidth=2, foreground="black"),
-                              pe.Normal()])
+        txt = ax.text(
+            x_pt, v_line + 0.02, lbl, ha="center", color="white", fontsize=14, zorder=3
+        )
+        txt.set_path_effects([pe.Stroke(linewidth=2, foreground="black"), pe.Normal()])
     # --- NEW: make a_v and s_v proper x-axis ticks --------------------
     # keep the existing ticks and append the two new ones
     xticks = list(ax.get_xticks()) + [a_v, s_v]
@@ -154,4 +156,4 @@ def main(b0, v_line):
 
 if __name__ == "__main__":
     for b in [0.5, 1, 5]:
-        main(1/b, 0.6)
+        main(1 / b, 0.6)

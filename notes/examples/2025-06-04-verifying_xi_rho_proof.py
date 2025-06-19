@@ -2,6 +2,7 @@ import numpy as np
 from scipy.integrate import quad
 import sympy as sp
 
+
 # --- Define the integrand J_v (numeric) ---
 def J_v_integrand(v, b_val):
     """
@@ -12,25 +13,28 @@ def J_v_integrand(v, b_val):
     term_sqrt = np.sqrt(2 * (1 - v) / b_val)
     return 0.5 - ((1 - v) * term_sqrt) / 3
 
+
 # --- Define the two candidate formulas for I_3(b) ---
 def I3b_candidate1(b_val):
     """Candidate 1: (15*b - 2*b^2) / 60"""
     return (15 * b_val - 2 * b_val**2) / 60
 
+
 def I3b_candidate2(b_val):
     """Candidate 2: (15*b + 2*b^2) / 60"""
     return (15 * b_val + 2 * b_val**2) / 60
 
+
 # --- Symbolic computation with SymPy ---
-v, b = sp.symbols('v b', positive=True, real=True)
+v, b = sp.symbols("v b", positive=True, real=True)
 Jv_sym = sp.Rational(1, 2) - (1 - v) * sp.sqrt(2 * (1 - v) / b) / 3
 
 # Integrate Jv_sym with respect to v from (1 - b/2) to 1
-I3b_sym = sp.integrate(Jv_sym, (v, 1 - b/2, 1))
+I3b_sym = sp.integrate(Jv_sym, (v, 1 - b / 2, 1))
 I3b_sym_simplified = sp.simplify(I3b_sym)
 
 # Create a numeric function from the symbolic result
-I3b_sym_func = sp.lambdify(b, I3b_sym_simplified, 'numpy')
+I3b_sym_func = sp.lambdify(b, I3b_sym_simplified, "numpy")
 
 print("Symbolic result for I_3(b):")
 sp.pprint(I3b_sym_simplified)
@@ -49,8 +53,12 @@ for b_test in b_values_to_test:
     upper_limit = 1
 
     # Numerical integration
-    numerical_result, numerical_error = quad(J_v_integrand, lower_limit, upper_limit, args=(b_test,))
-    print(f"Numerical integration result: {numerical_result:.8f} (error estimate: {numerical_error:.2e})")
+    numerical_result, numerical_error = quad(
+        J_v_integrand, lower_limit, upper_limit, args=(b_test,)
+    )
+    print(
+        f"Numerical integration result: {numerical_result:.8f} (error estimate: {numerical_error:.2e})"
+    )
 
     # Evaluate candidates
     candidate1_value = I3b_candidate1(b_test)
@@ -75,7 +83,9 @@ for b_test in b_values_to_test:
     if diff_num_sym < 1e-7:
         print(f"Conclusion: Symbolic result matches numerical for b = {b_test:.4f}")
     else:
-        print(f"Conclusion: Symbolic result does NOT match numerical for b = {b_test:.4f}")
+        print(
+            f"Conclusion: Symbolic result does NOT match numerical for b = {b_test:.4f}"
+        )
 
     if diff_num_cand1 < 1e-7:
         print(f"            Candidate 1 is also CORRECT for b = {b_test:.4f}")

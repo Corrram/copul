@@ -55,7 +55,6 @@ def M_x_upper_bound_corrected(x_val: float) -> float:
 
 
 def main():
-    
     # ----------------------------- Data --------------------------------- #
     eps = 1e-9
     xi_points = np.concatenate(
@@ -77,13 +76,18 @@ def main():
     FILL = "#D6EAF8"
     # ---------- Original envelope figure ----------
     fig, ax = plt.subplots(figsize=(6, 8))
-    ax.plot(xi_v,  rho_up_v, color=BLUE, lw=2.5, label=r"$\pm M_\xi$")
+    ax.plot(xi_v, rho_up_v, color=BLUE, lw=2.5, label=r"$\pm M_\xi$")
     ax.plot(xi_v, -rho_up_v, color=BLUE, lw=2.5)
 
     ax.fill_between(
-        xi_v, -rho_up_v, rho_up_v,
+        xi_v,
+        -rho_up_v,
+        rho_up_v,
         where=rho_up_v >= -rho_up_v,
-        color=FILL, alpha=0.7, zorder=0, label="Attainable region"
+        color=FILL,
+        alpha=0.7,
+        zorder=0,
+        label="Attainable region",
     )
 
     # Hatched parts (where |rho| > xi)
@@ -94,23 +98,71 @@ def main():
         np.maximum(xi_v, rho_lo_v),
         rho_up_v,
         where=mask_top,
-        facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0,
+        facecolor="none",
+        hatch="..",
+        edgecolor=BLUE,
+        linewidth=0,
     )
     ax.fill_between(
         xi_v,
         rho_lo_v,
         np.minimum(-xi_v, rho_up_v),
         where=mask_bottom,
-        facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0,
+        facecolor="none",
+        hatch="..",
+        edgecolor=BLUE,
+        linewidth=0,
     )
 
     # Key points
-    ax.scatter([0, 1, 1, 0.3, 0.3], [0, 1, -1, 0.7, -0.7], s=60, color="black", zorder=5)
-    ax.annotate(r"$\Pi$", (0, 0), xytext=(10, 0), textcoords="offset points", fontsize=18, ha="left", va="center")
-    ax.annotate(r"$C_1$", (0.3, 0.7), xytext=(-5, 15), textcoords="offset points", fontsize=18, ha="right", va="top")
-    ax.annotate(r"$C_{-1}$", (0.3, -0.7), xytext=(0, -20), textcoords="offset points", fontsize=18, ha="right", va="bottom")
-    ax.annotate(r"$M$", (1, 1), xytext=(0, -5), textcoords="offset points", fontsize=18, ha="right", va="top")
-    ax.annotate(r"$W$", (1, -1), xytext=(0, 5), textcoords="offset points", fontsize=18, ha="right", va="bottom")
+    ax.scatter(
+        [0, 1, 1, 0.3, 0.3], [0, 1, -1, 0.7, -0.7], s=60, color="black", zorder=5
+    )
+    ax.annotate(
+        r"$\Pi$",
+        (0, 0),
+        xytext=(10, 0),
+        textcoords="offset points",
+        fontsize=18,
+        ha="left",
+        va="center",
+    )
+    ax.annotate(
+        r"$C_1$",
+        (0.3, 0.7),
+        xytext=(-5, 15),
+        textcoords="offset points",
+        fontsize=18,
+        ha="right",
+        va="top",
+    )
+    ax.annotate(
+        r"$C_{-1}$",
+        (0.3, -0.7),
+        xytext=(0, -20),
+        textcoords="offset points",
+        fontsize=18,
+        ha="right",
+        va="bottom",
+    )
+    ax.annotate(
+        r"$M$",
+        (1, 1),
+        xytext=(0, -5),
+        textcoords="offset points",
+        fontsize=18,
+        ha="right",
+        va="top",
+    )
+    ax.annotate(
+        r"$W$",
+        (1, -1),
+        xytext=(0, 5),
+        textcoords="offset points",
+        fontsize=18,
+        ha="right",
+        va="bottom",
+    )
 
     # Labels, ticks, grid
     ax.set_xlabel(r"Chatterjee's $\xi$", fontsize=16)
@@ -126,10 +178,9 @@ def main():
     # Legend
     ax.legend(loc="center", fontsize=12, frameon=True)
 
-
     fig.tight_layout()
     plt.show()
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     main()

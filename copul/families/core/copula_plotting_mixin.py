@@ -476,8 +476,8 @@ class CopulaPlottingMixin:
         Parameters
         ----------
         plot_type : {"3d", "contour", "functions"}, optional
-            - "3d"      : surface plot (default)  
-            - "contour" : filled contour plot  
+            - "3d"      : surface plot (default)
+            - "contour" : filled contour plot
             - "functions": 9 one-dimensional slices  v = 0.1,…,0.9
         log_z : bool, optional
             Log–colour scale for the contour plot.
@@ -487,14 +487,16 @@ class CopulaPlottingMixin:
         # Build a callable / SymPy expression for C(u,v)/u
         # ------------------------------------------------------------------
         ratio_obj = None
-        if hasattr(self.cdf, "func"):                      # SymPy wrapper
+        if hasattr(self.cdf, "func"):  # SymPy wrapper
             ratio_obj = sp.simplify(self.cdf.func / self.u)
-        elif isinstance(self.cdf, sp.Expr):                # bare SymPy Expr
+        elif isinstance(self.cdf, sp.Expr):  # bare SymPy Expr
             ratio_obj = sp.simplify(self.cdf / self.u)
-        else:                                              # numeric callable
-            ratio_obj = lambda u, v: self.cdf(u, v) / u
+        else:  # numeric callable
 
-        title  = kwargs.pop(
+            def ratio_obj(u, v):
+                return self.cdf(u, v) / u
+
+        title = kwargs.pop(
             "title",
             f"{CopulaGraphs(self).get_copula_title()}  –  C(u,v)/u",
         )
@@ -522,14 +524,16 @@ class CopulaPlottingMixin:
         # Build a callable / SymPy expression for C(u,v)/v
         # ------------------------------------------------------------------
         ratio_obj = None
-        if hasattr(self.cdf, "func"):                      # SymPy wrapper
+        if hasattr(self.cdf, "func"):  # SymPy wrapper
             ratio_obj = sp.simplify(self.cdf.func / self.v)
-        elif isinstance(self.cdf, sp.Expr):                # bare SymPy Expr
+        elif isinstance(self.cdf, sp.Expr):  # bare SymPy Expr
             ratio_obj = sp.simplify(self.cdf / self.v)
-        else:                                              # numeric callable
-            ratio_obj = lambda u, v: self.cdf(u, v) / v
+        else:  # numeric callable
 
-        title  = kwargs.pop(
+            def ratio_obj(u, v):
+                return self.cdf(u, v) / v
+
+        title = kwargs.pop(
             "title",
             f"{CopulaGraphs(self).get_copula_title()}  –  C(u,v)/v",
         )

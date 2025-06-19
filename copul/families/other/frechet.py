@@ -203,5 +203,38 @@ class Frechet(BivCopula):
     def pdf(self):
         raise PropertyUnavailableException("Frechet copula does not have a pdf")
 
+    def footrule(self, *args, **kwargs):
+        """
+        Calculates Spearman's Footrule (psi) for the Frechet copula.
+        
+        The closed-form formula is psi = alpha - beta / 2.
+        """
+        self._set_params(args, kwargs)
+        return self.alpha - self.beta / 2
 
+    def ginis_gamma(self, *args, **kwargs):
+        """
+        Calculates Gini's Gamma (gamma) for the Frechet copula.
+
+        The closed-form formula is gamma = alpha - beta, which is identical to
+        Spearman's Rho for this family.
+        """
+        self._set_params(args, kwargs)
+        return self.alpha - self.beta
+    
 # B11 = lambda: Frechet(beta=0)
+if __name__ == "__main__":
+    # Example usage
+    frechet_copula = Frechet(alpha=0.55, beta=0)
+    xi = frechet_copula.xi()
+    ccop = frechet_copula.to_checkerboard()
+    xi_ccop = ccop.xi()
+    rho_ccop = ccop.rho()
+    print(f"Frechet Copula: xi = {xi}, Checkerboard xi = {xi_ccop}, Checkerboard rho = {rho_ccop}")
+    gamma = frechet_copula.ginis_gamma()
+    ccop_gamma = ccop.ginis_gamma()
+    footrule = frechet_copula.footrule()
+    ccop_footrule = ccop.footrule()
+    print(f"Gini's Gamma: {gamma}, Checkerboard Gini's Gamma: {ccop_gamma}")
+    print(f"Footrule: {footrule}, Checkerboard Footrule: {ccop_footrule}")
+    print("Done!")

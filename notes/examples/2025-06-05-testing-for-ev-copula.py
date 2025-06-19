@@ -1,19 +1,24 @@
 import numpy as np
 
+
 def s_v(v, b):
     """Compute s_v according to definition (works for b > 0)."""
-    if (b >= 1 and v <= 1/(2*b)) or (b <= 1 and v <= b/2):
+    if (b >= 1 and v <= 1 / (2 * b)) or (b <= 1 and v <= b / 2):
         return np.sqrt(2 * v / b)
-    if 1/(2*b) < v <= 1 - 1/(2*b):
-        return v + 1/(2*b)
-    if (b <= 1 and (b/2) < v <= 1 - (b/2)) or (b >= 1 and (1/(2*b)) < v <= 1 - (b/2)):
-        return v / b + 1/2
+    if 1 / (2 * b) < v <= 1 - 1 / (2 * b):
+        return v + 1 / (2 * b)
+    if (b <= 1 and (b / 2) < v <= 1 - (b / 2)) or (
+        b >= 1 and (1 / (2 * b)) < v <= 1 - (b / 2)
+    ):
+        return v / b + 1 / 2
     # fourth case
-    return 1 + 1/b - np.sqrt(2 * (1 - v) / b)
+    return 1 + 1 / b - np.sqrt(2 * (1 - v) / b)
+
 
 def a_v(v, b):
     """Compute a_v = s_v - 1/b (for b > 0)."""
-    return s_v(v, b) - 1/b
+    return s_v(v, b) - 1 / b
+
 
 def C_b_positive(u, v, b):
     """
@@ -28,11 +33,12 @@ def C_b_positive(u, v, b):
     else:
         return v
 
+
 def C_b(u, v, b):
     """
     Full Copula C_b:
       - If b >= 0: return C_b^↑(u,v; b)
-      - If b  < 0: return the decreasing rearrangement C_{-b}^↓(u,v) 
+      - If b  < 0: return the decreasing rearrangement C_{-b}^↓(u,v)
         defined by C^↓(u,v) = v - C^↑(1-u, v).
     """
     if b >= 0:
@@ -40,6 +46,7 @@ def C_b(u, v, b):
     else:
         # Define C_{|b|}^↑ at (1-u, v), then apply C^↓(u,v) = v - C^↑(1-u, v)
         return v - C_b_positive(1 - u, v, -b)
+
 
 # Vectorized version for array inputs
 vec_Cb = np.vectorize(C_b)

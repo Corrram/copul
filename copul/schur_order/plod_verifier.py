@@ -3,6 +3,7 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+
 # --------------------------------------------------------------------------- #
 #  Positive-Lower-Orthant-Dependence (PLOD) verifier
 # --------------------------------------------------------------------------- #
@@ -35,13 +36,13 @@ class PLODVerifier:
         Returns
         -------
         bool
-            ``True``  – PLOD holds for every parameter tested  
+            ``True``  – PLOD holds for every parameter tested
             ``False`` – at least one parameter violates PLOD
         """
         range_min = -10 if range_min is None else range_min
-        range_max =  10 if range_max is None else range_max
-        n_interpolate = 20                     # grid on parameter axis
-        grid = np.linspace(0.001, 0.999, 40)   # grid on (u,v)
+        range_max = 10 if range_max is None else range_max
+        n_interpolate = 20  # grid on parameter axis
+        grid = np.linspace(0.001, 0.999, 40)  # grid on (u,v)
 
         # ---------- 1)  No parameter → check directly ------------------ #
         try:
@@ -66,7 +67,7 @@ class PLODVerifier:
             is_plod = self._copula_is_plod(C, grid)
             log.debug("param %s = %.4g → PLOD %s", param_name, p, is_plod)
             is_plod_final &= is_plod
-            if not is_plod_final:            # stop once a counter-example is found
+            if not is_plod_final:  # stop once a counter-example is found
                 break
 
         return is_plod_final
@@ -81,16 +82,16 @@ class PLODVerifier:
         tol = 1e-10
         # ---------- symbolic route (fast if available) ----------------- #
         try:
-            C_expr = C.cdf.func                 # SymPy expression
+            C_expr = C.cdf.func  # SymPy expression
             u_sym, v_sym = C.u, C.v
-            diff = C_expr - u_sym * v_sym       # should be ≥ 0
+            diff = C_expr - u_sym * v_sym  # should be ≥ 0
             for u in grid:
                 for v in grid:
                     if diff.subs({u_sym: u, v_sym: v}) < -tol:
                         return False
         # ---------- numeric fallback ----------------------------------- #
         except Exception:
-            cdf = C.cdf                         # SymPyFuncWrapper → callable
+            cdf = C.cdf  # SymPyFuncWrapper → callable
             for u in grid:
                 for v in grid:
                     if cdf(u, v) < u * v - tol:

@@ -1,4 +1,17 @@
-from sympy import Integer, acos, cos, symbols, integrate, solve, Max, Min, sqrt, Rational, simplify, Symbol
+from sympy import (
+    Integer,
+    acos,
+    cos,
+    symbols,
+    integrate,
+    solve,
+    Max,
+    Min,
+    sqrt,
+    Rational,
+    simplify,
+    Symbol,
+)
 
 # Define symbols
 t, v, mu, s_v, a_v, x, b, u = symbols("t v mu s_v a_v x b u", real=True, positive=True)
@@ -224,13 +237,13 @@ x_B_mu = simplify(6 * I_B_mu - 2)
 print(rf"x_B(mu) = 6*I_B(mu) - 2 = {x_B_mu}")
 
 # Define symbols
-x, mu, theta = symbols('x mu theta', positive=True)
+x, mu, theta = symbols("x mu theta", positive=True)
 
 # Define mu(x) as given
-mu_expr = (2 / sqrt(6*x)) * cos((1/Integer(3)) * acos(-3*sqrt(6*x)/5))
+mu_expr = (2 / sqrt(6 * x)) * cos((1 / Integer(3)) * acos(-3 * sqrt(6 * x) / 5))
 
 # Define the cubic f(mu) = 10*x*mu^3 - 5*mu + 2
-f = 10*x*mu**3 - 5*mu + 2
+f = 10 * x * mu**3 - 5 * mu + 2
 
 # Substitute mu := mu_expr and simplify
 res = simplify(f.subs(mu, mu_expr))
@@ -389,7 +402,7 @@ print(
 )  # Text: $(3-2b-b^2)/12$
 
 # (iii) $1-b/2 \le v \le 1$. $s_v = 1+b-\sqrt{2(1-v)/b}$, $a_v = s_v-1/b$. $h_v(t)$ is 1 then $b(s_v-t)$.
-s_v_K_b_le_1_z3 = 1 + 1/b - sqrt(2 * (1 - v) / b)
+s_v_K_b_le_1_z3 = 1 + 1 / b - sqrt(2 * (1 - v) / b)
 a_v_K_b_le_1_z3 = s_v_K_b_le_1_z3 - 1 / b
 int_K_b_le_1_z3_dt_part1 = integrate((1 - t) * 1, (t, 0, a_v_K_b_le_1_z3))
 int_K_b_le_1_z3_dt_part2 = integrate(

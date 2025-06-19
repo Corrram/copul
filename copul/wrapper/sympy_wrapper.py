@@ -59,8 +59,6 @@ class SymPyFuncWrapper:
         if isinstance(result, sympy.Number):
             return float(result)
 
-        _
-
     def __repr__(self) -> str:
         """Return a string representation of the wrapped expression.
 
