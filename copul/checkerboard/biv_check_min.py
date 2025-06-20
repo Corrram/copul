@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
@@ -108,15 +109,74 @@ class BivCheckMin(CheckMin, BivCheckPi):
     def lambda_U(self):
         return self.matr[-1, -1] * np.min(self.m, self.n)
 
+    def footrule(self) -> float:
+        """
+        Compute Spearman's Footrule (psi) for a BivCheckMin copula.
+
+        The value is the footrule of the underlying CheckPi copula plus an
+        add-on term accounting for the singular part of the distribution.
+        Implemented for square checkerboard matrices.
+        
+        Returns:
+            float: The value of Spearman's Footrule.
+        """
+        if self.m != self.n:
+            warnings.warn("Footrule analytical formula is implemented for square matrices only.")
+            return np.nan
+
+        # Calculate footrule for the absolutely continuous part (CheckPi)
+        check_pi_footrule = super().footrule()
+
+        # Add-on term from the singular part of the copula
+        # Add-on = (1/n) * trace(P)
+        trace = np.trace(self.matr)
+        add_on = trace / self.m
+
+        return check_pi_footrule + add_on
+
+    def ginis_gamma(self) -> float:
+        """
+        Compute Gini's Gamma for a BivCheckMin copula.
+
+        This method corrects the value from the parent BivCheckPi class. The
+        parent method incorrectly uses the overridden `footrule` method from
+        this child class, leading to a "contaminated" result that already
+        includes the add-on for the main diagonal integral. We correct this
+        by adding only the missing component from the anti-diagonal integral.
+        Implemented for square checkerboard matrices.
+
+        Returns:
+            float: The value of Gini's Gamma.
+        """
+        if self.m != self.n:
+            warnings.warn("Gini's Gamma analytical formula is implemented for square matrices only.")
+            return np.nan
+
+        # The super() call returns a value that has incorrectly incorporated the
+        # diagonal add-on but not the anti-diagonal add-on.
+        contaminated_gamma_pi = super().ginis_gamma()
+
+        # We add only the part that was missing: the add-on for the
+        # anti-diagonal integral C(u, 1-u).
+        # Add-on = 4 * (Trace(Anti-Diagonal(P)) / (12n))
+        anti_diag_trace = np.trace(np.fliplr(self.matr))
+        
+        add_on = anti_diag_trace / (3 * self.m)
+
+        return contaminated_gamma_pi + add_on
 
 if __name__ == "__main__":
     matr1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     matr2 = [[5, 1, 5, 1], [5, 1, 5, 1], [1, 5, 1, 5], [1, 5, 1, 5]]
-    ccop = BivCheckMin(matr2)
+    matr = [[1,0], [0, 1]]
+    ccop = BivCheckMin(matr)
+    footrule = ccop.footrule()
+    ginis_gamma = ccop.ginis_gamma()
     xi = ccop.xi()
-    ccop.plot_cond_distr_1()
-    ccop.transpose().plot_cond_distr_1()
+    # ccop.plot_cond_distr_1()
+    # ccop.transpose().plot_cond_distr_1()
     is_cis, is_cds = ccop.is_cis()
     transpose_is_cis, transpose_is_cds = ccop.transpose().is_cis()
     print(f"Is cis: {is_cis}, Is cds: {is_cds}")
     print(f"Is cis: {transpose_is_cis}, Is cds: {transpose_is_cds}")
+    print(f"Footrule: {footrule}, Gini's Gamma: {ginis_gamma}, xi: {xi}")

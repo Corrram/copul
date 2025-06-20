@@ -2,77 +2,6 @@ import copul as cp
 import numpy as np
 
 
-# generate 10 permutations of (1,...,10) randomly
-def generate_permutations(n, num_permutations=None):
-    if num_permutations is None:
-        num_permutations = n
-    permutations = []
-    for _ in range(num_permutations):
-        perm = np.random.permutation(n)
-        permutations.append(perm)
-    return permutations
-
-
-# generate n exponential random variables
-def generate_exponential_random_variables(n, scale=1.0):
-    return np.random.exponential(scale, n)
-
-
-# cauchy distribution
-def generate_cauchy_random_variables(n, scale=1.0):
-    values = np.random.standard_cauchy(size=n) * scale
-    # make absolute
-    return np.abs(values)
-
-
-def simulate():
-    # simulate n from 1 to 50
-    n = np.random.randint(1, 51)
-    permutations = generate_permutations(n)
-    a = generate_cauchy_random_variables(n)
-    identity_matr = np.eye(n)
-    # shuffle the identity matrix according to the permutations
-    shuffled_matrices = []
-    for perm in permutations:
-        shuffled_matrix = identity_matr[perm, :]
-        shuffled_matrices.append(shuffled_matrix)
-    # sum(a* shuffled_matrices)
-    for i in range(len(shuffled_matrices)):
-        shuffled_matrices[i] = shuffled_matrices[i] * a[i]
-    # sum the shuffled matrices
-    shuffled_matrix_sum = np.sum(shuffled_matrices, axis=0)
-    ccop = cp.BivCheckPi(shuffled_matrix_sum)
-    ccop_r_matr = cp.CISRearranger().rearrange_checkerboard(ccop)
-    ccop_r = cp.BivCheckPi(ccop_r_matr)
-    ccop_r.scatter_plot()
-    ccop_r.plot_cond_distr_1()
-    cis, cds = ccop_r.is_cis()
-    xi = ccop_r.xi()
-    tau = ccop_r.tau()
-    if xi > tau:
-        matr = ccop_r.matr
-        print(f"xi > tau: {xi} > {tau}; is cis {cis}; for the matrix:\n{matr}")
-
-
-def simulate2():
-    # simulate n from 1 to 50
-    n = np.random.randint(1, 1_000)
-    unif_u = np.random.uniform()
-    permutation = generate_permutations(n, 1)[0]
-    grid_size = int(np.ceil(n ** (unif_u)))
-    ccop = cp.ShuffleOfMin(permutation).to_check_pi(grid_size)
-    ccop_r_matr = cp.CISRearranger().rearrange_checkerboard(ccop)
-    ccop_r = cp.BivCheckPi(ccop_r_matr)
-    # ccop_r.scatter_plot()
-    cis, cds = ccop_r.is_cis()
-    assert cis
-    xi = ccop_r.xi()
-    tau = ccop_r.tau()
-    if xi > tau:
-        matr = ccop_r.matr
-        print(f"xi > tau: {xi} > {tau}; is cis {cis}; for the matrix:\n{matr}")
-
-
 def simulate_one(n):
     # 1) draw n permutations all at once via argsort of uniforms
     perms = np.argsort(np.random.rand(n, n), axis=1)  # shape (n,n)
@@ -115,25 +44,25 @@ def main(num_iters=1_000_000):
                 print(f"Iteration {i} completed.")
             continue
         ltd_counter += 1
-        xi = ccop.xi()
-        rho = ccop.rho()
-        if rho < xi - 1e-8:
+        footrule = ccop.footrule()
+        ginis_gamma = ccop.ginis_gamma()
+        if ginis_gamma < footrule - 1e-8:
             is_plod = cp.PLODVerifier().is_plod(ccop)
             tau = ccop.tau()
             print(
-                f"Iteration {i}: tau={tau:.4f}, xi={xi:.4f}, rho={rho:.4f} for n={n}."
+                f"Iteration {i}: tau={tau:.4f}, footrule={footrule:.4f}, ginis_gamma={ginis_gamma:.4f} for n={n}."
             )
             print(f"Matrix:\n{ccop.matr}")
             cis, cds = ccop.is_cis()
             print(f"CIS: {cis}, CDS: {cds}, LTD: {is_ltd}, PLOD: {is_plod}")
-        xi_min = ccop_min.xi()
-        rho_min = ccop_min.rho()
-        if rho_min < xi_min - 1e-8:
+        footrule_min = ccop_min.footrule()
+        ginis_gamma_min = ccop_min.ginis_gamma()
+        if ginis_gamma_min < footrule_min - 1e-8:
             is_plod_min = cp.PLODVerifier().is_plod(ccop_min)
             cis_min, cds_min = ccop_min.is_cis()
             tau_min = ccop_min.tau()
             print(
-                f"Iteration {i}: tau_min={tau_min:.4f}, xi_min={xi_min:.4f}, rho_min={rho_min:.4f} for n={n}."
+                f"Iteration {i}: tau_min={tau_min:.4f}, footrule_min={footrule_min:.4f}, ginis_gamma_min={ginis_gamma_min:.4f} for n={n}."
             )
             print(f"Matrix Min:\n{ccop_min.matr}")
             cis, cds = ccop_min.is_cis()
