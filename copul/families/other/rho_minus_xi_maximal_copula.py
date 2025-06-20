@@ -261,6 +261,8 @@ if __name__ == "__main__":
     # Example usage: pick any nonzero b_new
     for b_val in [0.5, 1, 5]:
         C = RhoMinusXiMaximalCopula(b_val)
+        cdf_val = C.cdf(0.5, 0.5)
+        print(f"CDF at (0.5, 0.5) for b_new = {b_val}: {cdf_val}")
         # xi = C.xi()
         # rho = C.rho()
         # print(f"b_new = {b_val}, xi = {xi}, rho = {rho}")

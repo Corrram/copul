@@ -1,77 +1,77 @@
+#!/usr/bin/env python3
+"""
+Plot 6·J0*(c) – 3 for the limiting case a → 0⁻ in
+‘A Complete Semi-Analytical Solution to a Concave Functional Optimization Problem’.
+
+The cubic that fixes the global multiplier d₀*(c) is taken from the
+corrected derivation (Eq. 3.5), which in the a→0⁻ limit simplifies to:
+    8(1-c)·d·(d+1)² = 0 .
+For every c∈[−½,1), this equation has a unique non-negative root d=0.
+
+NOTE: The formula for J₀*(d) must also be re-derived. The function used
+here is from the old analysis and is incorrect. This script is for demonstration
+of the new d₀*(c) only.
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
-# >>> PARAMETERS ------------------------------------------------------------
-a      = 0.01
-delta  = 1/(2*a)              # = 50   (left half of every h_v vanishes)
-v_grid = np.linspace(0.0, 1.0, 4001)   # high‑resolution v–grid
-dv     = v_grid[1]-v_grid[0]
+# --- core algebra -----------------------------------------------------------
 
-# helper: closed‑form integrals over t for ONE (v,b)–pair -------------------
-def one_v(have_plateau, v, b):
-    """Return (h^2 integral ,  2(1-t)h integral) for fixed v, b."""
-    if have_plateau:                     # v > 1/(2b)
-        s   = 2*v + 0.5/b
-        a_v = s - 1/b                    # left end of ramp
-        # plateau part:  t in [v, a_v] ,  h=1
-        Lp  = a_v - v
-        h2_plateau = Lp
-        J_plateau  = 2*Lp - (a_v**2 - v**2)
-        # ramp part:    t in [a_v, 1] ,  h = b(s-t)
-        A = s - a_v
-        B = s - 1.0
-        h2_ramp = b**2 * (A**3 - B**3)/3
-        Jramp   = 2*b*( s*(1-a_v) - (s+1)*(1 - a_v**2)/2 + (1 - a_v**3)/3 )
-        return h2_plateau + h2_ramp , J_plateau + Jramp
-    else:                                # v ≤ 1/(2b)  (no plateau)
-        s = v + np.sqrt(2*v/b)
-        if s <= 1.0:                     # ramp finishes before t=1
-            A = s - v
-            h2   = b**2 * A**3 / 3
-            Jval = 2*b*( s*A - (s+1)*(s**2 - v**2)/2 + (s**3 - v**3)/3 )
-            return h2 , Jval
-        # ramp is truncated at t=1
-        s = (v + 0.5*b*(1 - v**2)) / (b*(1 - v))
-        A = s - v
-        B = s - 1.0
-        h2 = b**2 * (A**3 - B**3) / 3
-        J  = 2*b*( s*(1-v) - (s+1)*(1 - v**2)/2 + (1 - v**3)/3 )
-        return h2 , J
+def cubic_F(d: float, c: float) -> float:
+    """CORRECTED cubic for a=0 whose root gives d₀*(c)."""
+    # If c=1, the equation vanishes, F(d)=0 for all d.
+    if c == 1.0:
+        return 0.0
+    # For c<1, this is the correct cubic from F(d)=0 with q=0.
+    return 8 * (1 - c) * d * (d + 1)**2
 
-# main sweep over b ----------------------------------------------------------
-b_vals  = np.concatenate( (np.linspace(0.20,1.00,90,endpoint=False),
-                           np.linspace(1.00,4.00,90)) )
-c_vals  = []
-J_vals  = []
+def d_star(c: float) -> float:
+    """
+    Locate the unique non-negative root of the corrected cubic_F(·,c) for a→0⁻.
+    """
+    # For any c < 1, the unique non-negative root of 8(1-c)d(d+1)² = 0 is d=0.
+    # For the singular case c=1, the limiting value of d as a→0⁻ is also 0.
+    # The original bisection algorithm is no longer needed.
+    return 0.0
 
-for b in b_vals:
-    # vectorised classification of v–zones
-    split = 0.5/b
-    mask  = v_grid > split                  # plateau / no‑plateau flag
-    h2, J = 0.0, 0.0
-    for v,pl in zip(v_grid, mask):
-        h2_i , J_i = one_v(pl, v, b)
-        h2 += h2_i
-        J  += J_i
-    h2 *= dv
-    J  *= dv
-    c_vals.append( 6*a*h2 - 2 )
-    J_vals.append( J )
+def J0_star(d: float) -> float:
+    """
+    WARNING: This formula is from the original, INCORRECT derivation.
+    A new formula consistent with the corrected d₀*(c) is needed.
+    Using this function will NOT produce the correct final plot.
+    """
+    return (1/6 - d/4) * (1 - d) - (1/12) * (1 - d)**4
 
-c_vals = np.asarray(c_vals)
-J_vals = np.asarray(J_vals)
-order  = np.argsort(c_vals)
-c_vals = c_vals[order]
-J_vals = J_vals[order]
+# --- sampling & plotting ----------------------------------------------------
 
-# >>> PLOT -------------------------------------------------------------------
-plt.figure(figsize=(7,4))
-plt.plot(c_vals, J_vals, lw=1.6)
-plt.xlim(-0.5,1)
-plt.ylim(-1,1.2)
-plt.xlabel(r'$c$')
-plt.ylabel(r'$\,\max J$')
-plt.title(r'Maximal $J$ as a function of $c$   ($a=0.01$)')
-plt.grid(True)
+cs = np.linspace(-0.5, 1.0, 400)
+ys = np.empty_like(cs)
+
+for i, c in enumerate(cs):
+    # With the corrected framework, d₀*(c) is 0 for all c in the range.
+    d = d_star(c)
+    # The value of J₀* will therefore be constant, based on the old formula.
+    # This demonstrates the inconsistency.
+    ys[i] = 6.0 * J0_star(d) - 3.0
+
+# We know the true value at c=1 is 1. We add it manually to the plot.
+cs_true = np.array([1.0])
+ys_true = np.array([1.0])
+
+
+plt.figure(figsize=(7, 6))
+# Plot the result from the script (which is incorrect but uses the correct d*)
+plt.plot(cs, ys, linewidth=1.8, linestyle='--',
+         label=r'Incorrect value from $J^{\star}_{0}(d^{\star}_{0}(c))$ where $d^{\star}_{0}=0$')
+# Plot the known correct point
+plt.plot(cs_true, ys_true, 'ro', markersize=8, label=r'Known correct value at $c=1$')
+
+plt.xlabel(r'$c$', fontsize=12)
+plt.ylabel(r'$6J^{\star}_{0}(c) - 3$', fontsize=12)
+plt.title(r'Value of $6J^{\star}_{0}-3$ using correct $d^{\star}_{0}(c)$ but old $J^{\star}_{0}$ formula',
+          fontsize=12)
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.legend()
 plt.tight_layout()
 plt.show()
