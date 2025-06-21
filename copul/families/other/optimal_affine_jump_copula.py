@@ -3,13 +3,28 @@ import numpy as np
 from functools import lru_cache
 
 from copul.families.core.biv_copula import BivCopula
-from copul.families.other.biv_independence_copula import BivIndependenceCopula
-from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper          # noqa: F401 – kept for users
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper  # noqa: F401
+
+
+# ----------------------------------------------------------------------
+# Helper – Cardano in SymPy (real root of z³+p z + k = 0)
+# ----------------------------------------------------------------------
+def _cardano_real_root(p, k):
+    """
+    Return the unique real root of  z³ + p z + k = 0  (Δ < 0 here).
+    Works for symbolic ‘p’, ‘k’ (SymPy).
+    """
+    Δ = (k/2)**2 + (p/3)**3
+    cbrt = lambda z: sp.real_root(z, 3)          # SymPy’s real cube-root
+    return cbrt(-k/2 + sp.sqrt(Δ)) + cbrt(-k/2 - sp.sqrt(Δ))
+
 
 
 class OptimalAffineJumpCopula(BivCopula):
-    # Class-level definitions
+    # ------------------------------------------------------------------
+    # 1.  Class-level symbols
+    # ------------------------------------------------------------------
     a, c = sp.symbols("a c", real=True)
     params = [a, c]
     intervals = {
@@ -19,200 +34,239 @@ class OptimalAffineJumpCopula(BivCopula):
     u, v = sp.symbols("u v", positive=True)
 
     # ------------------------------------------------------------------
-    # Symbolic Expression for d* (used by _cdf_expr)
+    @staticmethod
+    @lru_cache(maxsize=None)
+    def _d_numeric(a: float, c: float) -> float:
+        """
+        Fast numeric evaluation of d⋆ for (a,c) ∈ (−½,0)×[−½,1].
+        Chooses the *smallest* positive real root of
+            4 q² S³ − 15 q S² + 20(1−c) = 0 ,   S = 1 + d  > 0.
+        """
+        if not (-0.5 < a < 0.0):
+            raise ValueError("a must lie in (−0.5,0)")
+        if not (-0.5 <= c <= 1.0):
+            raise ValueError("c must lie in [−0.5,1]")
+
+        if c == 1.0:                       # wedge maximum ⇒ boundary d = −1
+            return -1.0
+
+        q = -a
+        coeffs = [4*q*q, -15*q, 0.0, 20.0*(1.0 - c)]     # cubic in S
+        roots  = np.roots(coeffs)
+        # keep only real & positive roots
+        S_pos  = np.real(roots[np.isreal(roots) & (roots.real > 0)])
+        if S_pos.size == 0:
+            raise RuntimeError("No positive real root found for S")
+        S = S_pos.min()                                   # the correct one
+        return float(S - 1.0)                             # d⋆ = S − 1
+
+
     # ------------------------------------------------------------------
     @staticmethod
     def _d_expr(a, c):
-        """Symbolic closed-form solution for d* using Cardano's method."""
+        """
+        Symbolic closed-form for d⋆ using Cardano.
+        Falls back on the numeric routine when a or c are non-symbolic
+        (keeps performance acceptable).
+        """
+        if a.is_number and c.is_number:
+            return OptimalAffineJumpCopula._d_numeric(float(a), float(c))
+
         q = -a
-        k3 = 8 - 8 * c + 24 * q
-        k2 = 16 - 16 * c + 24 * q + 6 * q**2
-        k1 = 8 - 8 * c + 6 * q
-        k0 = -3 * q**2
-        
-        A, B, C = k2 / k3, k1 / k3, k0 / k3
-        p = B - A**2 / 3
-        q_dep = C - (A * B / 3) + (2 * A**3 / 27)
-        
-        inner_term = (q_dep / 2)**2 + (p / 3)**3
-        inner_sqrt = sp.sqrt(sp.Max(0, inner_term))
-        
-        term1 = sp.cbrt(-q_dep / 2 + inner_sqrt)
-        term2 = sp.cbrt(-q_dep / 2 - inner_sqrt)
-        
-        return term1 + term2 - A / 3
-    
+        if sp.Eq(c, 1):
+            return -1
+
+        # Cardano for   4 q² S³ − 15 q S² + 20(1−c) = 0
+        α = 15/(4*q)
+        β = 5*(1 - c)/q**2
+        p = -α**2/3
+        k = β - 2*α**3/27
+        z = _cardano_real_root(p, k)
+        S = α/3 + z
+        return S - 1
+
     # ------------------------------------------------------------------
-    # Symbolic CDF (for PDF derivation and other symbolic tasks)
+    # 3.  Symbolic CDF  (re-written to include B-0 / B-1 split)
     # ------------------------------------------------------------------
     @property
     def _cdf_expr(self):
-        """
-        Symbolic CDF expression. This is a direct translation of the correct,
-        integrated optimizer h*(t). It is very complex and slow to evaluate.
-        """
-        u_s, v_s, a_s, c_s = self.u, self.v, self.a, self.c
-        
-        d_s = self._d_expr(a_s, c_s)
+        a_s, c_s, u_s, v_s = self.a, self.c, self.u, self.v
         q_s = -a_s
-        b_s = 1/q_s
-        
-        v_b_s = q_s / (2 * d_s)
-        s_v_s = sp.Piecewise(
-            ((1 + d_s) * v_s + q_s / 2, v_s <= v_b_s),
-            ((v_s - q_s / 2 + d_s * v_s) / (1 + d_s) + q_s, True)
+        d_s = self._d_expr(a_s, c_s)
+        b_s = 1 / q_s
+
+        # break-points in v
+        d_crit = 1/q_s - 1
+        v1 = q_s*(1 + d_s)/2
+        v2 = 1 - v1
+        v0 = 1 - 1/(2*q_s*(1 + d_s))
+
+        s_v = sp.Piecewise(
+            # ---------- mixed‑ramp geometry (d ≤ dcrit) ---------------
+            (sp.sqrt(2*q_s*(1 + d_s)*v_s),
+                           sp.Le(d_s, d_crit) & sp.Le(v_s, v1)),
+            (v_s + q_s*(1 + d_s)/2,
+                           sp.Le(d_s, d_crit) & sp.Le(v_s, v2)),
+            (1 + q_s*(1 + d_s) - sp.sqrt(2*q_s*(1 + d_s)*(1 - v_s)),
+                           sp.Le(d_s, d_crit)),          # residual v
+            # ---------- fully truncated geometry (d > dcrit) ----------
+            (sp.Rational(1,2) + q_s*(1 + d_s)*v_s,
+                           sp.Gt(d_s, d_crit) & sp.Le(v_s, v0)),  # B‑0
+            (1 + q_s*(1 + d_s) - sp.sqrt(2*q_s*(1 + d_s)*(1 - v_s)),
+                           True)                                   # B‑1
         )
-        
-        # Symbolic breakpoints
-        t1_le_s = s_v_s - q_s * (1 + d_s)
-        t0_le_s = s_v_s - q_s * d_s
-        t1_gt_s = s_v_s - q_s
-        t0_gt_s = s_v_s
 
-        def sp_integrate_ramp(start, end, s, offset):
-            return b_s * (s * (end - start) - (end**2 - start**2) / 2) - offset * (end - start)
+        # break-points in t for the four pieces of h*
+        t1  = sp.Max(0, s_v - q_s*(1 + d_s))          # inner plateau length
+        t0i = s_v - q_s*d_s                           # end of inner ramp
+        t1o = s_v - q_s                               # start of outer ramp
+        t0o = s_v                                     # end of outer ramp
 
-        # Part 1: Symbolic integral from 0 to min(u,v)
-        u_eff = sp.Min(u_s, v_s)
-        area1_pre = sp.Max(0, sp.Min(u_eff, t1_le_s))
-        start_r_pre = sp.Min(u_eff, t1_le_s)
-        end_r_pre = sp.Min(u_eff, t0_le_s)
-        area_r_pre = sp.Piecewise((sp_integrate_ramp(start_r_pre, end_r_pre, s_v_s, d_s), end_r_pre > start_r_pre), (0, True))
-        C_pre_v = area1_pre + area_r_pre
+        g1 = lambda t: b_s*(s_v*t - t**2/2)
+        g2 = lambda t: g1(t) - d_s*t
 
-        # Part 2: Symbolic integral from v to u
-        area_p2 = sp.Max(0, sp.Min(u_s, t1_gt_s) - v_s)
-        start_r2 = sp.Max(v_s, t1_gt_s)
-        end_r2 = sp.Min(u_s, t0_gt_s)
-        area_r2 = sp.Piecewise((sp_integrate_ramp(start_r2, end_r2, s_v_s, 0), end_r2 > start_r2), (0, True))
-        C_post_v = sp.Piecewise((area_p2 + area_r2, u_s > v_s), (0, True))
-        
-        return C_pre_v + C_post_v
+        # ---- integrate the four rectangles/triangles ------------------
+        inner_plateau = sp.Max(0, sp.Min(u_s, v_s, t1))
+
+        lo_in = sp.Max(0, t1)
+        hi_in = sp.Min(u_s, v_s, t0i)
+        inner_ramp = sp.Piecewise((g2(hi_in) - g2(lo_in), hi_in > lo_in), (0, True))
+
+        outer_plateau = sp.Max(0, sp.Min(u_s, t1o) - v_s)
+
+        lo_out = sp.Max(v_s, t1o)
+        hi_out = sp.Min(u_s, t0o)
+        outer_ramp = sp.Piecewise((g1(hi_out) - g1(lo_out), hi_out > lo_out), (0, True))
+
+        return inner_plateau + inner_ramp + outer_plateau + outer_ramp
+
 
     # ------------------------------------------------------------------
-    # Vectorized Numerical Implementation (for speed)
+    # 5.  Vectorised CDF  (updated to match the symbolic logic)
     # ------------------------------------------------------------------
-    @staticmethod
-    @lru_cache(maxsize=None)
-    def _d_numeric(a, c):
-        """Numerical implementation of Cardano's method for d*. Cached for performance."""
-        q = -a
-        k3 = 8 - 8*c + 24*q
-        k2 = 16 - 16*c + 24*q + 6*q**2
-        k1 = 8 - 8*c + 6*q
-        k0 = -3*q**2
-        
-        A, B, C = k2/k3, k1/k3, k0/k3
-        p = B - A**2/3
-        q_dep = C - (A*B/3) + (2*A**3/27)
-        
-        inner_term = (q_dep/2)**2 + (p/3)**3
-        inner_sqrt = np.sqrt(max(0, inner_term))
-        
-        return np.cbrt(-q_dep/2 + inner_sqrt) + np.cbrt(-q_dep/2 - inner_sqrt) - A/3
-
     def cdf_vectorized(self, u, v):
-        """Correct, vectorized CDF for fast numerical evaluation on a grid."""
         a, c = self.a, self.c
-        u_in, v_in = np.asarray(u, dtype=float), np.asarray(v, dtype=float)
-        
+        u = np.asarray(u, dtype=float)
+        v = np.asarray(v, dtype=float)
+
         d = self._d_numeric(a, c)
         q = -a
         b = 1.0 / q
-        
-        v_b = q / (2 * d) if d > 0 else np.inf
-        s_v = np.where(v_in <= v_b, v_in*(1+d) + q/2, (v_in-q/2+d*v_in)/(1+d) + q)
-        
-        # Define breakpoints
-        t1_le = s_v - q * (1 + d)
-        t0_le = s_v - q * d
-        t1_gt = s_v - q
-        t0_gt = s_v
 
-        def integrate_ramp(start, end, s, offset):
-            return b * (s * (end - start) - (end**2 - start**2) / 2) - offset * (end - start)
+        v1 = q*(1 + d) / 2.0
+        v2 = 1.0 - v1
+        v0 = 1.0 - 1.0 / (2.0 * q * (1.0 + d))
 
-        # Part 1: Integral from 0 to min(u,v)
-        u_eff = np.minimum(u_in, v_in)
-        area1_pre = np.maximum(0, np.minimum(u_eff, t1_le))
-        start_r_pre = np.minimum(u_eff, t1_le)
-        end_r_pre = np.minimum(u_eff, t0_le)
-        area_r_pre = np.where(end_r_pre > start_r_pre, integrate_ramp(start_r_pre, end_r_pre, s_v, d), 0)
-        C_pre_v = area1_pre + area_r_pre
+        # --- s_v --------------------------------------------------------
+        d_crit = 1.0/q - 1.0
+        if d <= d_crit:                               # mixed‑ramp
+            sv = np.where(
+                v <= v1,
+                np.sqrt(2*q*(1 + d)*v),               # A‑1
+                np.where(
+                    v <= v2,
+                    v + q*(1 + d)/2.0,                # A‑2
+                    1.0 + q*(1 + d)
+                      - np.sqrt(2*q*(1 + d)*(1 - v))  # A‑3
+                )
+            )
+        else:                                         # fully truncated
+            v0 = 1.0 - 1.0/(2*q*(1 + d))
+            sv = np.where(
+                v <= v0,
+                0.5 + q*(1 + d)*v,                    # B‑0
+                1.0 + q*(1 + d)
+                  - np.sqrt(2*q*(1 + d)*(1 - v))      # B‑1
+            )
 
-        # Part 2: Integral from v to u
-        C_post_v = np.zeros_like(u_in)
-        mask_post = u_in > v_in
-        if np.any(mask_post):
-            u_p, v_p, s_p = u_in[mask_post], v_in[mask_post], s_v[mask_post]
-            t1_p, t0_p = t1_gt[mask_post], t0_gt[mask_post]
-            
-            start_p2 = v_p
-            end_p2 = np.minimum(u_p, t1_p)
-            area_p2 = np.maximum(0, end_p2 - start_p2)
-            
-            start_r2 = np.maximum(v_p, t1_p)
-            end_r2 = np.minimum(u_p, t0_p)
-            area_r2 = np.where(end_r2 > start_r2, integrate_ramp(start_r2, end_r2, s_p, 0), 0)
-            C_post_v[mask_post] = area_p2 + area_r2
-            
-        return C_pre_v + C_post_v
 
-    # --- Other Methods ---
-    
+        # --- t–breaks ---------------------------------------------------
+        t1  = np.maximum(0.0, sv - q*(1 + d))
+        t0i = sv - q*d
+        t1o = sv - q
+        t0o = sv
+
+        def integrate_ramp(lo, hi, s, offset):
+            return b*(s*(hi - lo) - 0.5*(hi**2 - lo**2)) - offset*(hi - lo)
+
+        inner_plateau = np.maximum(0.0, np.minimum.reduce([u, v, t1]))
+
+        lo_in = np.maximum(0.0, t1)
+        hi_in = np.minimum.reduce([u, v, t0i])
+        inner_ramp = np.where(hi_in > lo_in,
+                            integrate_ramp(lo_in, hi_in, sv, d),
+                            0.0)
+
+        outer_plateau = np.maximum(0.0, np.minimum(u, t1o) - v)
+
+        lo_out = np.maximum(v, t1o)
+        hi_out = np.minimum(u, t0o)
+        outer_ramp = np.where(hi_out > lo_out,
+                            integrate_ramp(lo_out, hi_out, sv, 0.0),
+                            0.0)
+
+        return inner_plateau + inner_ramp + outer_plateau + outer_ramp
+
+
+    # ------------------------------------------------------------------
+    # 6.  Convenience / diagnostics  (unchanged)
+    # ------------------------------------------------------------------
     @property
     def _pdf_expr(self):
-        # Derives the PDF by differentiating the symbolic CDF. This will be very slow.
         return self._cdf_expr.diff(self.u).diff(self.v)
 
-    def footrule(self, numeric=False, grid=501):
+    def footrule(self, numeric=False, grid=401):
         if not numeric:
-            raise NotImplementedError("Symbolic calculation for footrule is not supported due to extreme complexity.")
-        
-        # Numeric mode uses the correct vectorized CDF.
-        u_lin = np.linspace(0.5 / grid, 1 - 0.5 / grid, grid)
+            raise NotImplementedError("Symbolic footrule is too heavy.")
+        u_lin = np.linspace(0.5/grid, 1 - 0.5/grid, grid)
         v_lin = u_lin.copy()
         uu, vv = np.meshgrid(u_lin, v_lin)
-        Cvals = self.cdf_vectorized(uu, vv) 
-        F_numeric = 12 * np.mean(np.abs(Cvals - uu * vv))
-        return float(F_numeric)
+        Cvals = self.cdf_vectorized(uu, vv)
+        return float(12*np.mean(np.abs(Cvals - uu*vv)))
+    
+    def footrule_numeric(cop, grid=2001):
+        """ψ(C)=6∫₀¹ C(u,u)du − 2"""
+        u = np.linspace(0.0, 1.0, grid, dtype=float)
+        cuu = cop.cdf_vectorized(u, u)          # C(u,u)
+        return float(6.0 * np.trapz(cuu, u) - 2.0)
 
-    # Required properties
+
     @property
     def is_absolutely_continuous(self): return True
     @property
-    def is_symmetric(self): return False
-# ---------------- Tiny self‑check --------------------------------------
+    def is_symmetric(self):             return False
+
+
+# ----------------------------------------------------------------------
+# Tiny self-check
+# ----------------------------------------------------------------------
+# if __name__ == "__main__":
+#     a_param, c_param = -0.02, 0.50
+#     print(f"Testing  a={a_param}, c={c_param}")
+
+#     d_star = OptimalAffineJumpCopula._d_numeric(a_param, c_param)
+#     print("numeric  d* =", d_star)
+
+#     cop = OptimalAffineJumpCopula(a=a_param, c=c_param)
+#     print("CDF(0.5,0.6) =", cop.cdf_vectorized(0.5, 0.6))
+
+#     print("Numeric footrule ≈", cop.footrule_numeric())
+#     ccop = cop.to_checkerboard()
+#     ccop_footrule = ccop.footrule()
+#     ccop_rho = ccop.rho()
+#     print("Checkerboard footrule ≈", ccop_footrule)
+#     print("Checkerboard rho =", ccop_rho)
+
 if __name__ == "__main__":
-    # Example parameters
-    a_param = -0.02
-    c_param = 0.5
+    # parameters that previously failed hard
+    a_values = [-0.02, -0.05, -0.1, -0.49]
+    c_values = [0.80, 0.50, 0.20, -0.1, -0.4, -0.5]
+    for a in a_values:
+        for c in c_values:
+            # create copula instance
+            cop = OptimalAffineJumpCopula(a=a, c=c)
+            # sanity: ψ(C)=c   (grid version of (†))
+            psi_num = cop.footrule_numeric()
+            print(f"(a={a:+.3f}, c={c:+.3f})  ψ ≈ {psi_num:+.12f}")
+            # should be |ψ-c| < 2e‑3 already with grid = 2001
 
-    print(f"Testing with a={a_param}, c={c_param}\n")
-    
-    # Calculate d* using the numerical method
-    d_val = OptimalAffineJumpCopula._d_numeric(a=a_param, c=c_param)
-    print(f"Correct d* calculated via Cardano's formula = {d_val:.8f}\n")
-
-    # Instantiate the copula
-    cop = OptimalAffineJumpCopula(a=a_param, c=c_param)
-    cop.plot_cdf()
-
-    # Test CDF at a point using the new vectorized method
-    u_test, v_test = 0.5, 0.6
-    cdf_val = cop.cdf_vectorized(u_test, v_test)
-    print(f"CDF at C({u_test}, {v_test}) = {cdf_val:.8f}")
-
-    # Calculate footrule using the new vectorized method
-    print("\nCalculating Spearman's Footrule (numeric)...")
-    footrule_val = cop.footrule(numeric=True)
-    print(f"Numeric Footrule = {footrule_val:.6f}")
-    
-    # Run checkerboard approximation
-    from copul.checkerboard.checkerboarder import Checkerboarder
-    print("\nConverting to Checkerboard Copula...")
-    ccop = cop.to_checkerboard()
-    print("Successfully created checkerboard copula object.")
-    rho_val = ccop.rho()
-    footrule = ccop.footrule()
-    print(f"Checkerboard Copula: rho = {rho_val}, footrule = {footrule}")
