@@ -1,103 +1,100 @@
-#!/usr/bin/env python3
-"""
-Six prototype profiles for h*_v(t)   ––   Regime A vs. Regime B
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
-plt.rcParams.update({"font.size": 11})
 
-# ----------------- helper functions ---------------------------------
-def proj(x):
-    return np.minimum(1.0, np.maximum(0.0, x))
-
-
-def s_v(q, d, v):
-    """closed-form six-branch expression"""
-    d_crit  = 1.0 / q - 1.0
-    s_star  = q * (1.0 + d)
-
-    if d <= d_crit:                            # Regime A
-        v1, v2 = 0.5 * s_star, 1 - 0.5 * s_star
-        if v <= v1:                            # A-1
-            return np.sqrt(2 * q * (1 + d) * v)
-        elif v <= v2:                          # A-2
-            return v + 0.5 * s_star
-        else:                                  # A-3
-            return 1 + s_star - np.sqrt(2 * q * (1 + d) * (1 - v))
-    else:                                      # Regime B
-        v_star = 1.0 / (2 * q * (1 + d))
-        v0     = 1.0 - v_star
-        if v <= v_star:                        # B-0a
-            return np.sqrt(2 * q * (1 + d) * v)
-        elif v <= v0:                          # B-0b
-            return 0.5 + q * (1 + d) * v
-        else:                                  # B-1
-            return 1 + s_star - np.sqrt(2 * q * (1 + d) * (1 - v))
+# =============================================================================
+#  PARAMETER TO TUNE
+# =============================================================================
+# The global parameter D determines the solution's structure.
+# D is related to the limiting Lagrange multiplier (D = 3*zeta_0/2).
+# For all three regimes to be visible, D must be in (0, 0.5).
+# - If D <= 0 or D >= 0.5, the intermediate regime vanishes.
+# =============================================================================
 
 
-def h_star(q, d, v, t):
-    b  = 1.0 / q
-    sv = s_v(q, d, v)
-    raw = b * (sv - t) - d * (t <= v)
-    return proj(raw)
+def get_t_in(v, D):
+    """
+    Calculates the inner switching-time function t_in(v).
 
-# --------------------------------------------------------------------
-q       = 0.25
-d_crit  = 1 / q - 1                       # = 3.0
-d_A     = 1.0                             # Regime A   (d < d_crit)
-d_B     = 4.0                             # Regime B   (d > d_crit)
+    Args:
+        v (np.ndarray): Array of v values in [0, 1].
+        D (float): The global parameter of the solution.
 
-t   = np.linspace(0, 1, 2001)
-dt  = t[1] - t[0]
+    Returns:
+        np.ndarray: The corresponding t_in values.
+    """
+    # Create an empty array to store the results
+    t_in_values = np.zeros_like(v)
 
-# ---------------- choose v so that every feature is visible ----------
-# Regime A (s_star = 0.50,  v1 = 0.25,  v2 = 0.75)
-v_A = [0.05,       # A-1 : short, no plateau
-       0.40,       # A-2 : inner plateau on [0,0.15]
-       0.90]       # A-3 : outer ramp truncated
+    # Define the conditions for the three regimes
+    cond_low_v = (v >= 0) & (v <= D)
+    cond_mid_v = (v > D) & (v < 1 - D)
+    cond_high_v = (v >= 1 - D) & (v <= 1)
 
-# Regime B (s_star = 1.25, v_star = 0.20, v0 = 0.80)
-v_B = [0.15,       # B-0a : s_v ≤ 1, outer ramp truncated *at* 1
-       0.25,       # B-0b : s_v very close to 1 ⇒ NO clipping to 1
-       0.90]       # B-1  : clear inner plateau
+    # Apply the corresponding formula for each regime
+    t_in_values[cond_low_v] = 2 * v[cond_low_v] - 2 * D
+    t_in_values[cond_mid_v] = v[cond_mid_v] - D
+    t_in_values[cond_high_v] = 2 * v[cond_high_v] - 1
+    
+    return t_in_values
 
-titles_A = [r"A–1 (no inner plateau)",
-            r"A–2 (inner plateau)",
-            r"A–3 (outer ramp trnc.)"]
+def get_t_out(v, D):
+    """
+    Calculates the outer switching-time function t_out(v).
 
-titles_B = [r"B–0a ($s_v\leq 1$)",
-            r"B–0b ($s_v>1$, no inner plateau)",
-            r"B–1 (inner plateau)"]
+    Args:
+        v (np.ndarray): Array of v values in [0, 1].
+        D (float): The global parameter of the solution.
 
-# --------------------------------------------------------------------
-fig, axmat = plt.subplots(2, 3, figsize=(13, 6), sharey=True)
+    Returns:
+        np.ndarray: The corresponding t_out values.
+    """
+    # Create an empty array to store the results
+    t_out_values = np.zeros_like(v)
+    
+    # Define the conditions for the three regimes
+    cond_low_v = (v >= 0) & (v <= D)
+    cond_mid_v = (v > D) & (v < 1 - D)
+    cond_high_v = (v >= 1 - D) & (v <= 1)
+    
+    # Apply the corresponding formula for each regime
+    t_out_values[cond_low_v] = 2 * v[cond_low_v]
+    t_out_values[cond_mid_v] = v[cond_mid_v] + D
+    t_out_values[cond_high_v] = 2 * v[cond_high_v] - 1 + 2 * D
+    
+    return t_out_values
 
-for ax, v, ttl in zip(axmat[0], v_A, titles_A):
-    y = h_star(q, d_A, v, t).copy()
-    y[np.abs(t - v) < dt/2] = np.nan      # hide the 1-pixel jump
-    ax.plot(t, y, lw=2.4, color="tab:blue")
-    ax.set_title(ttl, pad=6)
-    ax.set_xlabel(r"$t$")
-    ax.set_ylabel(r"$h_v^{\!*}(t)$")
-    ax.set_ylim(-0.05, 1.05)
-    ax.grid(ls="--", alpha=.34)
+# --- Main script for plotting ---
+if __name__ == '__main__':
+    D = 0.5
+    # 1. Generate data
+    v_coords = np.linspace(0, 1, 500)
+    t_in_coords = get_t_in(v_coords, D)
+    t_out_coords = get_t_out(v_coords, D)
 
-for ax, v, ttl in zip(axmat[1], v_B, titles_B):
-    y = h_star(q, d_B, v, t).copy()
-    y[np.abs(t - v) < dt/2] = np.nan
-    ax.plot(t, y, lw=2.4, color="tab:orange")
-    ax.set_title(ttl, pad=6)
-    ax.set_xlabel(r"$t$")
-    ax.set_ylim(-0.05, 1.05)
-    ax.grid(ls="--", alpha=.34)
+    # 2. Create the plot
+    plt.style.use('seaborn-v0_8-whitegrid')
+    fig, ax = plt.subplots(figsize=(10, 8))
 
-fig.subplots_adjust(top=0.88)
-fig.suptitle(
-    rf"Regime A: $d={d_A}$ < $d_{{\mathrm{{crit}}}}={d_crit:.1f}$"
-    r"\qquad---\qquad"
-    rf"Regime B: $d={d_B}$ > $d_{{\mathrm{{crit}}}}={d_crit:.1f}$",
-    fontsize=13
-)
-fig.tight_layout()
-plt.show()
+    # Plot the main functions
+    ax.plot(v_coords, t_in_coords, lw=2.5, label='$t_{in}(v)$ (Inner ramp switch)')
+    ax.plot(v_coords, t_out_coords, lw=2.5, label='$t_{out}(v)$ (Outer ramp switch)')
+
+    # Plot reference lines for context
+    ax.plot(v_coords, v_coords, 'k--', lw=1, alpha=0.7, label='$y=v$')
+    
+    # Plot vertical lines for regime boundaries, only if the mid-regime exists
+    if 0 < D < 0.5:
+        ax.axvline(x=D, color='gray', linestyle='--', lw=1, label=f'$v=D={D}$')
+        ax.axvline(x=1-D, color='gray', linestyle='--', lw=1, label=f'$v=1-D={1-D}$')
+
+    # 3. Customize the plot
+    ax.set_title(f'Switching-Time Functions for the Limiting Optimizer ($D={D}$)', fontsize=16)
+    ax.set_xlabel('$v$', fontsize=12)
+    ax.set_ylabel('$t$', fontsize=12)
+    ax.legend(fontsize=11)
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_aspect('equal', adjustable='box') # Make the plot square for better intuition
+
+    # 4. Show the plot
+    plt.show()

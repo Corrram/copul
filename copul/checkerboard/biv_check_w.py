@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 from typing_extensions import TypeAlias
 import numpy as np
@@ -646,5 +647,69 @@ class BivCheckW(BivCheckPi):
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
         return super().xi(condition_on_y) + m * np.trace(self.matr.T @ self.matr) / n
 
+    def footrule(self) -> float:
+        """
+        Compute Spearman's Footrule (psi) for a BivCheckMin copula.
+
+        The value is the footrule of the underlying CheckPi copula plus an
+        add-on term accounting for the singular part of the distribution.
+        Implemented for square checkerboard matrices.
+        
+        Returns:
+            float: The value of Spearman's Footrule.
+        """
+        if self.m != self.n:
+            warnings.warn("Footrule analytical formula is implemented for square matrices only.")
+            return np.nan
+
+        # Calculate footrule for the absolutely continuous part (CheckPi)
+        check_pi_footrule = super().footrule()
+
+        # Add-on term from the singular part of the copula
+        # Add-on = (1/n) * trace(P)
+        trace = np.trace(self.matr)
+        add_on = trace / self.m
+
+        return check_pi_footrule - add_on
+
+    def ginis_gamma(self) -> float:
+        """
+        Compute Gini's Gamma for a BivCheckMin copula.
+
+        This method corrects the value from the parent BivCheckPi class. The
+        parent method incorrectly uses the overridden `footrule` method from
+        this child class, leading to a "contaminated" result that already
+        includes the add-on for the main diagonal integral. We correct this
+        by adding only the missing component from the anti-diagonal integral.
+        Implemented for square checkerboard matrices.
+
+        Returns:
+            float: The value of Gini's Gamma.
+        """
+        if self.m != self.n:
+            warnings.warn("Gini's Gamma analytical formula is implemented for square matrices only.")
+            return np.nan
+
+        # The super() call returns a value that has incorrectly incorporated the
+        # diagonal add-on but not the anti-diagonal add-on.
+        contaminated_gamma_pi = super().ginis_gamma()
+
+        # We add only the part that was missing: the add-on for the
+        # anti-diagonal integral C(u, 1-u).
+        # Add-on = 4 * (Trace(Anti-Diagonal(P)) / (12n))
+        anti_diag_trace = np.trace(np.fliplr(self.matr))
+        
+        add_on = anti_diag_trace / (3 * self.m)
+
+        return contaminated_gamma_pi - add_on
+
 
 CheckW: TypeAlias = BivCheckW
+
+if __name__ == "__main__":
+    matr = [[1,1]]
+    copula = BivCheckW(matr)
+    ccop = copula.to_checkerboard()
+    footrule = ccop.footrule()
+    rho = ccop.rho()
+    print(f"Footrule: {footrule}, Rho: {rho}")
