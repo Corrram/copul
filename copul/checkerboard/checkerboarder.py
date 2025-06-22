@@ -66,8 +66,7 @@ class Checkerboarder:
 
         if n_jobs > 1 and np.prod(self.n) > 100:
             return self._compute_checkerboard_parallel(copula, n_jobs)
-        else:
-            return self._compute_checkerboard_serial(copula)
+        return self._compute_checkerboard_serial(copula)
 
     def _compute_checkerboard_vectorized(self, copula, tol=1e-12):
         if self.d != 2:

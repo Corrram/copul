@@ -169,8 +169,10 @@ if __name__ == "__main__":
     matr1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     matr2 = [[5, 1, 5, 1], [5, 1, 5, 1], [1, 5, 1, 5], [1, 5, 1, 5]]
     matr = [[1,0], [0, 1]]
-    ccop = BivCheckMin(matr)
+    matr = [[1,1]]
+    ccop = BivCheckMin(matr).to_checkerboard()
     footrule = ccop.footrule()
+    rho = ccop.rho()
     ginis_gamma = ccop.ginis_gamma()
     xi = ccop.xi()
     # ccop.plot_cond_distr_1()
