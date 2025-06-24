@@ -1,5 +1,6 @@
 # file: copul/families/diagonal_band_b_inverse_reflected.py
 import sympy as sp
+import numpy as np
 
 from copul.families.core.biv_copula import BivCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
@@ -11,58 +12,58 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 class RhoMinusXiMaximalCopula(BivCopula):
     r"""
     Optimal–ρ diagonal–band copula, parametrised by b_new so that the original
-    scale‐parameter b_old = 1/|b_new|.  For b_new < 0, we use the reflection
+    scale‐parameter b_old = 1/|b_new|.  For b_new < 0, we use the reflection
     identity
     \[
-      C_{b_{\rm new}}^{\downarrow}(u,v) \;=\; v \;-\; 
+      C_{b_{\rm new}}^{\downarrow}(u,v) \;=\; v \;-\;
       C_{|b_{\rm new}|}^{\uparrow}(1 - u,\,v)\,.
     \]
 
     -----------------
     Parameter b_new
     -----------------
-    b_new ∈ ℝ \ {0}.  For b_new > 0, b_old = 1/b_new > 0; for b_new < 0,
+    b_new ∈ ℝ \ {0}.  For b_new > 0, b_old = 1/b_new > 0; for b_new < 0,
     we treat |b_new| just as above and apply the “down‐reflection.”
 
     --------
     Formulas
     --------
     1. Maximal Spearman’s ρ:
-      Let b := b_new.  Then b_old = 1/|b|.  Equivalently, one can write
+      Let b := b_new.  Then b_old = 1/|b|.  Equivalently, one can write
       M(b) piecewise in terms of |b| just as in the “b_old‐param” version.
-      We keep the same form, but with |b_old| ≤ 1 ↔ |b| ≥ 1, etc.  In symbolic
+      We keep the same form, but with |b_old| ≤ 1 ↔ |b| ≥ 1, etc.  In symbolic
       form:
       \[
         M(b) \;=\;
         \begin{cases}
-          b - \frac{3\,b^2}{10}, 
+          b - \frac{3\,b^2}{10},
             & |b|\ge 1, \\[1ex]
-          1 - \frac{1}{2\,b^2} + \frac{1}{5\,b^3}, 
+          1 - \frac{1}{2\,b^2} + \frac{1}{5\,b^3},
             & |b| < 1.
         \end{cases}
       \]
       (Here b_old = 1/b_new simply swaps the roles of “small‐b_old” vs. “large‐b_old.”)
 
     2. Shift s_v(b):
-      Define b_old = 1/|b|.  Then for |b_old| ≤ 1 (i.e. |b| ≥ 1):
+      Define b_old = 1/|b|.  Then for |b_old| ≤ 1 (i.e. |b| ≥ 1):
       \[
         \begin{cases}
-          s_v = \sqrt{2\,v\,b_{\text{old}}}, 
+          s_v = \sqrt{2\,v\,b_{\text{old}}},
             & v \le \tfrac{b_{\text{old}}}{2},\\
-          s_v = v + \tfrac{b_{\text{old}}}{2}, 
+          s_v = v + \tfrac{b_{\text{old}}}{2},
             & v \in (\tfrac{b_{\text{old}}}{2},\,1 - \tfrac{b_{\text{old}}}{2}],\\
-          s_v = 1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)}, 
+          s_v = 1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)},
             & v > 1 - \tfrac{b_{\text{old}}}{2}.
         \end{cases}
       \]
       For |b_old| > 1 (i.e. |b| < 1):
       \[
         \begin{cases}
-          s_v = \sqrt{2\,v\,b_{\text{old}}}, 
+          s_v = \sqrt{2\,v\,b_{\text{old}}},
             & v \le \tfrac{1}{2\,b_{\text{old}}},\\
-          s_v = v\,b_{\text{old}} + \tfrac12, 
+          s_v = v\,b_{\text{old}} + \tfrac12,
             & v \in (\tfrac{1}{2\,b_{\text{old}}},\,1 - \tfrac{1}{2\,b_{\text{old}}}],\\
-          s_v = 1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)}, 
+          s_v = 1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)},
             & v > 1 - \tfrac{1}{2\,b_{\text{old}}}.
         \end{cases}
       \]
@@ -70,11 +71,11 @@ class RhoMinusXiMaximalCopula(BivCopula):
     3. Copula CDF:
       For b_new > 0, use the usual triangle‐band formula with b_old = 1/b_new:
       \[
-        \;a_v \;=\; s_v - b_{\text{old}}, 
+        \;a_v \;=\; s_v - b_{\text{old}},
         \quad
-        C(u,v) = 
+        C(u,v) =
         \begin{cases}
-          u, 
+          u,
             & u \le a_v,\\[0.6ex]
           a_v + \frac{2\,s_v\,(u - a_v) \;-\; u^2 + a_v^2}{2\,b_{\text{old}}},
             & a_v < u \le s_v,\\[1ex]
@@ -119,7 +120,7 @@ class RhoMinusXiMaximalCopula(BivCopula):
             del kwargs["b"]  # Remove b before creating special case
             return special_case_cls()
         return super().__call__(**kwargs)
-    
+
     @classmethod
     def from_xi(cls, x):
         r"""
@@ -143,11 +144,11 @@ class RhoMinusXiMaximalCopula(BivCopula):
         x : float or sympy expression
             The target value for Chatterjee's xi, in (0, 1).
         """
-        if x==0:
+        if x == 0:
             return cls(b=0.0)  # Special case for xi = 0, which corresponds to independence
-        elif x==1:
+        elif x == 1:
             return UpperFrechet()
-        elif x==-1:
+        elif x == -1:
             return LowerFrechet()
         x_sym = sp.sympify(x)
 
@@ -169,9 +170,9 @@ class RhoMinusXiMaximalCopula(BivCopula):
     def _M_expr(b):
         """Piecewise maximal Spearman’s ρ in terms of b_new."""
         # When |b| ≥ 1, then b_old = 1/|b| ≤ 1 → formula b_old‐small → inverts to:
-        M_when_abs_b_ge_1 = b - sp.Rational(3, 10) * b**2
+        M_when_abs_b_ge_1 = b - sp.Rational(3, 10) * b ** 2
         # When |b| < 1, then b_old = 1/|b| > 1 → formula b_old‐large → inverts to:
-        M_when_abs_b_lt_1 = 1 - 1 / (2 * b**2) + 1 / (5 * b**3)
+        M_when_abs_b_lt_1 = 1 - 1 / (2 * b ** 2) + 1 / (5 * b ** 3)
         return sp.Piecewise(
             (M_when_abs_b_ge_1, sp.Abs(b) >= 1),
             (M_when_abs_b_lt_1, True),
@@ -222,7 +223,7 @@ class RhoMinusXiMaximalCopula(BivCopula):
         s = RhoMinusXiMaximalCopula._s_expr(v, b)
         a = sp.Max(s - b_old, 0)
         t = s
-        middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
+        middle = a + (2 * s * (u - a) - u ** 2 + a ** 2) / (2 * b_old)
 
         return sp.Piecewise(
             (u, u <= a),
@@ -253,6 +254,82 @@ class RhoMinusXiMaximalCopula(BivCopula):
         expr = self.cdf.func.diff(self.u).diff(self.v)
         return SymPyFuncWrapper(expr)
 
+    # ===================================================================
+    # START: Vectorized CDF implementation for performance improvement
+    # ===================================================================
+
+    @staticmethod
+    def _s_expr_numpy(v, b):
+        """
+        Numpy-based vectorized implementation of the shift function s_v.
+        This is a helper for `cdf_vectorized`.
+        """
+        v = np.asarray(v)
+        b_old = 1 / np.abs(b)
+
+        if np.abs(b) >= 1:  # Corresponds to |b_old| <= 1
+            v1_s_s = b_old / 2
+            s1_s_s = np.sqrt(2 * v * b_old)
+            s2_s_s = v + b_old / 2
+            s3_s_s = 1 + b_old - np.sqrt(2 * b_old * (1 - v))
+            
+            # np.select evaluates conditions in order, mimicking sympy.Piecewise
+            return np.select(
+                [v <= v1_s_s, v <= 1 - v1_s_s],
+                [s1_s_s, s2_s_s],
+                default=s3_s_s
+            )
+        else:  # Corresponds to |b_old| > 1
+            v1_s_L = 1 / (2 * b_old)
+            s1_s_L = np.sqrt(2 * v * b_old)
+            s2_s_L = v * b_old + 0.5
+            s3_s_L = 1 + b_old - np.sqrt(2 * b_old * (1 - v))
+            
+            return np.select(
+                [v <= v1_s_L, v <= 1 - v1_s_L],
+                [s1_s_L, s2_s_L],
+                default=s3_s_L
+            )
+
+    @staticmethod
+    def _base_cdf_numpy(u, v, b):
+        """
+        Numpy-based vectorized implementation of the base CDF for b > 0.
+        This is a helper for `cdf_vectorized`.
+        """
+        u, v = np.asarray(u), np.asarray(v)
+        b_old = 1 / b
+        
+        s = RhoMinusXiMaximalCopula._s_expr_numpy(v, b)
+        a = np.maximum(s - b_old, 0)
+        t = s
+        
+        middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
+        
+        return np.select(
+            [u <= a, u <= t],
+            [u, middle],
+            default=v
+        )
+
+    def cdf_vectorized(self, u, v):
+        """
+        Vectorized implementation of the cumulative distribution function.
+        This method allows for efficient computation of the CDF for arrays of points,
+        which is detected by the `Checkerboarder` for fast approximation.
+        """
+        b = self.b
+        if b > 0:
+            return self._base_cdf_numpy(u, v, b)
+        else:  # b < 0
+            u, v = np.asarray(u), np.asarray(v)
+            # Apply the reflection identity: C_neg(u,v) = v - C_pos(1-u, v) with b -> |b|
+            return v - self._base_cdf_numpy(1 - u, v, np.abs(b))
+
+    # ===================================================================
+    # END: Vectorized CDF implementation
+    # ===================================================================
+
     # -------- Metadata -------- #
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -281,7 +358,7 @@ class RhoMinusXiMaximalCopula(BivCopula):
             (xi_small, True),  # |b_new|  < 1
         )
 
-    # -------- ρ(b)   (Spearman’s rho) ----------------------------------- #
+    # -------- ρ(b)  (Spearman’s rho) ----------------------------------- #
     def rho(self):
         """
         Closed-form ρ(b_new).  From Prop. 3.4 with the same change of
@@ -316,32 +393,15 @@ class RhoMinusXiMaximalCopula(BivCopula):
 
         # Case where |b_new| >= 1, which corresponds to b_old <= 1
         # Original formula: b_old * (4 - b_old) / 6
-        tau_large_b = sp.sign(b) * (4 * b_abs - 1) / (6 * b_abs**2)
+        tau_large_b = sp.sign(b) * (6 * b_abs ** 2 - 4 * b_abs + 1) / (6 * b_abs ** 2)
 
         # Case where |b_new| < 1, which corresponds to b_old > 1
         # Original formula: (6*b_old**2 - 4*b_old + 1) / (6*b_old**2)
         # = 1 - (4*b_old - 1) / (6*b_old**2)
         # = 1 - (4/|b| - 1) / (6/|b|**2) = 1 - (|b|*(4-|b|))/6
-        tau_small_b = sp.sign(b) * (1 - (4 * b_abs - b_abs**2) / 6)
+        tau_small_b = sp.sign(b) * (b_abs * (4 - b_abs)) / 6
 
         return sp.Piecewise(
             (tau_large_b, b_abs >= 1),
             (tau_small_b, True),
         )
-# ---------------- Demo ---------------- #
-if __name__ == "__main__":
-    # Example usage: pick any nonzero b_new
-    for b_val in [0.5, 1, 5]:
-        C = RhoMinusXiMaximalCopula(b_val)
-        cdf_val = C.cdf(0.5, 0.5)
-        print(f"CDF at (0.5, 0.5) for b_new = {b_val}: {cdf_val}")
-        # xi = C.xi()
-        # rho = C.rho()
-        # print(f"b_new = {b_val}, xi = {xi}, rho = {rho}")
-        # C.plot_pdf(plot_type="contour", log_z=True, grid_size=2000)
-        fig = C.plot_cond_distr_1(
-            plot_type="functions", title=None, zlabel=None, xlabel="t"
-        )
-        # C.scatter_plot()
-    # Optionally, contour‐plot the PDF for a given b_new:
-    # C.plot_pdf(title=f"Contour of PDF for b={b_val}", plot_type="contour", log_z=True, grid_size=200)
