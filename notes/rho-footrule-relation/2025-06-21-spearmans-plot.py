@@ -47,10 +47,17 @@ def t_plus_scalar(v, D):
 def copula_C_scalar(u, v, D):
     """
     Calculates the copula value C(u,v) for scalar inputs, based on the
-    corrected formula (C_0).
+    corrected formula (C_0), ensuring t_minus is non-negative.
     """
-    t_minus = t_minus_scalar(v, D)
+    # Original calculation for the breakpoints
+    t_minus_raw = t_minus_scalar(v, D)
     t_plus = t_plus_scalar(v, D)
+    
+    # --- BUG FIX ---
+    # The support of the optimizer h_v^0(t) is on [0,1]. If the theoretical
+    # breakpoint t_-(v) is negative, the actual support interval [0, t_-(v)]
+    # is empty. We must use max(0, t_-(v)) for the copula calculation.
+    t_minus = max(0.0, t_minus_raw)
     
     if u <= t_minus:
         return u
@@ -59,7 +66,6 @@ def copula_C_scalar(u, v, D):
     elif v < u <= t_plus:
         return t_minus + u - v
     else:  # u > t_plus
-        # The value is t_-(v) + t_+(v) - v, which simplifies to v.
         return v
 
 def analytical_psi(D):
@@ -125,9 +131,9 @@ if __name__ == '__main__':
                 arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=8),
                 ha='center', fontsize=12)
 
-    # D=1 corresponds to the countermonotonicity copula W(u,v)=max(0,u+v-1)
-    ax.annotate(f'$D=1$\n(Countermonotonicity)\n($\psi=-0.5, \\rho=-1$)', 
-                xy=(-0.5, -1), xytext=(-0.1, -0.7),
+    # D=1 does not correspond to the countermonotonicity copula because rho=-0.5 not -1.
+    ax.annotate(f'$D=1$\n($\psi=-0.5, \\rho=-0.5$)', 
+                xy=(-0.5, -0.5), xytext=(-0.1, -0.7),
                 arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=8),
                 ha='center', fontsize=12)
 

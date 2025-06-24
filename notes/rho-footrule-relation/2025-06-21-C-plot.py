@@ -11,7 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 # - D -> 0 gives the comonotonicity copula C(u,v) = min(u,v).
 # - D -> 1 gives the countermonotonicity copula C(u,v) = max(0, u+v-1).
 # A value of D=0.4 shows the three regimes clearly.
-D = 0.4
+D = 1
 # =============================================================================
 
 

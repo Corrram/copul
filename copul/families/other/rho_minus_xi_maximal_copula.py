@@ -3,6 +3,8 @@ import sympy as sp
 
 from copul.families.core.biv_copula import BivCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
+from copul.families.other.lower_frechet import LowerFrechet
+from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -117,7 +119,51 @@ class RhoMinusXiMaximalCopula(BivCopula):
             del kwargs["b"]  # Remove b before creating special case
             return special_case_cls()
         return super().__call__(**kwargs)
+    
+    @classmethod
+    def from_xi(cls, x):
+        r"""
+        Instantiates the copula from a target value for Chatterjee's xi.
 
+        This method inverts the relationship between the parameter `b` and `xi`
+        to find the `b` that produces the given `x`. This implementation
+        assumes positive dependence (b > 0). The formula is:
+        \[
+            b_x =
+            \begin{cases}
+            \dfrac{\sqrt{6x}}{2\cos\left(\tfrac13\arccos\bigl(-\tfrac{3\sqrt{6x}}{5}\bigr)\right)},
+              & 0<x\le\tfrac{3}{10},\\[4ex]
+            \dfrac{5+\sqrt{5(6x-1)}}{10(1-x)},
+              & \tfrac{3}{10}<x<1.
+            \end{cases}
+        \]
+
+        Parameters
+        ----------
+        x : float or sympy expression
+            The target value for Chatterjee's xi, in (0, 1).
+        """
+        if x==0:
+            return cls(b=0.0)  # Special case for xi = 0, which corresponds to independence
+        elif x==1:
+            return UpperFrechet()
+        elif x==-1:
+            return LowerFrechet()
+        x_sym = sp.sympify(x)
+
+        # Case 1: 0 < x <= 3/10  (corresponds to |b| >= 1)
+        b_ge_1 = sp.sqrt(6 * x_sym) / (2 * sp.cos(sp.acos(-3 * sp.sqrt(6 * x_sym) / 5) / 3))
+
+        # Case 2: 3/10 < x < 1  (corresponds to |b| < 1)
+        b_lt_1 = (5 + sp.sqrt(5 * (6 * x_sym - 1))) / (10 * (1 - x_sym))
+
+        # Create the piecewise expression for b
+        b_expr = sp.Piecewise(
+            (b_ge_1, (x_sym > 0) & (x_sym <= sp.Rational(3, 10))),
+            (b_lt_1, (x_sym > sp.Rational(3, 10)) & (x_sym < 1))
+        )
+
+        return cls(b=float(b_expr))
     # -------- Maximal Spearman’s rho M(b) -------- #
     @staticmethod
     def _M_expr(b):
@@ -255,7 +301,33 @@ class RhoMinusXiMaximalCopula(BivCopula):
             (rho_small, True),  # |b_new|  < 1
         )
 
+    def tau(self):
+        """
+        Closed-form τ(b_new). Based on Prop. 3.5 with b_old = 1/|b_new|.
 
+            • |b_new| ≥ 1  (⇔ |b_old| ≤ 1):
+                  τ = sgn(b) · (4|b| − 1) / (6|b|²)
+
+            • |b_new| < 1   (⇔ |b_old| ≥ 1):
+                  τ = sgn(b) · (1 - (4|b| - |b|²)/6)
+        """
+        b = self.b
+        b_abs = sp.Abs(b)
+
+        # Case where |b_new| >= 1, which corresponds to b_old <= 1
+        # Original formula: b_old * (4 - b_old) / 6
+        tau_large_b = sp.sign(b) * (4 * b_abs - 1) / (6 * b_abs**2)
+
+        # Case where |b_new| < 1, which corresponds to b_old > 1
+        # Original formula: (6*b_old**2 - 4*b_old + 1) / (6*b_old**2)
+        # = 1 - (4*b_old - 1) / (6*b_old**2)
+        # = 1 - (4/|b| - 1) / (6/|b|**2) = 1 - (|b|*(4-|b|))/6
+        tau_small_b = sp.sign(b) * (1 - (4 * b_abs - b_abs**2) / 6)
+
+        return sp.Piecewise(
+            (tau_large_b, b_abs >= 1),
+            (tau_small_b, True),
+        )
 # ---------------- Demo ---------------- #
 if __name__ == "__main__":
     # Example usage: pick any nonzero b_new
