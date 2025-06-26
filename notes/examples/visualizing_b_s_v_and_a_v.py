@@ -139,9 +139,52 @@ def main(b0, v_line):
             xtick_labels.append(f"{t:g}")
     ax.set_xticklabels(xtick_labels)
 
-    # 13) dashed vertical bars at u = 0 and u = 1 (in white)
-    ax.vlines(0, 0, 1, colors="white", linestyles="--", linewidth=1.5)
-    ax.vlines(1, 0, 1, colors="white", linestyles="--", linewidth=1.5)
+    # 13) dashed vertical at u=0 only if the left‐edge a_v spills below 0
+    if a_v < 0:
+        ax.vlines(
+            0,        # x position
+            0, 1,     # from v=0 up to v=1
+            colors="white",
+            linestyles="--",
+            linewidth=1.5,
+            zorder=1,
+        )
+
+    # 14) dashed vertical at u=1 only if the right‐edge s_v spills above 1
+    if s_v > 1:
+        ax.vlines(
+            1,        # x position
+            0, 1,     # from v=0 up to v=1
+            colors="white",
+            linestyles="--",
+            linewidth=1.5,
+            zorder=1,
+        )
+
+
+    # 15) (new) two thin horizontal intercept‐lines for b!=1
+    if b0 != 1:
+        # compute the two v‐levels where the support 
+        # first hits u=0, and last hits u=1
+        if b0 <= 1:
+            v_low  =  b0/2
+            v_high = 1 - b0/2
+        else:
+            v_low  = 1/(2*b0)
+            v_high = 1 - 1/(2*b0)
+
+        # now draw exactly from a(v) to s(v) at each level
+        for v_level in (v_low, v_high):
+            u_min = a_of_v(v_level)
+            u_max = s_func(v_level)
+            ax.hlines(
+                v_level,
+                xmin=max(0, u_min), xmax=min(u_max, 1),
+                colors="black",
+                linestyles=":",
+                linewidth=1.0,
+                zorder=3,
+            )
 
     # 14) finalize
     ax.set_xlabel("$u$")  # ~~~(b={b_inv},~v={v_line}$)')
