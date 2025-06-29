@@ -405,3 +405,12 @@ class RhoMinusXiMaximalCopula(BivCopula):
             (tau_large_b, b_abs >= 1),
             (tau_small_b, True),
         )
+    
+if __name__ == "__main__":
+    # Example usage
+    copula = RhoMinusXiMaximalCopula(b=0.759)
+    print("CDF at (0.5, 0.5):", copula.cdf(0.5, 0.5))
+    print("PDF at (0.5, 0.5):", copula.pdf(0.5, 0.5))
+    print("xi:", copula.xi())
+    print("rho:", copula.rho())
+    print("tau:", copula.tau())
