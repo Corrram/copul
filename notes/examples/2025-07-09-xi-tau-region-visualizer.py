@@ -58,27 +58,32 @@ def main() -> None:
     BLUE, FILL = "#00529B", "#D6EAF8"
     fig, ax = plt.subplots(figsize=(8, 6))
 
-    # Envelope curve ±τ(ξ) from the parametric family only
-    ax.plot( tau_pos, xi_pos, color=BLUE, lw=2.5, label=r"$\pm\tau(\xi)$")
-    ax.plot(-tau_pos, xi_pos, color=BLUE, lw=2.5)
+    # Envelope curve ±τ(ξ) including the ceiling segments out to |τ|=1
+    # smooth‐closing envelope: 
+    # take just the sorted parametric branch and tack on the corner (1,1)
+    xi_plot       = np.concatenate([xi_sorted,       [1.0]])
+    tau_plot_pos  = np.concatenate([tau_sorted_pos,  [1.0]])
+    ax.plot( tau_plot_pos, xi_plot,  color=BLUE, lw=2.5, label=r"$\pm\tau(\xi)$")
+    ax.plot(-tau_plot_pos, xi_plot,  color=BLUE, lw=2.5)
+
 
     # Fill attainable region (up to |τ| = 1 when ξ ≥ ξ_max(param))
     ax.fill_betweenx(
-        xi_env, -tau_env, tau_env,
+        xi_plot, -tau_plot_pos, tau_plot_pos,
         color=FILL, alpha=0.7, zorder=0,
         label="Attainable region"
     )
 
     # Hatch |τ| > ξ sub-region
-    mask = tau_env > xi_env
-    ax.fill_betweenx(
-        xi_env[mask],  xi_env[mask],  tau_env[mask],
-        facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0
-    )
-    ax.fill_betweenx(
-        xi_env[mask], -tau_env[mask], -xi_env[mask],
-        facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0
-    )
+    # mask = tau_env > xi_env
+    # ax.fill_betweenx(
+    #     xi_env[mask],  xi_env[mask],  tau_env[mask],
+    #     facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0
+    # )
+    # ax.fill_betweenx(
+    #     xi_env[mask], -tau_env[mask], -xi_env[mask],
+    #     facecolor="none", hatch="..", edgecolor=BLUE, linewidth=0
+    # )
 
     # ---------------------- Highlight key points ----------------------
     # Extremal difference b0:
