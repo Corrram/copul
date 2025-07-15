@@ -271,8 +271,8 @@ class BivCheckPi(CheckPi, BivCoreCopula):
     
     
 if __name__ == "__main__":
-    matr = [[3, 0, 0], [0, 2, 1], [0, 1, 2]]
-    matr = [[1,0], [0, 1]]
+    matr = [[4, 0, 0], [0, 1, 3], [0, 3, 1]]
+    # matr = [[1,0], [0, 1]]
     ccop = BivCheckPi(matr)
     # ccop.plot_c_over_u()
     # ccop.plot_cond_distr_1()
