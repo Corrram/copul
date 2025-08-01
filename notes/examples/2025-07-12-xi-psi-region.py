@@ -8,43 +8,36 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
 
-def calculate_lower_boundary_corrected(mu_values):
+def calculate_lower_boundary(mu_values):
     """
     Calculates the (xi, psi) coordinates for the lower boundary based on the
-    correct three-region parametric formulas in mu.
+    simplified parametric formulas in mu.
+
     NOTE: In this script, psi is the x-axis and xi is the y-axis.
     This function returns (psi_vals, xi_vals).
     """
     epsilon = 1e-12
+    # Ensure mu is positive to avoid division by zero or log of zero.
     mu_values = np.maximum(mu_values, epsilon)
 
-    # Transition points v0 and v1
-    v0 = 1.0 / (2.0 * mu_values + 1.0)
+    # The simplified formulas depend primarily on v1 and B.
     v1 = 2.0 * mu_values / (2.0 * mu_values + 1.0)
-
-    # --- Calculate psi(mu) ---
     B = 1.0 / (2.0 * mu_values)
-    val_at_v1 = (v1 ** 3 / 3.0) * (1 + B) - (v1 ** 2 / 2.0) * B
-    val_at_v0 = (v0 ** 3 / 3.0) * (1 + B) - (v0 ** 2 / 2.0) * B
-    psi_reg2 = val_at_v1 - val_at_v0
-    psi_reg3 = (1.0 ** 2 - 1.0) - (v1 ** 2 - v1)
-    psi_vals = 6 * (psi_reg2 + psi_reg3) - 2
 
-    # --- Calculate xi(mu) ---
-    log_part_v0 = -np.log(np.maximum(1 - v0, epsilon))
-    xi_reg1 = -v0 ** 2 / 2.0 - v0 + log_part_v0
+    # Use a safe version of v1 to prevent division by zero or log(0).
+    safe_v1 = np.maximum(v1, epsilon)
 
+    # --- Calculate psi(mu) using the simplified formula ---
+    psi_vals = -2 * safe_v1 ** 2 + 6 * safe_v1 - 5 + 1.0 / safe_v1
+
+    # --- Calculate xi(mu) using the simplified formula ---
     B_sq = B ** 2
-    val_at_v1_xi = (v1 ** 3 / 3.0) * (1 - B_sq) + (v1 ** 2 / 2.0) * B_sq
-    val_at_v0_xi = (v0 ** 3 / 3.0) * (1 - B_sq) + (v0 ** 2 / 2.0) * B_sq
-    xi_reg2 = val_at_v1_xi - val_at_v0_xi
 
-    log_part_v1 = np.log(np.maximum(v1, epsilon))
-    val_at_1_xi = (3.0 / 2.0 - 3.0)
-    val_at_v1_xi_reg3 = (3 * v1 ** 2 / 2.0 - 3 * v1 + log_part_v1)
-    xi_reg3 = val_at_1_xi - val_at_v1_xi_reg3
+    polynomial_part = 4 * safe_v1 ** 3 - 18 * safe_v1 ** 2 + 36 * safe_v1 - 22
+    log_part = -12 * np.log(safe_v1)
+    b_term_polynomial = -4 * safe_v1 ** 3 + 6 * safe_v1 ** 2 - 1
 
-    xi_vals = 6 * (xi_reg1 + xi_reg2 + xi_reg3) - 2
+    xi_vals = polynomial_part + log_part + B_sq * b_term_polynomial
 
     return psi_vals, xi_vals
 
@@ -58,7 +51,7 @@ def main() -> None:
     # Left-side boundary (parametric curve)
     mu_vals = np.logspace(4, -4, 2000) + 1/2
     # mu_vals = mu_vals[mu_vals > 0.002]
-    psi_lower_raw, xi_lower_raw = calculate_lower_boundary_corrected(mu_vals)
+    psi_lower_raw, xi_lower_raw = calculate_lower_boundary(mu_vals)
 
     # Filter to only include psi >= -0.5
     mask = (0 >= psi_lower_raw) & (psi_lower_raw >= -0.5)
