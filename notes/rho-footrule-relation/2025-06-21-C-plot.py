@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 
 # =============================================================================
 #   PARAMETER TO TUNE
@@ -38,7 +37,7 @@ def get_t_minus(v, D):
     t_m_values[cond_low_v] = 0.0
     t_m_values[cond_mid_v] = v[cond_mid_v] - D / 2.0
     t_m_values[cond_high_v] = 2.0 * v[cond_high_v] - 1.0
-    
+
     return t_m_values
 
 
@@ -65,7 +64,7 @@ def get_t_plus(v, D):
     t_p_values[cond_low_v] = 2.0 * v[cond_low_v]
     t_p_values[cond_mid_v] = v[cond_mid_v] + D / 2.0
     t_p_values[cond_high_v] = 1.0
-    
+
     return t_p_values
 
 
@@ -84,7 +83,7 @@ def get_copula_C(U, V, D):
     """
     if not (0 <= D <= 1):
         raise ValueError("Parameter D must be between 0 and 1.")
-        
+
     # First, calculate the breakpoint functions for all v-coordinates
     t_minus_vals = get_t_minus(V, D)
     t_plus_vals = get_t_plus(V, D)
@@ -97,42 +96,47 @@ def get_copula_C(U, V, D):
     cond2 = (U > t_minus_vals) & (U <= V)
     cond3 = (U > V) & (U <= t_plus_vals)
     cond4 = U > t_plus_vals
-    
+
     # Apply the piecewise formula for C(u,v)
     C[cond1] = U[cond1]
     C[cond2] = t_minus_vals[cond2]
     C[cond3] = t_minus_vals[cond3] + U[cond3] - V[cond3]
-    C[cond4] = V[cond4] # This is because t_-(v) + t_+(v) - v = v
+    C[cond4] = V[cond4]  # This is because t_-(v) + t_+(v) - v = v
 
     return C
 
+
 # --- Main script for plotting ---
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 1. Generate data
     resolution = 100
     u_coords = np.linspace(0, 1, resolution)
     v_coords = np.linspace(0, 1, resolution)
     U, V = np.meshgrid(u_coords, v_coords)
-    
+
     # Calculate the copula surface
     C_vals = get_copula_C(U, V, D)
 
     # 2. Create the 3D plot
     fig = plt.figure(figsize=(12, 10))
-    ax = fig.add_subplot(111, projection='3d')
+    ax = fig.add_subplot(111, projection="3d")
 
     # Plot the surface
-    ax.plot_surface(U, V, C_vals, cmap='viridis', rstride=1, cstride=1, edgecolor='none', alpha=0.9)
+    ax.plot_surface(
+        U, V, C_vals, cmap="viridis", rstride=1, cstride=1, edgecolor="none", alpha=0.9
+    )
 
     # 3. Customize the plot
-    ax.set_title(f'Corrected Copula Surface $C_0(u,v)$ for $D={D}$', fontsize=16, pad=20)
-    ax.set_xlabel('$u$', fontsize=14, labelpad=10)
-    ax.set_ylabel('$v$', fontsize=14, labelpad=10)
-    ax.set_zlabel('$C_0(u,v)$', fontsize=14, labelpad=10)
+    ax.set_title(
+        f"Corrected Copula Surface $C_0(u,v)$ for $D={D}$", fontsize=16, pad=20
+    )
+    ax.set_xlabel("$u$", fontsize=14, labelpad=10)
+    ax.set_ylabel("$v$", fontsize=14, labelpad=10)
+    ax.set_zlabel("$C_0(u,v)$", fontsize=14, labelpad=10)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_zlim(0, 1)
-    
+
     # Set a good initial viewing angle
     ax.view_init(elev=30, azim=-120)
 

@@ -3,6 +3,7 @@
 Plots the exact attainable region for
 Chatterjee's ξ and Spearman's Footrule ψ.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
@@ -28,14 +29,14 @@ def calculate_lower_boundary(mu_values):
     safe_v1 = np.maximum(v1, epsilon)
 
     # --- Calculate psi(mu) using the simplified formula ---
-    psi_vals = -2 * safe_v1 ** 2 + 6 * safe_v1 - 5 + 1.0 / safe_v1
+    psi_vals = -2 * safe_v1**2 + 6 * safe_v1 - 5 + 1.0 / safe_v1
 
     # --- Calculate xi(mu) using the simplified formula ---
-    B_sq = B ** 2
+    B_sq = B**2
 
-    polynomial_part = 4 * safe_v1 ** 3 - 18 * safe_v1 ** 2 + 36 * safe_v1 - 22
+    polynomial_part = 4 * safe_v1**3 - 18 * safe_v1**2 + 36 * safe_v1 - 22
     log_part = -12 * np.log(safe_v1)
-    b_term_polynomial = -4 * safe_v1 ** 3 + 6 * safe_v1 ** 2 - 1
+    b_term_polynomial = -4 * safe_v1**3 + 6 * safe_v1**2 - 1
 
     xi_vals = polynomial_part + log_part + B_sq * b_term_polynomial
 
@@ -46,10 +47,10 @@ def main() -> None:
     # ---------------- Boundary Definition ----------------
     # Right-side boundary (parabola)
     psi_pos_bound = np.linspace(0, 1, 500)
-    xi_pos_bound = psi_pos_bound ** 2
+    xi_pos_bound = psi_pos_bound**2
 
     # Left-side boundary (parametric curve)
-    mu_vals = np.logspace(4, -4, 2000) + 1/2
+    mu_vals = np.logspace(4, -4, 2000) + 1 / 2
     # mu_vals = mu_vals[mu_vals > 0.002]
     psi_lower_raw, xi_lower_raw = calculate_lower_boundary(mu_vals)
 
@@ -67,7 +68,9 @@ def main() -> None:
     fig, ax = plt.subplots(figsize=(8, 8))
 
     # Plot the boundary envelope
-    ax.plot(psi_pos_bound, xi_pos_bound, color=BLUE, lw=2.5, zorder=3, label=r"Boundary")
+    ax.plot(
+        psi_pos_bound, xi_pos_bound, color=BLUE, lw=2.5, zorder=3, label=r"Boundary"
+    )
     ax.plot(psi_neg_bound, xi_neg_bound, color=BLUE, lw=2.5, zorder=3)
 
     # Add the diagonal line for the SI region
@@ -75,15 +78,30 @@ def main() -> None:
 
     # Fill the attainable region (solid)
     # Right Lobe (SI region): Between ξ=ψ² and ξ=ψ
-    ax.fill_between(psi_pos_bound, psi_pos_bound ** 2, 1,
-                    color=FILL, alpha=0.7, zorder=0, label="Attainable region")
+    ax.fill_between(
+        psi_pos_bound,
+        psi_pos_bound**2,
+        1,
+        color=FILL,
+        alpha=0.7,
+        zorder=0,
+        label="Attainable region",
+    )
     # Left Lobe: Between ξ=0 and the new upper boundary
     ax.fill_between(psi_neg_bound, xi_neg_bound, 1, color=FILL, alpha=0.7, zorder=0)
 
     # Dotted hatch on the SI wing
-    ax.fill_between(psi_pos_bound, psi_pos_bound ** 2, psi_pos_bound,
-                    facecolor='none', hatch='..', edgecolor=BLUE,
-                    linewidth=0, zorder=1, label="SI region")
+    ax.fill_between(
+        psi_pos_bound,
+        psi_pos_bound**2,
+        psi_pos_bound,
+        facecolor="none",
+        hatch="..",
+        edgecolor=BLUE,
+        linewidth=0,
+        zorder=1,
+        label="SI region",
+    )
 
     # ---------------------- Highlight key points ----------------------
     xi_endpoint = 12 * np.log(2) - 8
@@ -91,24 +109,57 @@ def main() -> None:
     ax.scatter([0, 1, -0.5, 0.5], [0, 1, 1, 0.25], s=70, color="black", zorder=5)
 
     # Annotations
-    ax.annotate(r"$\Pi$", (0, 0), xytext=(0, 15), textcoords="offset points",
-                fontsize=18, ha="center")
-    ax.annotate(r"$M$", (1, 1), xytext=(-10, -2), textcoords="offset points",
-                fontsize=18, ha="right", va="top")
-    ax.annotate(r"$W$", (-0.5, 1), xytext=(10, -2), textcoords="offset points",
-                fontsize=18, ha="left", va="top")
-    ax.annotate(r"$C_{*}$", (-0.5, xi_endpoint), xytext=(10, 5),
-                textcoords="offset points", fontsize=18, ha="left", va="bottom", clip_on=False)
-    ax.annotate(r"$C^{\mathrm{Fr}}_{1/2}$", (0.5, 0.25),
-                xytext=(5, -15), textcoords="offset points",
-                fontsize=18, ha="left")
+    ax.annotate(
+        r"$\Pi$",
+        (0, 0),
+        xytext=(0, 15),
+        textcoords="offset points",
+        fontsize=18,
+        ha="center",
+    )
+    ax.annotate(
+        r"$M$",
+        (1, 1),
+        xytext=(-10, -2),
+        textcoords="offset points",
+        fontsize=18,
+        ha="right",
+        va="top",
+    )
+    ax.annotate(
+        r"$W$",
+        (-0.5, 1),
+        xytext=(10, -2),
+        textcoords="offset points",
+        fontsize=18,
+        ha="left",
+        va="top",
+    )
+    ax.annotate(
+        r"$C_{*}$",
+        (-0.5, xi_endpoint),
+        xytext=(10, 5),
+        textcoords="offset points",
+        fontsize=18,
+        ha="left",
+        va="bottom",
+        clip_on=False,
+    )
+    ax.annotate(
+        r"$C^{\mathrm{Fr}}_{1/2}$",
+        (0.5, 0.25),
+        xytext=(5, -15),
+        textcoords="offset points",
+        fontsize=18,
+        ha="left",
+    )
 
     # -------------------- Axes, grid, legend --------------------------
     ax.set_xlabel(r"Spearman's footrule $\psi$", fontsize=16)
     ax.set_ylabel(r"Chatterjee's $\xi$", fontsize=16)
     ax.set_xlim(-0.55, 1.05)
     ax.set_ylim(-0.05, 1.05)
-    ax.set_aspect('equal', adjustable='box')
+    ax.set_aspect("equal", adjustable="box")
     ax.xaxis.set_major_locator(MultipleLocator(0.25))
     ax.yaxis.set_major_locator(MultipleLocator(0.25))
     ax.tick_params(labelsize=13)

@@ -481,7 +481,12 @@ class RankCorrelationPlotter:
 
         # Create CorrelationData object
         data = CorrelationData(
-            param_values, xi_values, xi_var_values, rho_values, tau_values, footrule_values
+            param_values,
+            xi_values,
+            xi_var_values,
+            rho_values,
+            tau_values,
+            footrule_values,
         )
 
         # Plot results
@@ -772,10 +777,10 @@ if __name__ == "__main__":
 
     families = [e.name for e in copul.family_list.Families]
 
-    params_dict = {
-        "Clayton": {"log_cut_off": (-1.5, 1.5)}
-    }
+    params_dict = {"Clayton": {"log_cut_off": (-1.5, 1.5)}}
     for family in families:
         copula = copul.family_list.Families.create(family)
         params = params_dict.get(family, {})
-        copula.plot_rank_correlations(n_obs=100_000, n_params=50, approximate=False, **params)
+        copula.plot_rank_correlations(
+            n_obs=100_000, n_params=50, approximate=False, **params
+        )

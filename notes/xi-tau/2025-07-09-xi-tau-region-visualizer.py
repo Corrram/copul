@@ -35,43 +35,48 @@ xi_vec, tau_vec = map(np.vectorize, (xi_from_b, tau_from_b))
 # ----------------------------------------------------------------------
 def main() -> None:
     # ---------------- Parameter grid (positive branch) ----------------
-    b_pos = np.hstack([
-        np.linspace(0.0, 1.0, 600, endpoint=False)[1:],   # fine mesh 0<b≤1
-        np.linspace(1.0, 20.0, 1400)                      # stretch to large b
-    ])
+    b_pos = np.hstack(
+        [
+            np.linspace(0.0, 1.0, 600, endpoint=False)[1:],  # fine mesh 0<b≤1
+            np.linspace(1.0, 20.0, 1400),  # stretch to large b
+        ]
+    )
     xi_pos, tau_pos = xi_vec(b_pos), tau_vec(b_pos)
 
     # Sort the positive branch by ξ so fill_betweenx works monotonically
-    sort_idx       = np.argsort(xi_pos)
-    xi_sorted      = xi_pos[sort_idx]
+    sort_idx = np.argsort(xi_pos)
+    xi_sorted = xi_pos[sort_idx]
     tau_sorted_pos = tau_pos[sort_idx]
 
     # ------------- Extend envelope to ξ=1 with |τ| = 1 ----------------
     xi_ceiling = np.linspace(xi_sorted[-1], 1.0, 200)
-    tau_ceiling = np.ones_like(xi_ceiling)               # full width |τ|=1
+    tau_ceiling = np.ones_like(xi_ceiling)  # full width |τ|=1
 
     # Complete envelope for  ξ∈[0,1]
-    xi_env  = np.concatenate([xi_sorted,   xi_ceiling[1:]])
-    tau_env = np.concatenate([tau_sorted_pos, tau_ceiling[1:]])
+    np.concatenate([xi_sorted, xi_ceiling[1:]])
+    np.concatenate([tau_sorted_pos, tau_ceiling[1:]])
 
     # -------------------------- Plotting ------------------------------
     BLUE, FILL = "#00529B", "#D6EAF8"
     fig, ax = plt.subplots(figsize=(8, 6))
 
     # Envelope curve ±τ(ξ) including the ceiling segments out to |τ|=1
-    # smooth‐closing envelope: 
+    # smooth‐closing envelope:
     # take just the sorted parametric branch and tack on the corner (1,1)
-    xi_plot       = np.concatenate([xi_sorted,       [1.0]])
-    tau_plot_pos  = np.concatenate([tau_sorted_pos,  [1.0]])
-    ax.plot( tau_plot_pos, xi_plot,  color=BLUE, lw=2.5, label=r"$\pm\tau(\xi)$")
-    ax.plot(-tau_plot_pos, xi_plot,  color=BLUE, lw=2.5)
-
+    xi_plot = np.concatenate([xi_sorted, [1.0]])
+    tau_plot_pos = np.concatenate([tau_sorted_pos, [1.0]])
+    ax.plot(tau_plot_pos, xi_plot, color=BLUE, lw=2.5, label=r"$\pm\tau(\xi)$")
+    ax.plot(-tau_plot_pos, xi_plot, color=BLUE, lw=2.5)
 
     # Fill attainable region (up to |τ| = 1 when ξ ≥ ξ_max(param))
     ax.fill_betweenx(
-        xi_plot, -tau_plot_pos, tau_plot_pos,
-        color=FILL, alpha=0.7, zorder=0,
-        label="Attainable region"
+        xi_plot,
+        -tau_plot_pos,
+        tau_plot_pos,
+        color=FILL,
+        alpha=0.7,
+        zorder=0,
+        label="Attainable region",
     )
 
     # Hatch |τ| > ξ sub-region
@@ -87,34 +92,67 @@ def main() -> None:
 
     # ---------------------- Highlight key points ----------------------
     # Extremal difference b0:
-    b0  = (10 - sqrt(10)) / 9          # ≈ 0.759
+    b0 = (10 - sqrt(10)) / 9  # ≈ 0.759
     xi0 = xi_from_b(b0)
     tau0 = tau_from_b(b0)
 
-    key_tau = [0,  1,  -1,  tau0,  -tau0]
-    key_xi  = [0,  1,   1,  xi0,    xi0 ]
+    key_tau = [0, 1, -1, tau0, -tau0]
+    key_xi = [0, 1, 1, xi0, xi0]
     ax.scatter(key_tau, key_xi, s=60, color="black", zorder=5)
 
     # Labels
-    ax.annotate(r"$\Pi$",        (0, 0),    xytext=(0, 20),
-                textcoords="offset points", fontsize=18, ha="center", va="top")
-    ax.annotate(r"$M$",          (1, 1),    xytext=(-10, 0),
-                textcoords="offset points", fontsize=18, ha="right",  va="top")
-    ax.annotate(r"$W$",         (-1, 1),    xytext=(10, 0),
-                textcoords="offset points", fontsize=18, ha="left",   va="top")
-    ax.annotate(r"$C_{b_0}$",   (tau0, xi0),
-                xytext=(5, 0),  textcoords="offset points",
-                fontsize=18, ha="left",   va="top")
-    ax.annotate(r"$C_{-b_0}$", (-tau0, xi0),
-                xytext=(0, 0),  textcoords="offset points",
-                fontsize=18, ha="right",  va="top")
+    ax.annotate(
+        r"$\Pi$",
+        (0, 0),
+        xytext=(0, 20),
+        textcoords="offset points",
+        fontsize=18,
+        ha="center",
+        va="top",
+    )
+    ax.annotate(
+        r"$M$",
+        (1, 1),
+        xytext=(-10, 0),
+        textcoords="offset points",
+        fontsize=18,
+        ha="right",
+        va="top",
+    )
+    ax.annotate(
+        r"$W$",
+        (-1, 1),
+        xytext=(10, 0),
+        textcoords="offset points",
+        fontsize=18,
+        ha="left",
+        va="top",
+    )
+    ax.annotate(
+        r"$C_{b_0}$",
+        (tau0, xi0),
+        xytext=(5, 0),
+        textcoords="offset points",
+        fontsize=18,
+        ha="left",
+        va="top",
+    )
+    ax.annotate(
+        r"$C_{-b_0}$",
+        (-tau0, xi0),
+        xytext=(0, 0),
+        textcoords="offset points",
+        fontsize=18,
+        ha="right",
+        va="top",
+    )
 
     # -------------------- Axes, grid, legend --------------------------
     ax.set_xlabel(r"Kendall's $\tau$", fontsize=16)
     ax.set_ylabel(r"Chatterjee's $\xi$", fontsize=16)
     ax.set_xlim(-1.05, 1.05)
     ax.set_ylim(-0.05, 1.05)
-    ax.set_aspect('equal', adjustable='box')
+    ax.set_aspect("equal", adjustable="box")
     ax.xaxis.set_major_locator(MultipleLocator(0.25))
     ax.yaxis.set_major_locator(MultipleLocator(0.25))
     ax.tick_params(labelsize=13)

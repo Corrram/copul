@@ -6,7 +6,7 @@ def simulate(num_iters=1_000_000):
     rearranger = cp.CISRearranger()
     n_max = 3
     for i in range(1, num_iters + 1):
-        n = np.random.randint(2, n_max+1)
+        n = np.random.randint(2, n_max + 1)
         ccop = cp.BivCheckPi.generate_randomly(n)
         ccop_r_matr = rearranger.rearrange_checkerboard(ccop)
         ccop_r = cp.BivCheckPi(ccop_r_matr)
@@ -25,9 +25,9 @@ def simulate(num_iters=1_000_000):
             )
             print(f"Matrix 1:\n{ccop_r_matr}")
             print(f"Matrix 2:\n{ccop2_r_matr}")
-            print(f"Average Matrix:\n{matr_avg}")   
+            print(f"Average Matrix:\n{matr_avg}")
             ccop_r.plot_pdf()
-            ccop2_r.plot_pdf()   
+            ccop2_r.plot_pdf()
             exit()
 
         if i % 1_000 == 0:
@@ -35,10 +35,12 @@ def simulate(num_iters=1_000_000):
 
 
 def main():
-    matr1 = [[1/5, 2/15,  0  ], [2/15, 1/15, 2/15], [ 0  , 2/15, 1/5]]
-    matr2 = [[9/60, 7/60, 4/60],
- [7/60, 6/60, 7/60],
- [4/60, 7/60, 9/60]]
+    matr1 = [[1 / 5, 2 / 15, 0], [2 / 15, 1 / 15, 2 / 15], [0, 2 / 15, 1 / 5]]
+    matr2 = [
+        [9 / 60, 7 / 60, 4 / 60],
+        [7 / 60, 6 / 60, 7 / 60],
+        [4 / 60, 7 / 60, 9 / 60],
+    ]
     ccop1 = cp.BivCheckPi(matr1)
     ccop2 = cp.BivCheckPi(matr2)
     tau1 = ccop1.tau()
@@ -47,6 +49,7 @@ def main():
     tau_avg = ccop_avg.tau()
     diff = tau_avg - (tau1 + tau2) / 2
     print(f"tau1: {tau1}, tau2: {tau2:}, tau_avg: {tau_avg:}, diff: {diff:}")
+
 
 if __name__ == "__main__":
     main()

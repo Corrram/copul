@@ -36,6 +36,22 @@ copul.families.other.farlie\_gumbel\_morgenstern module
    :show-inheritance:
    :undoc-members:
 
+copul.families.other.footrule\_minus\_xi\_lower\_bound module
+-------------------------------------------------------------
+
+.. automodule:: copul.families.other.footrule_minus_xi_lower_bound
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.other.footrule\_minus\_xi\_minimal\_copula module
+----------------------------------------------------------------
+
+.. automodule:: copul.families.other.footrule_minus_xi_minimal_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.other.frechet module
 -----------------------------------
 
@@ -64,6 +80,14 @@ copul.families.other.mardia module
 ----------------------------------
 
 .. automodule:: copul.families.other.mardia
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.other.optimal\_affine\_jump\_copula module
+---------------------------------------------------------
+
+.. automodule:: copul.families.other.optimal_affine_jump_copula
    :members:
    :show-inheritance:
    :undoc-members:

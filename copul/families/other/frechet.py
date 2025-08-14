@@ -206,7 +206,7 @@ class Frechet(BivCopula):
     def footrule(self, *args, **kwargs):
         """
         Calculates Spearman's Footrule (psi) for the Frechet copula.
-        
+
         The closed-form formula is psi = alpha - beta / 2.
         """
         self._set_params(args, kwargs)
@@ -221,7 +221,8 @@ class Frechet(BivCopula):
         """
         self._set_params(args, kwargs)
         return self.alpha - self.beta
-    
+
+
 # B11 = lambda: Frechet(beta=0)
 if __name__ == "__main__":
     # Example usage
@@ -230,7 +231,9 @@ if __name__ == "__main__":
     ccop = frechet_copula.to_checkerboard()
     xi_ccop = ccop.xi()
     rho_ccop = ccop.rho()
-    print(f"Frechet Copula: xi = {xi}, Checkerboard xi = {xi_ccop}, Checkerboard rho = {rho_ccop}")
+    print(
+        f"Frechet Copula: xi = {xi}, Checkerboard xi = {xi_ccop}, Checkerboard rho = {rho_ccop}"
+    )
     gamma = frechet_copula.ginis_gamma()
     ccop_gamma = ccop.ginis_gamma()
     footrule = frechet_copula.footrule()

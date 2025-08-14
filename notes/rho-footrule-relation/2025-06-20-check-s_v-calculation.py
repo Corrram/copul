@@ -2,15 +2,17 @@
 """
 Diagnostic checker for the updated local multiplier s_v(d).
 
-  • identifies which analytical branch 
+  • identifies which analytical branch
     (A-1, A-2, A-3, B-0a, B-0b, B-1) is used
   • reports pass / fail counts per branch
   • prints the parameters that give the worst mass-constraint error
 
 Only NumPy is required.
 """
+
 import numpy as np
 from collections import defaultdict
+
 
 # ----------------------------------------------------------------------
 # Basic primitives
@@ -32,31 +34,27 @@ def classify_branch(q, d, v):
     v2 = 1.0 - v1
 
     if d <= d_crit:  # ----- Regime A : mixed ramps -------------------
-        if v <= v1:        # A-1  (no plateau)
+        if v <= v1:  # A-1  (no plateau)
             s_v = np.sqrt(2.0 * q * (1.0 + d) * v)
             return s_v, "A-1"
-        elif v <= v2:      # A-2  (central plateau)
+        elif v <= v2:  # A-2  (central plateau)
             s_v = v + 0.5 * q * (1.0 + d)
             return s_v, "A-2"
-        else:              # A-3  (truncated outer ramp)
-            s_v = 1.0 + q * (1.0 + d) - np.sqrt(
-                    2.0 * q * (1.0 + d) * (1.0 - v)
-                  )
+        else:  # A-3  (truncated outer ramp)
+            s_v = 1.0 + q * (1.0 + d) - np.sqrt(2.0 * q * (1.0 + d) * (1.0 - v))
             return s_v, "A-3"
 
-    else:          # ----- Regime B : fully truncated -----------------
-        v_star = 1.0 / (2.0 * s_star)                #  v_{\!*}
-        v0     = 1.0 - v_star                        #  v_0
-        if v <= v_star:             # B-0a  (outer ramp ends at t=s_v≤1)
+    else:  # ----- Regime B : fully truncated -----------------
+        v_star = 1.0 / (2.0 * s_star)  #  v_{\!*}
+        v0 = 1.0 - v_star  #  v_0
+        if v <= v_star:  # B-0a  (outer ramp ends at t=s_v≤1)
             s_v = np.sqrt(2.0 * q * (1.0 + d) * v)
             return s_v, "B-0a"
-        elif v <= v0:               # B-0b  (no plateau, outer ramp hits t=1)
+        elif v <= v0:  # B-0b  (no plateau, outer ramp hits t=1)
             s_v = 0.5 + q * (1.0 + d) * v
             return s_v, "B-0b"
-        else:                       # B-1   (inner plateau present)
-            s_v = 1.0 + s_star - np.sqrt(
-                    2.0 * q * (1.0 + d) * (1.0 - v)
-                  )
+        else:  # B-1   (inner plateau present)
+            s_v = 1.0 + s_star - np.sqrt(2.0 * q * (1.0 + d) * (1.0 - v))
             return s_v, "B-1"
 
 
@@ -84,9 +82,9 @@ def diagnose(n_samples=10_000, n_grid=20_001, tol=1e-8, seed=42):
 
     for _ in range(n_samples):
         # sample parameters
-        q = rng.uniform(5e-3, 0.495)       # 0 < q < 0.5
-        d = rng.uniform(-0.999, 4.0)       # generous range
-        v = rng.random()                   # 0 ≤ v ≤ 1
+        q = rng.uniform(5e-3, 0.495)  # 0 < q < 0.5
+        d = rng.uniform(-0.999, 4.0)  # generous range
+        v = rng.random()  # 0 ≤ v ≤ 1
 
         s_v, branch = classify_branch(q, d, v)
         h_vals = h_profile(q, d, v, t)
@@ -121,8 +119,7 @@ def diagnose(n_samples=10_000, n_grid=20_001, tol=1e-8, seed=42):
         total = p + f
         if total == 0:
             continue
-        print(f"Branch {br:>4}: {p:5d} pass   {f:5d} fail   "
-              f"worst |∫h−v| = {w:.3e}")
+        print(f"Branch {br:>4}: {p:5d} pass   {f:5d} fail   worst |∫h−v| = {w:.3e}")
     print("\nWorst overall sample:")
     print(f"  branch  : {worst_global['branch']}")
     print(f"  q       : {worst_global['q']:.6f}")

@@ -1,11 +1,8 @@
 import copul as cp
-import numpy as np
-
 
 
 def main(num_iters=1_000_000):
     # rearranger = cp.CISRearranger()
-    n_max = 10
     ltd_counter = 0
     for i in range(1, num_iters + 1):
         ccop = cp.BivCheckPi.generate_randomly()
@@ -27,7 +24,7 @@ def main(num_iters=1_000_000):
             is_plod = cp.PLODVerifier().is_plod(ccop)
             tau = ccop.tau()
             print(
-                f"Iteration {i}: tau={tau:.4f}, footrule={footrule:.4f}, ginis_gamma={ginis_gamma:.4f} for n={n}."
+                f"Iteration {i}: tau={tau:.4f}, footrule={footrule:.4f}, ginis_gamma={ginis_gamma:.4f} for n={ccop.n}."
             )
             print(f"Matrix:\n{ccop.matr}")
             cis, cds = ccop.is_cis()
@@ -39,7 +36,7 @@ def main(num_iters=1_000_000):
             cis_min, cds_min = ccop_min.is_cis()
             tau_min = ccop_min.tau()
             print(
-                f"Iteration {i}: tau_min={tau_min:.4f}, footrule_min={footrule_min:.4f}, ginis_gamma_min={ginis_gamma_min:.4f} for n={n}."
+                f"Iteration {i}: tau_min={tau_min:.4f}, footrule_min={footrule_min:.4f}, ginis_gamma_min={ginis_gamma_min:.4f} for n={ccop.n}."
             )
             print(f"Matrix Min:\n{ccop_min.matr}")
             cis, cds = ccop_min.is_cis()

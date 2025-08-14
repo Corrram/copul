@@ -1,5 +1,4 @@
 import copul as cp
-import numpy as np
 
 
 def main(num_iters=1_000_000):
@@ -21,7 +20,7 @@ def main(num_iters=1_000_000):
         if xi > footrule + 1e-8:
             is_plod = cp.PLODVerifier().is_plod(ccop)
             print(
-                f"Iteration {i}: footrule={footrule:.4f}, xi={xi:.4f} for n={n}."
+                f"Iteration {i}: footrule={footrule:.4f}, xi={xi:.4f} for n={ccop.n}."
             )
             print(f"Matrix:\n{ccop.matr}")
             cis, cds = ccop.is_cis()
@@ -32,7 +31,7 @@ def main(num_iters=1_000_000):
             is_plod_min = cp.PLODVerifier().is_plod(ccop_min)
             cis_min, cds_min = ccop_min.is_cis()
             print(
-                f"Iteration {i}: footrule_min={footrule_min:.4f}, xi_min={xi_min:.4f} for n={n}."
+                f"Iteration {i}: footrule_min={footrule_min:.4f}, xi_min={xi_min:.4f} for n={ccop.n}."
             )
             print(f"Matrix Min:\n{ccop_min.matr}")
             cis, cds = ccop_min.is_cis()

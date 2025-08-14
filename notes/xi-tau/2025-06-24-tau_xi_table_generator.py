@@ -28,7 +28,7 @@ def fetch_measure(arr: np.ndarray, which: str = "xi") -> tuple[np.ndarray, np.nd
     return arr[:, 0], arr[:, col]
 
 
-def maximize_tau_minus_xi(                   # <-- renamed
+def maximize_tau_minus_xi(  # <-- renamed
     x: np.ndarray, tau: np.ndarray, xi: np.ndarray
 ) -> tuple[float, float, float]:
     """
@@ -37,14 +37,14 @@ def maximize_tau_minus_xi(                   # <-- renamed
     """
     # spline interpolants (no extrapolation)
     s_tau = si.CubicSpline(x, tau, extrapolate=False)
-    s_xi  = si.CubicSpline(x,  xi, extrapolate=False)
+    s_xi = si.CubicSpline(x, xi, extrapolate=False)
 
     # dense grid inside [x.min, x.max]
     x_dense = np.linspace(x.min(), x.max(), 20_001)
-    diff    = s_tau(x_dense) - s_xi(x_dense)
+    diff = s_tau(x_dense) - s_xi(x_dense)
 
-    idx_max = np.nanargmax(diff)             # ignore possible NaNs (edges)
-    best_x  = x_dense[idx_max]
+    idx_max = np.nanargmax(diff)  # ignore possible NaNs (edges)
+    best_x = x_dense[idx_max]
     return best_x, s_tau(best_x), s_xi(best_x)
 
 
@@ -54,17 +54,22 @@ def optimize_for(family: str, data_dir: Path) -> tuple[float, float, float]:
     Load data for *family* and return (parameter, tau, xi) at the maximum gap.
     """
     file = data_dir / f"{family}Data.pkl"
-    arr  = pickle.loads(file.read_bytes())
+    arr = pickle.loads(file.read_bytes())
 
-    x, xi  = fetch_measure(arr, "xi")
+    x, xi = fetch_measure(arr, "xi")
     _, tau = fetch_measure(arr, "tau")
 
-    return maximize_tau_minus_xi(x, tau, xi)    # (param, tau, xi)
+    return maximize_tau_minus_xi(x, tau, xi)  # (param, tau, xi)
 
 
 # ---------------------------------------------------------------- main block
 def main() -> None:
-    families = ["Clayton", "Frank", "GumbelHougaard", "Joe"]   # Gaussian handled separately
+    families = [
+        "Clayton",
+        "Frank",
+        "GumbelHougaard",
+        "Joe",
+    ]  # Gaussian handled separately
     # directory with the *.pkl files
     with pkg_resources.path("copul", "docs") as docs_path:
         data_dir = docs_path / "xi_rho_tau_estimates"
@@ -76,13 +81,13 @@ def main() -> None:
         rows.append((fam, p, t, x, t - x))
 
     # --- analytic Gaussian row ------------------------------------------
-    p_gauss   = 1 / np.sqrt(2)                              # optimum ≈ ρ = 1/√2
-    tau_gauss = 2 / np.pi * np.arcsin(p_gauss)              # τ(ρ) = 2/π·arcsin(ρ)
-    xi_gauss  = 3 / np.pi * np.arcsin(3 / 4) - 0.5          # Chatterjee's ξ for Gaussian
+    p_gauss = 1 / np.sqrt(2)  # optimum ≈ ρ = 1/√2
+    tau_gauss = 2 / np.pi * np.arcsin(p_gauss)  # τ(ρ) = 2/π·arcsin(ρ)
+    xi_gauss = 3 / np.pi * np.arcsin(3 / 4) - 0.5  # Chatterjee's ξ for Gaussian
     rows.append(("Gaussian", p_gauss, tau_gauss, xi_gauss, tau_gauss - xi_gauss))
 
     # --- manual C_b row --------------------------------------------------
-    rows.append(("\\(C_b\\)", 1.0, 0.5, 0.3, 0.2))          # τ = 0.5, ξ = 0.3 at b = 1
+    rows.append(("\\(C_b\\)", 1.0, 0.5, 0.3, 0.2))  # τ = 0.5, ξ = 0.3 at b = 1
 
     # --- sort alphabetically by family name -----------------------------
     rows_sorted = sorted(rows, key=lambda r: r[0].lower())
@@ -95,7 +100,9 @@ def main() -> None:
     print(r"    Family & Parameter & $\tau$ & $\xi$ & $\tau-\xi$ \\")
     print(r"    \midrule")
     for fam, p, t_, x_, diff in rows_sorted:
-        print(f"    {fam:14s} & {p:10.3f} & {t_:10.3f} & {x_:10.3f} & {diff:10.3f} \\\\")
+        print(
+            f"    {fam:14s} & {p:10.3f} & {t_:10.3f} & {x_:10.3f} & {diff:10.3f} \\\\"
+        )
     print(r"    \bottomrule")
     print(r"  \end{tabular}")
 

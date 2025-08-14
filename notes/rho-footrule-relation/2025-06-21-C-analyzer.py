@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import copul as cp
 
 # =============================================================================
@@ -81,20 +80,25 @@ def calculate_mass_matrix(D, n):
     # This requires n+1 points along each axis.
     coords = np.linspace(0, 1, n + 1)
     U_grid, V_grid = np.meshgrid(coords, coords)
-    
+
     # 2. Calculate the copula value C(u,v) at every corner.
     C_at_corners = get_copula_C(U_grid, V_grid, D)
-    
+
     # 3. Calculate the mass in each cell using the C-volume formula.
     # This can be vectorized by taking differences of the corner values.
     # Mass(i,j) = C(u_j+1, v_i+1) - C(u_j, v_i+1) - C(u_j+1, v_i) + C(u_j, v_i)
-    mass_matrix = (C_at_corners[1:, 1:] - C_at_corners[:-1, 1:] -
-                   C_at_corners[1:, :-1] + C_at_corners[:-1, :-1])
-    
+    mass_matrix = (
+        C_at_corners[1:, 1:]
+        - C_at_corners[:-1, 1:]
+        - C_at_corners[1:, :-1]
+        + C_at_corners[:-1, :-1]
+    )
+
     return mass_matrix
 
+
 # --- Main script for demonstration ---
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 1. Calculate the mass matrix
     # The global parameter D for the copula family.
     D_param = 0.4
@@ -112,21 +116,21 @@ if __name__ == '__main__':
     print(f"Spearman's rho: {rho:.6f}")
     print(f"Spearman's Footrule: {footrule:.6f}")
     # print(f"Total probability mass in the matrix: {total_mass:.6f}")
-    
+
     # # 3. Visualize the mass matrix as a heatmap
     # fig, ax = plt.subplots(figsize=(10, 8))
     # im = ax.imshow(mass_matrix, cmap='viridis', origin='lower',
     #                 extent=[0, 1, 0, 1])
-    
+
     # # 4. Customize the plot
     # ax.set_title(f'Probability Mass of $C_0$ for $D={D_param}$ on a {n_grid}x{n_grid} Grid',
     #              fontsize=16, pad=15)
     # ax.set_xlabel('$u$', fontsize=14)
     # ax.set_ylabel('$v$', fontsize=14)
-    
+
     # # Add a color bar to show the mapping of colors to probabilities
     # cbar = fig.colorbar(im, ax=ax)
     # cbar.set_label('Probability Mass', fontsize=12)
-    
+
     # # Show the plot
     # plt.show()

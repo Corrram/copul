@@ -109,23 +109,35 @@ class RepairedLowerBoundaryCopula(BivCopula):
         t_coords = np.full_like(v_coords, t_val)
 
         # The repaired function from this class
-        h_repaired_vals = self.h_vectorized(t_coords[np.newaxis, :], v_coords[np.newaxis, :])[0]
+        h_repaired_vals = self.h_vectorized(
+            t_coords[np.newaxis, :], v_coords[np.newaxis, :]
+        )[0]
 
         # For comparison, get the original function with the dip
         original_func = LowerBoundaryHFunction(self.mu)
         h_original_vals = original_func.h_vectorized(t_coords, v_coords)
 
         plt.figure(figsize=(12, 6))
-        plt.plot(v_coords, h_original_vals, 'r--', label='Original Invalid Function (with dip)')
-        plt.plot(v_coords, h_repaired_vals, 'b-', lw=2,
-                 label='Repaired Valid Function (with plateau)')
+        plt.plot(
+            v_coords,
+            h_original_vals,
+            "r--",
+            label="Original Invalid Function (with dip)",
+        )
+        plt.plot(
+            v_coords,
+            h_repaired_vals,
+            "b-",
+            lw=2,
+            label="Repaired Valid Function (with plateau)",
+        )
 
-        plt.axvline(x=self.v0, color='k', linestyle='--', label=f'v0={self.v0:.2f}')
-        plt.axvline(x=self.v1, color='k', linestyle=':', label=f'v1={self.v1:.2f}')
-        plt.xlabel('v')
-        plt.ylabel(f'h(t={t_val}, v)')
-        plt.title(f'Repairing the Structure with a Plateau (μ = {self.mu:.2f})')
-        plt.grid(True, linestyle=':')
+        plt.axvline(x=self.v0, color="k", linestyle="--", label=f"v0={self.v0:.2f}")
+        plt.axvline(x=self.v1, color="k", linestyle=":", label=f"v1={self.v1:.2f}")
+        plt.xlabel("v")
+        plt.ylabel(f"h(t={t_val}, v)")
+        plt.title(f"Repairing the Structure with a Plateau (μ = {self.mu:.2f})")
+        plt.grid(True, linestyle=":")
         plt.ylim(bottom=-0.1)
         plt.legend()
         plt.show()
@@ -133,24 +145,26 @@ class RepairedLowerBoundaryCopula(BivCopula):
 
 # We include the original class to show the comparison in the plot
 class LowerBoundaryHFunction:
-    def __init__(self, mu): self.mu = float(mu); self.v0 = 1 / (2 * mu + 1); self.v1 = (2 * mu) / (
-                2 * mu + 1)
+    def __init__(self, mu):
+        self.mu = float(mu)
+        self.v0 = 1 / (2 * mu + 1)
+        self.v1 = (2 * mu) / (2 * mu + 1)
 
     def h_vectorized(self, t, v):
-        t, v = np.asarray(t, dtype=float), np.asarray(v, dtype=float);
+        t, v = np.asarray(t, dtype=float), np.asarray(v, dtype=float)
         res = np.zeros_like(v)
-        mu, v0, v1 = self.mu, self.v0, self.v1;
-        mask1, mask3 = v <= v0, v > v1;
+        mu, v0, v1 = self.mu, self.v0, self.v1
+        mask1, mask3 = v <= v0, v > v1
         mask2 = ~mask1 & ~mask3
-        idx1 = np.where(mask1);
-        t1, v1_vals = t[idx1], v[idx1];
+        idx1 = np.where(mask1)
+        t1, v1_vals = t[idx1], v[idx1]
         res[idx1] = np.where(t1 <= v1_vals, 0.0, v1_vals / (1 - v1_vals + 1e-12))
-        idx3 = np.where(mask3);
-        t3, v3_vals = t[idx3], v[idx3];
+        idx3 = np.where(mask3)
+        t3, v3_vals = t[idx3], v[idx3]
         res[idx3] = np.where(t3 <= v3_vals, 2.0 - 1.0 / (v3_vals + 1e-12), 1.0)
-        idx2 = np.where(mask2);
-        t2, v2_vals = t[idx2], v[idx2];
-        h_lower = v2_vals - (1 - v2_vals) / (2 * mu);
+        idx2 = np.where(mask2)
+        t2, v2_vals = t[idx2], v[idx2]
+        h_lower = v2_vals - (1 - v2_vals) / (2 * mu)
         h_upper = v2_vals + v2_vals / (2 * mu)
         res[idx2] = np.where(t2 <= v2_vals, h_lower, h_upper)
         return res

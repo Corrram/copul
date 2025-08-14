@@ -228,7 +228,7 @@ class XiPsiLowerBoundaryCopula(BivCopula):
         """
         mu = self.mu
         v1 = (2 * mu) / (2 * mu + 1)
-        return -2 * v1 ** 2 + 6 * v1 - 5 + 1 / v1
+        return -2 * v1**2 + 6 * v1 - 5 + 1 / v1
 
     def xi(self):
         r"""
@@ -240,16 +240,16 @@ class XiPsiLowerBoundaryCopula(BivCopula):
         mu = self.mu
         v1 = (2 * mu) / (2 * mu + 1)
 
-        term1 = 4 * v1 ** 3 - 18 * v1 ** 2 + 36 * v1 - 22 - 12 * sp.log(v1)
-        term2 = (6 * v1 ** 2 - 4 * v1 ** 3 - 1) / (4 * mu ** 2)
+        term1 = 4 * v1**3 - 18 * v1**2 + 36 * v1 - 22 - 12 * sp.log(v1)
+        term2 = (6 * v1**2 - 4 * v1**3 - 1) / (4 * mu**2)
 
         return term1 + term2
 
 
 if __name__ == "__main__":
     # Example usage for the endpoint mu = 0.5
-    copula = XiPsiLowerBoundaryCopula(mu=1.5)
-    copula.plot_cdf()
-    copula.plot_pdf()
-    copula.plot_cond_distr_1()
-    copula.plot_cond_distr_2()
+    copula = XiPsiLowerBoundaryCopula(mu=0.7)
+    # copula.plot_cdf()
+    copula.plot_pdf(plot_type="contour")
+    # copula.plot_cond_distr_1()
+    # copula.plot_cond_distr_2()

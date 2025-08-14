@@ -57,7 +57,7 @@ class BivCheckW(BivCheckPi):
         return np.allclose(self.matr, self.matr.T)
 
     @classmethod
-    def generate_randomly(cls, grid_size:int|list|None=None, n=1):
+    def generate_randomly(cls, grid_size: int | list | None = None, n=1):
         generated_copulas = BivCheckPi.generate_randomly(grid_size, n)
         if n == 1:
             return cls(generated_copulas)
@@ -662,12 +662,14 @@ class BivCheckW(BivCheckPi):
         The value is the footrule of the underlying CheckPi copula plus an
         add-on term accounting for the singular part of the distribution.
         Implemented for square checkerboard matrices.
-        
+
         Returns:
             float: The value of Spearman's Footrule.
         """
         if self.m != self.n:
-            warnings.warn("Footrule analytical formula is implemented for square matrices only.")
+            warnings.warn(
+                "Footrule analytical formula is implemented for square matrices only."
+            )
             return np.nan
 
         # Calculate footrule for the absolutely continuous part (CheckPi)
@@ -695,7 +697,9 @@ class BivCheckW(BivCheckPi):
             float: The value of Gini's Gamma.
         """
         if self.m != self.n:
-            warnings.warn("Gini's Gamma analytical formula is implemented for square matrices only.")
+            warnings.warn(
+                "Gini's Gamma analytical formula is implemented for square matrices only."
+            )
             return np.nan
 
         # The super() call returns a value that has incorrectly incorporated the
@@ -706,7 +710,7 @@ class BivCheckW(BivCheckPi):
         # anti-diagonal integral C(u, 1-u).
         # Add-on = 4 * (Trace(Anti-Diagonal(P)) / (12n))
         anti_diag_trace = np.trace(np.fliplr(self.matr))
-        
+
         add_on = anti_diag_trace / (3 * self.m)
 
         return contaminated_gamma_pi - add_on
@@ -715,7 +719,7 @@ class BivCheckW(BivCheckPi):
 CheckW: TypeAlias = BivCheckW
 
 if __name__ == "__main__":
-    matr = [[1,1]]
+    matr = [[1, 1]]
     copula = BivCheckW(matr)
     ccop = copula.to_checkerboard()
     footrule = ccop.footrule()

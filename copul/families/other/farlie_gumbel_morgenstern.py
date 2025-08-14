@@ -115,15 +115,15 @@ class FarlieGumbelMorgenstern(BivCopula):
         return 2 * self.theta / 9
 
     def footrule(self):
-        return self.theta/5
-    
+        return self.theta / 5
+
     def ginis_gamma(self):
         """
         Calculate Gini's gamma for the FGM copula.
 
         For FGM, Gini's gamma = 2 * theta / 3
         """
-        return 4*self.theta / 15
+        return 4 * self.theta / 15
 
 
 if __name__ == "__main__":
@@ -132,7 +132,11 @@ if __name__ == "__main__":
     footrule = fgm_copula.footrule()
     ccop = fgm_copula.to_checkerboard()
     footrule_ccop = ccop.footrule()
-    print(f"Footrule for FGM copula: {footrule:.3f}, Footrule for checkerboard: {footrule_ccop:.3f}")
+    print(
+        f"Footrule for FGM copula: {footrule:.3f}, Footrule for checkerboard: {footrule_ccop:.3f}"
+    )
     gama = fgm_copula.ginis_gamma()
     ccop_gama = ccop.ginis_gamma()
-    print(f"Gini's gamma for FGM copula: {gama:.3f}, Gini's gamma for checkerboard: {ccop_gama:.3f}")
+    print(
+        f"Gini's gamma for FGM copula: {gama:.3f}, Gini's gamma for checkerboard: {ccop_gama:.3f}"
+    )

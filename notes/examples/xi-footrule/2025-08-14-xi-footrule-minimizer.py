@@ -1,6 +1,7 @@
 import copul as cp
 import numpy as np
 
+
 def simulate():
     minimal_value = 0
     i = 0
@@ -18,13 +19,19 @@ def simulate():
             print(
                 f"Iteration {i}: Footrule ({footrule}), Xi ({xi}), Sum = {footrule + xi}, n={ccop.n}"
             )
-            matrix_str = "[" + " ".join(
-                "[" + " ".join(f"{x:.8f}" for x in row) + "]" for row in ccop.matr) + "]"
+            matrix_str = (
+                "["
+                + " ".join(
+                    "[" + " ".join(f"{x:.8f}" for x in row) + "]" for row in ccop.matr
+                )
+                + "]"
+            )
             print(f"Matrix: {matrix_str}\n")
+
 
 def analyze_minimizer():
     # matr = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
-    matr = [[0,1], [1,0]]
+    matr = [[0, 1], [1, 0]]
     ccop_min = cp.BivCheckMin(matr)
     ccop_pi = cp.BivCheckPi(matr)
     ccop_w = cp.BivCheckW(matr)
@@ -40,6 +47,7 @@ def analyze_minimizer():
     sum_pi = xi_pi + footrule_pi
     print(f"Sum min = {sum_min}, Sum w = {sum_w}, Sum pi = {sum_pi}")
     print(f"Xi pi = {xi_pi}, footrule pi = {footrule_pi}")
+
 
 if __name__ == "__main__":
     analyze_minimizer()
