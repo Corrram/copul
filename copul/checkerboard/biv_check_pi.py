@@ -126,6 +126,36 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         """
         return True
 
+    @classmethod
+    def generate_randomly(cls, grid_size: int|list|None=None, n:int=1):
+        if grid_size is None:
+            grid_size = [2,50]
+        generated_copulas = []
+        for i in range(n):
+            if isinstance(grid_size, list):
+                grid_size = np.random.randint(*grid_size)
+            # 1) draw n permutations all at once via argsort of uniforms
+            perms = np.argsort(np.random.rand(grid_size, grid_size), axis=1)  # shape (n,n)
+            # 2) draw n cauchy random variables
+            a = np.abs(np.random.standard_cauchy(size=grid_size))  # shape (n,)
+            # a**1.5
+            # a = a**1.5
+
+            # 3) build weighted sum of permuted identity matrices:
+            #    M[j,k] = sum_i a[i] * 1{perms[i,j] == k}
+            #    -> we can do this in one np.add.at call
+            rows = np.repeat(np.arange(grid_size)[None, :], grid_size, axis=0)  # shape (n,n)
+            cols = perms  # shape (n,n)
+            weights = np.broadcast_to(a[:, None], (grid_size, grid_size))  # shape (n,n)
+            M = np.zeros((grid_size, grid_size), float)
+            np.add.at(M, (rows.ravel(), cols.ravel()), weights.ravel())
+
+            # 4) feed into copul
+            generated_copulas.extend([cls(M)])
+        if n == 1:
+            return generated_copulas[0]
+        return generated_copulas
+
     def is_cis(self, i=1) -> bool:
         """
         Check if the copula is cis.

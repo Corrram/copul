@@ -1,4 +1,6 @@
 import warnings
+from typing import List, Union
+
 import numpy as np
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
@@ -35,13 +37,15 @@ class BivCheckMin(CheckMin, BivCheckPi):
         instance = Check.__new__(cls)
         return instance
 
-    def __init__(self, matr: np.ndarray, **kwargs) -> None:
+    def __init__(self, matr: Union[List[List[float]], np.ndarray], **kwargs) -> None:
         """Initialize the BivCheckMin instance.
 
         Args:
             matr: Input matrix
             **kwargs: Additional keyword arguments
         """
+        if isinstance(matr, BivCheckPi):
+            matr = matr.matr
         CheckMin.__init__(self, matr, **kwargs)
         BivCheckPi.__init__(self, matr, **kwargs)
 
@@ -78,6 +82,14 @@ class BivCheckMin(CheckMin, BivCheckPi):
             bool: Always returns False for checkerboard distributions
         """
         return False
+
+    @classmethod
+    def generate_randomly(cls, grid_size:int|list|None=None, n=1):
+        generated_copulas = BivCheckPi.generate_randomly(grid_size, n)
+        if n == 1:
+            return cls(generated_copulas)
+        else:
+            return [cls(copula) for copula in generated_copulas]
 
     @property
     def pdf(self):
