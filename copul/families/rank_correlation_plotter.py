@@ -42,6 +42,7 @@ class CorrelationData:
     xi_var: Optional[np.ndarray] = None
     rho: Optional[np.ndarray] = None
     tau: Optional[np.ndarray] = None
+    footrule: Optional[np.ndarray] = None
 
     def with_error_bands(self, n_obs: int) -> Dict[str, np.ndarray]:
         """
@@ -387,6 +388,35 @@ class RankCorrelationPlotter:
         else:
             return np.logspace(-self.log_cut_off, self.log_cut_off, 500) + left_boundary
 
+    @staticmethod
+    def spearman_footrule(x, y):
+        """
+        Calculates Spearman's footrule-based estimator of ψ(C) = 6 ∫ C(u,u) du − 2.
+
+        Args:
+            x (array-like): First variable.
+            y (array-like): Second variable.
+
+        Returns:
+            float: The Spearman's footrule ψ estimate.
+        """
+        n = len(x)
+        if n != len(y):
+            raise ValueError("Input arrays must have the same length.")
+        if n < 2:
+            return np.nan
+
+        # Calculate ranks
+        rank_x = scipy.stats.rankdata(x)
+        rank_y = scipy.stats.rankdata(y)
+
+        # Sum of absolute differences
+        d_sum = np.sum(np.abs(rank_x - rank_y))
+
+        # ψ(C) finite-sample estimator
+        psi = 1 + (3.0 / n) - (3.0 / (n * n)) * d_sum
+        return psi
+
     def _plot_correlation_for(
         self,
         n_obs: int,
@@ -412,6 +442,7 @@ class RankCorrelationPlotter:
         xi_values = np.zeros(len(param_values))
         rho_values = np.zeros(len(param_values))
         tau_values = np.zeros(len(param_values))
+        footrule_values = np.zeros(len(param_values))
         xi_var_values = np.zeros(len(param_values)) if plot_var else None
 
         # Compute correlations for each parameter value
@@ -433,6 +464,9 @@ class RankCorrelationPlotter:
                 # Calculate Kendall's tau
                 tau_values[i] = scipy.stats.kendalltau(data[:, 0], data[:, 1])[0]
 
+                # Calculate Spearman's footrule
+                footrule_values[i] = self.spearman_footrule(data[:, 0], data[:, 1])
+
                 # Calculate variance if requested
                 if plot_var and xi_var_values is not None:
                     xi_var_values[i] = xi_nvarcalculate(data[:, 0], data[:, 1])
@@ -441,12 +475,13 @@ class RankCorrelationPlotter:
                 xi_values[i] = np.nan
                 rho_values[i] = np.nan
                 tau_values[i] = np.nan
+                footrule_values[i] = np.nan
                 if plot_var and xi_var_values is not None:
                     xi_var_values[i] = np.nan
 
         # Create CorrelationData object
         data = CorrelationData(
-            param_values, xi_values, xi_var_values, rho_values, tau_values
+            param_values, xi_values, xi_var_values, rho_values, tau_values, footrule_values
         )
 
         # Plot results
@@ -470,6 +505,7 @@ class RankCorrelationPlotter:
         y_xi = data.xi[mask]
         y_rho = data.rho[mask] if data.rho is not None else None
         y_tau = data.tau[mask] if data.tau is not None else None
+        y_footrule = data.footrule[mask] if data.footrule is not None else None
 
         # Adjust x values if using log scale
         inf = float(self.copul.intervals[str(self.copul.params[0])].inf)
@@ -485,6 +521,9 @@ class RankCorrelationPlotter:
         # Plot Kendall's tau if available
         if y_tau is not None:
             plt.scatter(x_adjusted, y_tau, label="Kendall's tau", marker="s")
+
+        if y_footrule is not None:
+            plt.scatter(x_adjusted, y_footrule, label="Footrule", marker="x")
 
         # Create spline interpolations if we have enough points
         if len(x) > 1:
@@ -512,6 +551,11 @@ class RankCorrelationPlotter:
                 cs_tau = CubicSpline(x, y_tau)
                 y_tau_dense = cs_tau(x_dense)
                 plt.plot(x_dense_adjusted, y_tau_dense)
+
+            if y_footrule is not None:
+                cs_footrule = CubicSpline(x, y_footrule)
+                y_footrule_dense = cs_footrule(x_dense)
+                plt.plot(x_dense_adjusted, y_footrule_dense)
 
             # Set logarithmic scale if requested
             if log_scale:
@@ -724,6 +768,9 @@ def plot_rank_correlations(
 
 if __name__ == "__main__":
     # Example usage
-    from copul.families.archimedean.nelsen1 import BivClayton
+    import copul
 
-    BivClayton().plot_rank_correlations(n_obs=50_000, n_params=50, approximate=True)
+    families = [e.name for e in copul.family_list.Families]
+    for family in families:
+        copula = copul.family_list.Families.create(family)
+        copula.plot_rank_correlations(n_obs=100_000, n_params=50, approximate=False)
