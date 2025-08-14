@@ -769,39 +769,42 @@ class BivCoreCopula:
         r"""Create a filled contour plot.
 
         If ``log_z`` is *True*, the colour map is based on
-        :math:`\log(1+z)` (simply `numpy.log1p`).  This means zeros map to
-        *exactly* 0 on the log scale instead of being excluded.  The colour bar
-        still shows the **original values** (by subtracting 1 again in its tick
+        :math:`\log(1+z)` (simply `numpy.log1p`). This means zeros map to
+        *exactly* 0 on the log scale instead of being excluded. The colour bar
+        still shows the **original values** (by subtracting 1 again in its tick
         labels) so that the legend remains interpretable in the natural scale.
         """
         intervals_backup = dict(self.intervals)
-        # Resolve callable --------------------------------------------------
+
+        # Resolve callable ------------------------------------------------------
         try:
             _ = inspect.signature(func).parameters
             if isinstance(func, types.MethodType):
                 func = func()
         except (TypeError, ValueError):
             pass
+
         if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
             f = sp.lambdify((self.u, self.v), func.func)
         elif isinstance(func, sp.Expr):
             f = sp.lambdify((self.u, self.v), func)
         else:
             f = func
-        # Evaluate grid -----------------------------------------------------
-        if "grid_size" in kwargs:
-            grid_size = kwargs.pop("grid_size")
-        else:
-            grid_size = 100
+
+        # Evaluate grid ---------------------------------------------------------
+        grid_size = kwargs.pop("grid_size", 100)
         x = np.linspace(0.005, 0.995, grid_size)
         y = np.linspace(0.005, 0.995, grid_size)
         X, Y = np.meshgrid(x, y)
         Z = np.vectorize(f)(X, Y)
+
         if zlim is not None:
             Z = np.clip(Z, zlim[0], zlim[1])
-        # Colour scaling ----------------------------------------------------
+
+        # Colour scaling --------------------------------------------------------
         cmap = plt.cm.get_cmap("viridis").copy()
-        fig = plt.figure()
+        fig, ax = plt.subplots()
+
         if log_z:
             # mask negatives, shift by +1 for log1p
             Z_mask = np.ma.masked_less(Z, 0.0)
@@ -812,21 +815,23 @@ class BivCoreCopula:
             # use more levels for smoother transitions
             if isinstance(levels, int):
                 levels = np.geomspace(vmin, vmax, levels * 5)
-            cf = fig.contourf(X, Y, Z_for_norm, levels=levels, cmap=cmap, norm=norm)
-            cbar = fig.colorbar(cf)
+            cf = ax.contourf(X, Y, Z_for_norm, levels=levels, cmap=cmap, norm=norm)
+            cbar = fig.colorbar(cf, ax=ax)
             ticks = cbar.get_ticks()
             cbar.set_ticks(ticks)
             cbar.set_ticklabels([f"{t - 1:g}" for t in ticks])
         else:
             if isinstance(levels, int):
                 levels = levels
-            cf = fig.contourf(X, Y, Z, levels=levels, cmap=cmap)
-            cbar = fig.colorbar(cf)
+            cf = ax.contourf(X, Y, Z, levels=levels, cmap=cmap)
+            cbar = fig.colorbar(cf, ax=ax)
+
         cbar.set_label(zlabel)
-        fig.xlabel("u")
-        fig.ylabel("v")
-        fig.title(title)
-        fig.show()
+        ax.set_xlabel("u")
+        ax.set_ylabel("v")
+        ax.set_title(title)
+
+        plt.show()
         self.intervals = intervals_backup
         return fig
 

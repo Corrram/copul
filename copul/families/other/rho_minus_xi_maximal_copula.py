@@ -145,7 +145,9 @@ class RhoMinusXiMaximalCopula(BivCopula):
             The target value for Chatterjee's xi, in (0, 1).
         """
         if x == 0:
-            return cls(b=0.0)  # Special case for xi = 0, which corresponds to independence
+            return cls(
+                b=0.0
+            )  # Special case for xi = 0, which corresponds to independence
         elif x == 1:
             return UpperFrechet()
         elif x == -1:
@@ -153,7 +155,9 @@ class RhoMinusXiMaximalCopula(BivCopula):
         x_sym = sp.sympify(x)
 
         # Case 1: 0 < x <= 3/10  (corresponds to |b| >= 1)
-        b_ge_1 = sp.sqrt(6 * x_sym) / (2 * sp.cos(sp.acos(-3 * sp.sqrt(6 * x_sym) / 5) / 3))
+        b_ge_1 = sp.sqrt(6 * x_sym) / (
+            2 * sp.cos(sp.acos(-3 * sp.sqrt(6 * x_sym) / 5) / 3)
+        )
 
         # Case 2: 3/10 < x < 1  (corresponds to |b| < 1)
         b_lt_1 = (5 + sp.sqrt(5 * (6 * x_sym - 1))) / (10 * (1 - x_sym))
@@ -161,18 +165,19 @@ class RhoMinusXiMaximalCopula(BivCopula):
         # Create the piecewise expression for b
         b_expr = sp.Piecewise(
             (b_ge_1, (x_sym > 0) & (x_sym <= sp.Rational(3, 10))),
-            (b_lt_1, (x_sym > sp.Rational(3, 10)) & (x_sym < 1))
+            (b_lt_1, (x_sym > sp.Rational(3, 10)) & (x_sym < 1)),
         )
 
         return cls(b=float(b_expr))
+
     # -------- Maximal Spearman’s rho M(b) -------- #
     @staticmethod
     def _M_expr(b):
         """Piecewise maximal Spearman’s ρ in terms of b_new."""
         # When |b| ≥ 1, then b_old = 1/|b| ≤ 1 → formula b_old‐small → inverts to:
-        M_when_abs_b_ge_1 = b - sp.Rational(3, 10) * b ** 2
+        M_when_abs_b_ge_1 = b - sp.Rational(3, 10) * b**2
         # When |b| < 1, then b_old = 1/|b| > 1 → formula b_old‐large → inverts to:
-        M_when_abs_b_lt_1 = 1 - 1 / (2 * b ** 2) + 1 / (5 * b ** 3)
+        M_when_abs_b_lt_1 = 1 - 1 / (2 * b**2) + 1 / (5 * b**3)
         return sp.Piecewise(
             (M_when_abs_b_ge_1, sp.Abs(b) >= 1),
             (M_when_abs_b_lt_1, True),
@@ -223,7 +228,7 @@ class RhoMinusXiMaximalCopula(BivCopula):
         s = RhoMinusXiMaximalCopula._s_expr(v, b)
         a = sp.Max(s - b_old, 0)
         t = s
-        middle = a + (2 * s * (u - a) - u ** 2 + a ** 2) / (2 * b_old)
+        middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
 
         return sp.Piecewise(
             (u, u <= a),
@@ -272,23 +277,19 @@ class RhoMinusXiMaximalCopula(BivCopula):
             s1_s_s = np.sqrt(2 * v * b_old)
             s2_s_s = v + b_old / 2
             s3_s_s = 1 + b_old - np.sqrt(2 * b_old * (1 - v))
-            
+
             # np.select evaluates conditions in order, mimicking sympy.Piecewise
             return np.select(
-                [v <= v1_s_s, v <= 1 - v1_s_s],
-                [s1_s_s, s2_s_s],
-                default=s3_s_s
+                [v <= v1_s_s, v <= 1 - v1_s_s], [s1_s_s, s2_s_s], default=s3_s_s
             )
         else:  # Corresponds to |b_old| > 1
             v1_s_L = 1 / (2 * b_old)
             s1_s_L = np.sqrt(2 * v * b_old)
             s2_s_L = v * b_old + 0.5
             s3_s_L = 1 + b_old - np.sqrt(2 * b_old * (1 - v))
-            
+
             return np.select(
-                [v <= v1_s_L, v <= 1 - v1_s_L],
-                [s1_s_L, s2_s_L],
-                default=s3_s_L
+                [v <= v1_s_L, v <= 1 - v1_s_L], [s1_s_L, s2_s_L], default=s3_s_L
             )
 
     @staticmethod
@@ -299,18 +300,14 @@ class RhoMinusXiMaximalCopula(BivCopula):
         """
         u, v = np.asarray(u), np.asarray(v)
         b_old = 1 / b
-        
+
         s = RhoMinusXiMaximalCopula._s_expr_numpy(v, b)
         a = np.maximum(s - b_old, 0)
         t = s
-        
+
         middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
-        
-        return np.select(
-            [u <= a, u <= t],
-            [u, middle],
-            default=v
-        )
+
+        return np.select([u <= a, u <= t], [u, middle], default=v)
 
     def cdf_vectorized(self, u, v):
         """
@@ -393,7 +390,7 @@ class RhoMinusXiMaximalCopula(BivCopula):
 
         # Case where |b_new| >= 1, which corresponds to b_old <= 1
         # Original formula: b_old * (4 - b_old) / 6
-        tau_large_b = sp.sign(b) * (6 * b_abs ** 2 - 4 * b_abs + 1) / (6 * b_abs ** 2)
+        tau_large_b = sp.sign(b) * (6 * b_abs**2 - 4 * b_abs + 1) / (6 * b_abs**2)
 
         # Case where |b_new| < 1, which corresponds to b_old > 1
         # Original formula: (6*b_old**2 - 4*b_old + 1) / (6*b_old**2)
@@ -405,7 +402,8 @@ class RhoMinusXiMaximalCopula(BivCopula):
             (tau_large_b, b_abs >= 1),
             (tau_small_b, True),
         )
-    
+
+
 if __name__ == "__main__":
     # Example usage
     copula = RhoMinusXiMaximalCopula(b=0.759)

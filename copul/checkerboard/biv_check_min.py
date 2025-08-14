@@ -84,7 +84,7 @@ class BivCheckMin(CheckMin, BivCheckPi):
         return False
 
     @classmethod
-    def generate_randomly(cls, grid_size:int|list|None=None, n=1):
+    def generate_randomly(cls, grid_size: int | list | None = None, n=1):
         generated_copulas = BivCheckPi.generate_randomly(grid_size, n)
         if n == 1:
             return cls(generated_copulas)
@@ -128,12 +128,14 @@ class BivCheckMin(CheckMin, BivCheckPi):
         The value is the footrule of the underlying CheckPi copula plus an
         add-on term accounting for the singular part of the distribution.
         Implemented for square checkerboard matrices.
-        
+
         Returns:
             float: The value of Spearman's Footrule.
         """
         if self.m != self.n:
-            warnings.warn("Footrule analytical formula is implemented for square matrices only.")
+            warnings.warn(
+                "Footrule analytical formula is implemented for square matrices only."
+            )
             return np.nan
 
         # Calculate footrule for the absolutely continuous part (CheckPi)
@@ -161,7 +163,9 @@ class BivCheckMin(CheckMin, BivCheckPi):
             float: The value of Gini's Gamma.
         """
         if self.m != self.n:
-            warnings.warn("Gini's Gamma analytical formula is implemented for square matrices only.")
+            warnings.warn(
+                "Gini's Gamma analytical formula is implemented for square matrices only."
+            )
             return np.nan
 
         # The super() call returns a value that has incorrectly incorporated the
@@ -172,16 +176,17 @@ class BivCheckMin(CheckMin, BivCheckPi):
         # anti-diagonal integral C(u, 1-u).
         # Add-on = 4 * (Trace(Anti-Diagonal(P)) / (12n))
         anti_diag_trace = np.trace(np.fliplr(self.matr))
-        
+
         add_on = anti_diag_trace / (3 * self.m)
 
         return contaminated_gamma_pi + add_on
 
+
 if __name__ == "__main__":
     matr1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     matr2 = [[5, 1, 5, 1], [5, 1, 5, 1], [1, 5, 1, 5], [1, 5, 1, 5]]
-    matr = [[1,0], [0, 1]]
-    matr = [[1,1]]
+    matr = [[1, 0], [0, 1]]
+    matr = [[1, 1]]
     ccop = BivCheckMin(matr).to_checkerboard()
     footrule = ccop.footrule()
     rho = ccop.rho()

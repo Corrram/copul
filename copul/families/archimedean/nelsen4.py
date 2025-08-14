@@ -42,7 +42,8 @@ class GumbelHougaard(BivArchimedeanCopula):
         return 2 - 2 ** (1 / self.theta)
 
     def footrule(self):
-        return 6*(1/(2**(1/self.theta) + 1))-2
+        return 6 * (1 / (2 ** (1 / self.theta) + 1)) - 2
+
 
 Nelsen4 = GumbelHougaard
 
@@ -56,5 +57,8 @@ if __name__ == "__main__":
     ccop_footrule = ccop.footrule()
     ccop_xi = ccop.xi()
     ccop_rho = ccop.rho()
-    print(f"Footrule distance: {footrule}, Checkerboard footrule: {ccop_footrule}",
-          f"Checkerboard xi: {ccop_xi}", f"Checkerboard rho: {ccop_rho}")
+    print(
+        f"Footrule distance: {footrule}, Checkerboard footrule: {ccop_footrule}",
+        f"Checkerboard xi: {ccop_xi}",
+        f"Checkerboard rho: {ccop_rho}",
+    )
