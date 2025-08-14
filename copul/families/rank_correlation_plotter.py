@@ -771,6 +771,11 @@ if __name__ == "__main__":
     import copul
 
     families = [e.name for e in copul.family_list.Families]
+
+    params_dict = {
+        "Clayton": {"log_cut_off": (-1.5, 1.5)}
+    }
     for family in families:
         copula = copul.family_list.Families.create(family)
-        copula.plot_rank_correlations(n_obs=100_000, n_params=50, approximate=False)
+        params = params_dict.get(family, {})
+        copula.plot_rank_correlations(n_obs=100_000, n_params=50, approximate=False, **params)

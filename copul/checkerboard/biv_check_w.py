@@ -56,6 +56,14 @@ class BivCheckW(BivCheckPi):
             return False
         return np.allclose(self.matr, self.matr.T)
 
+    @classmethod
+    def generate_randomly(cls, grid_size:int|list|None=None, n=1):
+        generated_copulas = BivCheckPi.generate_randomly(grid_size, n)
+        if n == 1:
+            return cls(generated_copulas)
+        else:
+            return [cls(copula) for copula in generated_copulas]
+
     def transpose(self):
         """
         Transpose the checkerboard matrix.
