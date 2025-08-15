@@ -24,20 +24,27 @@ def _setup_numerical_functions_hole(alpha):
     L_strip_vals = L_strip_vec(v_grid)
 
     f_V_vals = (1 - L_strip_vals) / (1 - r + 1e-12)
-    f_V_func = interp1d(v_grid, f_V_vals, kind='linear', bounds_error=False,
-                        fill_value=(f_V_vals[0], f_V_vals[-1]))
+    f_V_func = interp1d(
+        v_grid,
+        f_V_vals,
+        kind="linear",
+        bounds_error=False,
+        fill_value=(f_V_vals[0], f_V_vals[-1]),
+    )
 
     F_V_grid = np.cumsum(f_V_vals) * (v_grid[1] - v_grid[0])
     # Ensure the CDF grid is monotonic for interpolation
     F_V_grid = np.maximum.accumulate(F_V_grid)
-    F_V_inv = interp1d(F_V_grid, v_grid, kind='linear', bounds_error=False, fill_value=(0, 1))
+    F_V_inv = interp1d(
+        F_V_grid, v_grid, kind="linear", bounds_error=False, fill_value=(0, 1)
+    )
 
     return {
-        'r': r,
-        'psi_func': psi_func,
-        'f_V_func': f_V_func,
-        'F_V_inv': F_V_inv,
-        'L_strip_vec': L_strip_vec
+        "r": r,
+        "psi_func": psi_func,
+        "f_V_func": f_V_func,
+        "F_V_inv": F_V_inv,
+        "L_strip_vec": L_strip_vec,
     }
 
 
@@ -46,22 +53,26 @@ class ValidDiagonalHoleCopula(BivCopula):
     A valid, numerically defined copula with a diagonal "hole" of zero density.
     The density is positive on the complement of a diagonal strip.
     """
-    params = ['alpha']
-    intervals = {'alpha': (0, 0.5)}
+
+    params = ["alpha"]
+    intervals = {"alpha": (0, 0.5)}
 
     def __new__(cls, *args, **kwargs):
-        if args: kwargs["alpha"] = args[0]
+        if args:
+            kwargs["alpha"] = args[0]
         if "alpha" in kwargs and kwargs["alpha"] == 0:
             del kwargs["alpha"]
             return BivIndependenceCopula()
         return super().__new__(cls)
 
     def __init__(self, *args, **kwargs):
-        if args: kwargs["alpha"] = args[0]
-        alpha = kwargs.get('alpha', 0.1)
+        if args:
+            kwargs["alpha"] = args[0]
+        alpha = kwargs.get("alpha", 0.1)
 
         init_kwargs = kwargs.copy()
-        if 'alpha' in init_kwargs: del init_kwargs['alpha']
+        if "alpha" in init_kwargs:
+            del init_kwargs["alpha"]
 
         super().__init__(**init_kwargs)
 
@@ -71,11 +82,11 @@ class ValidDiagonalHoleCopula(BivCopula):
         self.alpha = alpha
 
         helpers = _setup_numerical_functions_hole(alpha)
-        self.r = helpers['r']
-        self._psi = helpers['psi_func']
-        self._f_V = helpers['f_V_func']
-        self._F_V_inv = helpers['F_V_inv']
-        self._L_strip = helpers['L_strip_vec']
+        self.r = helpers["r"]
+        self._psi = helpers["psi_func"]
+        self._f_V = helpers["f_V_func"]
+        self._F_V_inv = helpers["F_V_inv"]
+        self._L_strip = helpers["L_strip_vec"]
 
     @property
     def is_absolutely_continuous(self) -> bool:
@@ -102,13 +113,20 @@ class ValidDiagonalHoleCopula(BivCopula):
             for index in np.ndindex(u.shape):
                 u_val, w_val = u[index], w[index]
                 if u_val > 0 and w_val > 0:
-                    val, err = dblquad(lambda y, x: self.pdf(x, y), 0, u_val, lambda x: 0,
-                                       lambda x: w_val)
+                    val, err = dblquad(
+                        lambda y, x: self.pdf(x, y),
+                        0,
+                        u_val,
+                        lambda x: 0,
+                        lambda x: w_val,
+                    )
                     results[index] = val
             return results
         else:
             if u > 0 and w > 0:
-                val, err = dblquad(lambda y, x: self.pdf(x, y), 0, u, lambda x: 0, lambda x: w)
+                val, err = dblquad(
+                    lambda y, x: self.pdf(x, y), 0, u, lambda x: 0, lambda x: w
+                )
                 return val
             return 0.0
 
@@ -118,9 +136,12 @@ class ValidDiagonalHoleCopula(BivCopula):
 
         def get_strip_x_interval(v_s):
             r_s = self.r
-            if 0 <= v_s < r_s: return 0, v_s + r_s / 2
-            if r_s <= v_s <= 1 - r_s: return v_s - r_s / 2, v_s + r_s / 2
-            if 1 - r_s < v_s <= 1: return v_s - r_s / 2, 1
+            if 0 <= v_s < r_s:
+                return 0, v_s + r_s / 2
+            if r_s <= v_s <= 1 - r_s:
+                return v_s - r_s / 2, v_s + r_s / 2
+            if 1 - r_s < v_s <= 1:
+                return v_s - r_s / 2, 1
             return 0, 0
 
         def C_old_u_given_v_scalar(u_s, v_s):
@@ -156,9 +177,10 @@ class ValidDiagonalHoleCopula(BivCopula):
         # Inner integral for w from u to 1
         integral_val, err = dblquad(
             integrand_psi,
-            0, 1,  # u integration limits
+            0,
+            1,  # u integration limits
             lambda u: u,  # w lower integration limit
-            lambda u: 1  # w upper integration limit
+            lambda u: 1,  # w upper integration limit
         )
 
         return 6 * integral_val - 2
@@ -175,7 +197,8 @@ class ValidDiagonalHoleCopula(BivCopula):
 
 if __name__ == "__main__":
     copula = ValidDiagonalHoleCopula(alpha=0.49)
-    copula.plot_pdf(plot_type='contour')
+    copula = copula.to_checkerboard(20)
+    copula.plot_pdf(plot_type="contour")
     print(f"Instantiated ValidDiagonalHoleCopula with alpha = {copula.alpha}")
 
     print("\nCalculating dependence measures...")
