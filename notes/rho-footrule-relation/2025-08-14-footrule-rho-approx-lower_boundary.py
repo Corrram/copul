@@ -94,8 +94,7 @@ if __name__ == "__main__":
     plt.gca().set_aspect("equal", "box")
 
     # --- Compute and visualize H matrices for specific mu values ---
-    print("\nComputing and saving H matrices to CSV files...")
-    mu_for_files = [0.05, 0.2, 0.5, 0.8, 1.0, 2, 5, 10.0]
+    mu_for_files = [0.05, 0.2, 0.5, 0.8, 1.0, 1.2, 1.5, 1.8, 2]
     n_vis = 64  # Use a higher resolution for visualization
 
     for mu_val in mu_for_files:
@@ -103,11 +102,6 @@ if __name__ == "__main__":
         _, _, H_map = get_boundary_point_neg_mu_psi_rho(mu=mu_val, n=n_vis)
 
         if H_map is not None:
-            # --- Save to CSV ---
-            filename = f"h_matrix_neg_mu_psi_rho_mu_{mu_val:.2f}.csv"
-            np.savetxt(filename, H_map, delimiter=",")
-            print(f"Successfully saved data to {filename}")
-
             # --- Visualize the H matrix ---
             plt.figure(figsize=(7, 6))
             ax = plt.gca()

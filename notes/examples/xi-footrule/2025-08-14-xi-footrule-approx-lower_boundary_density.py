@@ -46,10 +46,8 @@ def get_boundary_point(mu, n=32, verbose=False):
 # --- Main simulation and plotting loop ---
 if __name__ == "__main__":
     # A selection of mu values to visualize
-    mu_for_files = [0.05, 0.2, 0.5, 1.0, 5.0, 20.0]
+    mu_for_files = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 2, 5, 10.0, 20]
     n_vis = 64  # Use a higher resolution for visualization
-
-    print("\nComputing H matrices and plotting corresponding densities c(t,v)...")
 
     for mu_val in mu_for_files:
         # 1. Compute the optimal H matrix (conditional distribution)

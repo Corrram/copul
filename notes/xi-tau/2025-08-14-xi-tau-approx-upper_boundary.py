@@ -102,7 +102,6 @@ if __name__ == "__main__":
     plt.gca().set_aspect("equal", "box")
 
     # --- Compute and visualize H matrices for specific mu values ---
-    print("\nComputing and saving H matrices to CSV files...")
     mu_for_files = [0.5, 1.0, 5.0, 10.0]
     n_vis = 64  # Use a higher resolution for visualization
 
@@ -112,9 +111,9 @@ if __name__ == "__main__":
 
         if H_map is not None:
             # --- Save to CSV ---
-            filename = f"h_matrix_tau_upper_mu_{mu_val:.2f}.csv"
-            np.savetxt(filename, H_map, delimiter=",")
-            print(f"Successfully saved data to {filename}")
+            # filename = f"h_matrix_tau_upper_mu_{mu_val:.2f}.csv"
+            # np.savetxt(filename, H_map, delimiter=",")
+            # print(f"Successfully saved data to {filename}")
 
             # --- Visualize the H matrix ---
             plt.figure(figsize=(7, 6))

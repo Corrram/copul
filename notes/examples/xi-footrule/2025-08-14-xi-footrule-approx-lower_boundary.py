@@ -68,8 +68,7 @@ if __name__ == "__main__":
     plt.gca().set_aspect("equal", "box")
 
     # --- Compute H matrices and save them to CSV files ---
-    print("\nComputing and saving H matrices to CSV files...")
-    mu_for_files = [0.05, 0.2, 0.5, 0.8, 1.0, 2, 5, 10.0, 20]
+    mu_for_files = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 2, 5, 10.0, 20]
     n_vis = 64  # Use a higher resolution for visualization
 
     for mu_val in mu_for_files:
