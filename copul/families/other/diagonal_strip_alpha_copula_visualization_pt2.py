@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 from scipy.integrate import cumulative_trapezoid, trapezoid
 
 
@@ -51,7 +52,7 @@ def construct_valid_geometric_copula(v_grid, u_grid, a):
     return density
 
 
-def calculate_and_plot(a_val, n_points=400):
+def calculate_and_plot(a_val, n_points=500):
     """
     Calculates xi and psi, and generates a plot for a given 'a'.
     """
@@ -97,9 +98,18 @@ def calculate_and_plot(a_val, n_points=400):
     ax.set_title(title, fontsize=14)
     ax.set_xlabel("u", fontsize=12)
     ax.set_ylabel("v", fontsize=12)
+    # Set MAJOR ticks to appear every 0.2 units for the labels
+    ax.xaxis.set_major_locator(mticker.MultipleLocator(0.1))
+    ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+
+    # Set MINOR ticks to appear every 0.1 units (without labels)
+    ax.xaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+    ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+
     ax.set_aspect("equal", "box")
+    plt.grid()
     plt.savefig(
-        f"images/copula_a_{a_val:.2f}_measures.png",
+        f"images/copula_a_{a_val:.3f}_measures.png",
         dpi=300,
         bbox_inches="tight",
     )
@@ -110,6 +120,20 @@ def calculate_and_plot(a_val, n_points=400):
 if __name__ == "__main__":
     # a=0.5 corresponds to the off-diagonal checkerboard copula
     # a=0 corresponds to a diagonal hole
-    a_values = [0.5, 0.45, 0.4, 0.35, 0.3, 1 - np.sqrt(0.5), 0.25, 0.225, 0.2, 0.1, 0.0]
+    a_values = [
+        0.5,
+        0.45,
+        0.4,
+        0.35,
+        0.3,
+        0.29,
+        1 - np.sqrt(0.5),
+        0.28,
+        0.25,
+        0.225,
+        0.2,
+        0.1,
+        0.0,
+    ]
     for a in a_values:
         calculate_and_plot(a_val=a)

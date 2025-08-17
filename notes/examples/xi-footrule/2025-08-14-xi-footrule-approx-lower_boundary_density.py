@@ -1,6 +1,7 @@
 import cvxpy as cp
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 from tqdm import tqdm
 
 
@@ -40,8 +41,34 @@ def get_boundary_point(mu, n=32, verbose=False):
 
 # --- Main simulation and plotting loop ---
 if __name__ == "__main__":
-    mu_for_files = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 2, 5, 10.0, 20]
-    n_vis = 64
+    mu_for_files = [
+        0.05,
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.48,
+        0.49,
+        0.5,
+        0.51,
+        0.52,
+        # 0.6,
+        # 0.7,
+        # 0.8,
+        # 0.9,
+        # 1.0,
+        # 1.2,
+        # 1.5,
+        # 1.8,
+        # 2,
+        # 2.5,
+        # 3,
+        # 4,
+        # 5,
+        # 10.0,
+        # 20,
+    ]
+    n_vis = 100
 
     for mu_val in mu_for_files:
         # 1. Compute the optimal H matrix (H(t,v) where t=rows, v=columns)
@@ -70,6 +97,15 @@ if __name__ == "__main__":
             ax.set_title(f"Copula Density c(v,t) for μ = {mu_val:.2f}")
             ax.set_xlabel("t")
             ax.set_ylabel("v")
+            # Set MAJOR ticks to appear every 0.2 units for the labels
+            ax.xaxis.set_major_locator(mticker.MultipleLocator(0.1))
+            ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+
+            # Set MINOR ticks to appear every 0.1 units (without labels)
+            ax.xaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+            ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+
+            plt.grid()
             plt.colorbar(
                 im,
                 ax=ax,

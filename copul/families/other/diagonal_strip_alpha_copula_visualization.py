@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib.ticker as mticker
 
 # Corrected import statement for modern SciPy versions
 from scipy.integrate import cumulative_trapezoid, trapezoid
@@ -81,7 +82,7 @@ def diagonal_hole_copula_density(u_grid, w_grid, alpha):
     return density
 
 
-def calculate_and_plot(alpha_val, n_points=200):
+def calculate_and_plot(alpha_val, n_points=500):
     """
     Calculates xi and psi, and generates a plot for a given alpha.
     """
@@ -142,7 +143,14 @@ def calculate_and_plot(alpha_val, n_points=200):
     ax.set_title(title, fontsize=14)
     ax.set_xlabel("u", fontsize=12)
     ax.set_ylabel("w", fontsize=12)
+    ax.xaxis.set_major_locator(mticker.MultipleLocator(0.1))
+    ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
+
+    # Set MINOR ticks to appear every 0.1 units (without labels)
+    ax.xaxis.set_minor_locator(mticker.MultipleLocator(0.02))
+    ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
     ax.set_aspect("equal", "box")
+    plt.grid()
     plt.savefig(f"images/diagonal_hole_copula_density_alpha_{alpha_val:.2f}.png")
     plt.show()
 
