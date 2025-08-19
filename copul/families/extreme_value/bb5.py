@@ -25,7 +25,7 @@ class BB5(BivExtremeValueCopula):
         if args is not None and len(args) == 2:
             self.theta = args[0]
             self.delta = args[1]
-        elif args is not None:
+        elif args:
             raise ValueError("BB5 copula requires two parameters")
         if "theta" in kwargs and kwargs["theta"] == 1:
             del kwargs["theta"]

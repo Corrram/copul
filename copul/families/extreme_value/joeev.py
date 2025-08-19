@@ -29,7 +29,7 @@ class JoeEV(BivExtremeValueCopula):
             self.alpha_1 = args[0]
             self.alpha_2 = args[1]
             self.delta = args[2]
-        elif args is not None:
+        elif args:
             raise ValueError("Tawn copula requires three parameters")
         if (
             "alpha_1" in kwargs
