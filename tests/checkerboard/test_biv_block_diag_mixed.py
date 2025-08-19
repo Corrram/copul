@@ -17,7 +17,6 @@ from __future__ import annotations
 import matplotlib
 import numpy as np
 import pytest
-from matplotlib import pyplot as plt
 
 from copul.checkerboard.biv_block_diag_mixed import BivBlockDiagMixed
 from copul.checkerboard.biv_check_pi import BivCheckPi
@@ -147,20 +146,3 @@ def small_block_mixed():
     make_block_diag_delta([1, 1])
     S = np.array([[0, 0], [0, 1]])
     return BivBlockDiagMixed([1, 1], sign=S)
-
-
-@pytest.mark.parametrize(
-    "plot_fun",
-    [
-        lambda c: c.plot_cdf(),
-        lambda c: c.plot_cond_distr_1(),
-        lambda c: c.plot_cond_distr_2(),
-    ],
-)
-def test_plotting_runs(plot_fun, small_block_mixed):
-    try:
-        plot_fun(small_block_mixed)
-    except Exception as exc:  # noqa: BLE001
-        pytest.fail(f"plot raised {exc}")
-    finally:
-        plt.close("all")

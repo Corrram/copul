@@ -2,7 +2,6 @@ import cvxpy as cp
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-from tqdm import tqdm
 
 
 def get_boundary_point(mu, n=32, verbose=False):

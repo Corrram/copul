@@ -2,6 +2,7 @@
 """
 Plots the attainable region for Stochastically Increasing (SI) copulas.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator

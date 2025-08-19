@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 from scipy.integrate import cumulative_trapezoid, trapezoid
-import os
 from tqdm import tqdm
 import pandas as pd
 

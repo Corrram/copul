@@ -94,7 +94,21 @@ if __name__ == "__main__":
     plt.gca().set_aspect("equal", "box")
 
     # --- Compute and visualize H matrices for specific mu values ---
-    mu_for_files = [0.05, 0.125, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 2/3, 0.7, 0.8, 0.9, 1.0]
+    mu_for_files = [
+        0.05,
+        0.125,
+        0.2,
+        0.25,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        2 / 3,
+        0.7,
+        0.8,
+        0.9,
+        1.0,
+    ]
     n_vis = 64  # Use a higher resolution for visualization
 
     for mu_val in mu_for_files:

@@ -3,6 +3,7 @@
 Plots the exact attainable regions for Chatterjee's ξ and Spearman's Footrule ψ
 in two side-by-side subplots.
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator

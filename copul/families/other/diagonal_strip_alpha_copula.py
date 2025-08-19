@@ -1,6 +1,5 @@
 # file: copul/families/diagonal_strip_alpha.py
 import sympy as sp
-import numpy as np
 
 from copul.families.core.biv_copula import BivCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
@@ -58,7 +57,7 @@ class DiagonalStripAlphaCopula(BivCopula):
         c_v_expr = sp.Piecewise(
             (1 / (1 - v - r / 2), v < r),
             (1 / (1 - r), v <= 1 - r),
-            (1 / (v - r / 2), True)
+            (1 / (v - r / 2), True),
         )
 
         # 2. Define the support (the "yellow region")
@@ -69,10 +68,7 @@ class DiagonalStripAlphaCopula(BivCopula):
         # NOTE: The use of `~in_white` appears to be a bug, as it makes the
         # copula invalid for alpha > 1/4. The implementation of cond_distr
         # assumes the density is ON the strip (i.e., `in_white` is used).
-        pdf_expr = sp.Piecewise(
-            (c_v_expr, ~in_white),
-            (0, True)
-        )
+        pdf_expr = sp.Piecewise((c_v_expr, ~in_white), (0, True))
         return SymPyFuncWrapper(pdf_expr)
 
     @property
@@ -118,7 +114,7 @@ class DiagonalStripAlphaCopula(BivCopula):
         cond_expr = sp.Piecewise(
             (cd_v_lt_r, v < r),
             (cd_v_gt_1mr, v > 1 - r),
-            (cd_v_between, True)  # The remaining case is r <= v <= 1-r
+            (cd_v_between, True),  # The remaining case is r <= v <= 1-r
         )
 
         return SymPyFuncWrapper(cond_expr)
@@ -142,14 +138,12 @@ class DiagonalStripAlphaCopula(BivCopula):
         r = sp.sqrt(alpha)
 
         # Dummy integration variable
-        y = sp.symbols('y', real=True, positive=True)
+        y = sp.symbols("y", real=True, positive=True)
 
         # Define c(y), the density's value (which only depends on y)
         # This is based on the corrected assumption that density is ON the strip
         c_y_func = sp.Piecewise(
-            (1 / (y + r / 2), y < r),
-            (1 / (1 - y + r / 2), y > 1 - r),
-            (1 / r, True)
+            (1 / (y + r / 2), y < r), (1 / (1 - y + r / 2), y > 1 - r), (1 / r, True)
         )
 
         # Define psi(u), the lower bound of the support for y at a given u

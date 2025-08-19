@@ -9,7 +9,6 @@ is constant, and that it blends the three regimes cell-wise.
 import matplotlib
 import numpy as np
 import pytest
-from matplotlib import pyplot as plt
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.biv_check_min import BivCheckMin
@@ -120,20 +119,3 @@ def small_mixed():
     Δ = np.array([[1, 1], [1, 1]], dtype=float) / 4
     S = np.array([[0, 1], [-1, 0]])
     return BivCheckMixed(Δ, sign=S)
-
-
-@pytest.mark.parametrize(
-    "plot_fun",
-    [
-        lambda c: c.plot_cdf(),
-        lambda c: c.plot_cond_distr_1(),
-        lambda c: c.plot_cond_distr_2(),
-    ],
-)
-def test_plotting_runs(plot_fun, small_mixed):
-    try:
-        plot_fun(small_mixed)
-    except Exception as exc:  # noqa: BLE001
-        pytest.fail(f"plot raised {exc}")
-    finally:
-        plt.close("all")

@@ -267,3 +267,12 @@ class BivClayton(BivArchimedeanCopula):
 # Type alias for backwards compatibility
 Clayton: TypeAlias = BivClayton
 Nelsen1: TypeAlias = BivClayton
+
+
+if __name__ == "__main__":
+    # Example usage
+    copula = BivClayton(theta=-0.8)
+    # ginis_gamma = copula.ginis_gamma()
+    ginis_gamma_ch = copula.to_checkerboard().ginis_gamma()
+    print(f"Gini's gamma: {ginis_gamma_ch}")
+    print("Done!")
