@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
+from copul import FarlieGumbelMorgenstern, Frechet
 from copul.checkerboard.biv_check_pi import BivCheckPi
 
 matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
@@ -403,3 +404,85 @@ def test_xi_with_large_m_and_small_n():
     ccop = BivCheckPi(matr)
     xi = ccop.xi()
     assert np.isclose(xi, 0, atol=0.02)
+
+
+@pytest.mark.parametrize(
+    "matr, expected_sign",
+    [
+        (np.ones((2, 2)), 0.0),  # independence
+        (np.eye(2), 1.0),  # comonotonic
+        (np.fliplr(np.eye(2)), -1.0),  # countermonotonic approx
+    ],
+)
+def test_footrule_signs(matr, expected_sign):
+    ccop = BivCheckPi(matr)
+    result = ccop.footrule()
+    if expected_sign == 0.0:
+        assert np.isclose(result, 0.0, atol=1e-2)
+    elif expected_sign > 0:
+        assert result == 0.5  # clearly positive
+    else:
+        assert result < -0.3  # clearly negative but not necessarily -1
+
+
+@pytest.mark.parametrize(
+    "alpha, beta",
+    [
+        (0.5, 0.5),  # Independence
+        (0.2, 0.3),
+        (1.0, 0),  # Perfect positive dependence
+        (0.6, 0.4),
+        (0.0, 1.0),  # Perfect negative dependence
+    ],
+)
+def test_footrule_and_gamma_frechet(alpha, beta):
+    """Test the footrule for the Frechet copula with known parameters."""
+    frechet = Frechet(alpha, beta)
+    checkerboard = frechet.to_checkerboard()
+
+    footrule_direct = frechet.footrule()
+    footrule_check = checkerboard.footrule()
+    assert np.isclose(footrule_direct, footrule_check, atol=1e-2), (
+        f"Expected {footrule_direct}, got {footrule_check}"
+    )
+    gamma_direct = frechet.ginis_gamma()
+    gamma_check = checkerboard.ginis_gamma()
+    assert np.isclose(gamma_direct, gamma_check, atol=2e-2), (
+        f"Expected {gamma_direct}, got {gamma_check}"
+    )
+
+
+@pytest.mark.parametrize(
+    "theta",
+    [-1, -0.7, -0.3, 0, 0.3, 0.7, 1],
+)
+def test_footrule_and_gamma_for_farlie_gumbel_morgenstern(theta):
+    """Test the footrule for the Frechet copula with known parameters."""
+    fgm = FarlieGumbelMorgenstern(theta)
+    checkerboard = fgm.to_checkerboard()
+
+    footrule_direct = fgm.footrule()
+    footrule_check = checkerboard.footrule()
+    assert np.isclose(footrule_direct, footrule_check, atol=1e-2), (
+        f"Expected {footrule_direct}, got {footrule_check}"
+    )
+    gamma_direct = fgm.ginis_gamma()
+    gamma_check = checkerboard.ginis_gamma()
+    assert np.isclose(gamma_direct, gamma_check, atol=1e-2), (
+        f"Expected {gamma_direct}, got {gamma_check}"
+    )
+    blomqvist_direct = fgm.blomqvists_beta()
+    blomqvist_check = checkerboard.blomqvists_beta()
+    assert np.isclose(blomqvist_direct, blomqvist_check, atol=1e-2), (
+        f"Expected {blomqvist_direct}, got {blomqvist_check}"
+    )
+
+
+def test_footrule_and_gamma_rectangular_matrix_warning():
+    """Ensure rectangular matrices return NaN with warning for footrule/gamma."""
+    matr = np.ones((2, 3))
+    ccop = BivCheckPi(matr)
+    footrule_val = ccop.footrule()
+    gamma_val = ccop.ginis_gamma()
+    assert np.isnan(footrule_val)
+    assert np.isnan(gamma_val)

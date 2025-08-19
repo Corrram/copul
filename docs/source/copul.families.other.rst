@@ -28,6 +28,46 @@ copul.families.other.diagonal\_band\_copula module
    :show-inheritance:
    :undoc-members:
 
+copul.families.other.diagonal\_strip\_alpha\_copula module
+----------------------------------------------------------
+
+.. automodule:: copul.families.other.diagonal_strip_alpha_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.other.diagonal\_strip\_alpha\_copula\_numerical module
+---------------------------------------------------------------------
+
+.. automodule:: copul.families.other.diagonal_strip_alpha_copula_numerical
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.other.diagonal\_strip\_alpha\_copula\_visualization module
+-------------------------------------------------------------------------
+
+.. automodule:: copul.families.other.diagonal_strip_alpha_copula_visualization
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.other.diagonal\_strip\_alpha\_copula\_visualization\_pt2 module
+------------------------------------------------------------------------------
+
+.. automodule:: copul.families.other.diagonal_strip_alpha_copula_visualization_pt2
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.other.diagonal\_strip\_alpha\_copula\_visualization\_two\_param module
+-------------------------------------------------------------------------------------
+
+.. automodule:: copul.families.other.diagonal_strip_alpha_copula_visualization_two_param
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.other.farlie\_gumbel\_morgenstern module
 -------------------------------------------------------
 

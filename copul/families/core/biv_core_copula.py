@@ -896,4 +896,4 @@ class BivCoreCopula:
         """
         Blomqvist’s β   :=  4·C(½,½) – 1
         """
-        return 4.0 * self.cdf(0.5, 0.5) - 1.0
+        return 4.0 * self.cdf(0.5, 0.5).evalf() - 1.0

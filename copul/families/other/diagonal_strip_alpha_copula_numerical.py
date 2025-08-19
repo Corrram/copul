@@ -15,7 +15,9 @@ def _setup_numerical_functions_hole(alpha):
     psi_func = np.vectorize(lambda u: min(max(u - r / 2, 0), 1 - r))
 
     def L_strip_scalar(v):
-        integrand = lambda u: 1.0 if (psi_func(u) <= v <= psi_func(u) + r) else 0.0
+        def integrand(u):
+            return 1.0 if (psi_func(u) <= v <= psi_func(u) + r) else 0.0
+
         return quad(integrand, 0, 1, limit=100)[0]
 
     L_strip_vec = np.vectorize(L_strip_scalar)
@@ -168,9 +170,11 @@ class ValidDiagonalHoleCopula(BivCopula):
         \[ \psi(C) = 6 \int_0^1 \int_u^1 C(w|u) dw du - 2 \]
         This is much faster than the triple integral derived from the CDF.
         """
+
         # The integrand is the conditional distribution C(w|u) = cond_distr_2(u, w)
         # Note: dblquad expects func(y,x), so our integrand is func(w, u)
-        integrand_psi = lambda w, u: self.cond_distr_2(u, w)
+        def integrand_psi(w, u):
+            return self.cond_distr_2(u, w)
 
         # We integrate 6 * C(w|u) over the region 0 <= u <= w <= 1
         # Outer integral for u from 0 to 1
@@ -190,7 +194,10 @@ class ValidDiagonalHoleCopula(BivCopula):
         Numerically computes Chatterjee's Xi.
         \[ \xi(C) = 6 \int_0^1 \int_0^1 (C(w|u))^2 du dw - 2 \]
         """
-        integrand_xi = lambda w, u: self.cond_distr_2(u, w) ** 2
+
+        def integrand_xi(w, u):
+            return self.cond_distr_2(u, w) ** 2
+
         integral_val, err = dblquad(integrand_xi, 0, 1, lambda u: 0, lambda u: 1)
         return 6 * integral_val - 2
 

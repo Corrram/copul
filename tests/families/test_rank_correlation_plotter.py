@@ -132,9 +132,9 @@ class TestRankCorrelationPlotter:
             self.plotter._construct_xi_graph_for(100, 5, mock_copula, False)
 
             # Verify xi_ncalculate was called
-            assert mock_xi_calculate.call_count == 5, (
-                "xi_ncalculate was not called 5 times"
-            )
+            assert (
+                mock_xi_calculate.call_count == 5
+            ), "xi_ncalculate was not called 5 times"
 
             # Verify scatter and plot were called
             mock_plt.scatter.assert_called_once()
@@ -195,8 +195,8 @@ class TestRankCorrelationPlotter:
             assert mock_kendall.call_count == 5
 
             # Verify scatter and plot were called for each correlation
-            assert mock_plt.scatter.call_count == 3
-            assert mock_plt.plot.call_count == 3
+            assert mock_plt.scatter.call_count == 6
+            assert mock_plt.plot.call_count == 6
 
     def test_save_data_and_splines(self):
         """Test _save_data_and_splines method using a temporary directory."""

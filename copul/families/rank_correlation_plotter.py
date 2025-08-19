@@ -43,6 +43,8 @@ class CorrelationData:
     rho: Optional[np.ndarray] = None
     tau: Optional[np.ndarray] = None
     footrule: Optional[np.ndarray] = None
+    ginis_gamma: Optional[np.ndarray] = None
+    blomqvists_beta: Optional[np.ndarray] = None
 
     def with_error_bands(self, n_obs: int) -> Dict[str, np.ndarray]:
         """
@@ -417,6 +419,80 @@ class RankCorrelationPlotter:
         psi = 1 + (3.0 / n) - (3.0 / (n * n)) * d_sum
         return psi
 
+    @staticmethod
+    def ginis_gamma(x, y):
+        """
+        Calculates Gini's gamma correlation estimate based on the empirical copula.
+
+        The formula is:
+        γ(C) = 4 ∫[0,1] C(u,u)du + 4 ∫[0,1] C(u,1-u)du - 2
+
+        Args:
+            x (array-like): First variable.
+            y (array-like): Second variable.
+
+        Returns:
+            float: The Gini's gamma estimate.
+        """
+        x = np.asarray(x)
+        y = np.asarray(y)
+        n = len(x)
+
+        if n != len(y):
+            raise ValueError("Input arrays must have the same length.")
+        if n < 2:
+            return np.nan
+
+        # Compute pseudo-observations from ranks (empirical copula values)
+        u = scipy.stats.rankdata(x, method="ordinal") / n
+        v = scipy.stats.rankdata(y, method="ordinal") / n
+
+        # Estimate the two integrals using their non-parametric sample estimators
+
+        # Estimate for ∫ C(u,u)du is mean(1 - max(u_i, v_i))
+        integral_1 = np.mean(1 - np.maximum(u, v))
+
+        # Estimate for ∫ C(u,1-u)du is mean(max(0, 1 - u_i - v_i))
+        integral_2 = np.mean(np.maximum(0, 1 - u - v))
+
+        gamma = 4 * integral_1 + 4 * integral_2 - 2
+        return gamma
+
+    @staticmethod
+    def blomqvist_beta(x, y):
+        """
+        Calculates Blomqvist's beta correlation coefficient.
+
+        Definition: β(C) = 4 C(1/2, 1/2) - 1.
+
+        Empirical version:
+            Count proportion of pairs (x_i, y_i)
+            that fall into the same quadrant w.r.t. their medians.
+
+        Args:
+            x (array-like): First variable.
+            y (array-like): Second variable.
+
+        Returns:
+            float: Blomqvist's beta estimate.
+        """
+        n = len(x)
+        if n != len(y):
+            raise ValueError("Input arrays must have the same length.")
+        if n < 2:
+            return np.nan
+
+        med_x = np.median(x)
+        med_y = np.median(y)
+
+        # Count quadrant agreements
+        same_quadrant = np.sum(
+            ((x <= med_x) & (y <= med_y)) | ((x > med_x) & (y > med_y))
+        )
+
+        beta = 2.0 * same_quadrant / n - 1.0
+        return beta
+
     def _plot_correlation_for(
         self,
         n_obs: int,
@@ -443,6 +519,8 @@ class RankCorrelationPlotter:
         rho_values = np.zeros(len(param_values))
         tau_values = np.zeros(len(param_values))
         footrule_values = np.zeros(len(param_values))
+        ginis_gamma_values = np.zeros(len(param_values))
+        blomqvists_beta_values = np.zeros(len(param_values))
         xi_var_values = np.zeros(len(param_values)) if plot_var else None
 
         # Compute correlations for each parameter value
@@ -455,17 +533,13 @@ class RankCorrelationPlotter:
                 # Generate random sample
                 data = specific_copula.rvs(n_obs, approximate=self._approximate)
 
-                # Calculate Chatterjee's xi
+                # Calculate rank correlations
                 xi_values[i] = xi_ncalculate(data[:, 0], data[:, 1])
-
-                # Calculate Spearman's rho
                 rho_values[i] = scipy.stats.spearmanr(data[:, 0], data[:, 1])[0]
-
-                # Calculate Kendall's tau
                 tau_values[i] = scipy.stats.kendalltau(data[:, 0], data[:, 1])[0]
-
-                # Calculate Spearman's footrule
                 footrule_values[i] = self.spearman_footrule(data[:, 0], data[:, 1])
+                ginis_gamma_values[i] = self.ginis_gamma(data[:, 0], data[:, 1])
+                blomqvists_beta_values[i] = self.blomqvist_beta(data[:, 0], data[:, 1])
 
                 # Calculate variance if requested
                 if plot_var and xi_var_values is not None:
@@ -476,6 +550,8 @@ class RankCorrelationPlotter:
                 rho_values[i] = np.nan
                 tau_values[i] = np.nan
                 footrule_values[i] = np.nan
+                ginis_gamma_values[i] = np.nan
+                blomqvists_beta_values[i] = np.nan
                 if plot_var and xi_var_values is not None:
                     xi_var_values[i] = np.nan
 
@@ -487,6 +563,8 @@ class RankCorrelationPlotter:
             rho_values,
             tau_values,
             footrule_values,
+            ginis_gamma_values,
+            blomqvists_beta_values,
         )
 
         # Plot results
@@ -507,28 +585,34 @@ class RankCorrelationPlotter:
         # Remove NaN values
         mask = ~np.isnan(data.xi)
         x = data.params[mask]
-        y_xi = data.xi[mask]
+        y_xi = data.xi[mask] if data.xi is not None else None
         y_rho = data.rho[mask] if data.rho is not None else None
         y_tau = data.tau[mask] if data.tau is not None else None
         y_footrule = data.footrule[mask] if data.footrule is not None else None
+        y_ginis_gamma = data.ginis_gamma[mask] if data.ginis_gamma is not None else None
+        y_blomqvists_beta = (
+            data.blomqvists_beta[mask] if data.blomqvists_beta is not None else None
+        )
 
         # Adjust x values if using log scale
         inf = float(self.copul.intervals[str(self.copul.params[0])].inf)
         x_adjusted = x - inf if log_scale and inf != 0.0 else x
 
-        # Plot Chatterjee's xi
-        plt.scatter(x_adjusted, y_xi, label="Chatterjee's xi", marker="o")
-
-        # Plot Spearman's rho if available
+        # Plot Rank Correlations
+        if y_xi is not None:
+            plt.scatter(x_adjusted, y_xi, label="Chatterjee's xi", marker="o")
         if y_rho is not None:
             plt.scatter(x_adjusted, y_rho, label="Spearman's rho", marker="^")
-
-        # Plot Kendall's tau if available
         if y_tau is not None:
             plt.scatter(x_adjusted, y_tau, label="Kendall's tau", marker="s")
-
         if y_footrule is not None:
             plt.scatter(x_adjusted, y_footrule, label="Footrule", marker="x")
+        if y_ginis_gamma is not None:
+            plt.scatter(x_adjusted, y_ginis_gamma, label="Gini's Gamma", marker="d")
+        if y_blomqvists_beta is not None:
+            plt.scatter(
+                x_adjusted, y_blomqvists_beta, label="Blomqvist's Beta", marker="*"
+            )
 
         # Create spline interpolations if we have enough points
         if len(x) > 1:
@@ -561,6 +645,16 @@ class RankCorrelationPlotter:
                 cs_footrule = CubicSpline(x, y_footrule)
                 y_footrule_dense = cs_footrule(x_dense)
                 plt.plot(x_dense_adjusted, y_footrule_dense)
+
+            if y_ginis_gamma is not None:
+                cs_ginis_gamma = CubicSpline(x, y_ginis_gamma)
+                y_ginis_gamma_dense = cs_ginis_gamma(x_dense)
+                plt.plot(x_dense_adjusted, y_ginis_gamma_dense)
+
+            if y_blomqvists_beta is not None:
+                cs_blomqvists_beta = CubicSpline(x, y_blomqvists_beta)
+                y_blomqvists_beta_dense = cs_blomqvists_beta(x_dense)
+                plt.plot(x_dense_adjusted, y_blomqvists_beta_dense)
 
             # Set logarithmic scale if requested
             if log_scale:
@@ -778,9 +872,9 @@ if __name__ == "__main__":
     families = [e.name for e in copul.family_list.Families]
 
     params_dict = {"Clayton": {"log_cut_off": (-1.5, 1.5)}}
-    for family in families:
+    for family in families[:1]:
         copula = copul.family_list.Families.create(family)
         params = params_dict.get(family, {})
         copula.plot_rank_correlations(
-            n_obs=100_000, n_params=50, approximate=False, **params
+            n_obs=100_000, n_params=50, approximate=True, **params
         )
