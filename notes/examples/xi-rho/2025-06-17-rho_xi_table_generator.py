@@ -10,7 +10,7 @@ import scipy.interpolate as si
 def fetch_measure(arr: np.ndarray, which: str = "xi") -> tuple[np.ndarray, np.ndarray]:
     """
     Extract (x, y) columns for *which* ∈ {"xi","rho","tau"} from the raw array.
-    The column indices follow the layout of xi_rho_tau_estimates/*.pkl:
+    The column indices follow the layout of rank_correlation_estimates/*.pkl:
         0 = parameter value, 1 = xi, 3 = rho, 4 = tau
     """
     col_map = {"xi": 1, "rho": 3, "tau": 4}
@@ -60,7 +60,7 @@ def main() -> None:
     families = ["Clayton", "Frank", "GumbelHougaard", "Joe"]  # <-- Gaussian skipped
     # directory with the *.pkl files
     with pkg_resources.path("copul", "docs") as docs_path:
-        data_dir = docs_path / "xi_rho_tau_estimates"
+        data_dir = docs_path / "rank_correlation_estimates"
 
     rows = []
     # --- numeric rows ----------------------------------------------------

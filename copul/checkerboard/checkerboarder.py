@@ -11,7 +11,9 @@ log = logging.getLogger(__name__)
 
 
 class Checkerboarder:
-    def __init__(self, n: Union[int, list] = None, dim=2, checkerboard_type="CheckPi"):  # noqa: E501
+    def __init__(
+        self, n: Union[int, list] = None, dim=2, checkerboard_type="CheckPi"
+    ):  # noqa: E501
         """
         Initialize a Checkerboarder instance.
 
@@ -69,36 +71,56 @@ class Checkerboarder:
         return self._compute_checkerboard_serial(copula)
 
     def _compute_checkerboard_vectorized(self, copula, tol=1e-12):
+        """
+        Computes the checkerboard copula mass matrix in a highly optimized, vectorized manner.
+
+        This method calculates the probability mass for each cell in the grid by first
+        evaluating the copula's CDF at all grid intersection points in a single call.
+        It then uses 2D finite differences on the resulting CDF grid to find the mass
+        of each rectangular cell. This avoids redundant computations and is significantly
+        faster than calculating the CDF for each cell's corners separately.
+        """
         if self.d != 2:
-            warnings.warn("Vectorized computation only supported for 2D case.")
+            warnings.warn("Vectorized computation is only supported for the 2D case.")
             return self._compute_checkerboard_serial(copula)
 
-        x_lower = self.grid_points[0][:-1]
-        x_upper = self.grid_points[0][1:]
-        y_lower = self.grid_points[1][:-1]
-        y_upper = self.grid_points[1][1:]
+        # 1. Get the unique grid points for each dimension.
+        u_pts = self.grid_points[0]
+        v_pts = self.grid_points[1]
 
-        X_lower, Y_lower = np.meshgrid(x_lower, y_lower, indexing="ij")
-        X_upper, Y_upper = np.meshgrid(x_upper, y_upper, indexing="ij")
+        # 2. Create a meshgrid of all grid points.
+        # This prepares the input for a single, comprehensive CDF evaluation.
+        U, V = np.meshgrid(u_pts, v_pts, indexing="ij")
 
-        cdf_uu = copula.cdf_vectorized(X_upper, Y_upper)
-        cdf_ll = copula.cdf_vectorized(X_lower, Y_lower)
-        cdf_ul = copula.cdf_vectorized(X_upper, Y_lower)
-        cdf_lu = copula.cdf_vectorized(X_lower, Y_upper)
+        # 3. Call the vectorized CDF function ONCE on the entire grid of points.
+        # This is the core optimization, replacing four separate, expensive calls.
+        cdf_grid = copula.cdf_vectorized(U, V)
 
-        cmatr = cdf_uu - cdf_ul - cdf_lu + cdf_ll
+        # 4. Compute the probability mass of each cell using fast 2D finite differences.
+        # This is equivalent to the inclusion-exclusion principle for rectangles:
+        # P(u_i<U<u_{i+1}, v_j<V<v_{j+1}) = C(u_{i+1},v_{j+1}) - C(u_{i+1},v_j) - C(u_i,v_{j+1}) + C(u_i,v_j)
+        cmatr = (
+            cdf_grid[1:, 1:]  # Upper-right corners of all cells
+            - cdf_grid[1:, :-1]  # Upper-left corners
+            - cdf_grid[:-1, 1:]  # Lower-right corners
+            + cdf_grid[:-1, :-1]  # Lower-left corners
+        )
+
+        # 5. Handle potential floating-point inaccuracies.
+        # The logic here remains the same as your original implementation.
         neg_mask = cmatr < 0
         if np.any(neg_mask):
             min_val = cmatr[neg_mask].min()
-            # if it’s more negative than our tolerance, warn
             if min_val < -tol:
                 log.warning(
                     f"cmatr has {np.sum(neg_mask)} entries < -{tol:.1e}; "
                     f"most extreme = {min_val:.3e}"
                 )
-            # zero out *all* negatives (small or large)
-            cmatr[neg_mask] = 0.0
+            cmatr[neg_mask] = 0.0  # Zero out any negative probabilities
+
+        # Ensure the probabilities are clipped between 0 and 1.
         cmatr = np.clip(cmatr, 0, 1)
+
         return self._get_checkerboard_copula_for(cmatr)
 
     def _compute_checkerboard_parallel(self, copula, n_jobs):

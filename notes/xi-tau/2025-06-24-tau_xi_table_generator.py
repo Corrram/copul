@@ -4,7 +4,7 @@ the gap  τ − ξ, and typeset the results in a LaTeX table.
 
 The *.pkl files are assumed to have the column layout
     0 = parameter value, 1 = xi, 3 = rho, 4 = tau
-and live in  copul/docs/xi_rho_tau_estimates/.
+and live in  copul/docs/rank_correlation_estimates/.
 """
 
 import pickle
@@ -20,7 +20,14 @@ def fetch_measure(arr: np.ndarray, which: str = "xi") -> tuple[np.ndarray, np.nd
     """
     Extract (x, y) columns for *which* ∈ {"xi","rho","tau"} from the raw array.
     """
-    col_map = {"xi": 1, "rho": 3, "tau": 4}
+    col_map = {
+        "xi": 1,
+        "rho": 3,
+        "tau": 4,
+        "footrule": 5,
+        "ginis_gamma": 6,
+        "blomqvists_beta": 7,
+    }
     try:
         col = col_map[which]
     except KeyError:
@@ -72,7 +79,7 @@ def main() -> None:
     ]  # Gaussian handled separately
     # directory with the *.pkl files
     with pkg_resources.path("copul", "docs") as docs_path:
-        data_dir = docs_path / "xi_rho_tau_estimates"
+        data_dir = docs_path / "rank_correlation_estimates"
 
     rows = []
     # --- numeric rows ----------------------------------------------------
