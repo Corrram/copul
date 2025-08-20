@@ -1,5 +1,6 @@
 import logging
 from abc import ABC
+from functools import cached_property
 
 import numpy as np
 import sympy
@@ -85,127 +86,45 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
     def cdf_vectorized(self, u, v):
         """
         Vectorized implementation of the cumulative distribution function.
-        This method evaluates the CDF at multiple points simultaneously,
-        which is more efficient than calling the scalar CDF function repeatedly.
-
-        Parameters
-        ----------
-        u : array_like
-            First uniform marginal, should be in [0, 1].
-        v : array_like
-            Second uniform marginal, should be in [0, 1].
-
-        Returns
-        -------
-        numpy.ndarray
-            The CDF values at the specified points.
+        This simplified version leverages NumPy broadcasting for cleaner and more efficient code.
         """
-        # Convert inputs to numpy arrays if they aren't already
+        # 1. Standard boilerplate: validation and conversion
         u = np.asarray(u)
         v = np.asarray(v)
-
-        # Ensure inputs are within [0, 1]
         if np.any((u < 0) | (u > 1)) or np.any((v < 0) | (v > 1)):
             raise ValueError("Marginals must be in [0, 1]")
 
-        # Special case for the independence copula
         if type(self).__name__ == "IndependenceCopula":
             return u * v
 
-        # Get vectorized functions for the generator and inverse generator
+        # 2. Get the numeric functions (ideally, these could also be cached)
         generator_func = self.generator.numpy_func()
         inv_generator_func = self.inv_generator.numpy_func()
 
-        # Create a properly patched inverse generator function that handles edge cases
-        def inv_generator_func_patched(x):
-            # Use numpy functions for vectorized operations
-            result = np.zeros_like(x, dtype=float)
+        # 3. Create the output array. `np.broadcast` creates the correct shape
+        #    to handle all input combinations (scalar-scalar, array-scalar, etc.)
+        result = np.zeros(np.broadcast(u, v).shape, dtype=float)
 
-            # Handle edge cases
-            zero_mask = np.isclose(x, 0)
-            inf_mask = np.isinf(x)
-            regular_mask = ~(zero_mask | inf_mask)
+        # 4. Identify where computation is needed (i.e., not on the u=0 or v=0 axes)
+        #    This mask works for all input shapes thanks to broadcasting.
+        compute_mask = (u > 0) & (v > 0)
+        if not np.any(compute_mask):
+            return result  # Return all zeros if no computation is needed
 
-            # Apply appropriate values for each case
-            result[zero_mask] = 1.0  # inv_generator(0) = 1
-            result[inf_mask] = 0.0  # inv_generator(inf) = 0
+        # 5. Apply the core Archimedean formula in a single vectorized step
+        u_comp, v_comp = u[compute_mask], v[compute_mask]
+        gen_sum = generator_func(u_comp) + generator_func(v_comp)
 
-            # Only compute the regular case where needed
-            if np.any(regular_mask):
-                result[regular_mask] = inv_generator_func(x[regular_mask])
+        # Patch the inverse generator for edge cases (0 and inf)
+        # We can do this more cleanly with np.where
+        inv_gen_vals = inv_generator_func(gen_sum)
+        final_vals = np.where(np.isclose(gen_sum, 0), 1.0, inv_gen_vals)
+        final_vals = np.where(np.isinf(gen_sum), 0.0, final_vals)
 
-            return result
+        result[compute_mask] = final_vals
+        return result
 
-        # Handle scalar inputs differently from array inputs
-        if u.ndim == 0 and v.ndim == 0:
-            # Both are scalars
-            if u == 0 or v == 0:
-                return np.array(0.0)
-            else:
-                gen_u = generator_func(u)
-                gen_v = generator_func(v)
-                return inv_generator_func_patched(np.array(gen_u + gen_v))
-
-        elif u.ndim == 0:
-            # u is scalar, v is array
-            result = np.zeros_like(v, dtype=float)
-
-            if u == 0:
-                return result  # All zeros if u is zero
-
-            # Non-zero scalar u
-            gen_u = generator_func(u)
-
-            # Process non-zero v values
-            non_zero_v = v != 0
-            if np.any(non_zero_v):
-                gen_v = generator_func(v[non_zero_v])
-                gen_sum = gen_u + gen_v
-                result[non_zero_v] = inv_generator_func_patched(gen_sum)
-
-            return result
-
-        elif v.ndim == 0:
-            # v is scalar, u is array
-            result = np.zeros_like(u, dtype=float)
-
-            if v == 0:
-                return result  # All zeros if v is zero
-
-            # Non-zero scalar v
-            gen_v = generator_func(v)
-
-            # Process non-zero u values
-            non_zero_u = u != 0
-            if np.any(non_zero_u):
-                gen_u = generator_func(u[non_zero_u])
-                gen_sum = gen_u + gen_v
-                result[non_zero_u] = inv_generator_func_patched(gen_sum)
-
-            return result
-
-        else:
-            # Both are arrays
-            zero_mask = (u == 0) | (v == 0)
-            result = np.zeros_like(u, dtype=float)
-
-            # Only compute non-zero cases
-            if not np.all(zero_mask):
-                non_zero_mask = ~zero_mask
-                u_nz = u[non_zero_mask]
-                v_nz = v[non_zero_mask]
-
-                # Apply the generator to each marginal
-                gen_u = generator_func(u_nz)
-                gen_v = generator_func(v_nz)
-
-                # Sum the generator values and apply the inverse generator
-                gen_sum = gen_u + gen_v
-                result[non_zero_mask] = inv_generator_func_patched(gen_sum)
-
-            return result
-
-    @property
+    @cached_property
     def pdf(self):
         """
         Probability density function of the bivariate copula.
@@ -218,7 +137,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         first_diff = self.cdf().diff(self.u)
         return first_diff.diff(self.v)
 
-    @property
+    @cached_property
     def first_deriv_of_inv_gen(self):
         """
         First derivative of the inverse generator function.
