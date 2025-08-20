@@ -67,47 +67,53 @@ def calculate_xi_psi_grid(alpha, beta, n_points=500):
 print("Computing final high-precision boundary with adaptive resolution...")
 NUM_POINTS_PER_PATH = 50
 
-# Path 1: Low mu penalty (beta=0.5 path)
-results_low_mu = []
-results_low_mu.append((0.5, -0.5))
-alphas_to_compute = np.linspace(0.5, 0.28, NUM_POINTS_PER_PATH)[1:]
-for alpha in tqdm(alphas_to_compute, desc="Path 1 (beta=0.5)"):
-    # This path is far from the origin, standard resolution is fine.
-    results_low_mu.append(calculate_xi_psi_grid(alpha, 0.5, n_points=500))
+# Path 1: Corresponds to mu >= 2 (where beta=0.5)
+results_path1 = []
+# Add the endpoint for mu -> infinity, where alpha=0.5
+results_path1.append((np.inf, 0.5, -0.5))
 
-# Path 2: High mu penalty (alpha = 0.6*beta path)
-betas_high_mu = np.linspace(0.5, 0, NUM_POINTS_PER_PATH)
-results_high_mu = []
-for beta in tqdm(betas_high_mu, desc="Path 2 (alpha=0.6*beta)"):
+# This path goes from alpha=0.5 (mu=inf) down to the transition point alpha=0.3 (mu=2)
+alphas_path1 = np.linspace(0.5, 0.3, NUM_POINTS_PER_PATH)[1:]
+for alpha in tqdm(alphas_path1, desc="Path 1 (mu >= 2)"):
+    # Calculate mu from alpha using the relation: alpha = 0.5 - 0.4 / mu
+    mu = 0.4 / (0.5 - alpha + 1e-12)
+
+    # --- FIX: Renamed variable from 'psi' to 'psi_val' ---
+    xi_val, psi_val = calculate_xi_psi_grid(alpha, 0.5, n_points=500)
+    results_path1.append((mu, xi_val, psi_val))
+
+# Path 2: Corresponds to mu <= 2 (where alpha = 0.6*beta)
+# This path goes from the transition point (beta=0.5, mu=2) down to beta=0 (mu=0)
+betas_path2 = np.linspace(0.5, 0, NUM_POINTS_PER_PATH)
+results_path2 = []
+for beta in tqdm(betas_path2, desc="Path 2 (mu <= 2)"):
     alpha = 0.6 * beta
     if alpha >= 0.5:
         alpha = 0.4999
 
-    # MODIFIED: Implement adaptive resolution
-    # -----------------------------------------------------------------------------------------
-    if beta < 0.15:
-        # Use very high resolution when the hole is small and near the origin
-        grid_res = 5000
-    else:
-        # Use standard resolution for larger features
-        grid_res = 5000
-    # -----------------------------------------------------------------------------------------
+    # Calculate mu from beta using the relation: beta = 0.25 * mu
+    mu = 4 * beta
 
-    results_high_mu.append(calculate_xi_psi_grid(alpha, beta, n_points=grid_res))
+    grid_res = 5000
+
+    # --- FIX: Renamed variable from 'psi' to 'psi_val' ---
+    xi_val, psi_val = calculate_xi_psi_grid(alpha, beta, n_points=grid_res)
+    results_path2.append((mu, xi_val, psi_val))
 
 # Combine, sort, and save results
-df_low = pd.DataFrame(results_low_mu, columns=["xi", "psi"])
-df_high = pd.DataFrame(results_high_mu, columns=["xi", "psi"])
+df_path1 = pd.DataFrame(results_path1, columns=["mu", "xi", "psi"])
+df_path2 = pd.DataFrame(results_path2, columns=["mu", "xi", "psi"])
+
 df = (
-    pd.concat([df_low, df_high])
-    .drop_duplicates()
-    .sort_values(by="xi")
+    pd.concat([df_path1, df_path2])
+    .drop_duplicates(subset=["xi", "psi"])
+    .sort_values(by="mu")
     .reset_index(drop=True)
 )
 
 output_filename = "lower_boundary_final_smooth.csv"
 df.to_csv(output_filename, index=False)
-print(f"\nFinal high-precision data saved to '{output_filename}'")
+print(f"\n✅ Final high-precision data (with mu) saved to '{output_filename}'")
 
 # --- Plotting ---
 plt.style.use("seaborn-v0_8-whitegrid")
@@ -118,10 +124,10 @@ ax.plot(
     "-",
     color="crimson",
     linewidth=2.5,
-    label="Conjectured Lower Boundary (Final)",
+    label="Conjectured Lower Boundary",
     zorder=5,
 )
-x_ref = np.linspace(0, 1, 200)
+x_ref = np.linspace(0, 1, 5000)
 ax.plot(
     x_ref,
     np.sqrt(x_ref),
@@ -129,20 +135,13 @@ ax.plot(
     linestyle="--",
     label=r"Upper Bound: $\psi = \sqrt{\xi}$",
 )
-ax.plot(
-    x_ref,
-    -np.sqrt(x_ref),
-    color="darkorange",
-    linestyle="--",
-    label=r"Symmetric Lower Bound: $\psi = -\sqrt{\xi}$",
-)
 ax.set_title(r"Final High-Precision Lower Boundary for $(\xi, \psi)$", fontsize=16)
 ax.set_xlabel(r"Chatterjee's $\xi$", fontsize=12)
 ax.set_ylabel(r"Spearman's Footrule $\psi$", fontsize=12)
 ax.set_xlim(-0.05, 1.05)
-ax.set_ylim(-1.05, 1.05)
+ax.set_ylim(-0.6, 1.05)
 ax.legend()
 ax.set_aspect("equal", adjustable="box")
-plt.savefig("images/lower_boundary_final_precise.png", dpi=300)
 plt.grid(True)
+plt.savefig("images/lower_boundary_final_precise.png", dpi=300)
 plt.show()

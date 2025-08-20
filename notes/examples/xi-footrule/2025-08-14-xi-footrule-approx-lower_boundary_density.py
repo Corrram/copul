@@ -7,7 +7,7 @@ import matplotlib.ticker as mticker
 def get_boundary_point(mu, n=32, verbose=False):
     """
     Solves the discretized optimization problem for a given mu.
-    Finds the copula derivative H that minimizes psi + mu * xi.
+    Finds the copula derivative H that minimizes mu * psi + xi.
     """
     H = cp.Variable((n, n), name="H")
 
@@ -24,7 +24,9 @@ def get_boundary_point(mu, n=32, verbose=False):
 
     xi_term = (6 / n**2) * cp.sum_squares(H)
     psi_term = (6 / n**2) * cp.trace(M @ H)
-    objective = cp.Minimize(psi_term + mu * xi_term)
+
+    # KEY CHANGE: The objective function is now mu * psi + xi
+    objective = cp.Minimize(mu * psi_term + xi_term)
 
     problem = cp.Problem(objective, constraints)
     problem.solve(solver=cp.SCS, verbose=verbose, eps=1e-6)
@@ -40,38 +42,26 @@ def get_boundary_point(mu, n=32, verbose=False):
 
 # --- Main simulation and plotting loop ---
 if __name__ == "__main__":
+    # KEY CHANGE: New set of mu values to explore the area around the new critical point at mu=2
     mu_for_files = [
-        0.05,
-        0.1,
-        0.2,
-        0.3,
-        0.4,
-        0.48,
-        0.49,
         0.5,
-        0.51,
-        0.52,
-        # 0.6,
-        # 0.7,
-        # 0.8,
-        # 0.9,
-        # 1.0,
-        # 1.2,
-        # 1.5,
-        # 1.8,
-        # 2,
-        # 2.5,
-        # 3,
-        # 4,
-        # 5,
-        # 10.0,
-        # 20,
+        1.0,
+        1.5,
+        1.8,
+        2.0,
+        2.2,
+        2.5,
+        3.0,
+        4.0,
+        5.0,
+        8.0,
+        10.0,
     ]
     n_vis = 100
 
     for mu_val in mu_for_files:
         # 1. Compute the optimal H matrix (H(t,v) where t=rows, v=columns)
-        H_map = get_boundary_point(mu=mu_val, n=n_vis)
+        H_map = get_boundary_point(mu=mu_val, n=n_vis, verbose=True)
 
         if H_map is not None:
             # 2. Calculate the copula density c(t,v) from H
@@ -82,8 +72,6 @@ if __name__ == "__main__":
             plt.figure(figsize=(7, 6))
             ax = plt.gca()
 
-            # KEY CHANGE: Plot the transpose of C_map to interchange the axes.
-            # This puts the original 'v' axis on the y-axis and 't' on the x-axis.
             im = ax.imshow(
                 C_map.T,
                 origin="lower",
@@ -92,15 +80,13 @@ if __name__ == "__main__":
                 aspect="auto",
             )
 
-            # KEY CHANGE: Update title and swap labels to match the new orientation.
-            ax.set_title(f"Copula Density c(v,t) for μ = {mu_val:.2f}")
+            ax.set_title(f"Copula Density c(v,t) for $\\mu = {mu_val:.2f}$")
             ax.set_xlabel("t")
             ax.set_ylabel("v")
-            # Set MAJOR ticks to appear every 0.2 units for the labels
+
             ax.xaxis.set_major_locator(mticker.MultipleLocator(0.1))
             ax.yaxis.set_major_locator(mticker.MultipleLocator(0.1))
 
-            # Set MINOR ticks to appear every 0.1 units (without labels)
             ax.xaxis.set_minor_locator(mticker.MultipleLocator(0.02))
             ax.yaxis.set_minor_locator(mticker.MultipleLocator(0.02))
 
@@ -113,9 +99,9 @@ if __name__ == "__main__":
                 pad=0.04,
                 label="Density c(v,t)",
             )
-        else:
-            pass
-        plt.savefig(
-            f"images/xi_footrule_approx_lower_boundary_density_mu_{mu_val:.2f}.png"
-        )
-    plt.show()
+            plt.savefig(
+                f"images/new_xi_footrule_approx_lower_boundary_density_mu_{mu_val:.2f}.png"
+            )
+            plt.close()  # Close the figure to avoid displaying all plots at the end
+
+    print("All plots generated.")
