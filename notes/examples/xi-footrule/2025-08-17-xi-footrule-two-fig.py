@@ -117,9 +117,9 @@ def plot_full_region(ax, data):
         va="bottom",
     )
     ax.annotate(
-        r"$C_{\searrow}$",
+        r"$C^{\searrow}_2$",
         (xi_end, -0.5),
-        xytext=(-25, -15),
+        xytext=(-37, -12),
         textcoords="offset points",
         fontsize=18,
         ha="left",
