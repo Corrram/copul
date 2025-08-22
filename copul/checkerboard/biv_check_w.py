@@ -655,7 +655,7 @@ class BivCheckW(BivCheckPi):
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
         return super().xi(condition_on_y) + m * np.trace(self.matr.T @ self.matr) / n
 
-    def footrule(self) -> float:
+    def spearmans_footrule(self) -> float:
         """
         Compute Spearman's Footrule (psi) for a BivCheckMin copula.
 
@@ -673,7 +673,7 @@ class BivCheckW(BivCheckPi):
             return np.nan
 
         # Calculate footrule for the absolutely continuous part (CheckPi)
-        check_pi_footrule = super().footrule()
+        check_pi_footrule = super().spearmans_footrule()
 
         # Add-on term from the singular part of the copula
         # Add-on = (1/n) * trace(P)
@@ -722,6 +722,6 @@ if __name__ == "__main__":
     matr = [[1, 1]]
     copula = BivCheckW(matr)
     ccop = copula.to_checkerboard()
-    footrule = ccop.footrule()
+    footrule = ccop.spearmans_footrule()
     rho = ccop.rho()
     print(f"Footrule: {footrule}, Rho: {rho}")

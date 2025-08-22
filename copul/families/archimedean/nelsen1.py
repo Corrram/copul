@@ -1,5 +1,6 @@
 import numpy as np
 import sympy
+from typing import Optional, TypeAlias
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
@@ -8,7 +9,6 @@ from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
-from typing import TypeAlias
 
 
 class BivClayton(BivArchimedeanCopula):
@@ -107,6 +107,54 @@ class BivClayton(BivArchimedeanCopula):
         # Regular formula for Clayton copula
         cdf = sympy.Max((u ** (-theta) + v ** (-theta) - 1), 0) ** (-1 / theta)
         return cdf
+
+    def rvs(
+        self, n: int = 1, random_state: Optional[int] = None, approximate: bool = False
+    ) -> np.ndarray:
+        """
+        Generate random samples from the Clayton copula using a fast, vectorized algorithm.
+
+        This method overrides the slow, iterative solver from the parent class. It uses a
+        numerically stable, closed-form inverse of the conditional distribution, allowing
+        for thousands of samples to be generated almost instantly.
+
+        Parameters
+        ----------
+        n : int
+            Number of samples to generate.
+        random_state : int, optional
+            Seed for the random number generator for reproducibility.
+        approximate : bool
+            This parameter is ignored as the exact vectorized method is always fast.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of shape (n, 2) containing the generated samples.
+        """
+        rng = np.random.default_rng(random_state)
+        w = rng.random((n, 2))
+
+        theta_val = float(self.theta)
+
+        # Handle special cases for independence and countermonotonicity
+        if np.isclose(theta_val, 0):
+            return w
+        if np.isclose(theta_val, -1):
+            u = w[:, 0]
+            v = 1 - u
+            return np.column_stack((u, v))
+
+        u = w[:, 0]
+        w2 = w[:, 1]
+
+        # Use the closed-form inverse of the conditional distribution C(v|u) = w2
+        # Formula: v = [u**(-theta) * (w2**(-theta / (theta + 1)) - 1) + 1]**(-1 / theta)
+        term1 = w2 ** (-theta_val / (theta_val + 1)) - 1
+        term2 = u ** (-theta_val)
+        v = (term2 * term1 + 1) ** (-1 / theta_val)
+
+        return np.column_stack((u, v))
 
     def cond_distr_1(self, u=None, v=None):
         """
@@ -271,8 +319,15 @@ Nelsen1: TypeAlias = BivClayton
 
 if __name__ == "__main__":
     # Example usage
-    copula = BivClayton(theta=-0.8)
-    # ginis_gamma = copula.ginis_gamma()
-    ginis_gamma_ch = copula.to_checkerboard().ginis_gamma()
-    print(f"Gini's gamma: {ginis_gamma_ch}")
-    print("Done!")
+    copula = BivClayton(theta=2)
+    # Test the new rvs method
+    print("Generating 5 samples with the fast rvs method:")
+    samples = copula.rvs(5, random_state=42)
+    print(samples)
+
+    copula_neg = BivClayton(theta=-0.8)
+    print("\nGenerating 5 samples with a negative theta:")
+    samples_neg = copula_neg.rvs(5, random_state=42)
+    print(samples_neg)
+
+    print("\nDone!")

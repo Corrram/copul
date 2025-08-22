@@ -227,7 +227,7 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         H = J @ (L @ L.T) @ J
         return (H - 0.5 * np.ones((n, n)) - (1 / 6) * np.eye(n)) / n
 
-    def footrule(self) -> float:
+    def spearmans_footrule(self) -> float:
         if self.m != self.n:
             warnings.warn("Footrule is implemented for square matrices only.")
             return np.nan
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     # ccop.plot_cond_distr_1()
     xi = ccop.xi()
     rho = ccop.rho()
-    footrule = ccop.footrule()
+    footrule = ccop.spearmans_footrule()
     gini = ccop.ginis_gamma()
     beta = ccop.blomqvists_beta()
     # ccop.plot_cdf()

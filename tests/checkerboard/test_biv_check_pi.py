@@ -416,7 +416,7 @@ def test_xi_with_large_m_and_small_n():
 )
 def test_footrule_signs(matr, expected_sign):
     ccop = BivCheckPi(matr)
-    result = ccop.footrule()
+    result = ccop.spearmans_footrule()
     if expected_sign == 0.0:
         assert np.isclose(result, 0.0, atol=1e-2)
     elif expected_sign > 0:
@@ -440,8 +440,8 @@ def test_footrule_and_gamma_frechet(alpha, beta):
     frechet = Frechet(alpha, beta)
     checkerboard = frechet.to_checkerboard()
 
-    footrule_direct = frechet.footrule()
-    footrule_check = checkerboard.footrule()
+    footrule_direct = frechet.spearmans_footrule()
+    footrule_check = checkerboard.spearmans_footrule()
     assert np.isclose(footrule_direct, footrule_check, atol=1e-2), (
         f"Expected {footrule_direct}, got {footrule_check}"
     )
@@ -461,8 +461,8 @@ def test_footrule_and_gamma_for_farlie_gumbel_morgenstern(theta):
     fgm = FarlieGumbelMorgenstern(theta)
     checkerboard = fgm.to_checkerboard()
 
-    footrule_direct = fgm.footrule()
-    footrule_check = checkerboard.footrule()
+    footrule_direct = fgm.spearmans_footrule()
+    footrule_check = checkerboard.spearmans_footrule()
     assert np.isclose(footrule_direct, footrule_check, atol=1e-2), (
         f"Expected {footrule_direct}, got {footrule_check}"
     )
@@ -482,7 +482,7 @@ def test_footrule_and_gamma_rectangular_matrix_warning():
     """Ensure rectangular matrices return NaN with warning for footrule/gamma."""
     matr = np.ones((2, 3))
     ccop = BivCheckPi(matr)
-    footrule_val = ccop.footrule()
+    footrule_val = ccop.spearmans_footrule()
     gamma_val = ccop.ginis_gamma()
     assert np.isnan(footrule_val)
     assert np.isnan(gamma_val)

@@ -216,7 +216,7 @@ class OptimalAffineJumpCopula(BivCopula):
     def _pdf_expr(self):
         return self._cdf_expr.diff(self.u).diff(self.v)
 
-    def footrule(self, numeric=False, grid=401):
+    def spearmans_footrule(self, numeric=False, grid=401):
         if not numeric:
             raise NotImplementedError("Symbolic footrule is too heavy.")
         u_lin = np.linspace(0.5 / grid, 1 - 0.5 / grid, grid)
@@ -255,7 +255,7 @@ class OptimalAffineJumpCopula(BivCopula):
 
 #     print("Numeric footrule ≈", cop.footrule_numeric())
 #     ccop = cop.to_checkerboard()
-#     ccop_footrule = ccop.footrule()
+#     ccop_footrule = ccop.spearmans_footrule()
 #     ccop_rho = ccop.rho()
 #     print("Checkerboard footrule ≈", ccop_footrule)
 #     print("Checkerboard rho =", ccop_rho)
