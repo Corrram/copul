@@ -105,5 +105,5 @@ ax.legend(loc="lower right")
 ax.grid(True, linestyle=":", alpha=0.6)
 
 plt.tight_layout()
-plt.savefig(f"images/mu_path_visualizer.png", dpi=300, bbox_inches="tight")
+plt.savefig("images/mu_path_visualizer.png", dpi=300, bbox_inches="tight")
 plt.show()

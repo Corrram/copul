@@ -15,7 +15,6 @@ from typing import Optional
 
 import numpy as np
 import scipy.interpolate as si
-import scipy.optimize as so
 
 from dataclasses import dataclass
 
@@ -42,7 +41,7 @@ def fetch_measure(arr: np.ndarray, which: str) -> tuple[np.ndarray, np.ndarray]:
     # As per the CorrelationData object structure
     col_map = {"xi": 1, "rho": 2, "tau": 3, "footrule": 4}
     try:
-        col = col_map[which]
+        col_map[which]
     except KeyError:
         raise ValueError(f"unknown measure {which!r}")
     return arr.params, getattr(arr, which)

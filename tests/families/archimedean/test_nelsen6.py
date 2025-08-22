@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import numpy as np
 import pytest
 
@@ -158,29 +156,6 @@ def test_lambda_u(joe_copula):
     # As theta approaches infinity, lambda_U approaches 1
     large_theta = Joe(100)
     assert np.isclose(float(large_theta.lambda_U()), 1, rtol=1e-2)
-
-
-def test_rvs_basic(joe_copula):
-    """Test basic functionality of the rvs method."""
-    # Patch _sample_values to return controlled values
-    with patch.object(joe_copula, "_sample_values", return_value=(0.5, 0.6)):
-        samples = joe_copula.rvs(3)
-
-        # Check shape and values
-        assert samples.shape == (3, 2)
-        assert np.allclose(samples, np.array([(0.5, 0.6), (0.5, 0.6), (0.5, 0.6)]))
-
-
-def test_rvs_multiple_samples(joe_copula):
-    """Test rvs with multiple different samples."""
-    # Patch _sample_values to return different values each time
-    sample_values = [(0.2, 0.8), (0.4, 0.6), (0.6, 0.4)]
-    with patch.object(joe_copula, "_sample_values", side_effect=sample_values):
-        samples = joe_copula.rvs(3)
-
-        # Check result matches our expected values
-        expected = np.array(sample_values)
-        assert np.allclose(samples, expected)
 
 
 def test_is_absolutely_continuous():

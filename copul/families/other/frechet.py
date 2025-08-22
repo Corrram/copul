@@ -203,7 +203,7 @@ class Frechet(BivCopula):
     def pdf(self):
         raise PropertyUnavailableException("Frechet copula does not have a pdf")
 
-    def footrule(self, *args, **kwargs):
+    def spearmans_footrule(self, *args, **kwargs):
         """
         Calculates Spearman's Footrule (psi) for the Frechet copula.
 
@@ -236,8 +236,8 @@ if __name__ == "__main__":
     )
     gamma = frechet_copula.ginis_gamma()
     ccop_gamma = ccop.ginis_gamma()
-    footrule = frechet_copula.footrule()
-    ccop_footrule = ccop.footrule()
+    footrule = frechet_copula.spearmans_footrule()
+    ccop_footrule = ccop.spearmans_footrule()
     print(f"Gini's Gamma: {gamma}, Checkerboard Gini's Gamma: {ccop_gamma}")
     print(f"Footrule: {footrule}, Checkerboard Footrule: {ccop_footrule}")
     print("Done!")

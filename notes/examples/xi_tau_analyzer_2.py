@@ -18,7 +18,7 @@ def main(num_iters=1_000_000):
                 print(f"Iteration {i} completed.")
             continue
         ltd_counter += 1
-        footrule = ccop.footrule()
+        footrule = ccop.spearmans_footrule()
         ginis_gamma = ccop.ginis_gamma()
         if ginis_gamma < footrule - 1e-8:
             is_plod = cp.PLODVerifier().is_plod(ccop)
@@ -29,7 +29,7 @@ def main(num_iters=1_000_000):
             print(f"Matrix:\n{ccop.matr}")
             cis, cds = ccop.is_cis()
             print(f"CIS: {cis}, CDS: {cds}, LTD: {is_ltd}, PLOD: {is_plod}")
-        footrule_min = ccop_min.footrule()
+        footrule_min = ccop_min.spearmans_footrule()
         ginis_gamma_min = ccop_min.ginis_gamma()
         if ginis_gamma_min < footrule_min - 1e-8:
             is_plod_min = cp.PLODVerifier().is_plod(ccop_min)

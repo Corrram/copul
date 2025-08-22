@@ -112,7 +112,7 @@ if __name__ == "__main__":
     total_mass = np.sum(mass_matrix)
     ccop = cp.BivCheckPi(mass_matrix)
     rho = ccop.rho()
-    footrule = ccop.footrule()
+    footrule = ccop.spearmans_footrule()
     print(f"Spearman's rho: {rho:.6f}")
     print(f"Spearman's Footrule: {footrule:.6f}")
     # print(f"Total probability mass in the matrix: {total_mass:.6f}")

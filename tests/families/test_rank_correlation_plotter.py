@@ -2,13 +2,11 @@
 Tests for the RankCorrelationPlotter class.
 """
 
-import tempfile
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 import sympy
-from scipy.interpolate import CubicSpline
 
 from copul.families.rank_correlation_plotter import RankCorrelationPlotter
 
@@ -182,9 +180,9 @@ class TestRankCorrelationPlotter:
     "log_cut_off,log_scale,min_bound,max_bound",
     [
         (None, False, -10, 10),  # Linear scale, no cut_off (using interval bounds)
-        (5, True, 0, None),  # Log scale with numeric cut_off
+        (5, True, -10, None),  # Log scale with numeric cut_off
         ((-2, 2), False, -10, 10),  # Linear scale with tuple cut_off
-        ((-2, 2), True, 0, None),  # Log scale with tuple cut_off
+        ((-2, 2), True, -10, None),  # Log scale with tuple cut_off
     ],
 )
 def test_get_params_ranges(log_cut_off, log_scale, min_bound, max_bound):

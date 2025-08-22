@@ -1,6 +1,7 @@
 import numpy as np
 import sympy
 from scipy import integrate
+from typing import Optional
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
@@ -47,6 +48,95 @@ class Frank(BivArchimedeanCopula):
                 / (sympy.exp(-theta) - 1)
             )
         )
+
+    def rvs(
+        self, n: int = 1, random_state: Optional[int] = None, approximate: bool = False
+    ) -> np.ndarray:
+        """
+        Generate random samples from the Frank copula using a fast, vectorized algorithm.
+
+        This method uses a numerically stable, closed-form inverse of the conditional
+        distribution, allowing for thousands of samples to be generated almost instantly.
+
+        Parameters
+        ----------
+        n : int
+            Number of samples to generate.
+        random_state : int, optional
+            Seed for the random number generator for reproducibility.
+        approximate : bool
+            This parameter is ignored as the exact vectorized method is always fast.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of shape (n, 2) containing the generated samples.
+        """
+        rng = np.random.default_rng(random_state)
+        w = rng.random((n, 2))
+
+        theta_val = float(self.theta)
+
+        # Handle the independence case where theta is close to 0
+        if np.isclose(theta_val, 0):
+            return w
+
+        u = w[:, 0]
+        w2 = w[:, 1]
+
+        # Use the closed-form inverse of the conditional distribution C(v|u) = w2
+        # v = (-1/θ) * log( [e⁻θu(w₂-1) - w₂e⁻θ] / [e⁻θu(w₂-1) - w₂] )
+        exp_thetau = np.exp(-theta_val * u)
+        exp_theta = np.exp(-theta_val)
+
+        # Numerator of the log's argument
+        num = exp_thetau * (w2 - 1) - w2 * exp_theta
+        # Denominator of the log's argument
+        den = exp_thetau * (w2 - 1) - w2
+
+        v = (-1 / theta_val) * np.log(num / den)
+
+        return np.column_stack((u, v))
+
+    def cdf_vectorized(self, u: np.ndarray, v: np.ndarray) -> np.ndarray:
+        """
+        Vectorized implementation of the cumulative distribution function for the Frank copula.
+
+        This method uses the explicit mathematical formula for the Frank copula, which is
+        significantly faster than the generic generator-based approach.
+
+        Parameters
+        ----------
+        u : array_like
+            First uniform marginal, must be in [0, 1].
+        v : array_like
+            Second uniform marginal, must be in [0, 1].
+
+        Returns
+        -------
+        numpy.ndarray
+            The CDF values at the specified points.
+        """
+        theta_val = float(self.theta)
+        u = np.asarray(u)
+        v = np.asarray(v)
+
+        # Handle the independence case where theta is close to 0
+        if np.isclose(theta_val, 0):
+            return u * v
+
+        # Numerator term
+        num = (np.exp(-theta_val * u) - 1) * (np.exp(-theta_val * v) - 1)
+        # Denominator term
+        den = np.exp(-theta_val) - 1
+
+        # Full expression, with protection against division by zero if den is somehow zero
+        # although this is handled by the theta_val check.
+        if np.isclose(den, 0):
+            return u * v  # Fallback to independence
+
+        result = (-1 / theta_val) * np.log(1 + num / den)
+        return result
 
     def cond_distr_1(self, u=None, v=None):
         expr_u = sympy.exp(-self.theta * self.u)
@@ -204,8 +294,21 @@ Nelsen5 = Frank
 
 if __name__ == "__main__":
     copula = Nelsen5(theta=4.0)
-    print("Spearman's rho:", copula.rho())
-    print("Kendall's tau:", copula.tau())
-    ccop = copula.to_check_pi()
-    print("Check Pi xi:", ccop.xi())
-    print("Done!")
+    print("--- Testing Frank Copula with theta = 4.0 ---")
+    print(f"Spearman's rho: {copula.rho():.4f}")
+    print(f"Kendall's tau: {copula.tau():.4f}")
+
+    # Test new rvs method
+    print("\nTesting fast rvs method:")
+    samples = copula.rvs(5, random_state=42)
+    print(samples)
+
+    # Test new cdf_vectorized method
+    print("\nTesting fast cdf_vectorized method:")
+    u_test = np.array([0.2, 0.5, 0.8])
+    v_test = np.array([0.3, 0.6, 0.7])
+    cdf_vals = copula.cdf_vectorized(u_test, v_test)
+    print(f"CDF values for u={u_test}, v={v_test}:")
+    print(cdf_vals)
+
+    print("\nDone!")

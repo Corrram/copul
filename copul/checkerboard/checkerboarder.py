@@ -11,9 +11,7 @@ log = logging.getLogger(__name__)
 
 
 class Checkerboarder:
-    def __init__(
-        self, n: Union[int, list] = None, dim=2, checkerboard_type="CheckPi"
-    ):  # noqa: E501
+    def __init__(self, n: Union[int, list] = None, dim=2, checkerboard_type="CheckPi"):  # noqa: E501
         """
         Initialize a Checkerboarder instance.
 

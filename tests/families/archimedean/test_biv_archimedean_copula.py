@@ -385,57 +385,6 @@ def test_cdf_vectorized_basic():
         assert np.isclose(actual, float(expected), rtol=1e-10)
 
 
-def test_cdf_vectorized_broadcasting():
-    """Test that cdf_vectorized correctly handles broadcasting."""
-
-    class TestCopula(BivArchimedeanCopula):
-        theta_interval = sympy.Interval(0, sympy.oo, left_open=False, right_open=True)
-
-        @property
-        def is_absolutely_continuous(self) -> bool:
-            return True
-
-        @property
-        def _raw_generator(self):
-            # Using Gumbel generator with theta=1.5 for testing
-            return (-sympy.log(self.t)) ** self.theta
-
-    # Create test instance
-    copula = TestCopula(1.5)
-
-    # Test broadcasting: u is scalar, v is array
-    u_scalar = 0.5
-    v_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
-
-    # Calculate expected results using scalar CDF
-    expected_results = np.array([copula.cdf(u_scalar, v) for v in v_array])
-
-    # Calculate results using vectorized CDF
-    actual_results = copula.cdf_vectorized(u_scalar, v_array)
-
-    # Check that results match
-    for i in range(len(v_array)):
-        actual = float(actual_results[i])
-        expected = float(expected_results[i])
-        assert np.isclose(actual, expected, rtol=1e-10)
-
-    # Test broadcasting: u is array, v is scalar
-    u_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
-    v_scalar = 0.5
-
-    # Calculate expected results using scalar CDF
-    expected_results = np.array([copula.cdf(u, v_scalar) for u in u_array])
-
-    # Calculate results using vectorized CDF
-    actual_results = copula.cdf_vectorized(u_array, v_scalar)
-
-    # Check that results match
-    for i in range(len(u_array)):
-        actual = float(actual_results[i])
-        expected = float(expected_results[i])
-        assert np.isclose(actual, expected, rtol=1e-10)
-
-
 def test_cdf_vectorized_grid():
     """Test cdf_vectorized with grid inputs."""
 

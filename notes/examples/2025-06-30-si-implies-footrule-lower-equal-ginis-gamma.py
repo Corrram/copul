@@ -11,7 +11,7 @@ def main(num_iters=1_000_000):
         ccop_r_matr = rearranger.rearrange_checkerboard(ccop)
         ccop_r = cp.BivCheckPi(ccop_r_matr)
         is_cis_1, is_cds_1 = ccop_r.is_cis()
-        footrule = ccop_r.footrule()
+        footrule = ccop_r.spearmans_footrule()
         gamma = ccop_r.ginis_gamma()
         if footrule < gamma:
             print(

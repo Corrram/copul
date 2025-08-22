@@ -469,6 +469,8 @@ if __name__ == "__main__":
     }
 
     main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE", "GAUSSIAN"]
+    main_families = ["JOE", "GUMBEL_HOUGAARD", "GAUSSIAN"]
+    # main_families = ["GAUSSIAN"]
     for family in main_families:
         print(f"Plotting rank correlations for {family} copula...")
         copula_class = copul.family_list.Families.create(family)

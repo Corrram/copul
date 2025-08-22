@@ -114,7 +114,7 @@ class FarlieGumbelMorgenstern(BivCopula):
         self._set_params(args, kwargs)
         return 2 * self.theta / 9
 
-    def footrule(self):
+    def spearmans_footrule(self):
         return self.theta / 5
 
     def ginis_gamma(self):
@@ -129,9 +129,9 @@ class FarlieGumbelMorgenstern(BivCopula):
 if __name__ == "__main__":
     # Example usage
     fgm_copula = FarlieGumbelMorgenstern(theta=0.7)
-    footrule = fgm_copula.footrule()
+    footrule = fgm_copula.spearmans_footrule()
     ccop = fgm_copula.to_checkerboard()
-    footrule_ccop = ccop.footrule()
+    footrule_ccop = ccop.spearmans_footrule()
     print(
         f"Footrule for FGM copula: {footrule:.3f}, Footrule for checkerboard: {footrule_ccop:.3f}"
     )

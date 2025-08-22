@@ -121,7 +121,7 @@ class BivCheckMin(CheckMin, BivCheckPi):
     def lambda_U(self):
         return self.matr[-1, -1] * np.min(self.m, self.n)
 
-    def footrule(self) -> float:
+    def spearmans_footrule(self) -> float:
         """
         Compute Spearman's Footrule (psi) for a BivCheckMin copula.
 
@@ -139,7 +139,7 @@ class BivCheckMin(CheckMin, BivCheckPi):
             return np.nan
 
         # Calculate footrule for the absolutely continuous part (CheckPi)
-        check_pi_footrule = super().footrule()
+        check_pi_footrule = super().spearmans_footrule()
 
         # Add-on term from the singular part of the copula
         # Add-on = (1/n) * trace(P)
@@ -188,7 +188,7 @@ if __name__ == "__main__":
     matr = [[1, 0], [0, 1]]
     matr = [[1, 1]]
     ccop = BivCheckMin(matr).to_checkerboard()
-    footrule = ccop.footrule()
+    footrule = ccop.spearmans_footrule()
     rho = ccop.rho()
     ginis_gamma = ccop.ginis_gamma()
     xi = ccop.xi()

@@ -41,8 +41,24 @@ class GumbelHougaard(BivArchimedeanCopula):
     def lambda_U(self):
         return 2 - 2 ** (1 / self.theta)
 
-    def footrule(self):
-        return 6 * (1 / (2 ** (1 / self.theta) + 1)) - 2
+    def spearmans_footrule(self, *args, **kwargs):
+        """
+        Compute Spearman's footrule (ψ) for the Gumbel–Hougaard copula.
+
+        Closed-form expression:
+            ψ(C_θ) = 6 / (2^(1/θ) + 1) - 2
+
+        For θ = 1 (independence), this yields ψ = 0.
+        As θ → ∞ (comonotonicity), this yields ψ = 1.
+
+        Returns
+        -------
+        float
+            Spearman's footrule value (ψ).
+        """
+        self._set_params(args, kwargs)
+        theta = float(self.theta)
+        return 6.0 / (2.0 ** (1.0 / theta) + 1.0) - 2.0
 
 
 Nelsen4 = GumbelHougaard
@@ -52,9 +68,9 @@ Nelsen4 = GumbelHougaard
 if __name__ == "__main__":
     # Example usage
     copula = GumbelHougaard(theta=2)
-    footrule = copula.footrule()
+    footrule = copula.spearmans_footrule()
     ccop = copula.to_checkerboard()
-    ccop_footrule = ccop.footrule()
+    ccop_footrule = ccop.spearmans_footrule()
     ccop_xi = ccop.xi()
     ccop_rho = ccop.rho()
     print(

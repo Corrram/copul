@@ -4,7 +4,6 @@ import numpy as np
 import sympy
 
 from copul.families.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.families.archimedean.heavy_compute_arch import HeavyComputeArch
 from copul.families.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
