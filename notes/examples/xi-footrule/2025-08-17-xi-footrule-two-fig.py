@@ -9,24 +9,33 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import pandas as pd
 
+
 # --- Data Calculation Functions ---
 
 
 def calculate_lower_boundary(mu_values):
     """
-    Calculates the (xi, psi) coordinates for a segment of the lower boundary.
+    Calculates the (xi, psi) coordinates for the C_searrow_mu family.
     """
     epsilon = 1e-12
-    mu_values = np.maximum(mu_values, 0.5)
-    v1 = 2.0 * mu_values / (2.0 * mu_values + 1.0)
-    B = 1.0 / (2.0 * mu_values)
+    # Ensure mu is non-negative
+    mu_values = np.maximum(mu_values, epsilon)
+
+    # v1 = 2 / (2 + mu)
+    v1 = 2.0 / (2.0 + mu_values)
+
+    # Avoid division by zero for v1, though mu>=0 means v1 is in (0, 1]
     safe_v1 = np.maximum(v1, epsilon)
-    psi_vals = -2 * safe_v1**2 + 6 * safe_v1 - 5 + 1.0 / safe_v1
-    B_sq = B**2
-    poly_part = 4 * safe_v1**3 - 18 * safe_v1**2 + 36 * safe_v1 - 22
+
+    # Correct formula for psi
+    psi_vals = -2 * safe_v1 ** 2 + 6 * safe_v1 - 5 + 1.0 / safe_v1
+
+    # Correct formula for xi, derived from simplifying the integrals
     log_part = -12 * np.log(safe_v1)
-    b_term_poly = -4 * safe_v1**3 + 6 * safe_v1**2 - 1
-    xi_vals = poly_part + log_part + B_sq * b_term_poly
+    poly_part = -4 * safe_v1 ** 2 + 20 * safe_v1 - 17
+    inv_part = 2.0 / safe_v1 - 1.0 / safe_v1 ** 2
+    xi_vals = poly_part + inv_part + log_part
+
     return xi_vals, psi_vals
 
 
@@ -204,11 +213,18 @@ def plot_si_region(ax, data):
 
 def main() -> None:
     # --- 1. Prepare Data for Both Plots ---
+    # Data for upper and SI boundaries
     xi_vals = np.linspace(0, 1, 500)
     psi_upper_bound = np.sqrt(xi_vals)
-    mu_vals = np.logspace(4, -4, 2000) + 0.5
+
+    # Data for the C_searrow_mu lower boundary curve (from mu=0 to mu=2)
+    mu_vals = np.linspace(0, 2, 500)
     xi_lower_bound, psi_lower_bound = calculate_lower_boundary(mu_vals)
+
+    # Endpoint xi value at mu=2 (v1=0.5)
     xi_endpoint = 12 * np.log(2) - 8
+
+    # Data for the conjectured boundary segment
     conjecture_df = pd.read_csv("lower_boundary_final_smooth.csv")
 
     # Package data for each plot function
