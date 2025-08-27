@@ -57,7 +57,7 @@ if __name__ == "__main__":
         8.0,
         10.0,
     ]
-    n_vis = 100
+    n_vis = 50
 
     for mu_val in mu_for_files:
         # 1. Compute the optimal H matrix (H(t,v) where t=rows, v=columns)

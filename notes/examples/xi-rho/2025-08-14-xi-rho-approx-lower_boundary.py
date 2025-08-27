@@ -4,137 +4,142 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
-def get_boundary_point_rho(mu, n=32, verbose=False):
+def rho_expr_from_identity(H):
     """
-    Solves the discretized optimization problem for a given mu.
-    Finds the copula derivative h that minimizes mu * xi + rho.
-    This traces the lower boundary of the (xi, rho) region.
+    Spearman's rho via  ∬C = ∬ (1-t) h_v(t) dt dv,
+    using midpoint in t and trapezoid in v to remove the independence bias.
     """
-    # Define the CVXPY variable for the discretized copula derivative h(t,v).
+    n = H.shape[0]
+    t_mid = (np.arange(n) + 0.5) / n  # midpoints in t
+    w_t = 1.0 - t_mid  # row weights (1 - t)
+
+    w_v = np.ones(n)  # trapezoid weights in v
+    w_v[0] = 0.5
+    w_v[-1] = 0.5
+
+    W = np.outer(w_t, w_v)  # (n,n) weight matrix
+    integral_C = (1.0 / n**2) * cp.sum(cp.multiply(W, H))
+    return 12.0 * integral_C - 3.0
+
+
+def solve_SD_rho_max_at_xi(xi_target, n=32, tol=5e-3, verbose=False):
+    """
+    For a given target ξ (normalized so that independence is ξ=0),
+    find the SD-feasible H that MAXIMIZES ρ subject to ξ <= ξ_target + tol.
+    Returns (xi_val, rho_val, H_opt).
+    """
     H = cp.Variable((n, n), name="H")
 
-    # --- Define the constraints for H ---
-    # These constraints ensure that H corresponds to a valid copula derivative.
+    # SD & CDF-in-v constraints
     constraints = [
         H >= 0,
         H <= 1,
-        cp.sum(H, axis=0) == np.arange(n),
-        H[:, :-1] <= H[:, 1:],
+        cp.sum(H, axis=0) == np.arange(n),  # your discretization
+        H[:, :-1] <= H[:, 1:],  # non-decreasing in v
+        H[:-1, :] <= H[1:, :],  # SD: non-decreasing in u
     ]
 
-    # --- Define the objective function terms ---
-    # xi is related to the L2 norm of h.
-    xi_term = (6 / n**2) * cp.sum_squares(H)
+    # ξ definition (unshifted); recall reported ξ = ξ_unshifted - 2
+    xi_unshifted = (6.0 / n**2) * cp.sum_squares(H)
+    # Map user's xi_target (in [-? , 1]) to unshifted target
+    xi_unshifted_cap = xi_target + 2.0 + tol
+    constraints += [xi_unshifted <= xi_unshifted_cap]
 
-    # rho (Spearman's Rho) is related to the double integral of the copula C.
-    # We first get C from H by cumulative summation (integration).
-    # M is a lower-triangular matrix of ones that acts as a cumulative sum operator.
-    M = np.tril(np.ones((n, n)))
-    # The term `M @ H` gives a matrix whose entries are proportional to C(i/n, j/n).
-    # The sum over all entries corresponds to the double integral.
-    # The scaling factor is 12/n^3 for the discrete approximation.
-    rho_term = (12 / n**3) * cp.sum(M @ H)
+    # ρ (linear) — maximize ρ  <=>  minimize (-ρ)
+    rho = rho_expr_from_identity(H)
+    objective = cp.Minimize(-rho)
 
-    # --- Define the objective function to be minimized ---
-    # We are minimizing mu * xi + rho.
-    objective = cp.Minimize(mu * xi_term + rho_term)
+    prob = cp.Problem(objective, constraints)
 
-    # --- Solve the optimization problem ---
-    problem = cp.Problem(objective, constraints)
-    problem.solve(
-        solver=cp.OSQP, verbose=verbose, max_iter=20000, eps_abs=1e-5, eps_rel=1e-5
-    )
-
-    # --- Return the results ---
-    if H.value is not None:
-        H_opt = H.value
-        # The constants (-2 and -3) are added to normalize the values.
-        xi_val = (6 / n**2) * np.sum(H_opt**2) - 2
-        rho_val = (12 / n**3) * np.sum(M @ H_opt) - 3
-        return xi_val, rho_val, H_opt
-    else:
-        # Return None if the solver fails.
+    # Use a conic solver (quadratic constraint present)
+    solved = False
+    try:
+        prob.solve(
+            solver=cp.ECOS,
+            max_iters=4000,
+            abstol=1e-8,
+            reltol=1e-8,
+            feastol=1e-8,
+            verbose=verbose,
+        )
+        solved = H.value is not None
+    except Exception:
+        solved = False
+    if not solved:
+        try:
+            prob.solve(solver=cp.SCS, max_iters=60000, eps=5e-6, verbose=verbose)
+            solved = H.value is not None
+        except Exception:
+            solved = False
+    if not solved:
         return None, None, None
 
+    H_opt = H.value
+    xi_val = (6.0 / n**2) * np.sum(H_opt**2) - 2.0
+    rho_val = (12.0 / n**2) * np.sum(
+        (1.0 - (np.arange(n) + 0.5) / n)[:, None] * H_opt
+    ) - 3.0
+    return xi_val, rho_val, H_opt
 
-# --- Main simulation loop ---
+
 if __name__ == "__main__":
-    # A range of mu values to trace the boundary.
-    mu_values = np.logspace(-2, 1.5, 30)
-    boundary_points = []
+    n = 32
+    # sweep ξ from 0 (independence) up to ≈ 1 (strong functional dependence)
+    xi_targets = np.linspace(0.0, 0.99, 5)
+    tol = 5e-3
 
-    print("Tracing the lower boundary for (xi, rho)...")
-    for mu in tqdm(mu_values):
-        xi, rho, _ = get_boundary_point_rho(mu, n=32)
+    frontier = []
+    H_examples = {}
+
+    print("Tracing the UPPER boundary of the SD region by maximizing ρ at fixed ξ...")
+    for xi_tgt in tqdm(xi_targets):
+        xi, rho, H = solve_SD_rho_max_at_xi(xi_tgt, n=n, tol=tol, verbose=False)
         if xi is not None:
-            boundary_points.append((xi, rho))
+            frontier.append((xi, rho))
+            # cache a few examples to visualize shapes
+            if any(np.isclose(xi_tgt, x, atol=0.02) for x in [0.0, 0.3, 0.6, 0.9]):
+                H_examples[float(np.round(xi, 3))] = H
+    print(frontier)
+    frontier = np.array(frontier)
 
-    # --- Plot 1: The attainable region boundary ---
+    # plot upper boundary ρ_max(ξ)
     plt.figure(figsize=(8, 8))
-    boundary_points = np.array(boundary_points)
-    plt.plot(
-        boundary_points[:, 0],
-        boundary_points[:, 1],
-        "o-",
-        label="Numerical Lower Bound",
-    )
-
-    # For comparison, plot the known theoretical lower bound rho = (3*xi - 1)/2
-    x_theory = np.linspace(-1 / 3, 1, 100)
-    plt.plot(
-        x_theory,
-        (3 * x_theory - 1) / 2,
-        "r--",
-        label="Theoretical Lower Bound (ρ = (3ξ-1)/2)",
-    )
-
-    plt.title("Attainable Region for (ξ, ρ)")
+    if frontier.size:
+        # sort by xi for a clean curve
+        order = np.argsort(frontier[:, 0])
+        plt.plot(
+            frontier[order, 0],
+            frontier[order, 1],
+            "o-",
+            label="Upper boundary (SD): max ρ at fixed ξ",
+        )
+    plt.scatter([0.0], [0.0], marker="x", s=80, label="Independence")
+    plt.title("Upper Boundary of the (ξ, ρ) Region under SD")
     plt.xlabel("Chatterjee's ξ")
     plt.ylabel("Spearman's ρ")
     plt.grid(True, linestyle=":")
     plt.legend()
-    plt.xlim(-0.4, 1.05)
+    plt.xlim(-0.05, 1.05)
     plt.ylim(-1.05, 1.05)
     plt.gca().set_aspect("equal", "box")
 
-    # --- Compute and visualize H matrices for specific mu values ---
-    mu_for_files = [0.05, 0.5, 1.0, 10.0]
-    n_vis = 64  # Use a higher resolution for visualization
+    # visualize selected H maps
+    for xi_val, H_map in H_examples.items():
+        plt.figure(figsize=(7, 6))
+        ax = plt.gca()
+        im = ax.imshow(
+            H_map,
+            origin="lower",
+            extent=[0, 1, 0, 1],
+            cmap="viridis",
+            vmin=0,
+            vmax=1,
+        )
+        ax.set_title(f"h(t,v) at ξ ≈ {xi_val:.2f} (max ρ under SD)")
+        ax.set_xlabel("v")
+        ax.set_ylabel("t")
+        plt.colorbar(
+            im, ax=ax, orientation="vertical", fraction=0.046, pad=0.04, label="h(t,v)"
+        )
 
-    for mu_val in mu_for_files:
-        # Compute the optimal H matrix
-        _, _, H_map = get_boundary_point_rho(mu=mu_val, n=n_vis)
-
-        if H_map is not None:
-            # --- Save to CSV ---
-            # filename = f"h_matrix_rho_mu_{mu_val:.2f}.csv"
-            # np.savetxt(filename, H_map, delimiter=",")
-            # print(f"Successfully saved data to {filename}")
-
-            # --- Visualize the H matrix ---
-            plt.figure(figsize=(7, 6))
-            ax = plt.gca()
-            im = ax.imshow(
-                H_map,
-                origin="lower",
-                extent=[0, 1, 0, 1],
-                cmap="viridis",
-                vmin=0,
-                vmax=1,
-            )
-            ax.set_title(f"Structure of h(t,v) for μ = {mu_val:.2f} (ρ Lower Bound)")
-            ax.set_xlabel("v")
-            ax.set_ylabel("t")
-            plt.colorbar(
-                im,
-                ax=ax,
-                orientation="vertical",
-                fraction=0.046,
-                pad=0.04,
-                label="h(t,v)",
-            )
-        else:
-            print(f"Solver failed for μ={mu_val}, could not save file.")
-
-    # Display all created figures
     plt.show()
