@@ -407,6 +407,7 @@ class RhoMinusXiMaximalCopula(BivCopula):
 if __name__ == "__main__":
     # Example usage
     copula = RhoMinusXiMaximalCopula(b=0.759)
+    copula.plot_cdf(plot_type="contour")
     print("CDF at (0.5, 0.5):", copula.cdf(0.5, 0.5))
     print("PDF at (0.5, 0.5):", copula.pdf(0.5, 0.5))
     print("xi:", copula.xi())
