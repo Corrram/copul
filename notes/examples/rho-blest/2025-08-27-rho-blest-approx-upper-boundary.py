@@ -116,7 +116,7 @@ if __name__ == "__main__":
     plt.gca().set_aspect("equal", "box")
 
     # --- Visualize H(t,v) for a few μ values ---
-    mu_for_files = [0.05, 0.1, 0.2, 0.5, 1.0, 1.2, 1.5, 2.0]
+    mu_for_files = [0.05, 0.1, 0.2, 0.5, 0.7, 0.9, 1.0, 1.2, 1.5, 2.0]
     n_vis = 64
 
     for mu_val in mu_for_files:
