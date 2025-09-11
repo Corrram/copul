@@ -1,11 +1,9 @@
-_# file: copul/families/clamped_parabola.py
 import sympy as sp
 import numpy as np
 from scipy.optimize import brentq
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from mpl_toolkits.mplot3d import Axes3D
 import types
 
 from copul.families.core.biv_copula import BivCopula
@@ -19,7 +17,7 @@ from scipy.integrate import IntegrationWarning
 warnings.filterwarnings("ignore", category=IntegrationWarning)
 
 
-class NuXiMaximalCopula(BivCopula):
+class ClampedParabolaCopula(BivCopula):
     r"""
     Clamped-parabola copula that maximizes Blest's ν for a given Chatterjee's ξ.
 
@@ -116,7 +114,10 @@ class NuXiMaximalCopula(BivCopula):
         else:
             if isinstance(func, types.MethodType):
                 func = func()
-            q_func = lambda v_val: self._get_q_v_vec(v_val, float(self.mu))
+
+            def q_func(v_val):
+                return self._get_q_v_vec(v_val, float(self.mu))
+
             f = sp.lambdify(
                 (self.u, self.v),
                 func,
@@ -154,7 +155,10 @@ class NuXiMaximalCopula(BivCopula):
         else:
             if isinstance(func, types.MethodType):
                 func = func()
-            q_func = lambda v_val: self._get_q_v_vec(v_val, float(self.mu))
+
+            def q_func(v_val):
+                return self._get_q_v_vec(v_val, float(self.mu))
+
             f = sp.lambdify(
                 (self.u, self.v),
                 func,
@@ -195,7 +199,10 @@ class NuXiMaximalCopula(BivCopula):
         else:
             if isinstance(func, types.MethodType):
                 func = func()
-            q_func = lambda v_val: self._get_q_v_vec(v_val, float(self.mu))
+
+            def q_func(v_val):
+                return self._get_q_v_vec(v_val, float(self.mu))
+
             f = sp.lambdify(
                 (self.u, self.v),
                 func,
@@ -320,26 +327,37 @@ class NuXiMaximalCopula(BivCopula):
         """Instantiates the copula from a target value for Chatterjee's xi."""
         if not (0 < x_target < 1):
             raise ValueError("Target xi must be in (0, 1).")
-        xi_of_mu = lambda mu: cls(mu=mu).xi() - x_target
+
+        def xi_of_mu(mu):
+            return cls(mu=mu).xi() - x_target
+
         mu_val = brentq(xi_of_mu, 1e-6, 1000)
         return cls(mu=mu_val)
 
     def xi(self):
         """Calculates Chatterjee's ξ via numerical integration."""
         mu = float(self.mu)
-        h_squared = (
-            lambda t, v: np.clip(((1 - t) ** 2 - self._get_q_v(v, mu)) / mu, 0, 1) ** 2
-        )
-        inner_int = lambda v: quad(h_squared, 0, 1, args=(v,))[0]
+
+        def h_squared(t, v):
+            return np.clip(((1 - t) ** 2 - self._get_q_v(v, mu)) / mu, 0, 1) ** 2
+
+        def inner_int(v):
+            return quad(h_squared, 0, 1, args=(v,))[0]
+
         return 6 * quad(inner_int, 0, 1)[0] - 2
 
     def nu(self):
         """Calculates Blest's ν via numerical integration."""
         mu = float(self.mu)
-        nu_integrand = lambda t, v: (1 - t) ** 2 * np.clip(
-            ((1 - t) ** 2 - self._get_q_v(v, mu)) / mu, 0, 1
-        )
-        inner_int = lambda v: quad(nu_integrand, 0, 1, args=(v,))[0]
+
+        def nu_integrand(t, v):
+            return (1 - t) ** 2 * np.clip(
+                ((1 - t) ** 2 - self._get_q_v(v, mu)) / mu, 0, 1
+            )
+
+        def inner_int(v):
+            return quad(nu_integrand, 0, 1, args=(v,))[0]
+
         return 12 * quad(inner_int, 0, 1)[0] - 2
 
 
@@ -347,7 +365,7 @@ if __name__ == "__main__":
     mu_values = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
     for mu in mu_values:
         # 1. Create a copula with a specific mu
-        copula = NuXiMaximalCopula(mu=mu)
+        copula = ClampedParabolaCopula(mu=mu)
         print(f"--- Copula with mu = {copula.mu} ---")
 
         # 2. Demonstrate the rich plotting capabilities

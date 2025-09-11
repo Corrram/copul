@@ -9,7 +9,7 @@ from copul.families.other.upper_frechet import UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class RhoMinusXiMaximalCopula(BivCopula):
+class XiRhoBoundaryCopula(BivCopula):
     r"""
     Optimal–ρ diagonal–band copula, parametrised by b_new so that the original
     scale‐parameter b_old = 1/|b_new|.  For b_new < 0, we use the reflection
@@ -225,7 +225,7 @@ class RhoMinusXiMaximalCopula(BivCopula):
         The “upright” CDF formula valid when b_new > 0.  Here b_old = 1/b_new.
         """
         b_old = 1 / b
-        s = RhoMinusXiMaximalCopula._s_expr(v, b)
+        s = XiRhoBoundaryCopula._s_expr(v, b)
         a = sp.Max(s - b_old, 0)
         t = s
         middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
@@ -301,7 +301,7 @@ class RhoMinusXiMaximalCopula(BivCopula):
         u, v = np.asarray(u), np.asarray(v)
         b_old = 1 / b
 
-        s = RhoMinusXiMaximalCopula._s_expr_numpy(v, b)
+        s = XiRhoBoundaryCopula._s_expr_numpy(v, b)
         a = np.maximum(s - b_old, 0)
         t = s
 
@@ -406,8 +406,9 @@ class RhoMinusXiMaximalCopula(BivCopula):
 
 if __name__ == "__main__":
     # Example usage
-    copula = RhoMinusXiMaximalCopula(b=0.759)
-    copula.plot_cdf(plot_type="contour")
+    copula = XiRhoBoundaryCopula(b=0.759)
+    copula.plot_pdf(plot_type="contour")
+    # copula.plot_cdf(plot_type="contour")
     print("CDF at (0.5, 0.5):", copula.cdf(0.5, 0.5))
     print("PDF at (0.5, 0.5):", copula.pdf(0.5, 0.5))
     print("xi:", copula.xi())

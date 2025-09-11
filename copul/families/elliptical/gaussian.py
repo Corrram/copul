@@ -1,6 +1,6 @@
 import numpy as np
 import sympy as sp
-from scipy.stats import norm, multivariate_normal
+from scipy.stats import norm
 
 from copul.copula_sampler import CopulaSampler
 from copul.families.elliptical.multivar_gaussian import MultivariateGaussian
@@ -385,3 +385,24 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         """
         self._set_params(args, kwargs)
         return 2 / np.pi * np.arcsin(float(self.rho))
+
+    def spearmans_footrule(self, *args, **kwargs) -> float:
+        """
+        Spearman's footrule F = E[|U - V|] for the Gaussian copula.
+
+        Closed form:
+            F(rho) = 1/2 - (3/pi) * arcsin( (1 + rho) / 2 )
+
+        Returns
+        -------
+        float
+            Footrule distance in [0, 0.5].
+        """
+        self._set_params(args, kwargs)
+        rho = float(self.rho)
+
+        # numeric safety: clamp to [-1, 1]
+        rho = max(-1.0, min(1.0, rho))
+
+        footrule = (3.0 / np.pi) * np.arcsin((1.0 + rho) / 2.0) - 0.5
+        return footrule

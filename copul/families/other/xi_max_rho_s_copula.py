@@ -46,7 +46,7 @@ class XiMaxRhoSCopula(BivCopula):
         1+\mu_x-\sqrt{2\mu_x(1-v)}, & 1-\mu_x/2 < v \le 1
       \end{cases}
     \]
-    Actually, the s_v structure from the example `RhoMinusXiMaximalCopula._s_expr(v, b_param)`
+    Actually, the s_v structure from the example `XiRhoBoundaryCopula._s_expr(v, b_param)`
     where `b_param` is $\mu_x$ is better structured. Let's use that directly.
     $a_v = s_v - \mu_x$.
     The copula CDF is:
@@ -122,7 +122,7 @@ class XiMaxRhoSCopula(BivCopula):
     def _mu_calc_expr(rho_s_param):
         """
         Calculates the internal parameter mu_val = 1/b_star from Spearman's rho_s_param.
-        This mu_val is used in s_v and CDF formulas, analogous to 'b_x' in RhoMinusXiMaximalCopula.
+        This mu_val is used in s_v and CDF formulas, analogous to 'b_x' in XiRhoBoundaryCopula.
         """
         b_star_val = XiMaxRhoSCopula._b_star_expr(rho_s_param)
 
@@ -162,7 +162,7 @@ class XiMaxRhoSCopula(BivCopula):
     def _s_expr(v_sym, mu_param):
         r"""
         Shift s_v (max‐band) using mu_param.
-        This structure is identical to RhoMinusXiMaximalCopula._s_expr(v, b)
+        This structure is identical to XiRhoBoundaryCopula._s_expr(v, b)
         if we identify its 'b' argument with our 'mu_param'.
         mu_param corresponds to \mu in the appendix derivations.
         """
@@ -191,7 +191,7 @@ class XiMaxRhoSCopula(BivCopula):
         # small-b region: mu_param <= 1
         # large-b region: mu_param > 1
 
-        # Re-using the structure from RhoMinusXiMaximalCopula for clarity, assuming its 'b' is mu_param
+        # Re-using the structure from XiRhoBoundaryCopula for clarity, assuming its 'b' is mu_param
         # Small mu_param (mu_param <= 1, equivalent to original example's b <= 1)
         mu_param / 2
         # s1_s, s2_s, s3_s are defined above as s1_small_mu etc.
@@ -386,7 +386,7 @@ class XiMaxRhoSCopula(BivCopula):
     def is_symmetric(self) -> bool:
         # This family is generally not symmetric C(u,v) != C(v,u)
         # However, the specific problem did not impose symmetry.
-        # The example RhoMinusXiMaximalCopula claims is_symmetric = True.
+        # The example XiRhoBoundaryCopula claims is_symmetric = True.
         # That might be specific to its parameterization or an assumed property.
         # For this general family, symmetry is not guaranteed.
         # Let's assume it refers to exchangeability for now, like original example.

@@ -7,6 +7,9 @@ from copul.families.other.mardia import Mardia
 from copul.families.other.plackett import Plackett
 from copul.families.other.raftery import Raftery
 from copul.families.other.upper_frechet import UpperFrechet
+from copul.families.other.clamped_parabola_copula import ClampedParabolaCopula
+from copul.families.other.diagonal_band_copula import DiagonalBandCopula
+from copul.families.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
 
 __all__ = [
     "FarlieGumbelMorgenstern",
@@ -18,4 +21,7 @@ __all__ = [
     "Plackett",
     "Raftery",
     "UpperFrechet",
+    "ClampedParabolaCopula",
+    "DiagonalBandCopula",
+    "XiRhoBoundaryCopula",
 ]

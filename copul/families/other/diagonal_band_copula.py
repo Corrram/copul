@@ -118,6 +118,6 @@ if __name__ == "__main__":
     # copula.plot_cond_distr_2()
     # copula.scatter_plot()
     copula.plot_pdf(title=f"Diagonal Band Copula (delta={x})", plot_type="contour")
-    copula.survival_copula().plot_pdf(
-        title=f"Diagonal Band Survival Copula (delta={x})", plot_type="contour"
-    )
+    # copula.survival_copula().plot_pdf(
+    #     title=f"Diagonal Band Survival Copula (delta={x})", plot_type="contour"
+    # )
