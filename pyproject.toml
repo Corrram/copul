@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "copul"
-version = "0.2.2"
+version = "0.2.4"
 description = "Risk analysis with copulas."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -26,6 +26,7 @@ dependencies = [
     "numba>=0.61.0",
     "joblib>=1.4.2",
     "mfoci>=0.2.0",
+    "typing-extensions>=4.15.0",
 ]
 
 [project.urls]

@@ -119,6 +119,8 @@ class Families(enum.Enum):
     PLACKETT = "copul.families.other.Plackett"
     RAFTERY = "copul.families.other.Raftery"
     UPPER_FRECHET = "copul.families.other.UpperFrechet"
+    CLAMPED_PARABOLA = "copul.families.other.ClampedParabolaCopula"
+    DIAGONAL_BAND = "copul.families.other.DiagonalBandCopula"
 
     @property
     def cls(self):
@@ -271,7 +273,7 @@ class Families(enum.Enum):
 
 
 # Legacy support for the `families` list
-families = [f.cls.__name__ for f in Families]
+families = list(dict.fromkeys(f.cls.__name__ for f in Families))
 
 # Add some useful constants
 COMMON_COPULAS = ["CLAYTON", "FRANK", "GUMBEL_HOUGAARD", "GAUSSIAN", "T", "JOE"]

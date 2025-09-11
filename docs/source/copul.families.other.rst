@@ -4,6 +4,14 @@ copul.families.other package
 Submodules
 ----------
 
+copul.families.other.asymmetric\_xi\_rho\_si\_copula module
+-----------------------------------------------------------
+
+.. automodule:: copul.families.other.asymmetric_xi_rho_si_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.families.other.b11 module
 -------------------------------
 
@@ -16,6 +24,14 @@ copul.families.other.biv\_independence\_copula module
 -----------------------------------------------------
 
 .. automodule:: copul.families.other.biv_independence_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.families.other.clamped\_parabola\_copula module
+-----------------------------------------------------
+
+.. automodule:: copul.families.other.clamped_parabola_copula
    :members:
    :show-inheritance:
    :undoc-members:

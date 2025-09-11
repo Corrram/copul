@@ -653,8 +653,6 @@ def test_scatter_plot():
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.xlim(-0.05, 1.05)
     plt.ylim(-0.05, 1.05)
-    # Save plot instead of showing
-    plt.savefig("shuffle_min_scatter_test.png")
     plt.close()
     print("\n[INFO] Scatter plot saved to shuffle_min_scatter_test.png")
 

@@ -28,12 +28,12 @@ def calculate_lower_boundary(mu_values):
     safe_v1 = np.maximum(v1, epsilon)
 
     # Correct formula for psi
-    psi_vals = -2 * safe_v1 ** 2 + 6 * safe_v1 - 5 + 1.0 / safe_v1
+    psi_vals = -2 * safe_v1**2 + 6 * safe_v1 - 5 + 1.0 / safe_v1
 
     # Correct formula for xi, derived from simplifying the integrals
     log_part = -12 * np.log(safe_v1)
-    poly_part = -4 * safe_v1 ** 2 + 20 * safe_v1 - 17
-    inv_part = 2.0 / safe_v1 - 1.0 / safe_v1 ** 2
+    poly_part = -4 * safe_v1**2 + 20 * safe_v1 - 17
+    inv_part = 2.0 / safe_v1 - 1.0 / safe_v1**2
     xi_vals = poly_part + inv_part + log_part
 
     return xi_vals, psi_vals

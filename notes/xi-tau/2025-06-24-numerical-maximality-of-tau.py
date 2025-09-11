@@ -8,7 +8,7 @@ def main(num_iters=1_000_000):
         ccop = cp.BivCheckMin.generate_randomly()
         xi = ccop.xi()
         xi = np.clip(xi, 0, 1)
-        cop = cp.RhoMinusXiMaximalCopula.from_xi(xi)
+        cop = cp.XiRhoBoundaryCopula.from_xi(xi)
         tau_max = cop.tau()
         cop.to_checkerboard().tau()
         tau = ccop.tau()

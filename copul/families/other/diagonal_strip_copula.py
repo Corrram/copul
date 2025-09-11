@@ -11,7 +11,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 # from copul.wrapper.cd2_wrapper import CD2Wrapper
 
 
-class DiagonalStripAlphaCopula(BivCopula):
+class DiagonalStripCopula(BivCopula):
     r"""
     Diagonal–strip copula with parameter α ∈ [0, 1/2].
 
@@ -181,7 +181,7 @@ class DiagonalStripAlphaCopula(BivCopula):
 
 if __name__ == "__main__":
     # Instantiate the new, valid copula family
-    copula = DiagonalStripAlphaCopula(alpha=0.25)
+    copula = DiagonalStripCopula(alpha=0.25)
     # copula.plot_cdf()
-    # copula.plot_pdf(plot_type="contour")
-    copula.plot_cond_distr_1()
+    copula.plot_pdf(plot_type="contour")
+    # copula.plot_cond_distr_1()

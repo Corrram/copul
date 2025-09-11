@@ -61,9 +61,10 @@ from copul.families.other.mardia import Mardia
 from copul.families.other.plackett import Plackett
 from copul.families.other.raftery import Raftery
 from copul.families.other.upper_frechet import UpperFrechet
-from copul.families.other.rho_minus_xi_maximal_copula import RhoMinusXiMaximalCopula
+from copul.families.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
+from copul.families.other.clamped_parabola_copula import ClampedParabolaCopula
 
-from copul.family_list import Families
+from copul.family_list import Families, families
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.schur_order.cis_verifier import CISVerifier
 from copul.schur_order.ltd_verifier import LTDVerifier
@@ -87,6 +88,7 @@ __all__ = [
     # Families & Builders
     "BivCopula",
     "from_cdf",
+    "families",
     "Families",
     # Archimedean copulas
     "AliMikhailHaq",
@@ -140,7 +142,7 @@ __all__ = [
     "Mardia",
     "Plackett",
     "Raftery",
-    "RhoMinusXiMaximalCopula",
+    "XiRhoBoundaryCopula",
     "UpperFrechet",
     # Miscellaneous
     "CISRearranger",
