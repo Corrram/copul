@@ -537,7 +537,7 @@ class BivCoreCopula:
             This method displays the plot using matplotlib.
         """
         plotter = RankCorrelationPlotter(self, log_cut_off, approximate)
-        plotter.plot_rank_correlations(n_obs, n_params, params, plot_var, ylim)
+        plotter.plot_rank_correlations(n_obs, n_params, params, ylim)
 
     def plot_cdf(
         self,
