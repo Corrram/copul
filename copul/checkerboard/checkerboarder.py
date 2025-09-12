@@ -202,18 +202,34 @@ class Checkerboarder:
             raise ValueError(f"Unknown checkerboard type: {self._checkerboard_type}")
 
     def from_data(self, data: Union[pd.DataFrame, np.ndarray, list]):  # noqa: E501
+        # Normalize input to DataFrame
         if isinstance(data, (list, np.ndarray)):
             data = pd.DataFrame(data)
+
         n_obs = len(data)
+
+        # Rank -> pseudo-observations in (0,1]; one column at a time for speed (numba)
         rank_data = np.empty_like(data.values, dtype=float)
         for i, col in enumerate(data.columns):
             rank_data[:, i] = _fast_rank(data[col].values)
-        rank_df = pd.DataFrame(rank_data, columns=data.columns)
+
+        # Use existing fast path for 2D
         if self.d == 2:
+            rank_df = pd.DataFrame(rank_data, columns=data.columns)
             return self._from_data_bivariate(rank_df, n_obs)
-        else:
-            check_pi_matr = np.zeros(self.n)
-            return self._get_checkerboard_copula_for(check_pi_matr)
+
+        # General d-dimensional case (d > 2): histogram on the unit cube
+        # Guard against any tiny floating overshoots by nudging 1.0 to the next lower float.
+        right_inclusive = np.nextafter(1.0, 0.0)
+        rank_data = np.clip(rank_data, 0.0, right_inclusive)
+
+        # Build d-D histogram with per-dimension bins self.n and range [0,1] in each dim
+        hist, _ = np.histogramdd(rank_data, bins=self.n, range=[(0.0, 1.0)] * self.d)
+
+        # Convert counts to probabilities
+        cmatr = hist / n_obs
+
+        return self._get_checkerboard_copula_for(cmatr)
 
     def _from_data_bivariate(self, data, n_obs):
         x = data.iloc[:, 0].values
@@ -246,3 +262,11 @@ def from_data(data, checkerboard_size=None, checkerboard_type="CheckPi"):  # noq
         n=checkerboard_size, dim=dimensions, checkerboard_type=checkerboard_type
     )
     return cb.from_data(data)
+
+
+def from_samples(samples, checkerboard_size=None, checkerboard_type="CheckPi"):  # noqa: E501
+    return from_data(samples, checkerboard_size, checkerboard_type)
+
+
+def from_matrix(matrix, checkerboard_size=None, checkerboard_type="CheckPi"):  # noqa: E501
+    return from_data(matrix, checkerboard_size, checkerboard_type)

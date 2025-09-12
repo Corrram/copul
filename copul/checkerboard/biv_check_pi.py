@@ -11,7 +11,7 @@ import warnings
 
 import sympy
 from copul.checkerboard.check_pi import CheckPi
-from copul.families.core.biv_core_copula import BivCoreCopula
+from copul.family.core.biv_core_copula import BivCoreCopula
 from copul.schur_order.cis_verifier import CISVerifier
 
 
@@ -178,7 +178,7 @@ class BivCheckPi(CheckPi, BivCoreCopula):
     def cond_distr_2(self, *args):
         return self.cond_distr(2, *args)
 
-    def rho(self) -> float:
+    def spearmans_rho(self) -> float:
         """
         Compute Spearman's rho for a bivariate checkerboard copula.
         """
@@ -194,7 +194,7 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         trace = np.trace(omega.T @ p)
         return 3 * trace - 3
 
-    def tau(self) -> float:
+    def kendalls_tau(self) -> float:
         """
         Calculate the tau coefficient more efficiently using numpy's vectorized operations.
 
@@ -205,7 +205,7 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         Xi_n = 2 * np.tri(self.n) - np.eye(self.n)
         return 1 - np.trace(Xi_m @ self.matr @ Xi_n @ self.matr.T)
 
-    def xi(self, condition_on_y: bool = False) -> float:
+    def chatterjees_xi(self, condition_on_y: bool = False) -> float:
         if condition_on_y:
             delta = self.matr.T
             m = self.n
@@ -268,8 +268,8 @@ if __name__ == "__main__":
     ccop = BivCheckPi(matr)
     # ccop.plot_c_over_u()
     # ccop.plot_cond_distr_1()
-    xi = ccop.xi()
-    rho = ccop.rho()
+    xi = ccop.chatterjees_xi()
+    rho = ccop.spearmans_rho()
     footrule = ccop.spearmans_footrule()
     gini = ccop.ginis_gamma()
     beta = ccop.blomqvists_beta()

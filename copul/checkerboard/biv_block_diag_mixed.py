@@ -105,14 +105,14 @@ class BivBlockDiagMixed(BivCheckMixed):
         return S_r, P_r, B2
 
     # --------------  Chatterjee’s ξ  ---------------------------------- #
-    def xi(self, *, condition_on_y: bool = False) -> float:  # noqa: D401
+    def chatterjees_xi(self, *, condition_on_y: bool = False) -> float:  # noqa: D401
         S_r, P_r, B2 = self._block_sums()
         d = self.d
         term_blocks = sum(P / n_r**2 for P, n_r in zip(P_r, self.sizes))
         return 1.0 - B2 / d**2 + term_blocks / d**2
 
     # --------------  Kendall’s τ  ------------------------------------- #
-    def tau(self) -> float:
+    def kendalls_tau(self) -> float:
         S_r, _, B2 = self._block_sums()
         d = self.d
         term_blocks = sum(S / n_r**2 for S, n_r in zip(S_r, self.sizes))
@@ -122,7 +122,7 @@ class BivBlockDiagMixed(BivCheckMixed):
     # --- inside BivBlockDiagMixed -----------------------------------------
 
     # --------------  Spearman’s ρ  ------------------------------------ #
-    def rho(self) -> float:
+    def spearmans_rho(self) -> float:
         """
         Closed-form Spearman’s ρ for the block-diagonal mixed copula
             ρ = 3 d⁻³ Σ_r n_r (2d − 2a_r − n_r)²  − 3
@@ -156,8 +156,8 @@ if __name__ == "__main__":  # pragma: no cover
     cop_block = BivBlockDiagMixed(sizes, sign=S)
     cop_block.plot_cdf()
     cop_block.scatter_plot()
-    xi = cop_block.xi()
-    tau = cop_block.tau()
-    rho = cop_block.rho()
+    xi = cop_block.chatterjees_xi()
+    tau = cop_block.kendalls_tau()
+    rho = cop_block.spearmans_rho()
     beta = cop_block.blomqvists_beta()
     print(f"xi = {xi:.3f}, tau = {tau:.3f}")

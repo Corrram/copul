@@ -1,6 +1,6 @@
 import sympy as sp
 import numpy as np
-from copul.families.core.biv_copula import BivCopula
+from copul.family.core.biv_copula import BivCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 

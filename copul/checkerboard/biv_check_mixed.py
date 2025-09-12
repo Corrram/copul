@@ -17,8 +17,8 @@ import numpy as np
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.biv_check_min import BivCheckMin
 from copul.checkerboard.biv_check_w import BivCheckW
-from copul.families.core.biv_core_copula import BivCoreCopula
-from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
+from copul.family.core.biv_core_copula import BivCoreCopula
+from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
 from copul.schur_order.cis_verifier import CISVerifier
 
 
@@ -147,23 +147,23 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
     # ------------------------------------------------------------------ #
     #                    exact dependence measures                       #
     # ------------------------------------------------------------------ #
-    def tau(self) -> float:
+    def kendalls_tau(self) -> float:
         Xi_m = self._xi_matrix(self.m)
         Xi_n = self._xi_matrix(self.n)
         core = np.trace(Xi_m @ self.matr @ Xi_n @ self.matr.T)
         extra = np.sum(self.sign * (self.matr**2))
         return 1.0 - core + extra
 
-    def xi(self, *, condition_on_y: bool = False) -> float:
+    def chatterjees_xi(self, *, condition_on_y: bool = False) -> float:
         # base value from plain checkerboard
-        base = self._pi.xi(condition_on_y)
+        base = self._pi.chatterjees_xi(condition_on_y)
 
         # scaling m/n depends on conditioning
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
         extra = (m / n) * np.sum(np.abs(self.sign) * (self.matr**2))
         return base + extra
 
-    def rho(self) -> float:
+    def spearmans_rho(self) -> float:
         Omega = self._omega()
         core = 3.0 * np.trace(Omega.T @ self.matr) - 3.0
         extra = np.sum(self.sign * self.matr) / (self.m * self.n)
@@ -257,4 +257,6 @@ if __name__ == "__main__":  # pragma: no cover
     Δ = np.full((2, 2), 0.25)
     S = np.array([[0, 1], [-1, 1]])
     cop = BivCheckMixed(Δ, sign=S)
-    print("τ:", cop.tau(), "ρ:", cop.rho(), "ξ:", cop.xi())
+    print(
+        "τ:", cop.kendalls_tau(), "ρ:", cop.spearmans_rho(), "ξ:", cop.chatterjees_xi()
+    )

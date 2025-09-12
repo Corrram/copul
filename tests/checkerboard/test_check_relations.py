@@ -11,9 +11,9 @@ def test_rho_example():
     ccop_min = BivCheckMin(matr)
     ccop_pi = BivCheckPi(matr)
     ccop_w = BivCheckW(matr)
-    xi_min = ccop_min.xi()
-    xi_pi = ccop_pi.xi()
-    xi_w = ccop_w.xi()
+    xi_min = ccop_min.chatterjees_xi()
+    xi_pi = ccop_pi.chatterjees_xi()
+    xi_w = ccop_w.chatterjees_xi()
 
     # Check range and expected sign (this matrix has positive dependence)
     assert xi_pi < xi_min

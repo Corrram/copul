@@ -126,7 +126,7 @@ def test_ccop_cond_distr_2(matr, expected):
 def test_ccop_xi(matr, expected):
     np.random.seed(1)
     ccop = BivCheckPi(matr)
-    xi_estimate = ccop.xi()
+    xi_estimate = ccop.chatterjees_xi()
     actual_diff = np.abs(xi_estimate - expected)
     assert actual_diff < 0.02
 
@@ -149,7 +149,7 @@ def test_tau_independence(n):
     """Test that tau is close to 0 for independence copula."""
     matr = np.ones((n, n))  # Uniform distribution represents independence
     ccop = BivCheckPi(matr)
-    tau = ccop.tau()
+    tau = ccop.kendalls_tau()
     assert np.isclose(tau, 0, atol=1e-2)
 
 
@@ -160,14 +160,14 @@ def test_tau_perfect_dependence(n):
     matr_pos = np.zeros((n, n))
     np.fill_diagonal(matr_pos, 1)  # Place 1's on the main diagonal
     ccop_pos = BivCheckPi(matr_pos)
-    tau_pos = ccop_pos.tau()
+    tau_pos = ccop_pos.kendalls_tau()
 
     # Perfect negative dependence
     matr_neg = np.zeros((n, n))
     for i in range(3):
         matr_neg[i, 2 - i] = 1  # Place 1's on the opposite diagonal
     ccop_neg = BivCheckPi(matr_neg)
-    tau_neg = ccop_neg.tau()
+    tau_neg = ccop_neg.kendalls_tau()
 
     # Tau should be positive for positive dependence and negative for negative dependence
     assert tau_pos > 0.5
@@ -186,9 +186,9 @@ def test_tau_2x2_exact():
     ccop_neg = BivCheckPi(matr_neg)
 
     # For 2x2, these are the exact values
-    tau_pos = ccop_pos.tau()
+    tau_pos = ccop_pos.kendalls_tau()
     assert np.isclose(tau_pos, 0.5, atol=1e-2)
-    tau_neg = ccop_neg.tau()
+    tau_neg = ccop_neg.kendalls_tau()
     assert np.isclose(tau_neg, -0.5, atol=1e-2)
 
 
@@ -209,12 +209,12 @@ def test_measures_of_assiciation_with_rectangular_matrix():
         ],
     ]
     ccop = BivCheckPi(matr)
-    xi1 = ccop.xi(condition_on_y=False)
-    xi2 = ccop.xi(condition_on_y=True)
+    xi1 = ccop.chatterjees_xi(condition_on_y=False)
+    xi2 = ccop.chatterjees_xi(condition_on_y=True)
     assert 1 > xi1 > 0
     assert 1 > xi2 > 0
-    tau = ccop.tau()
-    rho = ccop.rho()
+    tau = ccop.kendalls_tau()
+    rho = ccop.spearmans_rho()
     assert 1 > tau > -1
     assert 1 > rho > -1
 
@@ -223,7 +223,7 @@ def test_tau_example():
     """Test tau for the example matrix from the original code."""
     matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
     ccop = BivCheckPi(matr)
-    tau = ccop.tau()
+    tau = ccop.kendalls_tau()
 
     # Check range and expected sign (this matrix has positive dependence)
     assert -1 <= tau <= 1
@@ -236,7 +236,7 @@ def test_rho_independence():
     np.random.seed(42)
     matr = np.ones((4, 4))  # Uniform distribution represents independence
     ccop = BivCheckPi(matr)
-    rho = ccop.rho()
+    rho = ccop.spearmans_rho()
     assert np.isclose(rho, 0, atol=1e-2)
 
 
@@ -246,14 +246,14 @@ def test_rho_perfect_dependence():
     matr_pos = np.zeros((3, 3))
     np.fill_diagonal(matr_pos, 1)  # Place 1's on the main diagonal
     ccop_pos = BivCheckPi(matr_pos)
-    rho_pos = ccop_pos.rho()
+    rho_pos = ccop_pos.spearmans_rho()
 
     # Perfect negative dependence
     matr_neg = np.zeros((3, 3))
     for i in range(3):
         matr_neg[i, 2 - i] = 1  # Place 1's on the opposite diagonal
     ccop_neg = BivCheckPi(matr_neg)
-    rho_neg = ccop_neg.rho()
+    rho_neg = ccop_neg.spearmans_rho()
 
     # Rho should be positive for positive dependence and negative for negative dependence
     assert rho_pos > 0.5
@@ -272,9 +272,9 @@ def test_rho_2x2_exact():
     ccop_neg = BivCheckPi(matr_neg)
 
     # For 2x2, these are the exact values
-    pos_rho = ccop_pos.rho()
+    pos_rho = ccop_pos.spearmans_rho()
     assert np.isclose(pos_rho, 0.745, atol=1e-1)
-    neg_rho = ccop_neg.rho()
+    neg_rho = ccop_neg.spearmans_rho()
     assert np.isclose(neg_rho, -0.745, atol=1e-1)
 
 
@@ -282,7 +282,7 @@ def test_rho_example():
     """Test rho for the example matrix from the original code."""
     matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
     ccop = BivCheckPi(matr)
-    rho_val = ccop.rho()
+    rho_val = ccop.spearmans_rho()
 
     # Check range and expected sign (this matrix has positive dependence)
     assert -1 <= rho_val <= 1
@@ -298,7 +298,7 @@ def test_xi_independence(n, condition_on_y):
     """Test that xi is close to 0 for independence copula."""
     matr = np.ones((n, n))  # Uniform distribution represents independence
     ccop = BivCheckPi(matr)
-    assert np.isclose(ccop.xi(condition_on_y), 0, atol=1e-2)
+    assert np.isclose(ccop.chatterjees_xi(condition_on_y), 0, atol=1e-2)
 
 
 def test_xi_perfect_dependence():
@@ -307,14 +307,14 @@ def test_xi_perfect_dependence():
     matr_pos = np.zeros((10, 10))
     np.fill_diagonal(matr_pos, 1)  # Place 1's on the main diagonal
     ccop_pos = BivCheckPi(matr_pos)
-    xi_pos = ccop_pos.xi()
+    xi_pos = ccop_pos.chatterjees_xi()
 
     # Perfect negative dependence
     matr_neg = np.zeros((10, 10))
     for i in range(10):
         matr_neg[i, 9 - i] = 1  # Place 1's on the opposite diagonal
     ccop_neg = BivCheckPi(matr_neg)
-    xi_neg = ccop_neg.xi()
+    xi_neg = ccop_neg.chatterjees_xi()
 
     # Xi should be close to 1 for both perfect positive and negative dependence
     assert xi_pos > 0.8
@@ -333,8 +333,8 @@ def test_xi_2x2_exact():
     ccop_neg = BivCheckPi(matr_neg)
 
     # For 2x2, both should have xi = 1 (perfect dependence)
-    xi_pos = ccop_pos.xi()
-    xi_neg = ccop_neg.xi()
+    xi_pos = ccop_pos.chatterjees_xi()
+    xi_neg = ccop_neg.chatterjees_xi()
     assert np.isclose(xi_pos, 0.5, atol=1e-1)
     assert np.isclose(xi_neg, 0.5, atol=1e-1)
 
@@ -343,7 +343,7 @@ def test_xi_example():
     """Test xi for the example matrix from the original code."""
     matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
     ccop = BivCheckPi(matr)
-    xi_val = ccop.xi()
+    xi_val = ccop.chatterjees_xi()
 
     # Check range (xi is always between 0 and 1)
     assert 0 <= xi_val <= 1
@@ -354,8 +354,8 @@ def test_measure_consistency():
     # Create a matrix with positive dependence
     matr_pos = np.array([[0.6, 0.2, 0.0], [0.2, 0.4, 0.2], [0.0, 0.2, 0.6]])
     ccop_pos = BivCheckPi(matr_pos)
-    tau_pos = ccop_pos.tau()
-    rho_pos = ccop_pos.rho()
+    tau_pos = ccop_pos.kendalls_tau()
+    rho_pos = ccop_pos.spearmans_rho()
 
     # Both should be positive
     assert tau_pos > 0
@@ -364,8 +364,8 @@ def test_measure_consistency():
     # Create a matrix with negative dependence
     matr_neg = np.array([[0.0, 0.2, 0.6], [0.2, 0.4, 0.2], [0.6, 0.2, 0.0]])
     ccop_neg = BivCheckPi(matr_neg)
-    tau_neg = ccop_neg.tau()
-    rho_neg = ccop_neg.rho()
+    tau_neg = ccop_neg.kendalls_tau()
+    rho_neg = ccop_neg.spearmans_rho()
 
     # Both should be negative
     assert tau_neg < 0
@@ -377,7 +377,7 @@ def test_xi_equivalent_to_monte_carlo():
     # This matrix was tested previously with Monte Carlo
     matr = np.array([[1, 0], [0, 1]])
     ccop = BivCheckPi(matr)
-    xi_value = ccop.xi()
+    xi_value = ccop.chatterjees_xi()
     assert np.isclose(xi_value, 0.5, atol=0.02)
 
 
@@ -395,14 +395,14 @@ def test_pdf():
 def test_xi_with_small_m_and_large_n():
     matr = np.array([[0.1] * 10])
     ccop = BivCheckPi(matr)
-    xi = ccop.xi()
+    xi = ccop.chatterjees_xi()
     assert np.isclose(xi, 0, atol=0.02)
 
 
 def test_xi_with_large_m_and_small_n():
     matr = np.array([[0.1] * 10]).T
     ccop = BivCheckPi(matr)
-    xi = ccop.xi()
+    xi = ccop.chatterjees_xi()
     assert np.isclose(xi, 0, atol=0.02)
 
 
@@ -438,7 +438,7 @@ def test_footrule_signs(matr, expected_sign):
 def test_footrule_and_gamma_frechet(alpha, beta):
     """Test the footrule for the Frechet copula with known parameters."""
     frechet = Frechet(alpha, beta)
-    checkerboard = frechet.to_checkerboard()
+    checkerboard = frechet.to_checkerboard(100)
 
     footrule_direct = frechet.spearmans_footrule()
     footrule_check = checkerboard.spearmans_footrule()

@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pytest
 
 import copul
 from copul.checkerboard.checkerboarder import Checkerboarder
@@ -38,8 +37,8 @@ def test_xi_computation():
     copula = copul.Families.NELSEN7.cls(0.5)
     checkerboarder = copul.Checkerboarder(10)
     ccop = checkerboarder.get_checkerboard_copula(copula)
-    orig_xi = copula.xi()
-    xi = ccop.xi()
+    orig_xi = copula.chatterjees_xi()
+    xi = ccop.chatterjees_xi()
     assert 0.5 * orig_xi <= xi <= orig_xi
 
 
@@ -138,12 +137,38 @@ def test_direct_from_data():
     assert np.isclose(ccop.matr.sum(), 1.0)
 
 
-@pytest.mark.skip(reason="3D copulas not supported in the current implementation")
-def test_higher_dimensions():
-    """Test Checkerboarder with higher dimensions."""
-    # This test is explicitly skipped since the error shows the Gaussian copula
-    # implementation only accepts 2 arguments (bivariate case)
-    pass
+def test_from_data_trivariate_uniform_shape_and_sum():
+    """3D: uniform data -> histogramdd path, correct shape & normalization."""
+    np.random.seed(123)
+    data = np.random.rand(2000, 3)  # i.i.d. U(0,1)
+    checkerboarder = Checkerboarder(6, dim=3)  # 6x6x6
+    ccop = checkerboarder.from_data(data)
+
+    assert ccop.matr.shape == (6, 6, 6)
+    assert np.isclose(ccop.matr.sum(), 1.0)
+    assert np.all(ccop.matr >= 0.0)
+
+
+def test_from_data_trivariate_rectangular_bins_and_boundary():
+    """3D: rectangular bins & boundary ranks (==1) are handled (clipped) correctly."""
+    # Construct data that guarantees some ranks equal 1.0 in each column
+    np.random.seed(321)
+    n = 999  # odd size to avoid ties with random seed; max rank exactly 1.0
+    X = np.random.randn(n)
+    Y = np.random.randn(n)
+    Z = np.random.randn(n)
+
+    df = pd.DataFrame({"X": X, "Y": Y, "Z": Z})
+
+    # Rectangular grid
+    n_bins = [4, 3, 5]
+    checkerboarder = Checkerboarder(n_bins, dim=3)
+    ccop = checkerboarder.from_data(df)
+
+    assert ccop.matr.shape == (4, 3, 5)
+    # Proper probability tensor: nonnegative, sums to 1
+    assert np.isclose(ccop.matr.sum(), 1.0)
+    assert np.all(ccop.matr >= 0.0)
 
 
 def test_boundary_conditions_for_independence():

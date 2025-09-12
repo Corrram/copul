@@ -47,14 +47,14 @@ def test_constant_sign_matches_base(sign_cls):
         assert np.isclose(cop_mixed.cdf(u, v), cop_base.cdf(u, v))
 
     # measures of association should coincide too
-    tau_actual = cop_mixed.tau()
-    tau_expected = cop_base.tau()
+    tau_actual = cop_mixed.kendalls_tau()
+    tau_expected = cop_base.kendalls_tau()
     assert np.isclose(tau_actual, tau_expected)
-    rho_actual = cop_mixed.rho()
-    rho_expected = cop_base.rho()
+    rho_actual = cop_mixed.spearmans_rho()
+    rho_expected = cop_base.spearmans_rho()
     assert np.isclose(rho_actual, rho_expected)
-    xi_actual = cop_mixed.xi()
-    xi_expected = cop_base.xi()
+    xi_actual = cop_mixed.chatterjees_xi()
+    xi_expected = cop_base.chatterjees_xi()
     assert np.isclose(xi_actual, xi_expected)
 
 
@@ -98,9 +98,9 @@ def test_measures_sanity_mixed():
 
     cop = BivCheckMixed(Δ, sign=S)
 
-    tau = cop.tau()
-    rho = cop.rho()
-    xi = cop.xi()
+    tau = cop.kendalls_tau()
+    rho = cop.spearmans_rho()
+    xi = cop.chatterjees_xi()
 
     # all measures are within [-1,1] and xi ∈ [0,1]
     assert -1 <= tau <= 1

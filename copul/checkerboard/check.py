@@ -130,7 +130,7 @@ class Check:
         """Upper tail dependence (usually 0 for a checkerboard copula)."""
         return 0
 
-    def xi(self, n=100_000, seed=None, i=1, samples=None):
+    def chatterjees_xi(self, n=100_000, seed=None, i=1, samples=None):
         i0 = i - 1  # Convert to zero-based index
         if samples is None:
             samples = self.rvs(n, random_state=seed)

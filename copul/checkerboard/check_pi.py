@@ -3,8 +3,8 @@ import itertools
 import numpy as np
 
 from copul.checkerboard.check import Check
-from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
-from copul.families.core.copula_approximator_mixin import CopulaApproximatorMixin
+from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
+from copul.family.core.copula_approximator_mixin import CopulaApproximatorMixin
 
 
 class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):

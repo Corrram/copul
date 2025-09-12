@@ -8,7 +8,7 @@ from copul.checkerboard.bernstein import BernsteinCopula, Bernstein
 from copul.checkerboard.shuffle_min import ShuffleOfMin
 from copul.checkerboard.biv_bernstein import BivBernsteinCopula, BivBernstein
 from copul.checkerboard.checkerboarder import Checkerboarder, from_data
-from copul.families.archimedean import (
+from copul.family.archimedean import (
     AliMikhailHaq,
     Clayton,
     Frank,
@@ -39,10 +39,10 @@ from copul.families.archimedean import (
     Nelsen21,
     Nelsen22,
 )
-from copul.families.core.biv_copula import BivCopula
-from copul.families.copula_builder import from_cdf
-from copul.families.elliptical import Gaussian, Laplace, StudentT
-from copul.families.extreme_value import (
+from copul.family.core.biv_copula import BivCopula
+from copul.family.copula_builder import from_cdf
+from copul.family.elliptical import Gaussian, Laplace, StudentT
+from copul.family.extreme_value import (
     BB5,
     CuadrasAuge,
     Galambos,
@@ -53,16 +53,16 @@ from copul.families.extreme_value import (
     Tawn,
     tEV,
 )
-from copul.families.other.farlie_gumbel_morgenstern import FarlieGumbelMorgenstern
-from copul.families.other.frechet import Frechet
-from copul.families.other.biv_independence_copula import BivIndependenceCopula
-from copul.families.other.lower_frechet import LowerFrechet
-from copul.families.other.mardia import Mardia
-from copul.families.other.plackett import Plackett
-from copul.families.other.raftery import Raftery
-from copul.families.other.upper_frechet import UpperFrechet
-from copul.families.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
-from copul.families.other.clamped_parabola_copula import ClampedParabolaCopula
+from copul.family.other.farlie_gumbel_morgenstern import FarlieGumbelMorgenstern
+from copul.family.other.frechet import Frechet
+from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.other.mardia import Mardia
+from copul.family.other.plackett import Plackett
+from copul.family.other.raftery import Raftery
+from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
+from copul.family.other.clamped_parabola_copula import ClampedParabolaCopula
 
 from copul.family_list import Families, families
 from copul.schur_order.cis_rearranger import CISRearranger
@@ -143,6 +143,7 @@ __all__ = [
     "Plackett",
     "Raftery",
     "XiRhoBoundaryCopula",
+    "ClampedParabolaCopula",
     "UpperFrechet",
     # Miscellaneous
     "CISRearranger",
