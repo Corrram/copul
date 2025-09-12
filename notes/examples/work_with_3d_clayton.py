@@ -1,5 +1,5 @@
 import copul
-from copul.families.archimedean.multivariate_clayton import MultivariateClayton
+from copul.family.archimedean.multivariate_clayton import MultivariateClayton
 
 
 def main():

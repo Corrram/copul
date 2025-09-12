@@ -532,5 +532,5 @@ def test_chatterjees_xi_for_independence_copula():
     copula = CheckPi(matr)
 
     # Chatterjee's xi for this copula should be 0
-    xi = copula.xi(seed=42)
+    xi = copula.chatterjees_xi(seed=42)
     assert np.isclose(xi, 0, atol=1e-2)

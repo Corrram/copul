@@ -1,8 +1,8 @@
 import math
 import numpy as np
 from copul.checkerboard.bernstein import BernsteinCopula
-from copul.families.core.copula_sampling_mixin import CopulaSamplingMixin
-from copul.families.core.biv_core_copula import BivCoreCopula
+from copul.family.core.copula_sampling_mixin import CopulaSamplingMixin
+from copul.family.core.biv_core_copula import BivCoreCopula
 from typing import TypeAlias
 
 
@@ -13,7 +13,7 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         self.m = self.matr.shape[0]
         self.n = self.matr.shape[1]
 
-    def rho(self) -> float:
+    def spearmans_rho(self) -> float:
         """
         Compute Spearman's rho for a bivariate checkerboard (Bernstein) copula.
         Formula:  rho = 12/( (m+1)*(n+1) ) * sum_{i,j} D_{i,j} - 3
@@ -26,7 +26,7 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         rho_val = factor * trace_sum - 3.0
         return rho_val
 
-    def tau(self) -> float:
+    def kendalls_tau(self) -> float:
         """
         Calculate Kendall's tau using the matrix formula:
             tau = 1 - trace( Theta^(m) * D * Theta^(n) * D^T ).
@@ -37,7 +37,7 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         tau_val = 1.0 - np.trace(theta_m @ d @ theta_n @ d.T)
         return tau_val
 
-    def xi(self, condition_on_y: bool = False) -> float:
+    def chatterjees_xi(self, condition_on_y: bool = False) -> float:
         """
         Calculate Chatterjee's xi using the matrix-trace formula:
             xi = 6 * trace( Omega^(m) * D * Lambda^(n) * D^T ) - 2,

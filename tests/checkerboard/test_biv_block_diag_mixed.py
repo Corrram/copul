@@ -63,12 +63,12 @@ def test_constant_sign_matches_base(sign_val, base_cls):
     for u, v in pts:
         assert np.isclose(cop_mixed.cdf(u, v), cop_base.cdf(u, v))
 
-    tau = cop_mixed.tau()
-    tau_actual = cop_base.tau()
-    rho = cop_mixed.rho()
-    rho_actual = cop_base.rho()
-    xi = cop_mixed.xi()
-    xi_actual = cop_base.xi()
+    tau = cop_mixed.kendalls_tau()
+    tau_actual = cop_base.kendalls_tau()
+    rho = cop_mixed.spearmans_rho()
+    rho_actual = cop_base.spearmans_rho()
+    xi = cop_mixed.chatterjees_xi()
+    xi_actual = cop_base.chatterjees_xi()
     assert np.isclose(tau, tau_actual)
     assert np.isclose(rho, rho_actual)
     assert np.isclose(xi, xi_actual)
@@ -104,7 +104,7 @@ def test_mixed_block_pattern():
         assert np.isclose(cop.cdf(u, v), ref.cdf(u, v))
 
     # quick sanity on measures
-    tau, rho, xi = cop.tau(), cop.rho(), cop.xi()
+    tau, rho, xi = cop.kendalls_tau(), cop.spearmans_rho(), cop.chatterjees_xi()
     assert -1 <= tau <= 1
     assert -1 <= rho <= 1
     assert 0 <= xi <= 1
@@ -129,12 +129,12 @@ def test_agrees_with_general_class():
     cop_block = BivBlockDiagMixed(sizes, sign=S)
     assert hasattr(cop_block, "scatter_plot")
 
-    xi = cop_general.xi()
-    tau = cop_general.tau()
-    rho = cop_general.rho()
-    assert np.isclose(tau, cop_block.tau())
-    assert np.isclose(rho, cop_block.rho())
-    assert np.isclose(xi, cop_block.xi())
+    xi = cop_general.chatterjees_xi()
+    tau = cop_general.kendalls_tau()
+    rho = cop_general.spearmans_rho()
+    assert np.isclose(tau, cop_block.kendalls_tau())
+    assert np.isclose(rho, cop_block.spearmans_rho())
+    assert np.isclose(xi, cop_block.chatterjees_xi())
     assert xi == tau <= rho
 
 

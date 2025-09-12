@@ -1,14 +1,14 @@
 import numpy as np
 from copul.checkerboard.biv_bernstein import BivBernsteinCopula
-from copul.families.other.lower_frechet import LowerFrechet
-from copul.families.other.upper_frechet import UpperFrechet
+from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.other.upper_frechet import UpperFrechet
 
 
 def test_tau_example():
     """Test tau for the example matrix from the original code."""
     matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
     ccop = BivBernsteinCopula(matr)
-    tau = ccop.tau()
+    tau = ccop.kendalls_tau()
 
     # Check range and expected sign (this matrix has positive dependence)
     assert -1 <= tau <= 1
@@ -19,7 +19,7 @@ def test_rho_example():
     """Test tau for the example matrix from the original code."""
     matr = np.array([[1, 5, 4], [5, 3, 2], [4, 2, 4]])
     ccop = BivBernsteinCopula(matr)
-    rho = ccop.rho()
+    rho = ccop.spearmans_rho()
 
     # Check range and expected sign (this matrix has positive dependence)
     assert -1 <= rho <= 1
@@ -31,7 +31,7 @@ def test_tau_independence():
     np.random.seed(42)
     matr = np.ones((4, 4))  # Uniform distribution represents independence
     ccop = BivBernsteinCopula(matr)
-    tau = ccop.tau()
+    tau = ccop.kendalls_tau()
     assert np.isclose(tau, 0)
 
 
@@ -40,7 +40,7 @@ def test_rho_independence():
     np.random.seed(42)
     matr = np.ones((4, 4))  # Uniform distribution represents independence
     ccop = BivBernsteinCopula(matr)
-    rho = ccop.rho()
+    rho = ccop.spearmans_rho()
     assert np.isclose(rho, 0)
 
 
@@ -49,7 +49,7 @@ def test_xi_independence():
     np.random.seed(42)
     matr = np.ones((4, 4))  # Uniform distribution represents independence
     ccop = BivBernsteinCopula(matr)
-    xi = ccop.xi()
+    xi = ccop.chatterjees_xi()
     assert np.isclose(xi, 0)
 
 
@@ -59,23 +59,23 @@ def test_tau_perfect_dependence():
     matr_pos = np.zeros((2, 2))
     np.fill_diagonal(matr_pos, 1)  # Place 1's on the main diagonal
     ccop_pos = BivBernsteinCopula(matr_pos)
-    tau_pos = ccop_pos.tau()
+    tau_pos = ccop_pos.kendalls_tau()
 
     # Perfect negative dependence
     matr_neg = np.zeros((2, 2))
     for i in range(2):
         matr_neg[i, 1 - i] = 1  # Place 1's on the opposite diagonal
     ccop_neg = BivBernsteinCopula(matr_neg)
-    tau_neg = ccop_neg.tau()
+    tau_neg = ccop_neg.kendalls_tau()
 
     bern_up = UpperFrechet().to_bernstein()
     bern_low = LowerFrechet().to_bernstein()
-    tau_up = bern_up.tau()
-    tau_low = bern_low.tau()
+    tau_up = bern_up.kendalls_tau()
+    tau_low = bern_low.kendalls_tau()
     bern_up_2 = UpperFrechet().to_bernstein(2)
     bern_low_2 = LowerFrechet().to_bernstein(2)
-    tau_up_2 = bern_up_2.tau()
-    tau_low_2 = bern_low_2.tau()
+    tau_up_2 = bern_up_2.kendalls_tau()
+    tau_low_2 = bern_low_2.kendalls_tau()
 
     # tau should be positive for positive dependence and negative for negative dependence
     assert np.isclose(tau_pos, 2 / 9)
@@ -92,14 +92,14 @@ def test_rho_perfect_dependence():
     matr_pos = np.zeros((2, 2))
     np.fill_diagonal(matr_pos, 1)  # Place 1's on the main diagonal
     ccop_pos = BivBernsteinCopula(matr_pos)
-    rho_pos = ccop_pos.rho()
+    rho_pos = ccop_pos.spearmans_rho()
 
     # Perfect negative dependence
     matr_neg = np.zeros((2, 2))
     for i in range(2):
         matr_neg[i, 1 - i] = 1  # Place 1's on the opposite diagonal
     ccop_neg = BivBernsteinCopula(matr_neg)
-    rho_neg = ccop_neg.rho()
+    rho_neg = ccop_neg.spearmans_rho()
 
     # Rho should be positive for positive dependence and negative for negative dependence
     assert np.isclose(rho_pos, 1 / 3)
@@ -107,8 +107,8 @@ def test_rho_perfect_dependence():
 
     bern_up = UpperFrechet().to_bernstein(5)
     bern_low = LowerFrechet().to_bernstein(5)
-    rho_up = bern_up.rho()
-    rho_low = bern_low.rho()
+    rho_up = bern_up.spearmans_rho()
+    rho_low = bern_low.spearmans_rho()
     assert rho_up > 0.6
     assert rho_low < -0.6
 
@@ -119,12 +119,12 @@ def test_xi_perfect_dependence():
     matr_pos = np.zeros((2, 2))
     np.fill_diagonal(matr_pos, 0.5)  # Place 1's on the main diagonal
     ccop_pos = BivBernsteinCopula(matr_pos)
-    xi_pos = ccop_pos.xi()
+    xi_pos = ccop_pos.chatterjees_xi()
     matr_neg = np.zeros((2, 2))
     for i in range(2):
         matr_neg[i, 1 - i] = 0.5  # Place 1's on the opposite diagonal
     ccop_neg = BivBernsteinCopula(matr_neg)
-    xi_neg = ccop_neg.xi()
+    xi_neg = ccop_neg.chatterjees_xi()
     assert 1 >= xi_pos >= 0, "xi_pos should be between 0 and 1"
     assert 1 >= xi_neg >= 0, "xi_neg should be between 0 and 1"
 
@@ -132,12 +132,12 @@ def test_xi_perfect_dependence():
 def test_xi_from_frechet():
     bern_up = UpperFrechet().to_bernstein()
     bern_low = LowerFrechet().to_bernstein()
-    xi_up = bern_up.xi()
-    xi_low = bern_low.xi()
+    xi_up = bern_up.chatterjees_xi()
+    xi_low = bern_low.chatterjees_xi()
     bern_up_2 = UpperFrechet().to_bernstein(2)
     bern_low_2 = LowerFrechet().to_bernstein(2)
-    xi_up_2 = bern_up_2.xi()
-    xi_low_2 = bern_low_2.xi()
+    xi_up_2 = bern_up_2.chatterjees_xi()
+    xi_low_2 = bern_low_2.chatterjees_xi()
 
     # xi should be positive for positive dependence and negative for negative dependence
     assert np.isclose(xi_up_2, 1 / 15)
@@ -163,12 +163,12 @@ def test_measures_of_association_with_rectangular_matrix():
         ],
     ]
     ccop = BivBernsteinCopula(matr)
-    tau = ccop.tau()
-    rho = ccop.rho()
+    tau = ccop.kendalls_tau()
+    rho = ccop.spearmans_rho()
     assert 1 > rho > -1
     assert 1 > tau > -1
-    xi1 = ccop.xi(condition_on_y=False)
-    xi2 = ccop.xi(condition_on_y=True)
+    xi1 = ccop.chatterjees_xi(condition_on_y=False)
+    xi2 = ccop.chatterjees_xi(condition_on_y=True)
     assert 1 > xi1 > 0
     assert 1 > xi2 > 0
 
@@ -305,7 +305,7 @@ def test_omega_lambda_xi_relationship():
     manual_xi = 6.0 * np.trace(omega @ d @ lambda_matrix @ d.T) - 2.0
 
     # Compare with the method result
-    method_xi = cop_indep.xi()
+    method_xi = cop_indep.chatterjees_xi()
 
     assert np.isclose(manual_xi, method_xi, atol=1e-14)
     assert np.isclose(method_xi, 0, atol=1e-14)

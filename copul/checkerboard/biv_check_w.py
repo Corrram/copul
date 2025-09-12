@@ -642,18 +642,21 @@ class BivCheckW(BivCheckPi):
         """
         raise PropertyUnavailableException("PDF does not exist for BivCheckW.")
 
-    def rho(self) -> float:
-        return BivCheckPi.rho(self) - 1 / (self.m * self.n)
+    def spearmans_rho(self) -> float:
+        return BivCheckPi.spearmans_rho(self) - 1 / (self.m * self.n)
 
-    def tau(self) -> float:
-        return BivCheckPi.tau(self) - np.trace(self.matr.T @ self.matr)
+    def kendalls_tau(self) -> float:
+        return BivCheckPi.kendalls_tau(self) - np.trace(self.matr.T @ self.matr)
 
-    def xi(
+    def chatterjees_xi(
         self,
         condition_on_y: bool = False,
     ) -> float:
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
-        return super().xi(condition_on_y) + m * np.trace(self.matr.T @ self.matr) / n
+        return (
+            super().chatterjees_xi(condition_on_y)
+            + m * np.trace(self.matr.T @ self.matr) / n
+        )
 
     def spearmans_footrule(self) -> float:
         """
@@ -723,5 +726,5 @@ if __name__ == "__main__":
     copula = BivCheckW(matr)
     ccop = copula.to_checkerboard()
     footrule = ccop.spearmans_footrule()
-    rho = ccop.rho()
+    rho = ccop.spearmans_rho()
     print(f"Footrule: {footrule}, Rho: {rho}")

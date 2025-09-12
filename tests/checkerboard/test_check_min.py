@@ -305,5 +305,5 @@ def test_chatterjees_xi_for_upper_frechet():
     copula = CheckMin(matr)
 
     # Chatterjee's xi for this copula should be 0
-    xi = copula.xi()
+    xi = copula.chatterjees_xi()
     assert np.isclose(xi, 1, atol=1e-2)

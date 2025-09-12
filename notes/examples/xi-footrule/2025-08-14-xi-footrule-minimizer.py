@@ -13,7 +13,7 @@ def simulate():
         i += 1
         ccop = cp.BivCheckMin.generate_randomly()
         footrule = ccop.spearmans_footrule()
-        xi = ccop.xi()
+        xi = ccop.chatterjees_xi()
         if footrule + xi < minimal_value:
             minimal_value = footrule + xi
             print(
@@ -35,10 +35,10 @@ def analyze_minimizer():
     ccop_min = cp.BivCheckMin(matr)
     ccop_pi = cp.BivCheckPi(matr)
     ccop_w = cp.BivCheckW(matr)
-    xi_min = ccop_min.xi()
+    xi_min = ccop_min.chatterjees_xi()
     footrule_min = ccop_min.spearmans_footrule()
-    xi_pi = ccop_pi.xi()
-    xi_w = ccop_w.xi()
+    xi_pi = ccop_pi.chatterjees_xi()
+    xi_w = ccop_w.chatterjees_xi()
     footrule_w = ccop_w.spearmans_footrule()
     footrule_pi = ccop_pi.spearmans_footrule()
 

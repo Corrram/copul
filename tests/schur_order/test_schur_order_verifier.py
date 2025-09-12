@@ -6,7 +6,7 @@ import pytest
 from sympy import Matrix
 from unittest.mock import patch
 
-from copul.families import archimedean
+from copul.family import archimedean
 from copul.schur_order.schur_order_verifier import SchurOrderVerifier
 
 

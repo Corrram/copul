@@ -208,13 +208,13 @@ Checkerboard copulas are copulas that have probability density functions, which 
 .. highlight:: python
 .. code-block:: python
 
-    >>> cp.CuadrasAuge().rho()
+    >>> cp.CuadrasAuge().spearmans_rho()
     -3*delta/(delta - 4)
-    >>> cp.CuadrasAuge(0.5).rho()
+    >>> cp.CuadrasAuge(0.5).spearmans_rho()
     0.428571428571427
-    >>> cp.FarlieGumbelMorgenstern().tau()
+    >>> cp.FarlieGumbelMorgenstern().kendalls_tau()
     2*theta/9
-    >>> cp.AliMikhailHaq().xi()
+    >>> cp.AliMikhailHaq().chatterjees_xi()
     -theta/6 - 0.666666666666667 + 3/theta - 2/theta**2 - 2*(1 - theta)**2*log(1 - theta)/theta**3
     >>> cp.Gaussian().plot_rank_correlations(1_000_000, 50)
 

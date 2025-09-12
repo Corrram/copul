@@ -88,7 +88,7 @@ def test_xi(mock_codec):
 
     # Calculate Chatterjee's Xi
     n = 1_000
-    xi = check.xi(n)
+    xi = check.chatterjees_xi(n)
 
     # Verify rvs was called with the expected argument
     check.rvs.assert_called_once_with(n, random_state=None)

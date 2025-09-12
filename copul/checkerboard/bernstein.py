@@ -6,7 +6,7 @@ from typing import TypeAlias
 
 # Adjust these imports as needed.
 from copul.checkerboard.check import Check
-from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
+from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
 
 
 class BernsteinCopula(Check, CopulaPlottingMixin):

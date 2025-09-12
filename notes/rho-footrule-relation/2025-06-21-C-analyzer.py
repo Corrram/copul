@@ -111,7 +111,7 @@ if __name__ == "__main__":
     # 2. Sanity check: the sum of all probabilities should be 1.0
     total_mass = np.sum(mass_matrix)
     ccop = cp.BivCheckPi(mass_matrix)
-    rho = ccop.rho()
+    rho = ccop.spearmans_rho()
     footrule = ccop.spearmans_footrule()
     print(f"Spearman's rho: {rho:.6f}")
     print(f"Spearman's Footrule: {footrule:.6f}")

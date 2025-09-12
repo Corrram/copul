@@ -28,13 +28,13 @@ def estimate_xi_with_kappa(sample_data, kappa, true_xi=0.3098):
 
     # Measure CheckPi method
     ccop_pi = copul.BivCheckPi.from_data(sample_data, kappa=kappa)
-    lb = ccop_pi.xi()
+    lb = ccop_pi.chatterjees_xi()
     results["check_pi"] = lb
     results["error_check_pi"] = abs(lb - true_xi)
 
     # Measure CheckMin method
     ccop_min = copul.BivCheckMin.from_data(sample_data, kappa=kappa)
-    ub = ccop_min.xi()
+    ub = ccop_min.chatterjees_xi()
     results["check_min"] = ub
     results["error_check_min"] = abs(ub - true_xi)
 

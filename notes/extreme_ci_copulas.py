@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     # feed it into cp.BivCheckPi as before
     ccop = cp.BivCheckPi(M.tolist())
-    print("rho_S =", ccop.rho())
-    print("tau   =", ccop.tau())
-    print("xi    =", ccop.xi())
+    print("rho_S =", ccop.spearmans_rho())
+    print("tau   =", ccop.kendalls_tau())
+    print("xi    =", ccop.chatterjees_xi())
     print("eta   =", ccop.eta())

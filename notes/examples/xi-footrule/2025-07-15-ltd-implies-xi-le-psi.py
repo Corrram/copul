@@ -16,7 +16,7 @@ def main(num_iters=1_000_000):
             continue
         ltd_counter += 1
         footrule = ccop.spearmans_footrule()
-        xi = ccop.xi()
+        xi = ccop.chatterjees_xi()
         if xi > footrule + 1e-8:
             is_plod = cp.PLODVerifier().is_plod(ccop)
             print(
@@ -26,7 +26,7 @@ def main(num_iters=1_000_000):
             cis, cds = ccop.is_cis()
             print(f"CIS: {cis}, CDS: {cds}, LTD: {is_ltd}, PLOD: {is_plod}")
         footrule_min = ccop_min.spearmans_footrule()
-        xi_min = ccop_min.xi()
+        xi_min = ccop_min.chatterjees_xi()
         if xi_min > footrule_min + 1e-8:
             is_plod_min = cp.PLODVerifier().is_plod(ccop_min)
             cis_min, cds_min = ccop_min.is_cis()

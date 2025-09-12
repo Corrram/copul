@@ -8,7 +8,7 @@ Subpackages
    :maxdepth: 4
 
    copul.checkerboard
-   copul.families
+   copul.family
    copul.schur_order
    copul.simulations
    copul.wrapper

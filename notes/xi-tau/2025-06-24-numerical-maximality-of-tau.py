@@ -6,12 +6,12 @@ def main(num_iters=1_000_000):
     # rearranger = cp.CISRearranger()
     for i in range(1, num_iters + 1):
         ccop = cp.BivCheckMin.generate_randomly()
-        xi = ccop.xi()
+        xi = ccop.chatterjees_xi()
         xi = np.clip(xi, 0, 1)
         cop = cp.XiRhoBoundaryCopula.from_xi(xi)
-        tau_max = cop.tau()
-        cop.to_checkerboard().tau()
-        tau = ccop.tau()
+        tau_max = cop.kendalls_tau()
+        cop.to_checkerboard().kendalls_tau()
+        tau = ccop.kendalls_tau()
         if tau == 1:
             continue
         if tau > tau_max + 1e-12:

@@ -7,7 +7,7 @@ import sympy as sp
 from unittest.mock import patch, MagicMock
 import pathlib
 
-from copul.families import archimedean
+from copul.family import archimedean
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 # Import from the module we're testing

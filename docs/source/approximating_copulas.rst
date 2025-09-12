@@ -89,9 +89,9 @@ Estimate Chatterjee's xi using checkerboard and check--min approximations for th
     amh = cp.AliMikhailHaq(0.8)
     grid_sizes = range(3, 10)
 
-    plt.plot(grid_sizes, [amh.to_check_pi(i).xi() for i in grid_sizes], label="CheckPi xi")
-    plt.plot(grid_sizes, [amh.to_check_min(i).xi() for i in grid_sizes], label="CheckMin xi")
-    plt.axhline(y=amh.xi(), color='r', linestyle='--', label="True xi")
+    plt.plot(grid_sizes, [amh.to_check_pi(i).chatterjees_xi() for i in grid_sizes], label="CheckPi xi")
+    plt.plot(grid_sizes, [amh.to_check_min(i).chatterjees_xi() for i in grid_sizes], label="CheckMin xi")
+    plt.axhline(y=amh.chatterjees_xi(), color='r', linestyle='--', label="True xi")
     plt.legend()
     plt.grid()
     plt.show()

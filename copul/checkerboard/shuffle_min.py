@@ -1,9 +1,9 @@
 from typing import Sequence, Union
 import numpy as np
 
-from copul.families.core.biv_core_copula import BivCoreCopula
-from copul.families.core.copula_approximator_mixin import CopulaApproximatorMixin
-from copul.families.core.copula_plotting_mixin import CopulaPlottingMixin
+from copul.family.core.biv_core_copula import BivCoreCopula
+from copul.family.core.copula_approximator_mixin import CopulaApproximatorMixin
+from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
 
 
 # --- Start of ShuffleOfMin Class Definition ---

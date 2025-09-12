@@ -13,11 +13,11 @@ def simulate(num_iters=1_000_000):
         ccop2 = cp.BivCheckPi.generate_randomly(n)
         ccop2_r_matr = rearranger.rearrange_checkerboard(ccop2)
         ccop2_r = cp.BivCheckPi(ccop2_r_matr)
-        tau1 = ccop_r.tau()
-        tau2 = ccop2_r.tau()
+        tau1 = ccop_r.kendalls_tau()
+        tau2 = ccop2_r.kendalls_tau()
         matr_avg = (ccop_r_matr + ccop2_r_matr) / 2
         ccop_avg = cp.BivCheckPi(matr_avg)
-        tau_avg = ccop_avg.tau()
+        tau_avg = ccop_avg.kendalls_tau()
         diff = tau_avg - (tau1 + tau2) / 2
         if diff > 1e-3:
             print(
@@ -43,10 +43,10 @@ def main():
     ]
     ccop1 = cp.BivCheckPi(matr1)
     ccop2 = cp.BivCheckPi(matr2)
-    tau1 = ccop1.tau()
-    tau2 = ccop2.tau()
+    tau1 = ccop1.kendalls_tau()
+    tau2 = ccop2.kendalls_tau()
     ccop_avg = cp.BivCheckPi((np.array(matr1) + np.array(matr2)) / 2)
-    tau_avg = ccop_avg.tau()
+    tau_avg = ccop_avg.kendalls_tau()
     diff = tau_avg - (tau1 + tau2) / 2
     print(f"tau1: {tau1}, tau2: {tau2:}, tau_avg: {tau_avg:}, diff: {diff:}")
 

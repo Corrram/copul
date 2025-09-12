@@ -100,18 +100,18 @@ class BivCheckMin(CheckMin, BivCheckPi):
         """
         raise PropertyUnavailableException("PDF does not exist for BivCheckMin.")
 
-    def rho(self) -> float:
-        return BivCheckPi.rho(self) + 1 / (self.m * self.n)
+    def spearmans_rho(self) -> float:
+        return BivCheckPi.spearmans_rho(self) + 1 / (self.m * self.n)
 
-    def tau(self) -> float:
-        return BivCheckPi.tau(self) + np.trace(self.matr.T @ self.matr)
+    def kendalls_tau(self) -> float:
+        return BivCheckPi.kendalls_tau(self) + np.trace(self.matr.T @ self.matr)
 
-    def xi(
+    def chatterjees_xi(
         self,
         condition_on_y: bool = False,
     ) -> float:
         m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
-        check_pi_xi = super().xi(condition_on_y)
+        check_pi_xi = super().chatterjees_xi(condition_on_y)
         add_on = m * np.trace(self.matr.T @ self.matr) / n
         return check_pi_xi + add_on
 
@@ -189,9 +189,9 @@ if __name__ == "__main__":
     matr = [[1, 1]]
     ccop = BivCheckMin(matr).to_checkerboard()
     footrule = ccop.spearmans_footrule()
-    rho = ccop.rho()
+    rho = ccop.spearmans_rho()
     ginis_gamma = ccop.ginis_gamma()
-    xi = ccop.xi()
+    xi = ccop.chatterjees_xi()
     # ccop.plot_cond_distr_1()
     # ccop.transpose().plot_cond_distr_1()
     is_cis, is_cds = ccop.is_cis()

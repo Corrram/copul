@@ -9,9 +9,9 @@ from unittest.mock import MagicMock, patch
 
 from copul.copula_sampler import CopulaSampler
 from copul.checkerboard.check_pi import CheckPi
-from copul.families.other.biv_independence_copula import BivIndependenceCopula
-from copul.families.other.lower_frechet import LowerFrechet
-from copul.families.other.upper_frechet import UpperFrechet
+from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.other.upper_frechet import UpperFrechet
 
 
 class TestCopulaSampler:

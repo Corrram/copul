@@ -10,9 +10,9 @@
 /notes/examples/*.png
 .venv/
 /.coverage
-/tests/families/images/
-/copul/families/images/
+/tests/family/images/
+/copul/family/images/
 /images/functions/
 notes/examples/images/
-/copul/families/other/images/
+/copul/family/other/images/
 /notes/examples/xi-footrule/images/

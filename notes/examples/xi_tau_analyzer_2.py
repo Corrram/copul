@@ -22,7 +22,7 @@ def main(num_iters=1_000_000):
         ginis_gamma = ccop.ginis_gamma()
         if ginis_gamma < footrule - 1e-8:
             is_plod = cp.PLODVerifier().is_plod(ccop)
-            tau = ccop.tau()
+            tau = ccop.kendalls_tau()
             print(
                 f"Iteration {i}: tau={tau:.4f}, footrule={footrule:.4f}, ginis_gamma={ginis_gamma:.4f} for n={ccop.n}."
             )
@@ -34,7 +34,7 @@ def main(num_iters=1_000_000):
         if ginis_gamma_min < footrule_min - 1e-8:
             is_plod_min = cp.PLODVerifier().is_plod(ccop_min)
             cis_min, cds_min = ccop_min.is_cis()
-            tau_min = ccop_min.tau()
+            tau_min = ccop_min.kendalls_tau()
             print(
                 f"Iteration {i}: tau_min={tau_min:.4f}, footrule_min={footrule_min:.4f}, ginis_gamma_min={ginis_gamma_min:.4f} for n={ccop.n}."
             )

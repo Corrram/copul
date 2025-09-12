@@ -297,9 +297,9 @@ if __name__ == "__main__":
             # print(f"Sum of checkerboard densities: {np.sum(M_density / k**2):.6f}")
 
             ccop = cp.BivCheckPi(M_density)
-            xi = ccop.xi()
-            tau = ccop.tau()
-            rho = ccop.rho()
+            xi = ccop.chatterjees_xi()
+            tau = ccop.kendalls_tau()
+            rho = ccop.spearmans_rho()
             print(f"Approximated from {k}x{k} checkerboard density for x={x_val:.4f}:")
             print(
                 f"τ (Kendall) = {tau:.6f}   ξ (xi) = {xi:.6f}   ρ (Spearman) = {rho:.6f}"
