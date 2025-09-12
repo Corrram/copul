@@ -4,7 +4,7 @@ from copul.family.core.biv_copula import BivCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
-def star_product(
+def markov_product(
     C: "BivCopula",
     D: "BivCopula",
     *,
@@ -121,8 +121,6 @@ def star_product(
     #   build the resulting copula class
     # ------------------------------------------------------------------ #
     class _Star(BivCopula):
-        """Copula of (C ⋆ D).  Evaluations fully vectorised."""
-
         def __init__(self):
             super().__init__()
             if symbolic_ok:

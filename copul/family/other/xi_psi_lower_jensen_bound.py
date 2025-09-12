@@ -60,7 +60,6 @@ class XiPsiLowerJensenBound(BivCopula):
                   + \frac{6v_1^2 - 4v_1^3 - 1}{4\mu^2}.
     """
 
-
     # symbolic parameter & admissible interval
     mu = sp.symbols("mu", real=True)
     params = [mu]

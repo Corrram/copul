@@ -52,7 +52,6 @@ class EllipticalCopula(MultivariateEllipticalCopula, BivCoreCopula):
         BivCoreCopula.__init__(self)
 
     def __call__(self, **kwargs):
-
         if "rho" in kwargs:
             if kwargs["rho"] == -1:
                 del kwargs["rho"]

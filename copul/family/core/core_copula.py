@@ -17,7 +17,6 @@ class CoreCopula:
     utilities (single point, vectorized, and partially substituted forms).
     """
 
-
     params = []
     intervals = {}
     log_cut_off = 4

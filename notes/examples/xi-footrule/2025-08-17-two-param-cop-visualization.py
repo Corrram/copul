@@ -21,7 +21,7 @@ def spearmans_footrule(s, alpha, beta):
 
 def get_L_t(t_grid, alpha, beta, n_points=2000):
     s_fine = np.linspace(0, 1, n_points)
-    psi_vals = psi(s_fine, alpha, beta)
+    psi_vals = spearmans_footrule(s_fine, alpha, beta)
     is_in_hole = (psi_vals[np.newaxis, :] <= t_grid[:, np.newaxis]) & (
         psi_vals[np.newaxis, :] + beta >= t_grid[:, np.newaxis]
     )
@@ -38,7 +38,7 @@ def construct_diagonal_copula(u_grid, v_grid, alpha, beta):
     F_T = np.maximum.accumulate(F_T)
     t_mapped = np.interp(v_grid, F_T, t_base_pts)
     s_grid = u_grid
-    psi_vals_mapped = psi(s_grid, alpha, beta)
+    psi_vals_mapped = spearmans_footrule(s_grid, alpha, beta)
     is_in_hole = (t_mapped >= psi_vals_mapped) & (t_mapped <= psi_vals_mapped + beta)
     f_T_mapped = np.interp(t_mapped, t_base_pts, f_T)
     density = (1 / (1 - beta)) * (1 / (f_T_mapped + 1e-9))
