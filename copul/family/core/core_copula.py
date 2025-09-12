@@ -8,10 +8,15 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class CoreCopula:
+    r"""
+    Unified core for copula classes.
+
+    This class consolidates functionality that was previously split between
+    ``CoreCopula`` and ``Copula``. It manages symbolic CDF/PDF expressions,
+    parameters and their admissible intervals, and provides flexible evaluation
+    utilities (single point, vectorized, and partially substituted forms).
     """
-    A unified Copula class that combines functionality previously split between
-    CoreCopula and Copula classes.
-    """
+
 
     params = []
     intervals = {}
@@ -51,18 +56,24 @@ class CoreCopula:
         return self.__class__.__name__
 
     def __init__(self, dimension, *args, **kwargs):
-        """
-        Initialize a Copula.
+        r"""
+        Initialize a copula.
 
         Parameters
         ----------
         dimension : int
-            Dimension of the copula.
+            Dimension :math:`d` of the copula.
         *args : tuple
-            Positional arguments for parameters.
+            Positional arguments mapped onto remaining symbolic parameters in order.
         **kwargs : dict
-            Keyword arguments for parameters.
+            Explicit parameter assignments (e.g. ``rho=0.5``) or other attributes.
+
+        Notes
+        -----
+        Any provided parameters are removed from ``self.params`` and their intervals
+        from ``self.intervals``; the remaining ones stay symbolic.
         """
+
         self.u_symbols = sympy.symbols(f"u1:{dimension + 1}")
         self.dim = dimension
         self._are_class_vars(kwargs)
@@ -78,21 +89,22 @@ class CoreCopula:
         }
 
     def __call__(self, *args, **kwargs):
-        """
-        Create a new Copula instance with updated parameters.
+        r"""
+        Create a **new** copula instance with updated parameters.
 
         Parameters
         ----------
         *args : tuple
-            Positional arguments for parameters.
+            Positional arguments mapped onto the instance’s **remaining** parameters.
         **kwargs : dict
-            Keyword arguments for parameters.
+            Explicit parameter assignments.
 
         Returns
         -------
-        Copula
-            A new Copula instance with the updated parameters.
+        CoreCopula
+            A (shallow) copy of ``self`` with the provided parameter updates applied.
         """
+
         new_copula = copy.copy(self)
         self._are_class_vars(kwargs)
         for i in range(len(args)):
@@ -108,16 +120,17 @@ class CoreCopula:
         return new_copula
 
     def _set_params(self, args, kwargs):
-        """
-        Set parameters from args and kwargs.
+        r"""
+        Populate parameters from ``args``/``kwargs`` on the current instance.
 
         Parameters
         ----------
         args : tuple
-            Positional arguments for parameters.
+            Positional arguments mapped onto the remaining parameters in order.
         kwargs : dict
-            Keyword arguments for parameters.
+            Explicit parameter assignments (overrides values from ``args``).
         """
+
         if args and len(args) <= len(self.params):
             for i in range(len(args)):
                 kwargs[str(self.params[i])] = args[i]
@@ -127,74 +140,95 @@ class CoreCopula:
 
     @property
     def parameters(self):
-        """
-        Get the parameters of the copula.
+        r"""
+        Parameter intervals of the copula.
 
         Returns
         -------
         dict
-            Dictionary of parameter intervals.
+            Mapping ``name -> sympy.Interval`` for the **remaining** (not yet fixed)
+            parameters.
         """
+
         return self.intervals
 
     @property
     def is_absolutely_continuous(self) -> bool:
-        """
-        Check if the copula is absolutely continuous.
+        r"""
+        Whether the copula is absolutely continuous.
 
         Returns
         -------
         bool
-            True if the copula is absolutely continuous, False otherwise.
+            ``True`` if the copula has a density a.e. on :math:`[0,1]^d`,
+            otherwise ``False``.
+
+        Notes
+        -----
+        Subclasses must override this property.
         """
+
         # Implementations should override this method
         raise NotImplementedError("This method must be implemented in a subclass")
 
     @property
     def is_symmetric(self) -> bool:
-        """
-        Check if the copula is symmetric.
+        r"""
+        Whether the copula is exchangeable (symmetric under coordinate permutations).
 
         Returns
         -------
         bool
-            True if the copula is symmetric, False otherwise.
+            ``True`` if :math:`C(u_{\pi(1)},\ldots,u_{\pi(d)}) = C(u_1,\ldots,u_d)`
+            for all permutations :math:`\pi`, otherwise ``False``.
+
+        Notes
+        -----
+        Subclasses must override this property.
         """
+
         # Implementations should override this method
         raise NotImplementedError("This method must be implemented in a subclass")
 
     def _are_class_vars(self, kwargs):
-        """
-        Check if keys in kwargs are class variables.
+        r"""
+        Validate that all keys in ``kwargs`` are attributes of the instance.
 
         Parameters
         ----------
         kwargs : dict
-            Keyword arguments to check.
+            Candidate attribute assignments.
 
         Raises
         ------
         AssertionError
-            If any key in kwargs is not a class variable.
+            If a key is not found among the instance attributes.
         """
+
         class_vars = set(dir(self))
         assert set(kwargs).issubset(class_vars), (
             f"keys: {set(kwargs)}, free symbols: {class_vars}"
         )
 
     def slice_interval(self, param, interval_start=None, interval_end=None):
-        """
-        Slice the interval of a parameter.
+        r"""
+        Restrict the admissible interval of a parameter.
 
         Parameters
         ----------
         param : str or sympy.Symbol
-            The parameter to slice.
+            Parameter to restrict.
         interval_start : float, optional
-            Start of the interval.
+            New lower bound (inclusive).
         interval_end : float, optional
-            End of the interval.
+            New upper bound (inclusive).
+
+        Notes
+        -----
+        If a bound is not provided, the corresponding bound from the current
+        interval is kept. Open bounds are closed when explicitly set.
         """
+
         if not isinstance(param, str):
             param = str(param)
         left_open = self.intervals[param].left_open
@@ -212,70 +246,63 @@ class CoreCopula:
         )
 
     def _get_cdf_expr(self):
-        """
-        Get the symbolic CDF expression with parameters substituted.
+        r"""
+        Return the symbolic CDF wrapper with current parameter substitutions.
 
         Returns
         -------
-        sympy expression
-            The CDF expression with free symbols substituted.
+        CDFWrapper
+            Wrapper around the (possibly partially substituted) CDF expression.
         """
+
         return CDFWrapper(self._cdf_expr)
 
     def cdf(self, *args, **kwargs):
-        """
-        Compute the CDF at one or multiple points.
+        r"""
+        Evaluate (or partially evaluate) the CDF.
 
-        This method handles both single-point and multi-point CDF evaluation
-        in an efficient vectorized manner. It also supports variable substitution
-        via keyword arguments.
+        This method supports single-point evaluation, partial variable substitution,
+        and returning a callable wrapper if not all variables are specified.
 
         Parameters
         ----------
         *args : array-like or float
-            Either:
-            - Multiple separate coordinates (x, y, ...) of a single point
-            - A single array-like object with coordinates of a single point
-            - A 2D array where each row represents a separate point
+            Either
+            - coordinates of a **single** point (as separate scalars or a 1D array), or
+            - a **single** 1D array of remaining coordinates after substitution.
+            (Multi-point arrays are not supported here.)
         **kwargs : dict
-            Keyword arguments for variable substitution. Supports various naming conventions:
-            - Standard: u1=0.3, u2=0.7, etc.
-            - Bivariate alternative: u=0.3, v=0.7
-            - Original expression variables: x=0.3, y=0.7
-            Partial substitution is allowed.
+            Variable substitutions. Supported naming schemes (mixable):
+            - Standard: ``u1=0.3, u2=0.7, ...``
+            - Bivariate alias: ``u=0.3, v=0.7``
+            - Original expression variables (e.g. ``x=..., y=...``)
 
         Returns
         -------
-        float or numpy.ndarray or CDFWrapper
-            If a single point is provided, returns a float.
-            If multiple points are provided, returns an array of shape (n_points,).
-            If only variable substitutions are provided, returns a partially evaluated CDFWrapper.
-            If no arguments are provided, returns the full CDFWrapper.
+        float or CDFWrapper
+            - A scalar if all variables are provided,
+            - otherwise a partially evaluated ``CDFWrapper`` callable.
 
         Examples
         --------
-        # Single point as separate arguments
-        value = copula.cdf(0.3, 0.7)
+        Single point as separate args::
 
-        # Single point as array
-        value = copula.cdf([0.3, 0.7])
+            value = copula.cdf(0.3, 0.7)
 
-        # Multiple points as 2D array
-        values = copula.cdf(np.array([[0.1, 0.2], [0.3, 0.4]]))
+        Single point as array::
 
-        # Variable substitution (standard)
-        value = copula.cdf(u1=0.3, u2=0.7)
+            value = copula.cdf([0.3, 0.7])
 
-        # Variable substitution (bivariate alternative)
-        value = copula.cdf(u=0.3, v=0.7)
+        Variable substitution (bivariate alias)::
 
-        # Variable substitution (original expression)
-        value = copula.cdf(x=0.3, y=0.7)
+            value = copula.cdf(u=0.3, v=0.7)
 
-        # Partial variable substitution
-        partial_cdf = copula.cdf(u1=0.3)  # Returns a function of u2
-        value = partial_cdf(0.7)  # Evaluate at u2=0.7
+        Partial substitution (returns a function of the remaining variable)::
+
+            f = copula.cdf(u1=0.3)
+            value = f(0.7)
         """
+
         cdf_expr = self._get_cdf_expr()
         # Apply substitutions
         cdf_expr = cdf_expr(**kwargs)
@@ -329,75 +356,49 @@ class CoreCopula:
         return cdf_expr
 
     def _cdf_single_point(self, u):
-        """
-        Helper method to compute CDF for a single point.
+        r"""
+        Helper: CDF at a **single** point.
 
         Parameters
         ----------
         u : numpy.ndarray
-            1D array of length dim representing a single point.
+            1D array of length ``dim``.
 
         Returns
         -------
         float
-            CDF value at the point.
+            :math:`C(u)`.
         """
+
         # Get the CDF wrapper and evaluate
         cdf_wrapper = self._get_cdf_expr()
         return cdf_wrapper(*u)
 
     def cond_distr(self, i, *args, **kwargs):
-        """
-        Compute the conditional distribution for one or multiple points.
+        r"""
+        Evaluate (or partially evaluate) the conditional distribution
+
+        .. math::
+           F_{U_{-i}\mid U_i}(u_{-i}\mid u_i)
+           \;=\; \frac{\partial}{\partial u_i} \, C(u_1,\ldots,u_d).
 
         Parameters
         ----------
         i : int
-            Dimension index (1-based) to condition on.
+            Index (1-based) of the conditioning coordinate.
         *args : array-like or float
-            Either:
-            - Multiple separate coordinates (x, y, ...) of a single point
-            - A single array-like object with coordinates of a single point
-            - A 2D array where each row represents a separate point
+            Coordinates of a **single** point for the remaining variables
+            (same rules as :meth:`cdf`).
         **kwargs : dict
-            Keyword arguments for variable substitution. Supports various naming conventions:
-            - Standard: u1=0.3, u2=0.7, etc.
-            - Bivariate alternative: u=0.3, v=0.7
-            - Original expression variables: x=0.3, y=0.7
-            Partial substitution is allowed.
+            Variable substitutions (same schemes as :meth:`cdf`).
 
         Returns
         -------
-        float or numpy.ndarray or SymPyFuncWrapper
-            If a single point is provided, returns a float.
-            If multiple points are provided, returns an array of shape (n_points,).
-            If only variable substitutions are provided, returns a partially evaluated SymPyFuncWrapper.
-            If no arguments are provided, returns the full SymPyFuncWrapper.
-
-        Examples
-        --------
-        # Single point as separate arguments
-        value = copula.cond_distr(1, 0.3, 0.7)
-
-        # Single point as array
-        value = copula.cond_distr(1, [0.3, 0.7])
-
-        # Multiple points as 2D array
-        values = copula.cond_distr(1, np.array([[0.1, 0.2], [0.3, 0.4]]))
-
-        # Variable substitution (standard)
-        value = copula.cond_distr(1, u1=0.3, u2=0.7)
-
-        # Variable substitution (bivariate alternative)
-        value = copula.cond_distr(1, u=0.3, v=0.7)
-
-        # Variable substitution (original expression)
-        value = copula.cond_distr(1, x=0.3, y=0.7)
-
-        # Partial variable substitution
-        partial_cond = copula.cond_distr(1, u1=0.3)  # Returns a function of u2
-        value = partial_cond(0.7)  # Evaluate at u2=0.7
+        float or SymPyFuncWrapper
+            - Scalar if all variables are provided,
+            - otherwise a partially evaluated ``SymPyFuncWrapper`` callable.
         """
+
         if i < 1 or i > self.dim:
             raise ValueError(f"Dimension {i} out of range 1..{self.dim}")
 
@@ -455,21 +456,22 @@ class CoreCopula:
         return CDiWrapper(cond_expr, i)
 
     def _cond_distr_single(self, i, u):
-        """
-        Helper method for conditional distribution of a single point.
+        r"""
+        Helper: conditional distribution at a **single** point.
 
         Parameters
         ----------
         i : int
-            Dimension index (1-based) to condition on.
+            Conditioning index (1-based).
         u : numpy.ndarray
-            Single point as a 1D array of length dim.
+            1D array of length ``dim``.
 
         Returns
         -------
         float
-            Conditional distribution value.
+            Value of :math:`F_{U_{-i}\mid U_i}(u_{-i}\mid u_i)`.
         """
+
         # Get the conditional distribution function
         cdf = self.cdf()
         derivative = sympy.diff(cdf, self.u_symbols[i - 1])
@@ -479,21 +481,22 @@ class CoreCopula:
         return cond_distr_func(*u)
 
     def _cond_distr_vectorized(self, i, points):
-        """
-        Vectorized implementation of conditional distribution for multiple points.
+        r"""
+        Helper: conditional distribution for **multiple** points.
 
         Parameters
         ----------
         i : int
-            Dimension index (1-based) to condition on.
+            Conditioning index (1-based).
         points : numpy.ndarray
-            Multiple points as a 2D array of shape (n_points, dim).
+            Array of shape ``(n_points, dim)``.
 
         Returns
         -------
         numpy.ndarray
-            Array of shape (n_points,) with conditional distribution values.
+            Values of :math:`F_{U_{-i}\mid U_i}` for each row.
         """
+
         n_points = points.shape[0]
         results = np.zeros(n_points)
 
@@ -509,87 +512,65 @@ class CoreCopula:
         return results
 
     def cond_distr_1(self, *args, **kwargs):
-        """F_{U_{-1}|U_1}(u_{-1} | u_1).
+        r"""
+        :math:`F_{U_{-1}\mid U_1}(u_{-1}\mid u_1)`.
 
         Parameters
         ----------
-        *args : array-like or float
-            Either:
-            - Multiple separate coordinates (x, y, ...) of a single point
-            - A single array-like object with coordinates of a single point
-            - A 2D array where each row represents a separate point
-        **kwargs : dict
-            Keyword arguments for variable substitution, like u1=0.3, u2=0.7.
-            Partial substitution is allowed.
+        *args, **kwargs
+            See :meth:`cond_distr`.
         """
+
         return self.cond_distr(1, *args, **kwargs)
 
     def cond_distr_2(self, *args, **kwargs):
-        """F_{U_{-2}|U_2}(u_{-2} | u_2).
+        r"""
+        :math:`F_{U_{-2}\mid U_2}(u_{-2}\mid u_2)`.
 
         Parameters
         ----------
-        *args : array-like or float
-            Either:
-            - Multiple separate coordinates (x, y, ...) of a single point
-            - A single array-like object with coordinates of a single point
-            - A 2D array where each row represents a separate point
-        **kwargs : dict
-            Keyword arguments for variable substitution, like u1=0.3, u2=0.7.
-            Partial substitution is allowed.
+        *args, **kwargs
+            See :meth:`cond_distr`.
         """
+
         return self.cond_distr(2, *args, **kwargs)
 
     def pdf(self, *args, **kwargs):
-        """
-        Evaluate the PDF at one or multiple points.
+        r"""
+        Evaluate (or partially evaluate) the PDF.
+
+        This differentiates the CDF once w.r.t. **each** coordinate and then applies
+        the same substitution/evaluation logic as :meth:`cdf`.
 
         Parameters
         ----------
         *args : array-like or float
-            Either:
-            - Multiple separate coordinates (x, y, ...) of a single point
-            - A single array-like object with coordinates of a single point
-            - A 2D array where each row represents a separate point
+            Coordinates of a **single** point (same rules as :meth:`cdf`).
         **kwargs : dict
-            Keyword arguments for variable substitution. Supports various naming conventions:
-            - Standard: u1=0.3, u2=0.7, etc.
-            - Bivariate alternative: u=0.3, v=0.7
-            - Original expression variables: x=0.3, y=0.7
-            Partial substitution is allowed.
+            Variable substitutions (same schemes as :meth:`cdf`).
 
         Returns
         -------
         float or numpy.ndarray or SymPyFuncWrapper
-            If a single point is provided, returns a float.
-            If multiple points are provided, returns an array of shape (n_points,).
-            If only variable substitutions are provided, returns a partially evaluated SymPyFuncWrapper.
-            If no arguments are provided, returns the full SymPyFuncWrapper.
+            - Scalar if all variables are provided,
+            - otherwise a partially evaluated ``SymPyFuncWrapper`` callable.
 
         Examples
         --------
-        # Single point as separate arguments
-        value = copula.pdf(0.3, 0.7)
+        Single point as separate args::
 
-        # Single point as array
-        value = copula.pdf([0.3, 0.7])
+            value = copula.pdf(0.3, 0.7)
 
-        # Multiple points as 2D array
-        values = copula.pdf(np.array([[0.1, 0.2], [0.3, 0.4]]))
+        Variable substitution (bivariate alias)::
 
-        # Variable substitution (standard)
-        value = copula.pdf(u1=0.3, u2=0.7)
+            value = copula.pdf(u=0.3, v=0.7)
 
-        # Variable substitution (bivariate alternative)
-        value = copula.pdf(u=0.3, v=0.7)
+        Partial substitution::
 
-        # Variable substitution (original expression)
-        value = copula.pdf(x=0.3, y=0.7)
-
-        # Partial variable substitution
-        partial_pdf = copula.pdf(u1=0.3)  # Returns a function of u2
-        value = partial_pdf(0.7)  # Evaluate at u2=0.7
+            f = copula.pdf(u1=0.3)
+            value = f(0.7)
         """
+
         # Get the PDF expression
         pdf_expr = self._get_cdf_expr()
         for u_symbol in self.u_symbols:
@@ -646,19 +627,20 @@ class CoreCopula:
         return SymPyFuncWrapper(pdf_expr)
 
     def _pdf_single_point(self, u):
-        """
-        Helper method to compute PDF for a single point.
+        r"""
+        Helper: PDF at a **single** point.
 
         Parameters
         ----------
         u : numpy.ndarray
-            1D array of length dim representing a single point.
+            1D array of length ``dim``.
 
         Returns
         -------
         float
-            PDF value at the point.
+            :math:`c(u)` (the copula density at ``u``).
         """
+
         # Compute the PDF
         term = self._get_cdf_expr()
         for u_symbol in self.u_symbols:
@@ -669,19 +651,20 @@ class CoreCopula:
         return pdf_func(*u)
 
     def _pdf_vectorized(self, points):
-        """
-        Vectorized implementation of PDF for multiple points.
+        r"""
+        Vectorized PDF for **multiple** points.
 
         Parameters
         ----------
         points : numpy.ndarray
-            Array of shape (n_points, dim) where each row is a point.
+            Array of shape ``(n_points, dim)`` where each row is a point.
 
         Returns
         -------
         numpy.ndarray
-            Array of shape (n_points,) with PDF values.
+            Array of shape ``(n_points,)`` with values of :math:`c(u)`.
         """
+
         n_points = points.shape[0]
         results = np.zeros(n_points)
 
@@ -701,20 +684,27 @@ class CoreCopula:
     # Copula transforms
     # ------------------------------------------------------------------
     def survival_copula(self):
-        """
-        Return the survival (upper–tail) copula 𝑪̂ corresponding to *self*.
+        r"""
+        Return the survival (upper-tail) copula :math:`\widehat C` corresponding to *self*.
 
-        In d dimensions the survival copula is given by the inclusion–
-        exclusion formula
-            𝑪̂(u) = Σ_{J⊆{1,…,d}} (−1)^{|J|} C(u_J^c),
-        where *u_J^c* replaces u_j by 1 for j∈J.
+        In :math:`d` dimensions, the survival copula is given by the inclusion–exclusion formula
+
+        .. math::
+
+           \widehat C(u)
+           \;=\;
+           \sum_{J\subseteq\{1,\dots,d\}} (-1)^{|J|}
+           \, C\!\big(u^{(J)}\big),
+
+        where :math:`u^{(J)}` denotes the vector obtained from :math:`u` by replacing
+        :math:`u_j` with :math:`1` for all :math:`j\in J`.
 
         Returns
         -------
         CoreCopula
-            A new copula object whose CDF expression is the survival copula
-            of the current one.
+            A new copula object whose CDF expression is the survival copula of the current one.
         """
+
         from itertools import combinations
 
         if self._cdf_expr is None:
@@ -732,27 +722,30 @@ class CoreCopula:
         return new_copula
 
     def vertical_reflection(self, margin: int = 2):
-        """
-        Return the vertical reflection C^{∨} of *self* with respect to one
-        margin.
+        r"""
+        Vertical reflection :math:`C^{\vee}` of *self* with respect to one margin.
 
-        By default (margin=2) and for the bivariate case this is
-            C^{∨}(u,v) = u − C(u, 1−v).
-
-        For arbitrary `margin = j` (1 ≤ j ≤ dim) the definition is
-            C^{∨}(u) = u_j − C(u_1,…,u_{j−1}, 1−u_j, u_{j+1},…,u_d).
+        By default (``margin=2``) and in the bivariate case,
+        \[
+        C^{\vee}(u,v) \;=\; u \;-\; C\bigl(u,\,1-v\bigr).
+        \]
+        For general ``margin=j`` (``1 \le j \le \mathrm{dim}``),
+        \[
+        C^{\vee}(u) \;=\; u_j \;-\;
+        C\bigl(u_1,\dots,u_{j-1},\,1-u_j,\,u_{j+1},\dots,u_d\bigr).
+        \]
 
         Parameters
         ----------
-        margin : int, optional (default=2)
-            The coordinate index (1-based) that is reflected.
+        margin : int, optional
+            1-based index of the reflected coordinate (default ``2``).
 
         Returns
         -------
         CoreCopula
-            A new copula object whose CDF expression is the vertical
-            reflection of the current one.
+            A new copula object whose CDF expression is the vertical reflection of the current one.
         """
+
         if not (1 <= margin <= self.dim):
             raise ValueError(f"margin must be in 1..{self.dim}")
 

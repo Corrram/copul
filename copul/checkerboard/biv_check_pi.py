@@ -21,12 +21,6 @@ class BivCheckPi(CheckPi, BivCoreCopula):
 
     This class implements a bivariate checkerboard copula, which is defined by
     a matrix of values that determine the copula's distribution.
-
-    Attributes:
-        params (List): Empty list as checkerboard copulas are non-parametric.
-        intervals (dict): Empty dictionary as there are no parameters to bound.
-        m (int): Number of rows in the checkerboard matrix.
-        n (int): Number of columns in the checkerboard matrix.
     """
 
     params: List = []

@@ -5,11 +5,15 @@ log = logging.getLogger(__name__)
 
 
 class LTDVerifier:
-    """
-    Verifier for the Left-Tail-Decreasing (LTD) property of copulas.
-    A copula C is LTD iff, for every v in (0,1),
-        u ↦ C(u, v) / u               (0 < u < 1)
-    is non-increasing.
+    r"""Verifier for the left-tail-decreasing (LTD) property of copulas.
+
+    A copula :math:`C` is LTD iff, for every :math:`v\in(0,1)`, the mapping
+
+    .. math::
+
+       u \;\mapsto\; \frac{C(u,v)}{u}, \quad 0<u<1,
+
+    is non-increasing in :math:`u`.
     """
 
     def __init__(self):
@@ -20,23 +24,22 @@ class LTDVerifier:
     #  Public driver
     # ------------------------------------------------------------------ #
     def is_ltd(self, copul, range_min=None, range_max=None):
-        """
-        Check whether *all* members of a one-parameter copula family
-        (or a single fixed copula) satisfy LTD.
+        r"""Check whether a copula (or all members of a one-parameter family) satisfy LTD.
 
         Parameters
         ----------
-        copul : BivCopula (class *or* instance)
-            The copula family or concrete copula to test.
+        copul : BivCopula class or instance
+            The copula family (class) or a concrete copula (instance).
         range_min, range_max : float, optional
             Parameter range to scan if ``copul`` is a family.
 
         Returns
         -------
         bool
-            ``True``  – LTD holds for every parameter tested
-            ``False`` – at least one parameter violates LTD
+            ``True`` if LTD holds for every parameter tested,
+            ``False`` if at least one parameter violates LTD.
         """
+
         range_min = -10 if range_min is None else range_min
         range_max = 10 if range_max is None else range_max
         n_interpolate = 20  # grid on parameter axis
@@ -74,9 +77,21 @@ class LTDVerifier:
     #  Core routine for a *concrete* copula instance
     # ------------------------------------------------------------------ #
     def _copula_is_ltd(self, C, grid):
+        r"""Check LTD for a *concrete* copula instance on a fixed grid.
+
+        Parameters
+        ----------
+        C : BivCopula
+            Concrete copula instance.
+        grid : array_like
+            Discretization points in (0,1) for both :math:`u` and :math:`v`.
+
+        Returns
+        -------
+        bool
+            ``True`` iff :math:`C` is LTD on the given grid.
         """
-        True  ↔  C is LTD on the given grid.
-        """
+
         tol = 1e-10
         # Try the symbolic route first (much faster if available) --------
         try:

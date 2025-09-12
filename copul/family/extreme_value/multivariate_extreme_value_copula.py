@@ -78,13 +78,6 @@ class MultivariateExtremeValueCopula(Copula):
     An extension of the Copula class designed for multivariate extreme value distributions.
     Extreme value copulas arise as the limiting distributions of component-wise maxima
     of random vectors.
-
-    Attributes
-    ----------
-    params : list
-        List of parameters for the extreme value copula.
-    intervals : dict
-        Parameter intervals for the extreme value copula.
     """
 
     params = []

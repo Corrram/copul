@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 
 from copul.checkerboard.biv_check_min import BivCheckMin
 from copul.checkerboard.biv_check_pi import BivCheckPi
-from copul.families import archimedean, elliptical
+from copul.family import archimedean, elliptical
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 

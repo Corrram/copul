@@ -12,17 +12,18 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class Gaussian(MultivariateGaussian, EllipticalCopula):
-    """
-    Bivariate Gaussian copula implementation.
+    r"""
+    Bivariate Gaussian copula.
 
-    This class extends MultivariateGaussian for the bivariate (2-dimensional) case.
-    The Gaussian copula is an elliptical copula based on the multivariate normal distribution.
-    It is characterized by a correlation parameter rho in [-1, 1].
+    Extends :class:`~copul.family.elliptical.multivar_gaussian.MultivariateGaussian`
+    for the 2-dimensional case. Characterized by a correlation parameter
+    :math:`\rho \in [-1,1]`.
 
-    Special cases:
-    - rho = -1: Lower Fréchet bound (countermonotonicity)
-    - rho = 0: Independence copula
-    - rho = 1: Upper Fréchet bound (comonotonicity)
+    **Special cases**
+
+    - :math:`\rho=-1`: Lower Fréchet bound (countermonotone)
+    - :math:`\rho=0`: Independence
+    - :math:`\rho=1`: Upper Fréchet bound (comonotone)
     """
 
     # Define generator as a symbolic expression with 't' as the variable
@@ -30,8 +31,8 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
     generator = sp.exp(-t / 2)
 
     def __new__(cls, *args, **kwargs):
-        """
-        Factory method to handle special cases during initialization.
+        r"""
+        Factory method that handles special cases during initialization.
 
         Parameters
         ----------
@@ -41,7 +42,9 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         Returns
         -------
         Copula
-            An instance of the appropriate copula class.
+            An instance of the appropriate copula class (e.g., Lower/Upper Fréchet
+            or Independence) when :math:`\rho \in \{-1,0,1\}`, otherwise a
+            :class:`Gaussian`.
         """
         # Handle special cases during initialization with positional args
         if len(args) == 1:
@@ -56,7 +59,7 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         return super().__new__(cls)
 
     def __init__(self, *args, **kwargs):
-        """
+        r"""
         Initialize a bivariate Gaussian copula.
 
         Parameters
@@ -75,10 +78,11 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         super().__init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
-        """
+        r"""
         Create a new instance with updated parameters.
 
-        Special case handling for boundary rho values.
+        Special handling for boundary :math:`\rho` values
+        (:math:`-1, 0, 1`) returning the corresponding special copulas.
 
         Parameters
         ----------
@@ -107,23 +111,26 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         return super().__call__(**kwargs)
 
     def rvs(self, n=1, approximate=False, random_state=None, **kwargs):
-        """
+        r"""
         Generate random samples from the Gaussian copula.
 
-        For the bivariate case, this can use the statsmodels implementation
-        for efficiency.
+        For the bivariate case, a fast implementation from ``statsmodels`` is used.
 
         Parameters
         ----------
-        n : int
-            Number of samples to generate
+        n : int, default 1
+            Number of samples to generate.
+        approximate : bool, default False
+            If ``True``, use the project’s generic approximating sampler.
+        random_state : int or numpy.random.Generator, optional
+            Seed or generator for reproducibility.
         **kwargs
-            Additional keyword arguments
+            Passed to the multivariate sampler when ``dim > 2``.
 
         Returns
         -------
         numpy.ndarray
-            Array of shape (n, 2) containing the samples
+            Array of shape :math:`(n,2)` with samples on :math:`[0,1]^2`.
         """
         if approximate:
             sampler = CopulaSampler(self, random_state=random_state)
@@ -172,30 +179,34 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
             return super().cdf
 
     def cdf_vectorized(self, u, v):
-        """
-        Vectorized implementation of the cumulative distribution function for the bivariate Gaussian copula.
+        r"""
+        Vectorized CDF for the bivariate Gaussian copula.
 
-        This highly optimized method evaluates the CDF at multiple points simultaneously.
+        Evaluates :math:`C(u,v)` at many points simultaneously.
 
         Parameters
         ----------
         u : array_like
-            First uniform marginal, must be in [0, 1].
+            First uniform marginal, values in :math:`[0,1]`.
         v : array_like
-            Second uniform marginal, must be in [0, 1].
+            Second uniform marginal, values in :math:`[0,1]`.
 
         Returns
         -------
         numpy.ndarray
-            The CDF values at the specified points.
+            CDF values at the specified points.
 
         Notes
         -----
-        This implementation leverages the highly optimized, compiled backend of statsmodels
-        for the core computation, providing a significant performance increase over manual
-        iteration or less specialized scipy functions. The formula is:
-            C(u,v) = Φ_ρ(Φ^(-1)(u), Φ^(-1)(v))
-        where Φ is the standard normal CDF and Φ_ρ is the bivariate normal CDF with correlation ρ.
+        This implementation leverages the compiled backend in ``statsmodels``. The
+        defining relation is
+
+        .. math::
+
+           C(u,v) \;=\; \Phi_{\rho}\!\bigl(\Phi^{-1}(u),\,\Phi^{-1}(v)\bigr),
+
+        where :math:`\Phi` is the standard normal CDF and :math:`\Phi_{\rho}` is the
+        bivariate normal CDF with correlation :math:`\rho`.
         """
         # Ensure inputs are numpy arrays for vectorized operations
         u = np.asarray(u)
@@ -253,20 +264,24 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         return result
 
     def _conditional_distribution(self, u=None, v=None):
-        """
-        Compute the conditional distribution function of the bivariate Gaussian copula.
+        r"""
+        Conditional distribution of the bivariate Gaussian copula.
+
+        Returns a function computing :math:`\mathbb{P}(V \le v \mid U=u)` (or the
+        symmetric version) using the Gaussian conditional formula.
 
         Parameters
         ----------
         u : float, optional
-            First marginal value
+            Conditioning value for :math:`U`.
         v : float, optional
-            Second marginal value
+            Conditioning value for :math:`V`.
 
         Returns
         -------
         callable or float
-            Conditional distribution function or value
+            A function :math:`v \mapsto C(v\mid u)` / :math:`u \mapsto C(u\mid v)`,
+            or its value if both arguments are provided.
         """
         scale = float(np.sqrt(1 - float(self.rho) ** 2))
 
@@ -285,40 +300,40 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
             return lambda u_: conditional_func(u_, v)
 
     def cond_distr_1(self, u=None, v=None):
-        """
-        Compute the first conditional distribution C(v|u).
+        r"""
+        First conditional distribution :math:`C(v\mid u)`.
 
         Parameters
         ----------
         u : float, optional
-            Conditioning value
+            Conditioning value.
         v : float, optional
-            Value at which to evaluate
+            Evaluation point.
 
         Returns
         -------
         SymPyFuncWrapper
-            Wrapped conditional distribution function or value
+            Wrapped conditional distribution function or value.
         """
         if v in [0, 1]:
             return SymPyFuncWrapper(sp.Number(v))
         return SymPyFuncWrapper(sp.Number(self._conditional_distribution(u, v)))
 
     def cond_distr_2(self, u=None, v=None):
-        """
-        Compute the second conditional distribution C(u|v).
+        r"""
+        Second conditional distribution :math:`C(u\mid v)`.
 
         Parameters
         ----------
         u : float, optional
-            Value at which to evaluate
+            Evaluation point.
         v : float, optional
-            Conditioning value
+            Conditioning value.
 
         Returns
         -------
         SymPyFuncWrapper
-            Wrapped conditional distribution function or value
+            Wrapped conditional distribution function or value.
         """
         if u in [0, 1]:
             return SymPyFuncWrapper(sp.Number(u))
@@ -326,16 +341,15 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
 
     @property
     def pdf(self):
-        """
-        Compute the probability density function of the Gaussian copula.
+        r"""
+        Probability density function of the Gaussian copula.
 
-        For the bivariate case, this can use the statsmodels implementation
-        for efficiency.
+        In the bivariate case, this uses the optimized ``statsmodels`` implementation.
 
         Returns
         -------
         callable
-            Function that computes the PDF at given points
+            Function that computes :math:`c(u,v)` at given points :math:`(u,v)\in(0,1)^2`.
         """
         from statsmodels.distributions.copula.elliptical import (
             GaussianCopula as StatsGaussianCopula,
@@ -351,52 +365,54 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
             return super().pdf
 
     def chatterjees_xi(self, *args, **kwargs):
-        """
-        Compute Chatterjee's xi measure of dependence.
+        r"""
+        Chatterjee's :math:`\xi` dependence measure for the Gaussian copula.
 
         Returns
         -------
         float
-            Chatterjee's xi value
+            Value of :math:`\xi`.
         """
         self._set_params(args, kwargs)
         return 3 / np.pi * np.arcsin(1 / 2 + float(self.rho) ** 2 / 2) - 0.5
 
     def spearmans_rho(self, *args, **kwargs):
-        """
-        Compute Spearman's rho rank correlation.
+        r"""
+        Spearman's rank correlation :math:`\rho_{\!S}` for the Gaussian copula.
 
         Returns
         -------
         float
-            Spearman's rho value
+            Value of :math:`\rho_{\!S}`.
         """
         self._set_params(args, kwargs)
         return 6 / np.pi * np.arcsin(float(self.rho) / 2)
 
     def kendalls_tau(self, *args, **kwargs):
-        """
-        Compute Kendall's tau rank correlation.
+        r"""
+        Kendall's :math:`\tau` for the Gaussian copula.
 
         Returns
         -------
         float
-            Kendall's tau value
+            Value of :math:`\tau`.
         """
         self._set_params(args, kwargs)
         return 2 / np.pi * np.arcsin(float(self.rho))
 
     def spearmans_footrule(self, *args, **kwargs) -> float:
-        """
-        Spearman's footrule F = E[|U - V|] for the Gaussian copula.
+        r"""
+        Spearman's footrule :math:`F = \mathbb{E}\,\lvert U - V\rvert` for the Gaussian copula.
 
         Closed form:
-            F(rho) = 1/2 - (3/pi) * arcsin( (1 + rho) / 2 )
+
+        .. math::
+           F(\rho) \;=\; \tfrac{1}{2} \;-\; \frac{3}{\pi}\,\arcsin\!\Bigl(\frac{1+\rho}{2}\Bigr).
 
         Returns
         -------
         float
-            Footrule distance in [0, 0.5].
+            Footrule distance in :math:`[0, \tfrac12]`.
         """
         self._set_params(args, kwargs)
         rho = float(self.rho)

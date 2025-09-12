@@ -14,11 +14,6 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
 
     The Gaussian copula is an elliptical copula based on the multivariate normal distribution.
     It is characterized by a correlation matrix R.
-
-    Attributes
-    ----------
-    generator : sympy.Expr
-        Generator function for the Gaussian distribution.
     """
 
     # Define generator as a symbolic expression with 't' as the variable

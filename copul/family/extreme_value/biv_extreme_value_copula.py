@@ -20,19 +20,11 @@ log_ = logging.getLogger(__name__)
 
 
 class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
-    """
-    Bivariate Extreme Value Copula.
+    r"""Bivariate extreme value copula.
 
-    A specialized version of the multivariate extreme value copula for the bivariate case.
-    Implements additional methods specific to bivariate extreme value theory using Pickands
-    dependence functions.
-
-    Attributes
-    ----------
-    t : sympy.Symbol
-        Symbol representing the parameter in Pickands function.
-    _pickands : SymPyFuncWrapper
-        Wrapper around the Pickands dependence function.
+    Specialization of :class:`~copul.family.extreme_value.multivariate_extreme_value_copula.MultivariateExtremeValueCopula`
+    to the 2-dimensional case. Provides additional methods specific to bivariate
+    extreme value theory using Pickands dependence functions.
     """
 
     _t_min = 0
@@ -45,14 +37,14 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
     u, v = sp.symbols("u v", nonnegative=True)
 
     def __init__(self, *args, **kwargs):
-        """
-        Initialize a bivariate extreme value copula.
+        r"""Initialize a bivariate extreme value copula.
 
         Parameters
         ----------
         *args, **kwargs
             Additional parameters for the specific extreme value copula.
         """
+
         if "dimension" in kwargs:
             del kwargs["dimension"]
         # First initialize as a MultivariateExtremeValueCopula with dimension=2
@@ -61,14 +53,14 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
     @property
     def pickands(self):
-        """
-        Get the Pickands dependence function with current parameter values substituted.
+        r"""Return the Pickands dependence function with parameter values substituted.
 
         Returns
         -------
         PickandsWrapper
-            A wrapper that supports both calling with t values and sympy operations.
+            A wrapper that supports evaluation at :math:`t` values and symbolic use.
         """
+
         # Get the base expression
         expr = self._pickands
 
@@ -90,34 +82,33 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
     @pickands.setter
     def pickands(self, new_pickands):
-        """
-        Set a new Pickands dependence function.
+        r"""Set a new Pickands dependence function.
 
         Parameters
         ----------
         new_pickands : str or sympy.Expr
-            The new Pickands function to set.
+            The new Pickands function.
         """
+
         self._pickands = sp.sympify(new_pickands)
 
     @classmethod
     def from_pickands(cls, pickands, params=None):
-        """
-        Create a new ExtremeValueCopula instance from a Pickands function.
+        r"""Construct a new copula from a Pickands dependence function.
 
         Parameters
         ----------
-        pickands : str or sympy expression
-            The Pickands dependence function. Can contain 't' or any other variable.
+        pickands : str or sympy.Expr
+            Pickands dependence function. May contain ``t`` or another symbol.
         params : list or str, optional
-            List of parameter names or a single parameter name as string.
-            If None, will attempt to identify parameters automatically.
+            Parameter names. If ``None``, symbols are detected automatically.
 
         Returns
         -------
         BivExtremeValueCopula
-            A new instance with the specified Pickands function
+            Instance with the specified Pickands function.
         """
+
         # Special case for the Galambos test
         if isinstance(pickands, str):
             if pickands == "1 - (x ** (-delta) + (1 - x) ** (-delta)) ** (-1 / delta)":
@@ -203,14 +194,14 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         return obj
 
     def deriv_pickand_at_0(self):
-        """
-        Calculate the derivative of the Pickands function at t=0.
+        r"""Derivative of the Pickands function at :math:`t=0`.
 
         Returns
         -------
-        float or sympy expression
-            The derivative value at t=0
+        float or sympy.Expr
+            Value of :math:`A'(0)`.
         """
+
         # Get the Pickands function
         pickands_func = self.pickands
 
@@ -283,14 +274,14 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
     @property
     def cdf(self):
-        """
-        Cumulative distribution function of the copula.
+        r"""Cumulative distribution function of the copula.
 
         Returns
         -------
         CDFWrapper
-            A wrapper around the CDF function.
+            Wrapper around the symbolic CDF expression.
         """
+
         try:
             # Get the pickands function
             pickands_func = self.pickands
@@ -319,31 +310,27 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             return super().cdf
 
     def cdf_vectorized(self, u, v):
-        """
-        Vectorized implementation of the cumulative distribution function for Extreme Value copulas.
-
-        This method evaluates the CDF at multiple points simultaneously, which is more efficient
-        than calling the scalar CDF function repeatedly.
+        r"""Vectorized cumulative distribution function.
 
         Parameters
         ----------
-        u : array_like
-            First uniform marginal, should be in [0, 1].
-        v : array_like
-            Second uniform marginal, should be in [0, 1].
+        u, v : array_like
+            Uniform marginals in [0,1].
 
         Returns
         -------
         numpy.ndarray
-            The CDF values at the specified points.
+            Values of :math:`C(u,v)`.
 
         Notes
         -----
-        This implementation uses numpy for vectorized operations, providing significant
-        performance improvements for large inputs. The formula used is:
-            C(u,v) = (u*v)^A(ln(v)/ln(u*v))
-        where A is the Pickands dependence function.
+        Implements
+
+        .. math::
+
+           C(u,v) = (uv)^{A(\log v / \log(uv))}.
         """
+
         import numpy as np
         from sympy.utilities.lambdify import lambdify
 
@@ -424,14 +411,14 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
     @property
     def pdf(self):
-        """
-        Probability density function of the copula.
+        r"""Probability density function of the copula.
 
         Returns
         -------
         SymPyFuncWrapper
-            A wrapper around the PDF function.
+            Wrapper around the symbolic or numerical PDF.
         """
+
         try:
             _xi_1, u, v = sp.symbols("_xi_1 u v")
 
@@ -515,19 +502,19 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             return SymPyFuncWrapper(pdf_func)
 
     def spearmans_rho(self, *args, **kwargs):
-        """
-        Compute Spearman's rho for the extreme value copula.
+        r"""Spearman’s :math:`\rho` for the extreme value copula.
 
         Parameters
         ----------
         *args, **kwargs
-            Parameters for the copula.
+            Copula parameters.
 
         Returns
         -------
         sympy.Expr
-            Spearman's rho expression.
+            Symbolic expression of Spearman’s :math:`\rho`.
         """
+
         self._set_params(args, kwargs)
         integrand = self._rho_int_1()  # nelsen 5.15
         log_.debug(f"integrand: {integrand}")
@@ -538,41 +525,36 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         return rho
 
     def _rho_int_1(self):
-        """
-        Compute the integrand for Spearman's rho.
+        r"""Integrand for Spearman’s :math:`\rho`.
 
         Returns
         -------
         sympy.Expr
-            The integrand expression.
+            Symbolic integrand.
         """
+
         return sp.simplify((self.pickands.func + 1) ** (-2))
 
     def _rho(self):
-        """
-        Compute Spearman's rho for extreme value copulas.
+        r"""Compute Spearman’s :math:`\rho`.
 
         Returns
         -------
         sympy.Expr
-            Spearman's rho expression.
+            Symbolic expression of Spearman’s :math:`\rho`.
         """
+
         return sp.simplify(12 * sp.integrate(self._rho_int_1(), (self.t, 0, 1)) - 3)
 
     def kendalls_tau(self, *args, **kwargs):
-        """
-        Compute Kendall's tau for extreme value copulas (Nelsen 5.15).
-
-        Parameters
-        ----------
-        *args, **kwargs
-            Parameters for the copula.
+        r"""Compute Spearman’s :math:`\rho`.
 
         Returns
         -------
         sympy.Expr
-            Kendall's tau expression.
+            Symbolic expression of Spearman’s :math:`\rho`.
         """
+
         self._set_params(args, kwargs)
         t = self.t
         diff2_pickands = sp.diff(self.pickands, t, 2)
@@ -587,16 +569,16 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         return tau
 
     def plot_pickands(self, subs=None, **kwargs):
-        """
-        Plot the Pickands dependence function for different parameter values.
+        r"""Plot the Pickands dependence function.
 
         Parameters
         ----------
         subs : dict, optional
-            Dictionary of parameter substitutions (default is None).
+            Parameter substitutions.
         **kwargs
-            Additional parameter substitutions.
+            Additional substitutions.
         """
+
         if kwargs:
             subs = kwargs
         if subs is None:
@@ -640,16 +622,16 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
     @staticmethod
     def _get_function_graph(func, par):
-        """
-        Generate a function graph for the Pickands function.
+        r"""Plot a Pickands function for given parameter values.
 
         Parameters
         ----------
         func : callable
-            The function to plot.
+            Function of ``t`` to plot.
         par : dict
-            Dictionary of parameter values to display in the legend.
+            Parameter values to include in the legend.
         """
+
         par_str = ", ".join(f"$\\{key}={value}$" for key, value in par.items())
         par_str = par_str.replace("oo", "\\infty")
         lambda_func = sp.lambdify("t", func)
@@ -659,19 +641,19 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
     @staticmethod
     def _mix_params(params):
-        """
-        Generate combinations of parameter values for plotting.
+        r"""Generate parameter combinations for plotting.
 
         Parameters
         ----------
         params : dict
-            Dictionary of parameter names and values or lists of values.
+            Map from parameter name to value or list of values.
 
         Returns
         -------
-        list
-            List of parameter combination dictionaries.
+        list of dict
+            All combinations of parameter values.
         """
+
         # Identify keys with list values that need to be expanded
         list_keys = [key for key, value in params.items() if isinstance(value, list)]
         non_list_keys = [key for key in params if key not in list_keys]
@@ -700,19 +682,19 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
     @staticmethod
     def _get_simplified_solution(sol):
-        """
-        Simplify a symbolic solution.
+        r"""Simplify a symbolic solution.
 
         Parameters
         ----------
         sol : sympy.Expr
-            The symbolic expression to simplify.
+            Expression to simplify.
 
         Returns
         -------
         sympy.Expr
-            The simplified expression.
+            Simplified expression.
         """
+
         simplified_sol = sp.simplify(sol)
         if isinstance(simplified_sol, sp.core.containers.Tuple):
             return simplified_sol[0]
@@ -721,12 +703,12 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
     @property
     def is_ci(self):
-        """
-        Check if the copula is conditionally increasing.
+        r"""Whether the copula is conditionally increasing.
 
         Returns
         -------
         bool
-            True for extreme value copulas.
+            Always ``True`` for extreme value copulas.
         """
+
         return True

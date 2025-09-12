@@ -68,14 +68,6 @@ copul.family.other.farlie\_gumbel\_morgenstern module
    :show-inheritance:
    :undoc-members:
 
-copul.family.other.footrule\_minus\_xi\_lower\_bound module
------------------------------------------------------------
-
-.. automodule:: copul.family.other.footrule_minus_xi_lower_bound
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 copul.family.other.frechet module
 ---------------------------------
 
@@ -140,10 +132,10 @@ copul.family.other.upper\_frechet module
    :show-inheritance:
    :undoc-members:
 
-copul.family.other.xi\_max\_rho\_s\_copula module
--------------------------------------------------
+copul.family.other.xi\_psi\_lower\_jensen\_bound module
+-------------------------------------------------------
 
-.. automodule:: copul.family.other.xi_max_rho_s_copula
+.. automodule:: copul.family.other.xi_psi_lower_jensen_bound
    :members:
    :show-inheritance:
    :undoc-members:

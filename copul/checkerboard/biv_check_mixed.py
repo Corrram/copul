@@ -1,13 +1,3 @@
-"""
-Mixed checkerboard copula (per–cell choice of Π / ↗ / ↘).
-
-A sign-matrix S with entries  0, +1, –1  selects in every rectangle
-      0  → independence          (checkerboard Π)
-     +1  → perfect positive dep. (check-min  ↗)
-     –1  → perfect negative dep. (check-w    ↘)
-The probability matrix Δ (= `matr`) is shared across all three modes.
-"""
-
 from __future__ import annotations
 
 from typing import List, Union
@@ -23,21 +13,29 @@ from copul.schur_order.cis_verifier import CISVerifier
 
 
 class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
-    """Bivariate mixed checkerboard copula (see module doc-string)."""
+    r"""
+    Mixed checkerboard copula (per–cell choice of :math:`\Pi` / ↗ / ↘).
+
+    A sign matrix :math:`S` with entries :math:`\{0,+1,-1\}` selects, in every
+    checkerboard rectangle, which base copula to use:
+
+      * :math:`0`  → independence  (:math:`\Pi`)
+      * :math:`+1` → perfect positive dependence (check-min, ↗)
+      * :math:`-1` → perfect negative dependence (check-w, ↘)
+
+    The probability matrix :math:`\Delta` (argument ``matr``) is shared across
+    all three modes.
+    """
 
     params: List = []
     intervals: dict = {}
 
-    # ------------------------------------------------------------------ #
-    #                               init                                 #
-    # ------------------------------------------------------------------ #
     def __init__(
         self,
         matr: Union[np.ndarray, List[List[float]]],
         sign: Union[np.ndarray, List[List[int]], None] = None,
         **kwargs,
     ):
-        # --- Δ --------------------------------------------------------- #
         matr = np.asarray(matr, dtype=float)
         if matr.ndim != 2:
             raise ValueError("`matr` must be a 2-D array")
@@ -91,7 +89,20 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
     #                       helper (cell localisation)                   #
     # ------------------------------------------------------------------ #
     def _cell_indices(self, u: float, v: float) -> tuple[int, int]:
-        """Return 0-based cell indices (i,j) for point (u,v)."""
+        r"""
+        Mixed checkerboard copula (per–cell choice of :math:`\Pi` / ↗ / ↘).
+
+        A sign matrix :math:`S` with entries :math:`\{0,+1,-1\}` selects, in every
+        checkerboard rectangle, which base copula to use:
+
+          * :math:`0`  → independence  (:math:`\Pi`)
+          * :math:`+1` → perfect positive dependence (check-min, ↗)
+          * :math:`-1` → perfect negative dependence (check-w, ↘)
+
+        The probability matrix :math:`\Delta` (argument ``matr``) is shared across
+        all three modes.
+        """
+
         i = min(int(np.floor(u * self.m)), self.m - 1)
         j = min(int(np.floor(v * self.n)), self.n - 1)
         return i, j
@@ -100,7 +111,23 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
     #                               CDF                                  #
     # ------------------------------------------------------------------ #
     def cdf(self, u: float | np.ndarray, v: float | np.ndarray):
-        """Piecewise delegates to Π, ↗ or ↘ depending on S."""
+        r"""Piecewise delegates to :math:`\Pi`, ↗ or ↘ according to ``sign``.
+
+        For each evaluation point :math:`(u,v)`, the method chooses the base
+        checkerboard copula dictated by the cell’s sign entry and returns the
+        corresponding CDF value.
+
+        Parameters
+        ----------
+        u, v : float or ndarray
+            Coordinates in :math:`[0,1]`. Must have identical shapes.
+
+        Returns
+        -------
+        float or ndarray
+            CDF value(s) with the same shape as the broadcasted inputs.
+        """
+
         u_arr = np.asarray(u, dtype=float)
         v_arr = np.asarray(v, dtype=float)
         if u_arr.shape != v_arr.shape:
@@ -130,15 +157,29 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
     # ------------------------------------------------------------------ #
     @staticmethod
     def _xi_matrix(size: int) -> np.ndarray:
-        """Matrix 2·tri − I (strict lower-triangular coefficient)."""
+        r"""Matrix :math:`2\,\mathrm{tri} - I` (strict lower-triangular coefficient).
+
+        Constructs the :math:`s\times s` matrix
+        :math:`\Xi_s = 2\,\mathrm{tri}_s - I_s`, where :math:`\mathrm{tri}_s`
+        is the unit lower-triangular matrix and :math:`I_s` the identity.
+        Used in the closed-form expression for Kendall’s :math:`\tau`.
+        """
+
         return 2 * np.tri(size) - np.eye(size)
 
     def _omega(self) -> np.ndarray:
+        r"""
+        Ω-matrix with entries
+        :math:`\displaystyle \Omega_{i,j}=\frac{(2m-2i-1)(2n-2j-1)}{mn}`,
+        for **zero-based** indices :math:`i=0,\dots,m-1` and :math:`j=0,\dots,n-1`.
+
+        Returns
+        -------
+        ndarray
+            Array of shape ``(m, n)`` with the weights used in Spearman’s
+            :math:`\rho` computation.
         """
-        Ω-matrix with
-            Ω_{i,j} = ((2m-2i-1)(2n-2j-1)) / (m n)
-        for **zero-based** indices i,j = 0,… .
-        """
+
         i = np.arange(self.m).reshape(-1, 1)  # 0 … m-1
         j = np.arange(self.n).reshape(1, -1)
         num = (2 * self.m - 2 * i - 1) * (2 * self.n - 2 * j - 1)
@@ -173,7 +214,24 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
     #         simple numeric conditional distributions (plots)           #
     # ------------------------------------------------------------------ #
     def cond_distr(self, i: int, u: float, v: float):
-        """A quick numeric version (uses Π-behaviour).  Good enough for plots."""
+        r"""Quick numeric conditional (uses Π-behaviour; suitable for plots).
+
+        This auxiliary routine reuses the independence checkerboard to produce
+        a simple conditional CDF, which is sufficient for visualization.
+
+        Parameters
+        ----------
+        i : int
+            Dimension index to condition on (1-based).
+        u, v : float
+            Evaluation point.
+
+        Returns
+        -------
+        float
+            Conditional CDF value.
+        """
+
         return self._pi.cond_distr(i, u, v)
 
     def cond_distr_1(self, u: float, v: float):
@@ -194,21 +252,27 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
     def rvs(
         self, n: int = 1, *, random_state: int | None = None, **kwargs
     ) -> np.ndarray:
-        """
-        Draw *n* i.i.d. samples from the mixed checkerboard copula.
+        r"""
+        Draw :math:`n` i.i.d. samples from the mixed checkerboard copula.
+
+        Sampling proceeds by (i) selecting a cell according to :math:`\Delta`,
+        then (ii) drawing a point **inside** that cell according to the
+        cell’s mode (uniform for :math:`\Pi`, diagonal ↗ or ↘ for the two
+        perfect-dependence cases).
 
         Parameters
         ----------
         n : int, default 1
             Number of samples to generate.
         random_state : int, optional
-            Seed for the RNG (for reproducibility).
+            Seed for the RNG (reproducibility).
 
         Returns
         -------
-        ndarray, shape (n, 2)
-            Samples ``(U, V)`` in ``[0,1]²``.
+        ndarray of shape (n, 2)
+            Samples :math:`(U,V)` in :math:`[0,1]^2`.
         """
+
         rng = np.random.default_rng(random_state)
 
         # ------ 1) pick the cell for every sample  -------------------- #

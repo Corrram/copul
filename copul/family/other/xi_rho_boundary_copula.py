@@ -11,82 +11,80 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 class XiRhoBoundaryCopula(BivCopula):
     r"""
-    Optimal–ρ diagonal–band copula, parametrised by b_new so that the original
-    scale‐parameter b_old = 1/|b_new|.  For b_new < 0, we use the reflection
-    identity
-    \[
-      C_{b_{\rm new}}^{\downarrow}(u,v) \;=\; v \;-\;
-      C_{|b_{\rm new}|}^{\uparrow}(1 - u,\,v)\,.
-    \]
+    Optimal–:math:`\rho` diagonal–band copula, parameterised by :math:`b_{\mathrm{new}}`
+    so that the original scale parameter :math:`b_{\mathrm{old}} = 1/\lvert b_{\mathrm{new}}\rvert`.
+    For :math:`b_{\mathrm{new}} < 0`, we use the reflection identity
 
-    -----------------
-    Parameter b_new
-    -----------------
-    b_new ∈ ℝ \ {0}.  For b_new > 0, b_old = 1/b_new > 0; for b_new < 0,
-    we treat |b_new| just as above and apply the “down‐reflection.”
+    .. math::
 
-    --------
-    Formulas
-    --------
-    1. Maximal Spearman’s ρ:
-      Let b := b_new.  Then b_old = 1/|b|.  Equivalently, one can write
-      M(b) piecewise in terms of |b| just as in the “b_old‐param” version.
-      We keep the same form, but with |b_old| ≤ 1 ↔ |b| ≥ 1, etc.  In symbolic
-      form:
-      \[
-        M(b) \;=\;
-        \begin{cases}
-          b - \frac{3\,b^2}{10},
-            & |b|\ge 1, \\[1ex]
-          1 - \frac{1}{2\,b^2} + \frac{1}{5\,b^3},
-            & |b| < 1.
-        \end{cases}
-      \]
-      (Here b_old = 1/b_new simply swaps the roles of “small‐b_old” vs. “large‐b_old.”)
+       C_{b_{\rm new}}^{\downarrow}(u,v)
+       \;=\; v \;-\; C_{\lvert b_{\rm new}\rvert}^{\uparrow}\!\bigl(1 - u,\,v\bigr).
 
-    2. Shift s_v(b):
-      Define b_old = 1/|b|.  Then for |b_old| ≤ 1 (i.e. |b| ≥ 1):
-      \[
-        \begin{cases}
-          s_v = \sqrt{2\,v\,b_{\text{old}}},
-            & v \le \tfrac{b_{\text{old}}}{2},\\
-          s_v = v + \tfrac{b_{\text{old}}}{2},
-            & v \in (\tfrac{b_{\text{old}}}{2},\,1 - \tfrac{b_{\text{old}}}{2}],\\
-          s_v = 1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)},
-            & v > 1 - \tfrac{b_{\text{old}}}{2}.
-        \end{cases}
-      \]
-      For |b_old| > 1 (i.e. |b| < 1):
-      \[
-        \begin{cases}
-          s_v = \sqrt{2\,v\,b_{\text{old}}},
-            & v \le \tfrac{1}{2\,b_{\text{old}}},\\
-          s_v = v\,b_{\text{old}} + \tfrac12,
-            & v \in (\tfrac{1}{2\,b_{\text{old}}},\,1 - \tfrac{1}{2\,b_{\text{old}}}],\\
-          s_v = 1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)},
-            & v > 1 - \tfrac{1}{2\,b_{\text{old}}}.
-        \end{cases}
-      \]
+    **Parameter** — :math:`b_{\mathrm{new}}`
+        :math:`b_{\mathrm{new}}\in\mathbb{R}\setminus\{0\}`.
+        For :math:`b_{\mathrm{new}} > 0`, :math:`b_{\mathrm{old}} = 1/b_{\mathrm{new}} > 0`;
+        for :math:`b_{\mathrm{new}} < 0`, use :math:`\lvert b_{\mathrm{new}}\rvert` as above and apply the
+        “down–reflection.”
 
-    3. Copula CDF:
-      For b_new > 0, use the usual triangle‐band formula with b_old = 1/b_new:
-      \[
-        \;a_v \;=\; s_v - b_{\text{old}},
-        \quad
-        C(u,v) =
-        \begin{cases}
-          u,
-            & u \le a_v,\\[0.6ex]
-          a_v + \frac{2\,s_v\,(u - a_v) \;-\; u^2 + a_v^2}{2\,b_{\text{old}}},
-            & a_v < u \le s_v,\\[1ex]
-          v, & u > s_v.
-        \end{cases}
-      \]
-      For b_new < 0, one sets
-      \[
-        C_{b_{\rm new}}(u,v) \;=\;
-        v \;-\; C_{|b_{\rm new}|}\bigl(1 - u,\,v\bigr).
-      \]
+    **Formulas**
+
+    1. Maximal Spearman’s :math:`\rho`:
+
+       Let :math:`b := b_{\mathrm{new}}`. Then :math:`b_{\mathrm{old}} = 1/\lvert b\rvert`.
+       We can write :math:`M(b)` piecewise in terms of :math:`\lvert b\rvert`:
+
+       .. math::
+
+          M(b) \;=\;
+          \begin{cases}
+            b - \dfrac{3\,b^{2}}{10}, & \lvert b\rvert \ge 1,\\[1ex]
+            1 - \dfrac{1}{2\,b^{2}} + \dfrac{1}{5\,b^{3}}, & \lvert b\rvert < 1.
+          \end{cases}
+
+    2. Shift :math:`s_v(b)`:
+
+       Define :math:`b_{\mathrm{old}} = 1/\lvert b\rvert`. For :math:`\lvert b_{\mathrm{old}}\rvert \le 1`
+       (i.e. :math:`\lvert b\rvert \ge 1`),
+
+       .. math::
+
+          s_v \;=\;
+          \begin{cases}
+            \sqrt{2\,v\,b_{\text{old}}}, & v \le \tfrac{b_{\text{old}}}{2},\\
+            v + \tfrac{b_{\text{old}}}{2}, & v \in \bigl(\tfrac{b_{\text{old}}}{2},\,1 - \tfrac{b_{\text{old}}}{2}\bigr],\\
+            1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)}, & v > 1 - \tfrac{b_{\text{old}}}{2}.
+          \end{cases}
+
+       For :math:`\lvert b_{\mathrm{old}}\rvert > 1` (i.e. :math:`\lvert b\rvert < 1`),
+
+       .. math::
+
+          s_v \;=\;
+          \begin{cases}
+            \sqrt{2\,v\,b_{\text{old}}}, & v \le \tfrac{1}{2\,b_{\text{old}}},\\
+            v\,b_{\text{old}} + \tfrac12, & v \in \bigl(\tfrac{1}{2\,b_{\text{old}}},\,1 - \tfrac{1}{2\,b_{\text{old}}}\bigr],\\
+            1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)}, & v > 1 - \tfrac{1}{2\,b_{\text{old}}}.
+          \end{cases}
+
+    3. Copula CDF:
+
+       For :math:`b_{\mathrm{new}} > 0`, use the triangle–band formula with :math:`b_{\mathrm{old}} = 1/b_{\mathrm{new}}`:
+
+       .. math::
+
+          a_v = s_v - b_{\text{old}}, \qquad
+          C(u,v) =
+          \begin{cases}
+            u, & u \le a_v,\\[0.6ex]
+            a_v + \dfrac{2\,s_v\,(u - a_v) - u^2 + a_v^2}{2\,b_{\text{old}}}, & a_v < u \le s_v,\\[1ex]
+            v, & u > s_v.
+          \end{cases}
+
+       For :math:`b_{\mathrm{new}} < 0`, set
+
+       .. math::
+
+          C_{b_{\rm new}}(u,v) \;=\; v \;-\; C_{\lvert b_{\rm new}\rvert}\!\bigl(1 - u,\,v\bigr).
     """
 
     # symbolic parameter & admissible interval
@@ -124,25 +122,27 @@ class XiRhoBoundaryCopula(BivCopula):
     @classmethod
     def from_xi(cls, x):
         r"""
-        Instantiates the copula from a target value for Chatterjee's xi.
+        Instantiate the copula from a target value :math:`x` for Chatterjee's :math:`\xi`.
 
-        This method inverts the relationship between the parameter `b` and `xi`
-        to find the `b` that produces the given `x`. This implementation
-        assumes positive dependence (b > 0). The formula is:
-        \[
-            b_x =
-            \begin{cases}
-            \dfrac{\sqrt{6x}}{2\cos\left(\tfrac13\arccos\bigl(-\tfrac{3\sqrt{6x}}{5}\bigr)\right)},
-              & 0<x\le\tfrac{3}{10},\\[4ex]
-            \dfrac{5+\sqrt{5(6x-1)}}{10(1-x)},
-              & \tfrac{3}{10}<x<1.
-            \end{cases}
-        \]
+        This method inverts the relationship between :math:`b` and :math:`\xi`
+        to find the :math:`b` that produces the given :math:`x`. It assumes
+        positive dependence (:math:`b>0`).
+
+        .. math::
+
+           b_x =
+           \begin{cases}
+           \dfrac{\sqrt{6x}}
+                 {2\cos\!\left(\tfrac13\arccos\!\bigl(-\tfrac{3\sqrt{6x}}{5}\bigr)\right)},
+               & 0<x\le\tfrac{3}{10},\\[4ex]
+           \dfrac{5+\sqrt{5(6x-1)}}{10(1-x)},
+               & \tfrac{3}{10}<x<1.
+           \end{cases}
 
         Parameters
         ----------
         x : float or sympy expression
-            The target value for Chatterjee's xi, in (0, 1).
+            Target value for Chatterjee's :math:`\xi`, in :math:`(0,1)`.
         """
         if x == 0:
             return cls(
@@ -221,8 +221,9 @@ class XiRhoBoundaryCopula(BivCopula):
     # -------- Base‐CDF for b > 0 -------- #
     @staticmethod
     def _base_cdf_expr(u, v, b):
-        """
-        The “upright” CDF formula valid when b_new > 0.  Here b_old = 1/b_new.
+        r"""
+        “Upright” CDF formula valid when :math:`b_{\text{new}} > 0`
+        (here :math:`b_{\text{old}} = 1/b_{\text{new}}`).
         """
         b_old = 1 / b
         s = XiRhoBoundaryCopula._s_expr(v, b)
@@ -337,15 +338,15 @@ class XiRhoBoundaryCopula(BivCopula):
         return True
 
     def chatterjees_xi(self):
-        """
-        Closed-form ξ(b_new).  Recall b_old = 1/|b_new|, so the ‘≤ 1 / ≥ 1’
-        conditions in Prop. 3.4 are swapped when we work in the new scale.
+        r"""
+        Closed-form :math:`\xi(b_{\mathrm{new}})`. Recall :math:`b_{\mathrm{old}} = 1/\lvert b_{\mathrm{new}}\rvert`,
+        so the “:math:`\le 1` / :math:`\ge 1`” conditions swap in the new scale.
 
-            • |b_new| ≥ 1  (⇔ |b_old| ≤ 1):
-                  ξ = (1 / 10|b|²) · (5 − 2/|b|)
+        - If :math:`\lvert b_{\mathrm{new}}\rvert \ge 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \le 1`):
+          :math:`\xi = \dfrac{1}{10\lvert b\rvert^{2}}\,(5 - 2/\lvert b\rvert)`.
 
-            • |b_new| < 1   (⇔ |b_old| ≥ 1):
-                  ξ = 1 − |b| + (3/10) |b|²
+        - If :math:`\lvert b_{\mathrm{new}}\rvert < 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \ge 1`):
+          :math:`\xi = 1 - \lvert b\rvert + \dfrac{3}{10}\lvert b\rvert^{2}`.
         """
         b = 1 / self.b
         xi_large = (sp.Rational(1, 10) / sp.Abs(b) ** 2) * (5 - 2 / sp.Abs(b))
@@ -355,17 +356,18 @@ class XiRhoBoundaryCopula(BivCopula):
             (xi_small, True),  # |b_new|  < 1
         )
 
-    # -------- ρ(b)  (Spearman’s rho) ----------------------------------- #
     def spearmans_rho(self):
-        """
-        Closed-form ρ(b_new).  From Prop. 3.4 with the same change of
-        parameter as above (b_old = 1/|b_new|):
+        r"""
+        Closed-form Spearman’s :math:`\rho(b_{\mathrm{new}})` (from Prop. 3.4 with
+        :math:`b_{\mathrm{old}} = 1/\lvert b_{\mathrm{new}}\rvert`).
 
-            • |b_new| ≥ 1  (⇔ |b_old| ≤ 1):
-                  ρ = sgn(b)·( 1/|b| − 3/(10|b|²) )
+        - If :math:`\lvert b_{\mathrm{new}}\rvert \ge 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \le 1`):
 
-            • |b_new| < 1   (⇔ |b_old| ≥ 1):
-                  ρ = sgn(b)·( 1 − |b|²/2 ) + |b|³/5
+          .. math:: \rho = \operatorname{sgn}(b)\,\!\left(\frac{1}{\lvert b\rvert} - \frac{3}{10\,\lvert b\rvert^{2}}\right).
+
+        - If :math:`\lvert b_{\mathrm{new}}\rvert < 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \ge 1`):
+
+          .. math:: \rho = \operatorname{sgn}(b)\,\!\left(1 - \frac{\lvert b\rvert^{2}}{2}\right) + \frac{\lvert b\rvert^{3}}{5}.
         """
         b = self.b
         rho_large = sp.sign(b) * (1 / sp.Abs(b) - sp.Rational(3, 10) / sp.Abs(b) ** 2)
@@ -376,14 +378,17 @@ class XiRhoBoundaryCopula(BivCopula):
         )
 
     def kendalls_tau(self):
-        """
-        Closed-form τ(b_new). Based on Prop. 3.5 with b_old = 1/|b_new|.
+        r"""
+        Closed-form Kendall’s :math:`\tau(b_{\mathrm{new}})` (based on Prop. 3.5 with
+        :math:`b_{\mathrm{old}} = 1/\lvert b_{\mathrm{new}}\rvert`).
 
-            • |b_new| ≥ 1  (⇔ |b_old| ≤ 1):
-                  τ = sgn(b) · (4|b| − 1) / (6|b|²)
+        - If :math:`\lvert b_{\mathrm{new}}\rvert \ge 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \le 1`):
 
-            • |b_new| < 1   (⇔ |b_old| ≥ 1):
-                  τ = sgn(b) · (1 - (4|b| - |b|²)/6)
+          .. math:: \tau = \operatorname{sgn}(b)\,\frac{6\lvert b\rvert^{2} - 4\lvert b\rvert + 1}{6\lvert b\rvert^{2}}.
+
+        - If :math:`\lvert b_{\mathrm{new}}\rvert < 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \ge 1`):
+
+          .. math:: \tau = \operatorname{sgn}(b)\,\frac{\lvert b\rvert(4-\lvert b\rvert)}{6}.
         """
         b = self.b
         b_abs = sp.Abs(b)
@@ -408,6 +413,7 @@ if __name__ == "__main__":
     # Example usage
     copula = XiRhoBoundaryCopula(b=0.759)
     copula.plot_pdf(plot_type="contour")
+    copula.plot_cond_distr_1(plot_type="contour")
     # copula.plot_cdf(plot_type="contour")
     print("CDF at (0.5, 0.5):", copula.cdf(0.5, 0.5))
     print("PDF at (0.5, 0.5):", copula.pdf(0.5, 0.5))

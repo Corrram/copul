@@ -9,8 +9,38 @@ from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 class Frechet(BivCopula):
+    r"""
+    Bivariate Fréchet copula (a convex combination of the upper/lower
+    Fréchet bounds and independence).
+
+    Parameters
+    ----------
+    alpha : :math:`\alpha \in [0,1]`
+        Weight of the upper Fréchet bound :math:`\min(u,v)`.
+    beta : :math:`\beta \in [0,1]`
+        Weight of the lower Fréchet bound :math:`\max(u+v-1,0)`.
+
+    Notes
+    -----
+    The CDF is
+
+    .. math::
+
+       C(u,v)
+       \;=\;
+       \alpha\,\min(u,v)
+       \;+\; (1-\alpha-\beta)\,u\,v
+       \;+\; \beta\,\max(u+v-1,0).
+
+    The parameter domain must satisfy :math:`\alpha\ge 0`, :math:`\beta\ge 0`
+    and :math:`\alpha+\beta \le 1`.
+
+    The copula is absolutely continuous iff :math:`\alpha=\beta=0`.
+    """
+
     @property
     def is_symmetric(self) -> bool:
+        """Whether :math:`C(u,v)=C(v,u)` (always ``True`` for this family)."""
         return True
 
     _alpha, _beta = sympy.symbols("alpha beta", nonnegative=True)
@@ -94,6 +124,17 @@ class Frechet(BivCopula):
 
     @property
     def cdf(self):
+        r"""
+        Cumulative distribution function
+
+        .. math::
+
+           C(u,v)
+           \;=\;
+           \alpha\,\min(u,v)
+           \;+\; (1-\alpha-\beta)\,u\,v
+           \;+\; \beta\,\max(u+v-1,0).
+        """
         frechet_upper = sympy.Min(self.u, self.v)
         frechet_lower = sympy.Max(self.u + self.v - 1, 0)
         cdf = (
@@ -104,30 +145,22 @@ class Frechet(BivCopula):
         return CDFWrapper(cdf)
 
     def cdf_vectorized(self, u, v):
-        """
-        Vectorized implementation of the cumulative distribution function for Frechet copula.
-
-        This method evaluates the CDF at multiple points simultaneously, which is more efficient
-        than calling the scalar CDF function repeatedly.
+        r"""
+        Vectorized CDF on many points.
 
         Parameters
         ----------
-        u : array_like
-            First uniform marginal, should be in [0, 1].
-        v : array_like
-            Second uniform marginal, should be in [0, 1].
+        u, v : array_like
+            Uniform marginals in :math:`[0,1]`.
 
         Returns
         -------
         numpy.ndarray
-            The CDF values at the specified points.
+            Values of :math:`C(u,v)`.
 
         Notes
         -----
-        This implementation uses numpy for vectorized operations, providing significant
-        performance improvements for large inputs. The formula used is:
-            C(u,v) = α·min(u,v) + (1-α-β)·u·v + β·max(u+v-1,0)
-        where α and β are the parameters of the Frechet copula.
+        Uses NumPy broadcasting; implements the same formula as above.
         """
         import numpy as np
 
@@ -180,10 +213,22 @@ class Frechet(BivCopula):
         return CD2Wrapper(cond_distr)(u, v)
 
     def spearmans_rho(self, *args, **kwargs):
+        r"""
+        Spearman's rank correlation
+
+        .. math:: \rho_S \;=\; \alpha \;-\; \beta.
+        """
         self._set_params(args, kwargs)
         return self._alpha - self._beta
 
     def kendalls_tau(self, *args, **kwargs):
+        r"""
+        Kendall's :math:`\tau`
+
+        .. math::
+
+           \tau \;=\; \frac{(\alpha-\beta)\,\bigl(2+\alpha+\beta\bigr)}{3}.
+        """
         self._set_params(args, kwargs)
         return (self._alpha - self._beta) * (2 + self._alpha + self._beta) / 3
 
@@ -204,20 +249,26 @@ class Frechet(BivCopula):
         raise PropertyUnavailableException("Frechet copula does not have a pdf")
 
     def spearmans_footrule(self, *args, **kwargs):
-        """
-        Calculates Spearman's Footrule (psi) for the Frechet copula.
+        r"""
+        Spearman's footrule
+        :math:`\psi \;=\; \mathbb{E}\,\lvert U-V\rvert`.
 
-        The closed-form formula is psi = alpha - beta / 2.
+        Closed form:
+
+        .. math:: \psi \;=\; \alpha \;-\; \tfrac{1}{2}\,\beta.
         """
         self._set_params(args, kwargs)
         return self.alpha - self.beta / 2
 
     def ginis_gamma(self, *args, **kwargs):
-        """
-        Calculates Gini's Gamma (gamma) for the Frechet copula.
+        r"""
+        Gini's gamma :math:`\gamma`.
 
-        The closed-form formula is gamma = alpha - beta, which is identical to
-        Spearman's Rho for this family.
+        For the Fréchet copula,
+
+        .. math:: \gamma \;=\; \alpha \;-\; \beta,
+
+        which coincides with Spearman's :math:`\rho_S` for this family.
         """
         self._set_params(args, kwargs)
         return self.alpha - self.beta

@@ -11,13 +11,6 @@ class MultivariateEllipticalCopula(Copula):
     Elliptical copulas are derived from elliptical distributions and are characterized
     by a correlation structure. In the multivariate case, they are defined by a
     correlation matrix R.
-
-    Attributes
-    ----------
-    t : sympy.Symbol
-        Symbol representing the generator variable.
-    generator : sympy.Expr or None
-        Generator function for the elliptical distribution (to be defined in subclasses).
     """
 
     t = sp.symbols("t", positive=True)
