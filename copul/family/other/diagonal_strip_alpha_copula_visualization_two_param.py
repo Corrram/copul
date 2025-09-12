@@ -38,7 +38,7 @@ def get_L_t(t_grid, alpha, beta, n_points=1000):
     It integrates an indicator function over a high-resolution grid.
     """
     s_fine = np.linspace(0, 1, n_points)
-    psi_vals = psi(s_fine, alpha, beta)  # Shape: (n_points,)
+    psi_vals = spearmans_footrule(s_fine, alpha, beta)  # Shape: (n_points,)
 
     # Create a 2D boolean matrix where each row corresponds to a t value
     # is_in_hole[i, j] is True if s_fine[j] is in the hole at height t_grid[i]
@@ -83,7 +83,7 @@ def construct_diagonal_copula(u_grid, v_grid, alpha, beta):
     # The u-axis is not transformed, so s_grid is just u_grid
     s_grid = u_grid
 
-    psi_vals_mapped = psi(s_grid, alpha, beta)
+    psi_vals_mapped = spearmans_footrule(s_grid, alpha, beta)
     is_in_hole = (t_mapped >= psi_vals_mapped) & (t_mapped <= psi_vals_mapped + beta)
 
     # 4. Calculate the final density using the change of variables formula
@@ -188,7 +188,7 @@ def calculate_and_plot(alpha_val, beta_val, n_points=1000):
 
     # Overlay the "hole" band outline
     s = np.linspace(0, 1, 400)
-    psi_vals = psi(s, alpha_val, beta_val)
+    psi_vals = spearmans_footrule(s, alpha_val, beta_val)
     ax.plot(s, psi_vals, color=zero_density_color, lw=1.5, label=r"$\psi(s)$")
     ax.plot(
         s,

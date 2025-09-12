@@ -158,8 +158,8 @@ class ClampedParabolaCopula(BivCopula):
         Internal 3D surface plot using the numerical solver for :math:`q(v)`.
         """
         if hasattr(func, "__name__") and func.__name__ in (
-                "cdf_vectorized",
-                "pdf_vectorized",
+            "cdf_vectorized",
+            "pdf_vectorized",
         ):
             f = func
         else:
@@ -195,14 +195,14 @@ class ClampedParabolaCopula(BivCopula):
         return fig, ax
 
     def _plot_contour(
-            self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs
+        self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs
     ):
         """
         Internal contour plot using the numerical solver for :math:`q(v)`.
         """
         if hasattr(func, "__name__") and func.__name__ in (
-                "cdf_vectorized",
-                "pdf_vectorized",
+            "cdf_vectorized",
+            "pdf_vectorized",
         ):
             f = func
         else:
@@ -247,8 +247,8 @@ class ClampedParabolaCopula(BivCopula):
         Internal line plots (slices) using the numerical solver for :math:`q(v)`.
         """
         if hasattr(func, "__name__") and func.__name__ in (
-                "cdf_vectorized",
-                "pdf_vectorized",
+            "cdf_vectorized",
+            "pdf_vectorized",
         ):
             f = func
         else:

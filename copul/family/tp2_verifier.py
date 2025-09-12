@@ -20,6 +20,7 @@ class VerificationResult:
     """
     Class to represent TP2 verification results.
     """
+
     is_tp2: bool
     violations: List[Dict[str, float]]
     tested_params: List[Dict[str, float]]

@@ -69,7 +69,7 @@ from copul.schur_order.cis_rearranger import CISRearranger
 from copul.schur_order.cis_verifier import CISVerifier
 from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.schur_order.plod_verifier import PLODVerifier
-from copul.star_product import star_product
+from copul.star_product import markov_product
 
 __all__ = [
     "xi_ncalculate",
@@ -151,5 +151,5 @@ __all__ = [
     "LTDVerifier",
     "PLODVerifier",
     "ShuffleOfMin",
-    "star_product",
+    "markov_product",
 ]
