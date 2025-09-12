@@ -1,10 +1,3 @@
-"""
-Copula sampling module for generating random variates from copula distributions.
-
-This module provides functionality to sample from arbitrary copula distributions
-using conditional distribution methods.
-"""
-
 import inspect
 import logging
 import random
@@ -27,9 +20,6 @@ class CopulaSampler:
 
     This class provides methods to sample from arbitrary copula distributions using
     conditional distribution methods and numerical root-finding.
-
-    Attributes:
-        err_counter (int): Class variable tracking the number of sampling errors across all instances.
     """
 
     # Class-level error counter

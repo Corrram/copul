@@ -1,26 +1,3 @@
-"""
-Block–diagonal mixed checkerboard copula.
-
-*   Blocks sizes  n₁,…,n_k  along the diagonal  (∑ n_r = d).
-*   Inside a block I_r×I_r every cell mass is  Δ_{ij}=1/(d·n_r).
-*   A sign matrix S (−1/0/+1) chooses per cell between
-        0  → Π        ↘ independence
-        +1 → ↗ (check-min)   perfect +  dependence
-        −1 → ↘ (check-w)     perfect −  dependence
-*   All piece-wise numerics are inherited from
-    :class:`copul.checkerboard.biv_check_mixed.BivCheckMixed`.
-  ------------------------------------------------------------------
-  Closed-form measures (Prop. block_diag_mixed)
-      ξ = 1 − B₂/d² + d⁻² Σ_r P_r/n_r²
-      τ = 1 − B₂/d² + d⁻² Σ_r S_r/n_r²
-      ρ = 3 d⁻³ Σ_r n_r(2d−2a_r−n_r)² − 3 + d⁻¹ Σ_r S_r/n_r
-  with
-      B₂ = Σ_r n_r² ,
-      S_r = Σ_{i,j∈I_r} S_{ij} ,
-      P_r = Σ_{i,j∈I_r} |S_{ij}| ,
-      a_r = starting index of block r  (0-based).
-"""
-
 from __future__ import annotations
 
 from typing import List, Sequence, Union
@@ -31,9 +8,45 @@ from copul.checkerboard.biv_check_mixed import BivCheckMixed
 
 
 class BivBlockDiagMixed(BivCheckMixed):
-    # ------------------------------------------------------------------ #
-    #                              init                                  #
-    # ------------------------------------------------------------------ #
+    r"""
+    Block–diagonal mixed checkerboard copula.
+
+    Parameters
+    ----------
+    sizes : Sequence[int]
+        Block sizes :math:`n_1,\dots,n_k` along the diagonal
+        (with :math:`\sum_r n_r = d`).
+    sign : array-like of shape (d,d), optional
+        Sign matrix :math:`S \in \{-1,0,+1\}^{d\times d}` choosing per cell:
+
+        * 0 → :math:`\Pi` (independence)
+        * +1 → ↗ (check-min; perfect positive dependence)
+        * −1 → ↘ (check-w; perfect negative dependence)
+
+    Notes
+    -----
+    * Inside a block :math:`I_r \times I_r`, every cell mass is
+      :math:`\Delta_{ij} = 1/(d\,n_r)`.
+    * All piece-wise numerics are inherited from
+      :class:`copul.checkerboard.biv_check_mixed.BivCheckMixed`.
+
+    Closed-form dependence measures:
+
+    .. math::
+
+       \xi &= 1 - \tfrac{B_2}{d^2} + \tfrac{1}{d^2}\sum_r \tfrac{P_r}{n_r^2}, \\
+       \tau &= 1 - \tfrac{B_2}{d^2} + \tfrac{1}{d^2}\sum_r \tfrac{S_r}{n_r^2}, \\
+       \rho &= 3\,d^{-3}\sum_r n_r\,(2d-2a_r-n_r)^2 \;-\; 3
+              \;+\; d^{-3}\sum_r \tfrac{S_r}{n_r},
+
+    where
+
+    * :math:`B_2=\sum_r n_r^2`
+    * :math:`S_r=\sum_{i,j\in I_r} S_{ij}`
+    * :math:`P_r=\sum_{i,j\in I_r} |S_{ij}|`
+    * :math:`a_r` = starting index of block :math:`r` (0-based).
+    """
+
     def __init__(
         self,
         sizes: Sequence[int],
@@ -71,12 +84,13 @@ class BivBlockDiagMixed(BivCheckMixed):
     # ------------------------------------------------------------------ #
     @staticmethod
     def make_block_diag_delta(block_sizes: list[int]) -> np.ndarray:
-        """
-        Canonical block-diagonal checkerboard matrix Δ.
+        r"""
+        Canonical block-diagonal checkerboard matrix :math:`\Delta`.
 
-        Each block I_r×I_r of size n_r×n_r receives mass 1/(d·n_r),
-        where d = Σ n_r.
+        Each diagonal block :math:`I_r\times I_r` of size :math:`n_r\times n_r`
+        receives cell mass :math:`1/(d\,n_r)`, where :math:`d=\sum_r n_r`.
         """
+
         d = sum(block_sizes)
         Δ = np.zeros((d, d), dtype=float)
 
@@ -91,9 +105,15 @@ class BivBlockDiagMixed(BivCheckMixed):
     #  CLOSED-FORM DEPENDENCE MEASURES (override default formulas)       #
     # ------------------------------------------------------------------ #
     def _block_sums(self):
+        r"""
+        Per-block summaries.
+
+        Returns the lists :math:`(S_r)_r`, :math:`(P_r)_r` and
+        :math:`B_2=\sum_r n_r^2`, where
+        :math:`S_r=\sum_{i,j\in I_r} S_{ij}` and
+        :math:`P_r=\sum_{i,j\in I_r} |S_{ij}|`.
         """
-        Return per-block (S_r, P_r) lists and B₂ = Σ n_r².
-        """
+
         S_r, P_r = [], []
         B2 = 0
         for r, n_r in enumerate(self.sizes):
@@ -123,12 +143,15 @@ class BivBlockDiagMixed(BivCheckMixed):
 
     # --------------  Spearman’s ρ  ------------------------------------ #
     def spearmans_rho(self) -> float:
+        r"""
+        Closed-form Spearman’s :math:`\rho` for the block-diagonal mixed copula:
+        \[
+        \rho \;=\; 3 d^{-3}\!\sum_r n_r\,(2d-2a_r-n_r)^2 \;-\; 3
+        \;+\; d^{-3}\!\sum_r \frac{S_r}{n_r}.
+        \]
+        Note the second term uses the factor :math:`d^{-3}` (not :math:`d^{-1}`).
         """
-        Closed-form Spearman’s ρ for the block-diagonal mixed copula
-            ρ = 3 d⁻³ Σ_r n_r (2d − 2a_r − n_r)²  − 3
-                + d⁻³ Σ_r S_r / n_r .
-        The second-line coefficient is 1/d³ ( *not* 1/d ).
-        """
+
         S_r, _, _ = self._block_sums()
         d = self.d
 

@@ -290,7 +290,7 @@ class SchurOrderVerifier:
 
 
 if __name__ == "__main__":
-    from copul.families import archimedean
+    from copul.family import archimedean
 
     for i in [2, 8, 15, 18, 21]:
         print(f"Nelsen{i}")

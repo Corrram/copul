@@ -19,16 +19,20 @@ warnings.filterwarnings("ignore", category=IntegrationWarning)
 
 class ClampedParabolaCopula(BivCopula):
     r"""
-    Clamped-parabola copula that maximizes Blest's ν for a given Chatterjee's ξ.
+    Clamped–parabola copula that maximizes Blest's :math:`\nu` for a given
+    Chatterjee's :math:`\xi`.
 
-    This copula family arises from a KKT analysis of the variational problem of
-    maximizing ν(C) for a fixed ξ(C). The partial derivative h(t,v) = ∂₁C(t,v)
-    takes the form of a clamped, decreasing, convex parabola:
-    \[
-      h_v(t) \;=\; \mathrm{clamp}\!\left(\frac{(1-t)^2 - q(v)}{\mu},\,0,\,1\right)
-    \]
-    The function q(v) is determined implicitly by the marginal constraint
-    ∫₀¹ hᵥ(t) dt = v, and must be found numerically.
+    This family arises from a KKT analysis of the variational problem
+    maximizing :math:`\nu(C)` subject to a fixed :math:`\xi(C)`. The
+    partial derivative :math:`h(t,v)=\partial_1 C(t,v)` has the form of a
+    clamped, decreasing, convex parabola:
+
+    .. math::
+
+       h_v(t) \;=\; \mathrm{clamp}\!\left(\frac{(1-t)^2 - q(v)}{\mu},\,0,\,1\right).
+
+    The function :math:`q(v)` is determined implicitly by the marginal
+    constraint :math:`\int_0^1 h_v(t)\,dt = v` and is found numerically.
     """
 
     # Symbolic parameter & admissible interval
@@ -52,7 +56,24 @@ class ClampedParabolaCopula(BivCopula):
 
     @staticmethod
     def _marginal_integral_residual(q, v_target, mu):
-        """Calculates the residual F(q) = (∫ hᵥ(t) dt) - v for a given q."""
+        r"""
+        Residual :math:`F(q) = \left(\int_0^1 h_v(t)\,dt\right) - v`
+        for a given :math:`q`.
+
+        Parameters
+        ----------
+        q : float
+            Candidate value for :math:`q(v)`.
+        v_target : float
+            Target :math:`v \in (0,1)`.
+        mu : float
+            Model parameter :math:`\mu>0`.
+
+        Returns
+        -------
+        float
+            Residual value.
+        """
         if q > 1 or q < -mu:
             return 1e6
 
@@ -66,7 +87,21 @@ class ClampedParabolaCopula(BivCopula):
         return integral - v_target
 
     def _get_q_v(self, v_val, mu_val):
-        """Numerically solves for q(v) for a single SCALAR value v."""
+        r"""
+        Solve for :math:`q(v)` at a single scalar :math:`v`.
+
+        Parameters
+        ----------
+        v_val : float
+            Point :math:`v \in (0,1)`.
+        mu_val : float
+            Parameter :math:`\mu>0`.
+
+        Returns
+        -------
+        float
+            The root :math:`q(v)`.
+        """
         if not (0 < v_val < 1):
             return v_val
 
@@ -93,7 +128,21 @@ class ClampedParabolaCopula(BivCopula):
             )
 
     def _get_q_v_vec(self, v_arr, mu_val):
-        """Vectorized wrapper for _get_q_v that handles any array shape."""
+        r"""
+        Vectorized wrapper around :meth:`_get_q_v` that accepts arrays.
+
+        Parameters
+        ----------
+        v_arr : array_like
+            Array of :math:`v` values.
+        mu_val : float
+            Parameter :math:`\mu>0`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of :math:`q(v)`.
+        """
         v_arr = np.asarray(v_arr)
         original_shape = v_arr.shape
         v_flat = v_arr.flatten()
@@ -105,10 +154,12 @@ class ClampedParabolaCopula(BivCopula):
     # ===================================================================
 
     def _plot3d(self, func, title, zlabel, zlim=None, **kwargs):
-        """Overrides base 3D plot to use the numerical solver."""
+        r"""
+        Internal 3D surface plot using the numerical solver for :math:`q(v)`.
+        """
         if hasattr(func, "__name__") and func.__name__ in (
-            "cdf_vectorized",
-            "pdf_vectorized",
+                "cdf_vectorized",
+                "pdf_vectorized",
         ):
             f = func
         else:
@@ -144,12 +195,14 @@ class ClampedParabolaCopula(BivCopula):
         return fig, ax
 
     def _plot_contour(
-        self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs
+            self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs
     ):
-        """Overrides base contour plot to use the numerical solver."""
+        """
+        Internal contour plot using the numerical solver for :math:`q(v)`.
+        """
         if hasattr(func, "__name__") and func.__name__ in (
-            "cdf_vectorized",
-            "pdf_vectorized",
+                "cdf_vectorized",
+                "pdf_vectorized",
         ):
             f = func
         else:
@@ -190,10 +243,12 @@ class ClampedParabolaCopula(BivCopula):
         return fig
 
     def _plot_functions(self, func, title, zlabel, xlabel="u", **kwargs):
-        """Overrides base function plot to use the numerical solver."""
+        """
+        Internal line plots (slices) using the numerical solver for :math:`q(v)`.
+        """
         if hasattr(func, "__name__") and func.__name__ in (
-            "cdf_vectorized",
-            "pdf_vectorized",
+                "cdf_vectorized",
+                "pdf_vectorized",
         ):
             f = func
         else:
@@ -227,7 +282,7 @@ class ClampedParabolaCopula(BivCopula):
         return fig
 
     def plot_cdf(self, *, plot_type="3d", log_z=False, **kwargs):
-        """Overrides base method to use numerical cdf_vectorized."""
+        """Plot the CDF using the numerical :meth:`cdf_vectorized` implementation."""
         title = kwargs.pop("title", "Cumulative Distribution Function")
         zlabel = kwargs.pop("zlabel", "CDF")
 
@@ -243,7 +298,7 @@ class ClampedParabolaCopula(BivCopula):
             raise ValueError(f"plot_type must be '3d' or 'contour', not {plot_type}")
 
     def plot_pdf(self, *, plot_type="3d", log_z=False, **kwargs):
-        """Overrides base method to use numerical pdf_vectorized."""
+        """Plot the PDF using the numerical :meth:`pdf_vectorized` implementation."""
         title = kwargs.pop("title", "Probability Density Function")
         zlabel = kwargs.pop("zlabel", "PDF")
 
@@ -257,7 +312,7 @@ class ClampedParabolaCopula(BivCopula):
             raise ValueError(f"plot_type must be '3d' or 'contour', not {plot_type}")
 
     def plot_cond_distr_2(self, *, plot_type="3d", log_z=False, **kwargs):
-        """Overrides base method to indicate it is not available."""
+        """Not available: :math:`q(v)` is implicit and prevents a closed form."""
         raise NotImplementedError(
             "cond_distr_2 is not available due to the implicit function q(v)."
         )
@@ -268,10 +323,23 @@ class ClampedParabolaCopula(BivCopula):
 
     @property
     def cdf(self):
+        """Symbolic CDF (returned as a SymPy integral); for numerics use :meth:`cdf_vectorized`."""
         return self._cdf_expr
 
     def cdf_vectorized(self, u, v):
-        """Vectorized implementation of the cumulative distribution function."""
+        """
+        Vectorized cumulative distribution function.
+
+        Parameters
+        ----------
+        u, v : array_like
+            Points in :math:`[0,1]`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Values :math:`C(u,v)`.
+        """
         u, v = np.asarray(u), np.asarray(v)
         mu = float(self.mu)
 
@@ -286,7 +354,20 @@ class ClampedParabolaCopula(BivCopula):
         return np.select([u <= a, u <= s], [u, middle], default=v)
 
     def pdf_vectorized(self, u, v):
-        """Vectorized implementation of the probability density function."""
+        """
+        Vectorized probability density function computed via a finite-difference
+        approximation in :math:`v`.
+
+        Parameters
+        ----------
+        u, v : array_like
+            Points in :math:`[0,1]`.
+
+        Returns
+        -------
+        numpy.ndarray
+            Values of the PDF.
+        """
         u, v = np.atleast_1d(u), np.atleast_1d(v)
         pdf_vals = np.zeros_like(u, dtype=float)
         mu = float(self.mu)
@@ -307,24 +388,49 @@ class ClampedParabolaCopula(BivCopula):
     # ===================================================================
 
     def cond_distr_1(self):
-        """Symbolic expression for h(u,v) = ∂C/∂u."""
+        r"""
+        Symbolic expression for :math:`h(u,v)=\partial_1 C(u,v)`.
+
+        Returns
+        -------
+        sympy.Expr
+            Piecewise-clamped parabola in symbolic form.
+        """
         q = sp.Function("q")(self.v)
         return sp.Min(sp.Max(0, ((1 - self.u) ** 2 - q) / self.mu), 1)
 
     @property
     def _cdf_expr(self):
-        """Returns the integral form of the CDF for symbolic operations."""
+        r"""
+        Symbolic integral representation of the CDF,
+
+        .. math::
+
+           C(u,v) \;=\; \int_0^u h(t,v)\,dt .
+        """
         return sp.Integral(self.cond_distr_1(), (self.u, 0, self.u))
 
     def _pdf_expr(self):
-        """Symbolic PDF is not available."""
+        """No closed-form symbolic PDF; use :meth:`pdf_vectorized` instead."""
         raise NotImplementedError(
             "Symbolic PDF is not available. Use `pdf_vectorized` instead."
         )
 
     @classmethod
     def from_xi(cls, x_target):
-        """Instantiates the copula from a target value for Chatterjee's xi."""
+        r"""
+        Construct a copula with target Chatterjee's :math:`\xi`.
+
+        Parameters
+        ----------
+        x_target : float
+            Desired :math:`\xi \in (0,1)`.
+
+        Returns
+        -------
+        ClampedParabolaCopula
+            Instance with parameter :math:`\mu` chosen to match :math:`\xi`.
+        """
         if not (0 < x_target < 1):
             raise ValueError("Target xi must be in (0, 1).")
 
@@ -335,7 +441,19 @@ class ClampedParabolaCopula(BivCopula):
         return cls(mu=mu_val)
 
     def chatterjees_xi(self):
-        """Calculates Chatterjee's ξ via numerical integration."""
+        r"""
+        Compute Chatterjee's :math:`\xi` by numerical integration.
+
+        Notes
+        -----
+        Uses the identity
+
+        .. math::
+
+           \xi(C) \;=\; 6\int_0^1\!\!\int_0^1 h_v(t)^2\,dt\,dv \;-\; 2,
+
+        with :math:`h_v(t)` given in the class description.
+        """
         mu = float(self.mu)
 
         def h_squared(t, v):
@@ -347,7 +465,17 @@ class ClampedParabolaCopula(BivCopula):
         return 6 * quad(inner_int, 0, 1)[0] - 2
 
     def nu(self):
-        """Calculates Blest's ν via numerical integration."""
+        r"""
+        Compute Blest's :math:`\nu` by numerical integration.
+
+        Notes
+        -----
+        Uses
+
+        .. math::
+
+           \nu(C) \;=\; 12\int_0^1\!\!\int_0^1 (1-t)^2\,h_v(t)\,dt\,dv \;-\; 2.
+        """
         mu = float(self.mu)
 
         def nu_integrand(t, v):

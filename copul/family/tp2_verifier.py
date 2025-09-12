@@ -1,10 +1,3 @@
-"""
-TP2Verifier module for checking the TP2 property of copulas.
-
-This module provides functionality to verify if a copula satisfies the TP2
-(totally positive of order 2) property by analyzing its log-density function.
-"""
-
 import itertools
 import logging
 from typing import Any, Dict, List, Optional
@@ -26,13 +19,7 @@ log = logging.getLogger(__name__)
 class VerificationResult:
     """
     Class to represent TP2 verification results.
-
-    Attributes:
-        is_tp2: Whether the copula satisfies the TP2 property
-        violations: List of parameter values where TP2 property is violated
-        tested_params: List of parameter values that were tested
     """
-
     is_tp2: bool
     violations: List[Dict[str, float]]
     tested_params: List[Dict[str, float]]

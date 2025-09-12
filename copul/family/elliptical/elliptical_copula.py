@@ -9,31 +9,6 @@ from copul.family.other.upper_frechet import UpperFrechet
 
 
 class EllipticalCopula(MultivariateEllipticalCopula, BivCoreCopula):
-    """
-    Abstract base class for bivariate elliptical copulas.
-
-    This class extends MultivariateEllipticalCopula for the bivariate (2-dimensional) case.
-    Elliptical copulas are derived from elliptical distributions and are
-    characterized by a correlation parameter rho in [-1, 1].
-
-    Special cases:
-    - rho = -1: Lower Fréchet bound (countermonotonicity)
-    - rho = 1: Upper Fréchet bound (comonotonicity)
-
-    Attributes
-    ----------
-    t : sympy.Symbol
-        Symbol representing the generator variable.
-    generator : sympy.Expr or None
-        Generator function for the elliptical distribution (to be defined in subclasses).
-    rho : sympy.Symbol
-        Symbol representing the correlation parameter.
-    params : list
-        List of parameters defining the copula.
-    intervals : dict
-        Dictionary mapping parameter names to their valid intervals.
-    """
-
     t = sp.symbols("t", positive=True)
     generator = None
     rho = sp.symbols("rho", real=True)
@@ -41,16 +16,6 @@ class EllipticalCopula(MultivariateEllipticalCopula, BivCoreCopula):
     intervals = {"rho": sp.Interval(-1, 1, left_open=False, right_open=False)}
 
     def __init__(self, *args, **kwargs):
-        """
-        Initialize a bivariate elliptical copula.
-
-        Parameters
-        ----------
-        *args : tuple
-            Positional arguments corresponding to copula parameters.
-        **kwargs : dict
-            Keyword arguments to override default symbolic parameters.
-        """
         # Set dimension to 2 since this is a bivariate copula
         if "dimension" in kwargs and kwargs["dimension"] != 2:
             raise ValueError("EllipticalCopula is a bivariate copula with dimension=2")
@@ -87,21 +52,7 @@ class EllipticalCopula(MultivariateEllipticalCopula, BivCoreCopula):
         BivCoreCopula.__init__(self)
 
     def __call__(self, **kwargs):
-        """
-        Create a new instance with updated parameters.
 
-        Special case handling for boundary rho values.
-
-        Parameters
-        ----------
-        **kwargs
-            Updated parameter values.
-
-        Returns
-        -------
-        EllipticalCopula
-            A new instance with the updated parameters.
-        """
         if "rho" in kwargs:
             if kwargs["rho"] == -1:
                 del kwargs["rho"]
@@ -113,52 +64,58 @@ class EllipticalCopula(MultivariateEllipticalCopula, BivCoreCopula):
 
     @property
     def corr_matrix(self):
-        """
-        Get the 2x2 correlation matrix based on the rho parameter.
+        r"""Return the 2×2 correlation matrix defined by :math:`\rho`.
 
         Returns
         -------
         sympy.Matrix
-            2x2 correlation matrix with ones on the diagonal
-            and rho on the off-diagonal.
+            Matrix
+
+            .. math::
+               \begin{bmatrix}
+               1 & \rho \\
+               \rho & 1
+               \end{bmatrix}
         """
+
         return sp.Matrix([[1, self.rho], [self.rho, 1]])
 
     @corr_matrix.setter
     def corr_matrix(self, matrix):
-        """
-        Set the correlation matrix and update rho.
+        r"""Set the correlation matrix and update :math:`\rho`.
 
         Parameters
         ----------
         matrix : sympy.Matrix
-            2x2 correlation matrix.
+            A 2×2 correlation matrix. Only the off-diagonal element is
+            used to update :math:`\rho`.
         """
+
         # Only extract rho from the matrix if it's a 2x2 matrix
         if isinstance(matrix, sp.Matrix) and matrix.shape == (2, 2):
             self.rho = matrix[0, 1]
 
     def characteristic_function(self, t1, t2):
-        """
-        Compute the characteristic function of the elliptical copula.
+        r"""Characteristic function of the elliptical copula.
 
         Parameters
         ----------
         t1 : float or sympy.Symbol
-            First argument
+            First argument.
         t2 : float or sympy.Symbol
-            Second argument
+            Second argument.
 
         Returns
         -------
         sympy.Expr
-            Value of the characteristic function
+            Value of the characteristic function.
 
         Raises
         ------
         NotImplementedError
-            If generator is not defined in the subclass
+            If the subclass does not define a generator function.
         """
+
         if self.generator is None:
             raise NotImplementedError("Generator function must be defined in subclass")
 

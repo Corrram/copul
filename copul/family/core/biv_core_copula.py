@@ -29,15 +29,6 @@ class BivCoreCopula:
     distributions, and various dependence measures such as Chatterjee's xi,
     Spearman's rho, and Kendall's tau. Additionally, plotting utilities are
     included for visualizing the copula's functions.
-
-    Attributes
-    ----------
-    u, v : sympy.Symbol
-        Symbols representing the two dimensions of the copula.
-    log_cut_off : int
-        Default cut-off used for logarithmic scales.
-    _package_path : pathlib.Path
-        Path to the parent package directory.
     """
 
     u, v = sp.symbols("u v", nonnegative=True)

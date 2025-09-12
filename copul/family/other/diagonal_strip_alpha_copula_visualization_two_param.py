@@ -6,7 +6,7 @@ from scipy.integrate import cumulative_trapezoid, trapezoid
 import os
 
 
-def psi(s, alpha, beta):
+def spearmans_footrule(s, alpha, beta):
     """
     Calculates the lower boundary of the diagonal hole.
     This is the Python implementation of the piecewise function ψ(s).

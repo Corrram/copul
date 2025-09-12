@@ -8,10 +8,10 @@ log = logging.getLogger(__name__)
 #  Positive-Lower-Orthant-Dependence (PLOD) verifier
 # --------------------------------------------------------------------------- #
 class PLODVerifier:
-    """
-    Verifier for the Positive-Lower-Orthant-Dependence (PLOD) property.
-    A copula C is PLOD iff
-        C(u, v)  ≥  u · v            for all 0 < u, v < 1.
+    r"""
+    Verifier for the Positive–Lower–Orthant–Dependence (PLOD) property.
+
+    A copula :math:`C` is PLOD iff :math:`C(u,v) \ge u\,v` for all :math:`0<u,v<1`.
     """
 
     def __init__(self):
@@ -22,23 +22,24 @@ class PLODVerifier:
     #  Public driver
     # ------------------------------------------------------------------ #
     def is_plod(self, copul, range_min=None, range_max=None):
-        """
+        r"""
         Check whether *all* members of a one-parameter copula family
-        (or a single fixed copula) satisfy PLOD.
+        (or a single fixed copula) satisfy the PLOD property.
 
         Parameters
         ----------
-        copul : BivCopula (class *or* instance)
-            The copula family or concrete copula to test.
+        copul : BivCopula (class or instance)
+            The copula family or a concrete copula to test.
         range_min, range_max : float, optional
             Parameter range to scan if ``copul`` is a family.
 
         Returns
         -------
         bool
-            ``True``  – PLOD holds for every parameter tested
-            ``False`` – at least one parameter violates PLOD
+            ``True``  – PLOD holds for every parameter tested.
+            ``False`` – at least one parameter violates PLOD.
         """
+
         range_min = -10 if range_min is None else range_min
         range_max = 10 if range_max is None else range_max
         n_interpolate = 20  # grid on parameter axis
@@ -76,11 +77,24 @@ class PLODVerifier:
     #  Core routine for a *concrete* copula instance
     # ------------------------------------------------------------------ #
     def _copula_is_plod(self, C, grid):
+        r"""
+        Check whether a **concrete copula instance** satisfies PLOD
+        on the given evaluation grid.
+
+        Parameters
+        ----------
+        C : BivCopula
+            Copula instance to test.
+        grid : array-like
+            Grid of values in (0,1) for both coordinates.
+
+        Returns
+        -------
+        bool
+            ``True`` iff :math:`C(u,v)\ge u v` holds on the grid.
         """
-        True  ↔  C is PLOD on the given grid.
-        """
+
         tol = 1e-10
-        # ---------- symbolic route (fast if available) ----------------- #
         try:
             C_expr = C.cdf.func  # SymPy expression
             u_sym, v_sym = C.u, C.v

@@ -4,9 +4,6 @@ from copul.family.core.biv_copula import BivCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
-# ---------------------------------------------------------------------------
-#  Markov (star) product of two instantiated copulas
-# ---------------------------------------------------------------------------
 def star_product(
     C: "BivCopula",
     D: "BivCopula",
@@ -14,25 +11,6 @@ def star_product(
     n_grid: int = 400,  # integration grid for t ∈ [0,1]
     checkerboard: bool = False,  # quick & coarse plotting
 ) -> "BivCopula":
-    """
-    Return the copula (C ⋆ D) created from two *instances* C and D.
-
-    Parameters
-    ----------
-    C, D       instantiated subclasses of ``BivCopula``
-    n_grid     resolution of the inner t–integral
-    checkerboard  if True the resulting object's pdf() uses a fast 1/n_grid
-                  checkerboard approximation – useful for contour plots
-
-    Notes
-    -----
-    • If both inputs have a symbolic CDF we *keep* the unevaluated
-      integral for pretty-printing but evaluate numerically when needed.
-    • All numerical work is fully vectorised; no ``np.vectorize`` remains.
-    """
-    # ------------------------------------------------------------------ #
-    # symbolic objects (if available)
-    # ------------------------------------------------------------------ #
     try:
         C_expr = C.cdf().func
         D_expr = D.cdf().func
@@ -46,9 +24,6 @@ def star_product(
     except Exception:
         symbolic_ok = False  # silently switch to numeric-only
 
-    # ------------------------------------------------------------------ #
-    # pre-compute grid & helpers (both branches share them)
-    # ------------------------------------------------------------------ #
     t_grid = np.linspace(0.0, 1.0, n_grid)
     dt = t_grid[1] - t_grid[0]
 
@@ -68,9 +43,6 @@ def star_product(
     except Exception:
         D_pdf_fun = None
 
-    # ------------------------------------------------------------------ #
-    # helper: argument handling (shared by both star classes)
-    # ------------------------------------------------------------------ #
     def _process_args(args):
         if len(args) == 2:  # f(u,v)
             return np.asarray(args[0]), np.asarray(args[1])

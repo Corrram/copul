@@ -6,26 +6,38 @@ from copul.family.core.copula_approximator_mixin import CopulaApproximatorMixin
 from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
 
 
-# --- Start of ShuffleOfMin Class Definition ---
 class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
     r"""
-    Straight shuffle-of-Min copula C_\pi of order n.
+    Straight shuffle-of-Min copula :math:`C_\pi` of order :math:`n`.
 
-    *Parameters*
+    Parameters
     ----------
     pi : Sequence[int]
-        A permutation of {1,…,n} in 1-based notation. `pi[i]` is \pi(i+1).
+        A permutation of :math:`\{1,\dots,n\}` in **1-based** notation.
+        ``pi[i]`` represents :math:`\pi(i+1)`.
 
     Notes
     -----
-    The support consists of n diagonal line segments
-        S_i = {((i-1+t)/n , (pi[i]-1+t)/n) : 0 ≤ t ≤ 1 }.
-    The copula is singular: `pdf` returns 0 everywhere.
-    The CDF is given by C(u,v) = (1/n) * sum_{i=1}^n min(max(0, min(nu - (i-1), nv - (pi[i]-1))), 1).
-    The conditional CDF C_1(v|u) for u in ((i-1)/n, i/n) is a step function:
-    0 if v < v_0, 1 if v >= v_0, where v_0 = (pi[i]-1+t)/n and t = n*u - (i-1).
-    At boundaries u=0 or u=1, C_1(v|u)=v.
-    Similarly for C_2(u|v). At boundaries v=0 or v=1, C_2(u|v)=u.
+    The support consists of :math:`n` diagonal line segments
+    \[
+    S_i \;=\; \bigl\{\,((i-1+t)/n,\; (\pi(i)-1+t)/n) : 0 \le t \le 1 \,\bigr\}.
+    \]
+    The copula is **singular** (the density is 0 almost everywhere).
+
+    A convenient closed form for the CDF is
+    \[
+    C(u,v) \;=\; \frac{1}{n}\sum_{i=1}^n
+    \min\!\Bigl( 1,\; \max\!\bigl(0,\; \min(nu-i+1,\; nv-\pi(i)+1)\bigr) \Bigr).
+    \]
+
+    For fixed :math:`u \in ((i-1)/n,\, i/n)`, the conditional CDF
+    :math:`C_1(v\mid u)` is a step function: it jumps from 0 to 1 at
+    \[
+    v_0 \;=\; \frac{\pi(i)-1 + t}{n}, \qquad t \;=\; nu - (i-1).
+    \]
+    At the boundaries, :math:`C_1(v\mid 0)=v` and :math:`C_1(v\mid 1)=v`.
+    Similarly for :math:`C_2(u\mid v)` with :math:`C_2(u\mid 0)=u` and
+    :math:`C_2(u\mid 1)=u`.
     """
 
     def __init__(self, pi: Sequence[int]) -> None:
@@ -59,14 +71,26 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
     def _process_args(
         self, args
     ) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
-        """
-        Process arguments to extract u and v coordinates.
+        r"""
+        Normalize positional inputs and extract ``u`` and ``v``.
 
-        Supports:
-        - _process_args((u, v))
-        - _process_args(([u, v],))
-        - _process_args(([[u1, v1], [u2, v2], ...],))
+        Accepted forms
+        --------------
+        - ``_process_args((u, v))``
+        - ``_process_args(([u, v],))``  (single point as 1-D array)
+        - ``_process_args(([[u1, v1], ...],))``  (multiple points as 2-D array)
+
+        Returns
+        -------
+        tuple[float | ndarray, float | ndarray]
+            The two coordinates ``(u, v)`` with shapes broadcastable for vectorized use.
+
+        Raises
+        ------
+        ValueError
+            If the input shape is invalid.
         """
+
         if not args:
             raise ValueError("No arguments provided.")
 
@@ -98,19 +122,20 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
     # ---------- CDF ----------------------------------------------------------
 
     def cdf(self, *args) -> Union[float, np.ndarray]:
-        """
-        Copula C_\\pi(u,v). Vectorized implementation.
+        r"""
+        Copula :math:`C_\pi(u,v)` (vectorized).
 
         Multiple call signatures are supported:
-        - cdf(u, v): u and v are scalars or arrays
-        - cdf([u, v]): Single point as a 1D array
-        - cdf([[u1, v1], [u2, v2], ...]): Multiple points as a 2D array
+        - ``cdf(u, v)`` where ``u`` and ``v`` are scalars or arrays,
+        - ``cdf([u, v])`` for a single point as a 1-D array,
+        - ``cdf([[u1, v1], [u2, v2], ...])`` for multiple points as a 2-D array.
 
         Returns
         -------
         float or numpy.ndarray
             The CDF values at the specified points.
         """
+
         u, v = self._process_args(args)
         # Ensure inputs are arrays and broadcastable
         u_arr, v_arr = np.broadcast_arrays(u, v)
@@ -186,52 +211,65 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
 
     # ---------- PDF ----------------------------------------------------------
     def pdf(self, *args) -> Union[float, np.ndarray]:
+        r"""
+        The straight shuffle-of-Min copula is singular ⇒ the density is 0 a.e.
         """
-        The straight shuffle-of-Min copula is singular ⇒ density is 0 a.e.
-        """
+
         raise NotImplementedError(
             "The straight shuffle-of-Min copula is singular. PDF does not exist."
         )
 
     # ---------- Conditional Distribution -------------------------------------
     def cond_distr_1(self, *args) -> Union[float, np.ndarray]:
+        r"""
+        Conditional distribution of :math:`V` given :math:`U=u`:
+        :math:`C_1(v\mid u)=\mathbb{P}(V\le v\mid U=u)`.
+        Same calling conventions as :meth:`cdf`.
         """
-        Conditional distribution of V given U=u: C_1(v|u) = P(V <= v | U = u).
-        Same calling conventions as cdf() and pdf().
-        """
+
         return self.cond_distr(1, *args)
 
     def cond_distr_2(self, *args) -> Union[float, np.ndarray]:
+        r"""
+        Conditional distribution of :math:`U` given :math:`V=v`:
+        :math:`C_2(u\mid v)=\mathbb{P}(U\le u\mid V=v)`.
+        Same calling conventions as :meth:`cdf`.
         """
-        Conditional distribution of U given V=v: C_2(u|v) = P(U <= u | V = v).
-        Same calling conventions as cdf() and pdf().
-        """
+
         return self.cond_distr(2, *args)
 
     def cond_distr(self, i: int, *args) -> Union[float, np.ndarray]:
-        """
-        Conditional distribution function (vectorized).
+        r"""
+        Conditional distribution (vectorized).
 
-        Calculates:
-        - C_1(v|u) if i=1: conditional of V given U=u
-        - C_2(u|v) if i=2: conditional of U given V=v
+        Computes
+        - :math:`C_1(v\mid u)` if ``i=1`` (condition on :math:`U`)
+        - :math:`C_2(u\mid v)` if ``i=2`` (condition on :math:`V`)
 
-        For a fixed conditioning value, the conditional CDF is a step
-        function that jumps from 0 to 1 at the corresponding value on the
-        copula's support segment. At boundaries (u/v = 0 or 1), it's uniform.
+        For interior conditioning values the conditional CDF is a step function
+        jumping from :math:`0` to :math:`1` at the point where the corresponding
+        support segment is reached.  At the boundaries :math:`u\in\{0,1\}` or
+        :math:`v\in\{0,1\}` the conditionals are uniform (:math:`v` or :math:`u`,
+        respectively).
 
         Parameters
         ----------
         i : int
-            Index of the conditioning variable (1 for V|U, 2 for U|V)
-        *args :
-            Same calling conventions as cdf() and pdf().
+            ``1`` for :math:`C_1(v\mid u)`, ``2`` for :math:`C_2(u\mid v)`.
+        *args
+            Same calling conventions as :meth:`cdf`.
 
         Returns
         -------
         float or numpy.ndarray
-            The conditional distribution values.
+            Conditional CDF value(s).
+
+        Raises
+        ------
+        ValueError
+            If ``i`` is outside ``{1, 2}`` or coordinates lie outside :math:`[0,1]`.
         """
+
         if not (1 <= i <= self.dim):
             raise ValueError(f"i must be between 1 and {self.dim}")
 
@@ -336,7 +374,24 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
 
     # simple generators for simulation / plotting -----------------------------
     def rvs(self, size: int, **kwargs) -> np.ndarray:
-        """Generate `size` iid samples from C_{\\pi}."""
+        r"""
+        Generate :math:`\texttt{size}` i.i.d. samples from :math:`C_{\pi}`.
+
+        Sampling picks a segment index uniformly from :math:`\{0,\dots,n-1\}` and a
+        parameter :math:`t\sim U(0,1)`, then sets
+        :math:`u=(i+t)/n`, :math:`v=(\pi(i+1)-1+t)/n`.
+
+        Parameters
+        ----------
+        size : int
+            Number of samples.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of shape ``(size, 2)`` with samples in :math:`[0,1]^2`.
+        """
+
         # Choose a random segment index (0 to n-1) for each sample
         seg_idx = np.random.randint(0, self.n, size=size)
         # Choose a random parameter t (0 to 1) along the segment diagonal
@@ -352,7 +407,19 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
 
     # --- Association measures ------------------------------------------------
     def kendall_tau(self) -> float:
-        """Population Kendall's tau via inversion count."""
+        r"""
+        Population Kendall’s :math:`\tau` via inversion count.
+
+        Let :math:`N_{\mathrm{inv}}` be the number of inversions of the
+        0-based permutation ``pi0``.  Then
+        :math:`\tau = 1 - \dfrac{4\,N_{\mathrm{inv}}}{n^2}`.
+
+        Returns
+        -------
+        float
+            Kendall’s :math:`\tau` (``nan`` if :math:`n\le 1`).
+        """
+
         # Handle n=1 case first
         if self.n <= 1:
             return np.nan
@@ -374,7 +441,18 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
         return tau
 
     def spearman_rho(self) -> float:
-        """Population Spearman's rho via squared rank differences."""
+        r"""
+        Population Spearman’s :math:`\rho` via squared rank differences.
+
+        With ranks :math:`1,\dots,n` and :math:`\pi(1),\dots,\pi(n)`,
+        :math:`\rho = 1 - \dfrac{6\sum_{i=1}^n (i-\pi(i))^2}{n^3}`.
+
+        Returns
+        -------
+        float
+            Spearman’s :math:`\rho` (``nan`` if :math:`n\le 1`).
+        """
+
         # Handle n=1 case first
         if self.n <= 1:
             return np.nan
@@ -391,7 +469,18 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
         return 1.0 - 6.0 * d_sq / self.n**3
 
     def chatterjee_xi(self) -> float:
-        """Chatterjee's xi = 1 for any straight shuffle-of-Min (functional dependence)."""
+        r"""
+        Chatterjee’s :math:`\xi`.
+
+        For any straight shuffle-of-Min (functional dependence along segments),
+        :math:`\xi=1`.
+
+        Returns
+        -------
+        float
+            Always ``1.0`` (``nan`` only if :math:`n=0`).
+        """
+
         # V is a piecewise linear function of U, so xi should be 1.
         # For n=1, dependence is perfect, so 1 seems reasonable, though ranks are trivial.
         if self.n == 0:
@@ -399,13 +488,35 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
         return 1.0
 
     def tail_lower(self) -> float:
-        """Lower tail dependence: positive only if first segment is on diagonal."""
+        r"""
+        Lower tail dependence coefficient :math:`\lambda_L`.
+
+        It is positive (equal to 1) iff the first segment lies on the main diagonal,
+        i.e. :math:`\pi(1)=1`; otherwise it is 0.
+
+        Returns
+        -------
+        float
+            :math:`\lambda_L \in \{0,1\}` (``nan`` if :math:`n=0`).
+        """
+
         if self.n == 0:
             return np.nan
         return 1.0 if self.pi[0] == 1 else 0.0
 
     def tail_upper(self) -> float:
-        """Upper tail dependence: positive only if last segment is on diagonal."""
+        r"""
+        Upper tail dependence coefficient :math:`\lambda_U`.
+
+        It is positive (equal to 1) iff the last segment lies on the main diagonal,
+        i.e. :math:`\pi(n)=n`; otherwise it is 0.
+
+        Returns
+        -------
+        float
+            :math:`\lambda_U \in \{0,1\}` (``nan`` if :math:`n=0`).
+        """
+
         if self.n == 0:
             return np.nan
         return 1.0 if self.pi[-1] == self.n else 0.0

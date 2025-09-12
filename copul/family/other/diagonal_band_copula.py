@@ -5,22 +5,27 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class DiagonalBandCopula(BivCopula):
-    r"""Bojarski‐type **Diagonal Band Copula** (uniform band along *y=x*).
+    r"""Bojarski-type *diagonal band copula* (uniform band along :math:`y=x`).
 
-    A stripe of half‑width ``α`` is laid along the main diagonal and *wrapped/
-    reflected* at the square’s borders so that the marginals stay **uniform**.
+    A stripe of half-width :math:`\alpha` is laid along the main diagonal and
+    *wrapped/reflected* at the unit square’s borders so that both marginals remain
+    uniform.
 
-    The construction follows Bojarski (2002, *J. Math. Sci.*) Eq (1) with
-    a *constant* base density
-    :math:`f(z)=\frac{1}{2α}\mathbf1\{|z|\le α\}` on ``[-α,α]``.  Setting a
-    different, symmetric base density (e.g. a scaled Beta) is a straightforward
-    extension, but the uniform band already reproduces the classical diagonal
-    band copula discussed in the paper’s example.
+    Following Bojarski (2002, *J. Math. Sci.*, Eq. (1)) with a **constant** base
+    density
 
-    **Parameter**
+    .. math::
+
+       f(z) \;=\; \frac{1}{2\alpha}\,\mathbf{1}\{|z|\le \alpha\}, \quad z\in\mathbb{R},
+
+    supported on :math:`[-\alpha,\alpha]`. Using a different symmetric base density
+    (e.g., rescaled Beta) is a straightforward extension, but the uniform band
+    already reproduces the classical diagonal-band example discussed in the paper.
+
+    Parameters
     ----------
-    α : float in (0, 1]
-        Half‑width of the band.
+    \alpha : float in (0, 1]
+        Half-width of the diagonal band.
     """
 
     alpha = sp.symbols("alpha", positive=True)
@@ -74,7 +79,24 @@ class DiagonalBandCopula(BivCopula):
     # ------------------------------------------------------------------
     @property
     def pdf(self):
-        """Piece‑wise density *g_α(u,v)* from Bojarski (2002)."""
+        r"""Piecewise density :math:`g_\alpha(u,v)` of the diagonal-band construction.
+
+        With the base density :math:`f(z)=\tfrac{1}{2\alpha}\mathbf{1}\{|z|\le \alpha\}`,
+        the copula density is
+
+        .. math::
+
+           g_\alpha(u,v)
+           \;=\;
+           \begin{cases}
+             f(u-v) + f(u+v), & u+v \le \alpha,\\[0.5ex]
+             f(u-v),          & \alpha < u+v < 2-\alpha,\\[0.5ex]
+             f(u-v) + f(u+v-2), & u+v \ge 2-\alpha,
+           \end{cases}
+
+        which enforces uniform margins by wrapping the diagonal band near the corners.
+        """
+
         u, v, a = self.u, self.v, self.alpha
         term1 = self._f(u - v)
         pdf_expr = sp.Piecewise(
@@ -92,6 +114,15 @@ class DiagonalBandCopula(BivCopula):
     # ------------------------------------------------------------------
     @property
     def _cdf_expr(self):
+        r"""Symbolic CDF :math:`C(u,v)` obtained by integrating the density in the first
+        coordinate:
+
+        .. math::
+
+           C(u,v) \;=\; \int_{0}^{u} g_\alpha(t,v)\,dt.
+
+        This property returns the SymPy expression for the integral (not a callable).
+        """
         t = sp.symbols("t", nonnegative=True)
         g = self.pdf.func  # underlying sympy Expr from wrapper
         # substitute u -> t to integrate over the first coordinate

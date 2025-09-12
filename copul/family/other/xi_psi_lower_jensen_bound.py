@@ -7,50 +7,59 @@ from copul.family.other.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class XiPsiLowerBoundaryCopula(BivCopula):
+class XiPsiLowerJensenBound(BivCopula):
     r"""
-    A family of copulas that traces the lower boundary of the attainable region
-    for pairs of Chatterjee's xi and Spearman's footrule psi. This family is
-    derived by minimizing the functional J(C) = psi(C) + mu * xi(C) for a
-    parameter mu >= 1/2.
+    A family of copulas tracing the lower boundary of the attainable region
+    for pairs of Chatterjee's :math:`\xi` and Spearman's footrule :math:`\psi`.
+    This family is derived by minimizing the functional
+    :math:`J(C) = \psi(C) + \mu\,\xi(C)` for a parameter :math:`\mu \ge 1/2`.
 
-    -----------------
-    Parameter mu
-    -----------------
-    mu ∈ [1/2, ∞). The special case mu = 1/2 corresponds to the endpoint
-    (xi, psi) = (12*ln(2)-8, -1/2). As mu -> ∞, the copula approaches the
-    independence copula.
+    **Parameter —** :math:`\mu`
+        :math:`\mu \in [\tfrac12,\infty)`. The special case :math:`\mu=\tfrac12`
+        corresponds to the endpoint :math:`(\xi,\psi)=(12\ln 2 - 8,\,-\tfrac12)`.
+        As :math:`\mu \to \infty`, the copula approaches independence.
 
-    --------
-    Formulas
-    --------
+    **Formulas**
+
     The copula's structure is defined by its conditional probability
-    h(t,v) = ∂_1 C(t,v), which is piecewise constant in t.
-    Let v_0 = 1/(2*mu+1) and v_1 = (2*mu)/(2*mu+1). Then
-    h(t,v) = h_1(v) * 1_{t<=v} + h_2(v) * 1_{t>v}, where:
+    :math:`h(t,v) = \partial_1 C(t,v)`, which is piecewise constant in :math:`t`.
+    Let :math:`v_0 = \dfrac{1}{2\mu+1}` and :math:`v_1 = \dfrac{2\mu}{2\mu+1}`.
+    Then
+    :math:`h(t,v) = h_1(v)\,\mathbf{1}_{\{t\le v\}} + h_2(v)\,\mathbf{1}_{\{t>v\}}`,
+    where
 
-    1. For v in [0, v_0]:
-       h_1(v) = 0,   h_2(v) = v / (1-v)
+    .. math::
 
-    2. For v in (v_0, v_1]:
-       h_1(v) = v - (1-v)/(2*mu),   h_2(v) = v + v/(2*mu)
+       \begin{aligned}
+       \text{for } v \in [0,v_0]:\quad & h_1(v)=0,\quad h_2(v)=\frac{v}{1-v},\\
+       \text{for } v \in (v_0,v_1]:\quad & h_1(v)=v-\frac{1-v}{2\mu},\quad h_2(v)=v+\frac{v}{2\mu},\\
+       \text{for } v \in (v_1,1]:\quad & h_1(v)=2-\frac{1}{v},\quad h_2(v)=1.
+       \end{aligned}
 
-    3. For v in (v_1, 1]:
-       h_1(v) = 2 - 1/v,   h_2(v) = 1
+    The CDF is
 
-    The CDF is then C(u,v) = u*h_1(v) for u <= v, and
-    C(u,v) = v*h_1(v) + (u-v)*h_2(v) for u > v.
+    .. math::
 
-    Spearman's Footrule (psi):
-    \[
-        \psi(\mu) = -2v_1^2 + 6v_1 - 5 + \frac{1}{v_1}
-    \]
+       C(u,v) =
+       \begin{cases}
+       u\,h_1(v), & u \le v,\\
+       v\,h_1(v) + (u-v)\,h_2(v), & u > v.
+       \end{cases}
 
-    Chatterjee's Xi (xi):
-    \[
-        \xi(\mu) = 4v_1^3 - 18v_1^2 + 36v_1 - 22 - 12\ln(v_1) + \frac{6v_1^2-4v_1^3 - 1}{4\mu^2}
-    \]
+    **Dependence measures**
+
+    .. math::
+
+       \psi(\mu) = -2v_1^2 + 6v_1 - 5 + \frac{1}{v_1},
+       \qquad
+       v_1 = \frac{2\mu}{2\mu+1}.
+
+    .. math::
+
+       \xi(\mu) = 4v_1^3 - 18v_1^2 + 36v_1 - 22 - 12\ln(v_1)
+                  + \frac{6v_1^2 - 4v_1^3 - 1}{4\mu^2}.
     """
+
 
     # symbolic parameter & admissible interval
     mu = sp.symbols("mu", real=True)
@@ -216,15 +225,13 @@ class XiPsiLowerBoundaryCopula(BivCopula):
         # The construction h(t,v) is not symmetric in t and v.
         return False
 
-    # -------- Dependence Measures -------- #
-    def psi(self):
+    def spearmans_footrule(self):
         r"""
-        Closed-form Spearman's footrule psi(mu).
-        \[
-            \psi(\mu) = -2v_1^2 + 6v_1 - 5 + \frac{1}{v_1}
-            \quad \text{where} \quad
-            v_1 = \frac{2\mu}{2\mu+1}
-        \]
+        Closed-form Spearman's footrule :math:`\psi(\mu)`.
+
+        .. math::
+           \psi(\mu) = -2v_1^2 + 6v_1 - 5 + \frac{1}{v_1},
+           \qquad v_1 = \frac{2\mu}{2\mu+1}.
         """
         mu = self.mu
         v1 = (2 * mu) / (2 * mu + 1)
@@ -232,10 +239,12 @@ class XiPsiLowerBoundaryCopula(BivCopula):
 
     def chatterjees_xi(self):
         r"""
-        Closed-form Chatterjee's xi(mu).
-        \[
-            \xi(\mu) = 4v_1^3 - 18v_1^2 + 36v_1 - 22 - 12\ln(v_1) + \frac{6v_1^2-4v_1^3 - 1}{4\mu^2}
-        \]
+        Closed-form Chatterjee's :math:`\xi(\mu)`.
+
+        .. math::
+           \xi(\mu) = 4v_1^3 - 18v_1^2 + 36v_1 - 22 - 12\ln(v_1)
+                      + \frac{6v_1^2 - 4v_1^3 - 1}{4\mu^2},
+           \qquad v_1 = \frac{2\mu}{2\mu+1}.
         """
         mu = self.mu
         v1 = (2 * mu) / (2 * mu + 1)
@@ -248,8 +257,8 @@ class XiPsiLowerBoundaryCopula(BivCopula):
 
 if __name__ == "__main__":
     # Example usage for the endpoint mu = 0.5
-    copula = XiPsiLowerBoundaryCopula(mu=0.7)
+    copula = XiPsiLowerJensenBound(mu=0.7)
     # copula.plot_cdf()
     copula.plot_pdf(plot_type="contour")
-    # copula.plot_cond_distr_1()
+    copula.plot_cond_distr_1()
     # copula.plot_cond_distr_2()

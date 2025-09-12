@@ -6,36 +6,43 @@ from copul.family.core.biv_copula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class CounterexampleBandCopula(BivCopula):
+class AsymmetricSICopulaWithXiEqualsRho(BivCopula):
     r"""
     Singular “band” copula defined implicitly by
-    \[
-      h_v(t) := \partial_1 C(t,v)
-      \;=\; \mathbf{1}_{\{t < v/2\}} \;+\; v\,\mathbf{1}_{(v/2,\,(v+1)/2)}(t),
-    \]
+
+    .. math::
+
+       h_v(t) := \partial_1 C(t,v)
+       \;=\; \mathbf{1}_{\{\,t < v/2\,\}}
+             \;+\; v\,\mathbf{1}_{(\,v/2,\,(v+1)/2\,)}(t),
+
     and explicitly by
-    \[
-      C(u,v) \;=\;
-      \begin{cases}
-        u, & 0 \le u \le v/2,\\[0.6ex]
-        \dfrac{v}{2} + v\!\left(u - \dfrac{v}{2}\right)
-        \;=\; v\,u + \dfrac{v(1-v)}{2}, & v/2 < u \le (v+1)/2,\\[1.0ex]
-        v, & (v+1)/2 < u \le 1.
-      \end{cases}
-    \]
-    This copula is a valid (non‐symmetric) copula with absolutely continuous
-    part of density 1 on the strip \(\{(u,v): 2u-1 < v < 2u\}\) and a singular
-    part supported on the two boundary line segments \(v=2u\) for
-    \(u\in[0,\tfrac12]\) and \(v=2u-1\) for \(u\in[\tfrac12,1]\).
 
-    Basic functionals:
-      • Chatterjee's \(\xi(C)=\tfrac12\).
-      • Spearman's footrule \(\psi(C)=\tfrac12\).
+    .. math::
 
-    Notes
-    -----
-    • This class is parameter‐free.
-    • The returned PDF corresponds to the absolutely continuous part only.
+       C(u,v) \;=\;
+       \begin{cases}
+         u, & 0 \le u \le v/2,\\[0.6ex]
+         \dfrac{v}{2} + v\!\left(u - \dfrac{v}{2}\right)
+         \;=\; v\,u + \dfrac{v(1-v)}{2}, & v/2 < u \le (v+1)/2,\\[1.0ex]
+         v, & (v+1)/2 < u \le 1.
+       \end{cases}
+
+    This copula is valid (non-symmetric) with an absolutely continuous part
+    of density :math:`1` on the strip :math:`\{(u,v): 2u-1 < v < 2u\}` and a
+    singular part supported on the boundary line segments
+    :math:`v=2u` for :math:`u\in[0,\tfrac12]` and
+    :math:`v=2u-1` for :math:`u\in[\tfrac12,1]`.
+
+    **Basic functionals**
+
+    - Chatterjee's :math:`\xi(C)=\tfrac12`.
+    - Spearman's footrule :math:`\psi(C)=\tfrac12`.
+
+    **Notes**
+
+    - This class is parameter-free.
+    - The returned PDF corresponds to the absolutely continuous part only.
     """
 
     # No parameters
@@ -95,16 +102,16 @@ class CounterexampleBandCopula(BivCopula):
 
     # -------- Measures requested -------- #
     def chatterjees_xi(self):
-        """Chatterjee's rank correlation ξ(C) = 1/2."""
+        r"""Chatterjee's rank correlation :math:`\xi(C)=\tfrac12`."""
         return sp.Rational(1, 2)
 
-    def psi(self):
-        """Spearman's footrule ψ(C) = 1/2."""
+    def spearmans_footrule(self):
+        r"""Spearman's footrule :math:`\psi(C)=\tfrac12`."""
         return sp.Rational(1, 2)
 
 
 if __name__ == "__main__":
-    cop = CounterexampleBandCopula()
+    cop = AsymmetricSICopulaWithXiEqualsRho()
     # Quick sanity checks
     cop.plot_cdf()
     cop.plot_cond_distr_1()

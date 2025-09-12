@@ -7,7 +7,7 @@ import pandas as pd
 
 # --- Your provided functions for the copula construction ---
 # (These functions remain unchanged)
-def psi(s, alpha, beta):
+def spearmans_footrule(s, alpha, beta):
     s = np.asarray(s)
     ps_val = np.zeros_like(s, dtype=float)
     mask_middle = (s > alpha) & (s < 1 - alpha)
