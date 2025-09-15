@@ -115,6 +115,44 @@ class BivCheckMin(CheckMin, BivCheckPi):
         add_on = m * np.trace(self.matr.T @ self.matr) / n
         return check_pi_xi + add_on
 
+    def blests_nu(self) -> float:
+        """
+        Blest's measure (nu) for a BivCheckMin copula.
+
+        Returns:
+            float: Blest's nu.
+
+        Notes
+        -----
+        Decomposes as:
+            nu(CheckMin) = nu(CheckPi) + singular_add_on,
+        where the singular add-on arises from the minimum completion
+        placing a singular mass along the main diagonal segments of each
+        square cell (i,i). The add-on equals the diagonal mass weighted
+        by the average of (1-u) along the corresponding diagonal segment.
+
+        Closed forms:
+            nu(CheckPi) = (24 / (m^2 n)) * tr(Δ^T K) - 2,
+            with K as in BivCheckPi.blests_nu().
+
+            singular_add_on = (24 / m^2) * sum_{i=1}^m (m - i + 1/2) * Δ_{ii}.
+        """
+        # Absolutely-continuous part (CheckPi)
+        nu_pi = super().blests_nu()
+
+        P = np.asarray(self.matr, dtype=float)
+        m, n = P.shape
+
+        # Singular add-on from the minimum completion along the main diagonal
+        # weight_i = average of (1 - u) on the diagonal segment of row i
+        #         = (m - i + 1/2) / m, so total contribution scales as 24/m^2
+        i = np.arange(1, m + 1, dtype=float)
+        weight = m - i + 0.5  # row-wise weights before dividing by m
+        diagP = np.diag(P)
+        singular_add_on = (24.0 / (m * m)) * np.dot(weight, diagP)
+
+        return float(nu_pi + singular_add_on)
+
     def lambda_L(self):
         return self.matr[0, 0] * np.min(self.m, self.n)
 

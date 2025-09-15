@@ -260,6 +260,16 @@ def test_xi(copula):
     assert abs(xi - expected) < 1e-10
 
 
+def test_blests_nu(copula):
+    """Test Chatterjee's xi calculation."""
+    # Formula: (alpha - beta)^2 + alpha * beta
+    nu = float(copula.blests_nu())
+    checkerboard_nu = copula.to_checkerboard(100).blests_nu()
+    assert np.isclose(nu, checkerboard_nu, rtol=1e-3)
+    check_min_nu = copula.to_check_min(1000).blests_nu()
+    assert np.isclose(nu, check_min_nu, rtol=1e-1)
+
+
 def test_cdf_vectorized_basic(copula):
     """Test that cdf_vectorized gives same results as scalar evaluation."""
     import numpy as np

@@ -12,29 +12,45 @@ class CD2Wrapper(SymPyFuncWrapper):
     """
 
     def __call__(self, *args, **kwargs):
+        import numpy as _np
+
         free_symbols = {str(f): f for f in self._func.free_symbols}
 
-        # First process the arguments to create variable substitutions
+        # Prepare substitutions
         vars_, kwargs = self._prepare_call(args, kwargs)
 
-        # Check boundary conditions
+        # Boundary handling ONLY for scalar u (arrays are handled later by numpy_func)
         if {"u", "v"}.issubset(set(free_symbols.keys())):
-            if ("u", 0) in kwargs.items():
-                return SymPyFuncWrapper(sympy.S.Zero)
-            if ("u", 1) in kwargs.items():
-                return SymPyFuncWrapper(sympy.S.One)
+            u_val = kwargs.get("u", None)
+            if u_val is not None and (
+                _np.isscalar(u_val) or isinstance(u_val, (int, float))
+            ):
+                try:
+                    u_float = float(u_val)
+                except Exception:
+                    u_float = None
+                if u_float == 0.0:
+                    return SymPyFuncWrapper(sympy.S.Zero)
+                if u_float == 1.0:
+                    return SymPyFuncWrapper(sympy.S.One)
 
         # Apply substitutions
         func = self._func.subs(vars_)
 
-        # Wrap the result in CD2Wrapper to maintain behavior in chained calls
+        # Wrap again to keep CD2 semantics on further calls
         result = CD2Wrapper(func)
 
-        # If we've made a substitution for u, check if it's a boundary value
-        if "u" in kwargs and isinstance(kwargs["u"], (int, float)):
-            if kwargs["u"] == 0:
+        # Redundant scalar boundary guard (kept for full backward compatibility)
+        if "u" in kwargs and (
+            _np.isscalar(kwargs["u"]) or isinstance(kwargs["u"], (int, float))
+        ):
+            try:
+                u_float = float(kwargs["u"])
+            except Exception:
+                u_float = None
+            if u_float == 0.0:
                 return SymPyFuncWrapper(sympy.S.Zero)
-            if kwargs["u"] == 1:
+            if u_float == 1.0:
                 return SymPyFuncWrapper(sympy.S.One)
 
         return result

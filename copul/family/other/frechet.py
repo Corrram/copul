@@ -244,6 +244,14 @@ class Frechet(BivCopula):
         self._set_params(args, kwargs)
         return (self.alpha - self.beta) ** 2 + self.alpha * self.beta
 
+    def blests_nu(self, *args, **kwargs):
+        """
+        Blest's measure of rank correlation ν.
+        For the Fréchet copula: ν = α − β.
+        """
+        self._set_params(args, kwargs)
+        return self.alpha - self.beta
+
     @property
     def pdf(self):
         raise PropertyUnavailableException("Frechet copula does not have a pdf")

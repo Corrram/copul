@@ -209,6 +209,9 @@ class Frank(BivArchimedeanCopula):
         rho = 1 - 12 * (d1 - d2) / theta
         return rho * np.sign(self.theta)
 
+    def blests_nu(self):
+        return self.spearmans_rho()
+
     def kendalls_tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the Frank copula using numerical integration.
