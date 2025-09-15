@@ -117,6 +117,9 @@ class FarlieGumbelMorgenstern(BivCopula):
     def spearmans_footrule(self):
         return self.theta / 5
 
+    def blests_nu(self):
+        return self.spearmans_rho()
+
     def ginis_gamma(self):
         """
         Calculate Gini's gamma for the FGM copula.

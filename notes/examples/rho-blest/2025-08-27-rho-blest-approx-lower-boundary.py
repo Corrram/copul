@@ -1,3 +1,5 @@
+import pathlib
+
 import cvxpy as cp
 import numpy as np
 import matplotlib.pyplot as plt
@@ -134,5 +136,6 @@ if __name__ == "__main__":
             )
         else:
             print(f"Solver failed for μ={mu_val}.")
-
+    pathlib.Path("images").mkdir(parents=True, exist_ok=True)
+    plt.savefig("images/rho_nu_lower_boundary.png", dpi=150)
     plt.show()

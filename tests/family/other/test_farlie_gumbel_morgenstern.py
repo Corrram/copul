@@ -251,6 +251,17 @@ def test_tau():
         assert abs(tau - expected) < 1e-10, f"Kendall's tau incorrect for theta={theta}"
 
 
+def test_blests_nu():
+    """Test Chatterjee's xi calculation."""
+    # Formula: (alpha - beta)^2 + alpha * beta
+    copula = FarlieGumbelMorgenstern(0.5)
+    nu = float(copula.blests_nu())
+    checkerboard_nu = copula.to_checkerboard().blests_nu()
+    assert np.isclose(nu, checkerboard_nu, rtol=1e-2)
+    check_min_nu = copula.to_check_min(100).blests_nu()
+    assert np.isclose(nu, check_min_nu, rtol=1e-2)
+
+
 def test_tail_dependence():
     """Test that FGM has no tail dependence."""
     # FGM copula doesn't have tail dependence

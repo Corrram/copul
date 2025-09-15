@@ -66,6 +66,9 @@ class Plackett(BivCopula):
             theta - 1
         ) ** 2
 
+    def blests_nu(self):
+        return self.spearmans_rho()
+
     def blomqvist(self, *args, **kwargs):
         """Nelsen Exercise 5.18"""
         return (sympy.sqrt(self.theta) - 1) / (sympy.sqrt(self.theta) + 1)

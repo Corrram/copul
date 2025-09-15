@@ -1,7 +1,6 @@
 import sympy as sp
 import numpy as np
 from scipy.optimize import brentq
-from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import types
@@ -93,7 +92,7 @@ class ClampedParabolaCopula(BivCopula):
         Parameters
         ----------
         v_val : float
-            Point :math:`v \in (0,1)`.
+            Point :math:`v \in [0,1]`.
         mu_val : float
             Parameter :math:`\mu>0`.
 
@@ -102,26 +101,35 @@ class ClampedParabolaCopula(BivCopula):
         float
             The root :math:`q(v)`.
         """
-        if not (0 < v_val < 1):
-            return v_val
+        # --- CORRECTED CODE START ---
+        # Handle boundary cases v=0 and v=1 analytically, which is required
+        # for the copula properties to hold.
+        if v_val == 0.0:
+            return 1.0
+        if v_val == 1.0:
+            return -mu_val
+        # --- CORRECTED CODE END ---
 
         cache_key = (v_val, mu_val)
         if cache_key in self._q_cache:
             return self._q_cache[cache_key]
 
         try:
+            # Search on the open interval for v in (0, 1)
             q_val = brentq(
-                self._marginal_integral_residual, -mu_val, 1, args=(v_val, mu_val)
+                self._marginal_integral_residual, -mu_val, 1.0, args=(v_val, mu_val)
             )
             self._q_cache[cache_key] = q_val
             return q_val
         except ValueError:
+            # Check if root is extremely close to a boundary
             resid_at_lower = self._marginal_integral_residual(-mu_val, v_val, mu_val)
             if np.isclose(resid_at_lower, 0):
                 return -mu_val
             resid_at_upper = self._marginal_integral_residual(1, v_val, mu_val)
             if np.isclose(resid_at_upper, 0):
                 return 1.0
+            # If not, raise a more informative error
             raise RuntimeError(
                 f"Failed to find root q for v={v_val}, mu={mu_val}. "
                 f"Residuals at bounds F(-mu)={resid_at_lower:.3g}, F(1)={resid_at_upper:.3g}"
@@ -311,6 +319,41 @@ class ClampedParabolaCopula(BivCopula):
         else:
             raise ValueError(f"plot_type must be '3d' or 'contour', not {plot_type}")
 
+    def plot_cond_distr_1(self, *, plot_type="3d", log_z=False, **kwargs):
+        """
+        Plot the conditional distribution h(u,v) = ∂_u C(u,v).
+
+        This function represents the clamped-parabola shape for different slices of v.
+
+        Parameters
+        ----------
+        plot_type : str, optional
+            Type of plot to generate. One of '3d', 'contour', or 'slices'.
+            Default is '3d'.
+        log_z : bool, optional
+            Whether to use a logarithmic scale for the z-axis in contour plots.
+            Default is False.
+        **kwargs
+            Additional keyword arguments passed to the internal plotting functions.
+        """
+        title = kwargs.pop("title", "Conditional Distribution h(u,v)")
+        zlabel = kwargs.pop("zlabel", "h(u,v)")
+        # Get the symbolic expression for h(u,v)
+        func = self.cond_distr_1()
+
+        if plot_type == "3d":
+            return self._plot3d(func, title, zlabel, zlim=(0, 1), **kwargs)
+        elif plot_type == "contour":
+            return self._plot_contour(
+                func, title, zlabel, zlim=(0, 1), log_z=log_z, **kwargs
+            )
+        elif plot_type == "slices":
+            return self._plot_functions(func, title, zlabel, **kwargs)
+        else:
+            raise ValueError(
+                f"plot_type must be '3d', 'contour', or 'slices', not {plot_type}"
+            )
+
     def plot_cond_distr_2(self, *, plot_type="3d", log_z=False, **kwargs):
         """Not available: :math:`q(v)` is implicit and prevents a closed form."""
         raise NotImplementedError(
@@ -421,6 +464,10 @@ class ClampedParabolaCopula(BivCopula):
         r"""
         Construct a copula with target Chatterjee's :math:`\xi`.
 
+        Uses the corrected closed-form for :math:`\xi(\mu)`, which is strictly
+        decreasing in :math:`\mu \in (0,\infty)`, with limits
+        :math:`\lim_{\mu\downarrow 0}\xi=1` and :math:`\lim_{\mu\uparrow\infty}\xi=0`.
+
         Parameters
         ----------
         x_target : float
@@ -431,62 +478,117 @@ class ClampedParabolaCopula(BivCopula):
         ClampedParabolaCopula
             Instance with parameter :math:`\mu` chosen to match :math:`\xi`.
         """
-        if not (0 < x_target < 1):
+        if not (0.0 < x_target < 1.0):
             raise ValueError("Target xi must be in (0, 1).")
 
+        # Helper that uses the corrected closed-form xi
         def xi_of_mu(mu):
-            return cls(mu=mu).chatterjees_xi() - x_target
+            return cls(mu=mu).chatterjees_xi()
 
-        mu_val = brentq(xi_of_mu, 1e-6, 1000)
+        # xi(mu) is strictly decreasing. xi(1) = 32/105 ≈ 0.3047619
+        xi_at_1 = xi_of_mu(1.0)
+
+        # We want f(mu) := xi(mu) - x_target to change sign on [lo, hi]
+        if x_target < xi_at_1:
+            # Solution lies in mu >= 1. Start bracketing upward from 1.
+            lo = 1.0
+            hi = 2.0
+            while xi_of_mu(hi) > x_target:
+                hi *= 2.0
+                if hi > 1e12:
+                    raise RuntimeError(
+                        "from_xi bracketing failed (upper bound exploded)."
+                    )
+        else:
+            # Solution lies in mu <= 1. Start bracketing downward from 1.
+            hi = 1.0
+            lo = 0.5
+            while xi_of_mu(lo) < x_target:
+                lo *= 0.5
+                if lo < 1e-14:
+                    # Extremely close to xi = 1 -> effectively mu ~ 0
+                    return cls(mu=lo)
+
+        # Root-find with a robust bracket
+        def f(mu):
+            return xi_of_mu(mu) - x_target
+
+        mu_val = brentq(f, lo, hi, maxiter=200, xtol=1e-14, rtol=1e-12)
         return cls(mu=mu_val)
 
     def chatterjees_xi(self):
-        r"""
-        Compute Chatterjee's :math:`\xi` by numerical integration.
-
-        Notes
-        -----
-        Uses the identity
-
-        .. math::
-
-           \xi(C) \;=\; 6\int_0^1\!\!\int_0^1 h_v(t)^2\,dt\,dv \;-\; 2,
-
-        with :math:`h_v(t)` given in the class description.
         """
-        mu = float(self.mu)
+        Chatterjee's xi — corrected closed-form.
 
-        def h_squared(t, v):
-            return np.clip(((1 - t) ** 2 - self._get_q_v(v, mu)) / mu, 0, 1) ** 2
+        For 0 < mu < 1:
+            xi(mu) = [-105 s^8 A + 183 s^6 t - 38 s^4 t - 88 s^2 t + 112 s^2 + 48 t - 48] / (210 s^6),
+            where s = sqrt(mu), t = sqrt(1 - mu), A = asinh(t/s).
 
-        def inner_int(v):
-            return quad(h_squared, 0, 1, args=(v,))[0]
-
-        return 6 * quad(inner_int, 0, 1)[0] - 2
-
-    def nu(self):
-        r"""
-        Compute Blest's :math:`\nu` by numerical integration.
-
-        Notes
-        -----
-        Uses
-
-        .. math::
-
-           \nu(C) \;=\; 12\int_0^1\!\!\int_0^1 (1-t)^2\,h_v(t)\,dt\,dv \;-\; 2.
+        For mu >= 1:
+            xi(mu) = 8(7 mu - 3) / (105 mu^3).
         """
-        mu = float(self.mu)
+        import numpy as _np
 
-        def nu_integrand(t, v):
-            return (1 - t) ** 2 * np.clip(
-                ((1 - t) ** 2 - self._get_q_v(v, mu)) / mu, 0, 1
+        mu = float(self.mu)
+        if mu <= 0.0:
+            raise ValueError("mu must be > 0.")
+
+        s = _np.sqrt(mu)
+
+        if mu < 1.0:
+            t = _np.sqrt(1.0 - mu)
+            A = _np.asinh(t / s)  # = acosh(1/s)
+            num = (
+                -105 * s**8 * A
+                + 183 * s**6 * t
+                - 38 * s**4 * t
+                - 88 * s**2 * t
+                + 112 * s**2
+                + 48 * t
+                - 48
             )
+            den = 210 * s**6
+            return num / den
+        else:
+            # Purely algebraic branch; continuous at mu = 1
+            return 8.0 * (7.0 * mu - 3.0) / (105.0 * mu**3)
 
-        def inner_int(v):
-            return quad(nu_integrand, 0, 1, args=(v,))[0]
+    def blests_nu(self):
+        """
+        Blest's nu — corrected closed-form.
 
-        return 12 * quad(inner_int, 0, 1)[0] - 2
+        For 0 < mu < 1:
+            nu(mu) = [-105 s^8 A + 87 s^6 t + 250 s^4 t - 376 s^2 t + 448 s^2 + 144 t - 144] / (420 s^4),
+            where s = sqrt(mu), t = sqrt(1 - mu), A = asinh(t/s).
+
+        For mu >= 1:
+            nu(mu) = 4(28 mu - 9) / (105 mu^2).
+        """
+        import numpy as _np
+
+        mu = float(self.mu)
+        if mu <= 0.0:
+            raise ValueError("mu must be > 0.")
+
+        s = _np.sqrt(mu)
+
+        if mu < 1.0:
+            t = _np.sqrt(1.0 - mu)
+            A = _np.asinh(t / s)
+            num = (
+                -105 * s**8 * A
+                + 87 * s**6 * t
+                + 250 * s**4 * t
+                - 376 * s**2 * t
+                + 448 * s**2
+                + 144 * t
+                - 144
+            )
+            den = 420 * s**4
+            return num / den
+        else:
+            # Purely algebraic branch; continuous at mu = 1
+            return 4.0 * (28.0 * mu - 9.0) / (105.0 * mu**2)
 
 
 if __name__ == "__main__":

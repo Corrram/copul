@@ -214,6 +214,59 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         xi = 6 * m / n * trace - 2
         return xi
 
+    def blests_nu(self) -> float:
+        """
+        Blest's measure of rank association (nu) for a checkerboard copula.
+
+        Closed-form matrix formula:
+            nu(C^Δ_Π) = (24 / (m^2 n)) * tr(Δ^T K) - 2,
+        where
+            K = L_m^T U L_n
+                + 1/2 L_m^T U
+                + 1/2 U L_n
+                + 1/4 U
+                - 1/2 L_m^T E L_n
+                - 1/4 L_m^T E
+                - 1/3 E L_n
+                - 1/6 E.
+
+        Here:
+            Δ is the m×n checkerboard matrix,
+            L_m (resp. L_n) are strictly lower-triangular "ones" matrices,
+            E is the m×n all-ones matrix,
+            U = w e_n^T with w_i = m - i + 1.
+
+        Returns:
+            float: Blest's nu.
+        """
+        P = np.asarray(self.matr, dtype=float)
+        m, n = P.shape
+
+        # Strictly lower-triangular ones matrices L_m, L_n
+        Lm = np.tri(m, m, k=-1, dtype=float)
+        Ln = np.tri(n, n, k=-1, dtype=float)
+
+        # E = ones(m,n), U = w e_n^T with w_i = m - i + 1
+        E = np.ones((m, n), dtype=float)
+        w = np.arange(m, 0, -1, dtype=float)  # [m, m-1, ..., 1]
+        U = w[:, None] * np.ones((1, n), dtype=float)
+
+        # Assemble K per the closed-form
+        K = (
+            Lm.T @ U @ Ln
+            + 0.5 * (Lm.T @ U)
+            + 0.5 * (U @ Ln)
+            + 0.25 * U
+            - 0.5 * (Lm.T @ E @ Ln)
+            - 0.25 * (Lm.T @ E)
+            - (1.0 / 3.0) * (E @ Ln)
+            - (1.0 / 6.0) * E
+        )
+
+        # nu = (24 / (m^2 n)) * sum_{i,j} Δ_{ij} K_{ij} - 2
+        nu = (24.0 / (m * m * n)) * np.sum(P * K) - 2.0
+        return float(nu)
+
     @staticmethod
     def _W_diag(n: int):
         J = np.fliplr(np.eye(n))

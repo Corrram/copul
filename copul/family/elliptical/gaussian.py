@@ -376,6 +376,9 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         self._set_params(args, kwargs)
         return 3 / np.pi * np.arcsin(1 / 2 + float(self.rho) ** 2 / 2) - 0.5
 
+    def blests_nu(self):
+        return self.spearmans_rho()
+
     def spearmans_rho(self, *args, **kwargs):
         r"""
         Spearman's rank correlation :math:`\rho_{\!S}` for the Gaussian copula.

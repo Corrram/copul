@@ -100,6 +100,14 @@ copul.family.other.mardia module
    :show-inheritance:
    :undoc-members:
 
+copul.family.other.median\_swap\_copula module
+----------------------------------------------
+
+.. automodule:: copul.family.other.median_swap_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.family.other.pi\_over\_sigma\_minus\_pi module
 ----------------------------------------------------
 
@@ -128,6 +136,14 @@ copul.family.other.upper\_frechet module
 ----------------------------------------
 
 .. automodule:: copul.family.other.upper_frechet
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.family.other.v\_threshold\_copula module
+----------------------------------------------
+
+.. automodule:: copul.family.other.v_threshold_copula
    :members:
    :show-inheritance:
    :undoc-members:
