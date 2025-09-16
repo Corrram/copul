@@ -1,30 +1,32 @@
 #!/usr/bin/env python3
 """
-Plot Blest’s ν versus Spearman’s ρ
-with the attainable region correctly shaded,
-and key copulas (M, Π, W) and the cusp at μ=1 marked.
+Plot Spearman’s ρ versus Blest’s ν (axes swapped vs. the original script).
 
-Upper boundary is traced by the V-threshold family C_μ (μ∈[0,2]):
+Same boundary data (V-threshold family C_μ), but we now place
+  x-axis: ν,  y-axis: ρ.
+
+Upper boundary is traced by the family C_μ (μ∈[0,2]):
   ρ(μ) = { 1 - μ^3,                               0 ≤ μ ≤ 1
          { -μ^3 + 6μ^2 - 12μ + 7,                 1 ≤ μ ≤ 2
   ν(μ) = { 1 - (3/4) μ^4,                         0 ≤ μ ≤ 1
          { -(3/4) μ^4 + 4μ^3 - 6μ^2 + 3,          1 ≤ μ ≤ 2
 
-For ρ ∈ [0,1] the boundary admits the explicit law
-  ν_max(ρ) = 1 - (3/4) * (1 - ρ)^(4/3).
+For ρ ∈ [0,1]:
+  ν_max(ρ) = 1 - (3/4) * (1 - ρ)^(4/3)
+Invert to overlay ρ(ν) on ν ∈ [0,1]:
+  ρ(ν) = 1 - ((4/3) * (1 - ν))^(3/4)
 
-The lower boundary is centrally symmetric:
-  ν_min(ρ) = -ν_max(-ρ).
+Lower boundary is centrally symmetric:
+  ν_min(ρ) = -ν_max(-ρ)  ⇒  ρ_max(ν) = -ρ_min(ν) when plotting ρ vs ν.
 """
 import pathlib
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 
 
 # ----------------------------------------------------------------------
-#  Closed-form boundary (C_μ) and explicit ν(ρ) on [0,1]
+#  Closed-form boundary (C_μ)
 # ----------------------------------------------------------------------
 def rho_from_mu(mu: float) -> float:
     """Spearman's ρ for C_μ (piecewise)."""
@@ -43,9 +45,15 @@ def nu_from_mu(mu: float) -> float:
 rho_vec, nu_vec = np.vectorize(rho_from_mu), np.vectorize(nu_from_mu)
 
 
-def nu_max_pos_from_rho_pos(rho: float) -> float:
-    """Explicit boundary for ρ ∈ [0,1]: ν_max(ρ) = 1 - (3/4)*(1-ρ)^(4/3)."""
-    return 1.0 - 0.75 * (1.0 - rho) ** (4.0 / 3.0)
+def rho_of_nu_pos(nu: float) -> float:
+    """
+    Inversion of the explicit upper boundary on ρ ∈ [0,1]:
+      ν = 1 - (3/4)*(1-ρ)^(4/3)
+    ⇒  1-ρ = ((4/3)*(1-ν))^(3/4)
+    ⇒  ρ = 1 - ((4/3)*(1-ν))^(3/4)
+    Valid for ν ∈ [0,1], gives the upper curve (ρ≥0).
+    """
+    return 1.0 - np.power((4.0 / 3.0) * (1.0 - nu), 3.0 / 4.0)
 
 
 # ----------------------------------------------------------------------
@@ -57,58 +65,62 @@ def main() -> None:
     rho_mu = rho_vec(mu)
     nu_mu = nu_vec(mu)
 
-    # Sort by ρ so we can regard the boundary as a function ρ ↦ ν_max
+    # Sort by ρ so we can also build the symmetric lower boundary there
     sort_idx = np.argsort(rho_mu)
-    rho_sorted = rho_mu[sort_idx]
-    nu_sorted = nu_mu[sort_idx]  # this is ν_max(ρ) on [-1, 1]
+    rho_sorted = rho_mu[sort_idx]  # y-values if we swap axes
+    nu_sorted = nu_mu[sort_idx]  # x-values if we swap axes (upper boundary)
 
-    # Lower boundary by central symmetry: ν_min(ρ) = -ν_max(-ρ)
+    # Lower boundary by central symmetry in (ρ,ν):
+    #   ν_min(ρ) = -ν_max(-ρ).
+    # We want ρ as function of ν, but for shading it's simpler to keep (y=ρ, x=ν)
+    # and use fill_betweenx with x1=ν_lower(ρ), x2=ν_upper(ρ).
     nu_lower = -np.interp(-rho_sorted, rho_sorted, nu_sorted)
 
-    # For visual confirmation on [0,1], overlay the explicit law
-    rho_pos = np.linspace(0.0, 1.0, 600)
-    nu_pos_explicit = nu_max_pos_from_rho_pos(rho_pos)
+    # Explicit overlay (now as ρ(ν) for ν ∈ [0,1])
+    nu_pos = np.linspace(0.0, 1.0, 600)
+    rho_pos_explicit = rho_of_nu_pos(nu_pos)
 
     # ------------------------------ Plot ------------------------------
     BLUE, FILL = "#00529B", "#D6EAF8"
     fig, ax = plt.subplots(figsize=(8, 6))
 
-    # Upper and lower boundary curves
+    # Upper and lower boundary curves (now plotted as x=ν, y=ρ)
     ax.plot(
-        rho_sorted,
         nu_sorted,
+        rho_sorted,
         color=BLUE,
         lw=2.5,
-        label=r"Upper boundary $\nu_{\max}(\rho)$",
+        label=r"Upper boundary (as $\rho(\nu)$)",
     )
-    ax.plot(rho_sorted, nu_lower, color=BLUE, lw=2.0)
+    ax.plot(nu_lower, rho_sorted, color=BLUE, lw=2.0)
 
-    # Fill attainable region
-    ax.fill_between(
-        rho_sorted,
-        nu_lower,
-        nu_sorted,
+    # Fill attainable region between lower/upper (in x for each y)
+    ax.fill_betweenx(
+        rho_sorted,  # y
+        nu_lower,  # x1 (lower)
+        nu_sorted,  # x2 (upper)
         color=FILL,
         alpha=0.8,
         zorder=0,
         label="Attainable region",
     )
 
-    # Overlay explicit ν_max(ρ) for ρ∈[0,1] (should coincide with the upper curve on the right half)
+    # Overlay explicit ρ(ν) for ν∈[0,1] (should match the upper curve for ρ≥0)
     ax.plot(
-        rho_pos,
-        nu_pos_explicit,
+        nu_pos,
+        rho_pos_explicit,
         linestyle="--",
         lw=2.0,
         color="black",
-        label=r"$\nu_{\max}(\rho)=1-\frac{3}{4}(1-\rho)^{4/3}\ \ (0\leq \rho\leq 1)$",
+        label=r"$\rho(\nu)=1-(\frac{4}{3}(1-\nu))^{3/4}\ \ (0\leq \nu\leq 1)$",
     )
 
     # -------------------------- Highlight points ----------------------
-    # M (comonotone), Π (independence), W (countermonotone)
+    # M (1,1) -> (ν,ρ)=(1,1); Π (0,0) -> (0,0); W (-1,-1) -> (-1,-1)
+    # cusp at μ=1: (ρ,ν)=(0,0.25) -> (ν,ρ)=(0.25,0)
+    key_nu = [1, 0, -1, 0.25]
     key_rho = [1, 0, -1, 0]
-    key_nu = [1, 0, -1, 0.25]  # last one is cusp at μ=1
-    ax.scatter(key_rho, key_nu, s=60, color="black", zorder=5)
+    ax.scatter(key_nu, key_rho, s=60, color="black", zorder=5)
 
     ax.annotate(
         r"$M$",
@@ -139,7 +151,7 @@ def main() -> None:
     )
     ax.annotate(
         r"$\mu=1$",
-        (0, 0.25),
+        (0.25, 0),
         xytext=(8, -2),
         textcoords="offset points",
         fontsize=16,
@@ -148,8 +160,8 @@ def main() -> None:
     )
 
     # ------------------------ Axes & cosmetics ------------------------
-    ax.set_xlabel(r"Spearman's $\rho$", fontsize=16)
-    ax.set_ylabel(r"Blest's $\nu$", fontsize=16)
+    ax.set_xlabel(r"Blest's $\nu$", fontsize=16)
+    ax.set_ylabel(r"Spearman's $\rho$", fontsize=16)
     ax.set_xlim(-1.05, 1.05)
     ax.set_ylim(-1.05, 1.05)
     ax.set_aspect("equal", adjustable="box")
@@ -162,7 +174,7 @@ def main() -> None:
     ax.legend(loc="lower right", fontsize=11, frameon=True)
     fig.tight_layout()
     pathlib.Path("images").mkdir(exist_ok=True)
-    plt.savefig("images/rho-blest-region.png", dpi=300)
+    plt.savefig("images/blest-vs-rho_axes-swapped.png", dpi=300)
     plt.show()
 
 
