@@ -412,11 +412,4 @@ class XiRhoBoundaryCopula(BivCopula):
 if __name__ == "__main__":
     # Example usage
     copula = XiRhoBoundaryCopula(b=0.759)
-    copula.plot_pdf(plot_type="contour")
-    copula.plot_cond_distr_1(plot_type="contour")
-    # copula.plot_cdf(plot_type="contour")
-    print("CDF at (0.5, 0.5):", copula.cdf(0.5, 0.5))
-    print("PDF at (0.5, 0.5):", copula.pdf(0.5, 0.5))
-    print("xi:", copula.chatterjees_xi())
-    print("rho:", copula.spearmans_rho())
-    print("tau:", copula.kendalls_tau())
+    copula.plot_cond_distr_1(plot_type="contour", cmap="viridis")

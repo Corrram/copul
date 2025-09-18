@@ -755,7 +755,7 @@ class BivCoreCopula:
         return fig
 
     def _plot_contour(
-        self, func, title, zlabel, *, levels=50, zlim=None, log_z=False, **kwargs
+        self, func, title, zlabel, *, levels=100, zlim=None, log_z=False, **kwargs
     ) -> plt.Figure:
         r"""Create a filled contour plot.
 
@@ -783,7 +783,7 @@ class BivCoreCopula:
             f = func
 
         # Evaluate grid ---------------------------------------------------------
-        grid_size = kwargs.pop("grid_size", 100)
+        grid_size = kwargs.pop("grid_size", 200)
         x = np.linspace(0.005, 0.995, grid_size)
         y = np.linspace(0.005, 0.995, grid_size)
         X, Y = np.meshgrid(x, y)
@@ -793,7 +793,8 @@ class BivCoreCopula:
             Z = np.clip(Z, zlim[0], zlim[1])
 
         # Colour scaling --------------------------------------------------------
-        cmap = plt.cm.get_cmap("viridis").copy()
+        cmap = kwargs.pop("cmap", "viridis")
+        cmap = plt.cm.get_cmap(cmap).copy()
         fig, ax = plt.subplots()
 
         if log_z:
