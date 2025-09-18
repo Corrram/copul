@@ -592,7 +592,7 @@ class ClampedParabolaCopula(BivCopula):
 
 
 if __name__ == "__main__":
-    mu_values = [0.1, 0.5, 1.0, 2.0, 5.0, 10.0]
+    mu_values = [0.2, 0.5, 1.0]  # , 2.0]
     for mu in mu_values:
         # 1. Create a copula with a specific mu
         copula = ClampedParabolaCopula(mu=mu)
@@ -606,7 +606,7 @@ if __name__ == "__main__":
         # copula.plot_pdf(plot_type="contour", log_z=True)
 
         print("Generating conditional distribution function plot (slices)...")
-        copula.plot_cond_distr_1(plot_type="contour")
+        copula.plot_cond_distr_1(plot_type="contour", grid_size=500)
 
         # 3. Demonstrate error for unsupported plot
         # try:

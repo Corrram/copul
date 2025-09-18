@@ -219,6 +219,6 @@ if __name__ == "__main__":
     for mu in [0.5, 1.0, 1.5]:
         cop = VThresholdCopula(mu=mu)
         print(f"mu={mu:.2f} -> rho={cop.spearmans_rho():.6f}, nu={cop.blests_nu():.6f}")
-        cop.plot_cdf()
+        # cop.plot_cdf()
         # cop.plot_pdf()
-        cop.plot_cond_distr_1(plot_type="contour")
+        cop.plot_cond_distr_1(plot_type="contour", grid_size=1000, cmap="viridis")

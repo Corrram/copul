@@ -307,11 +307,11 @@ class MedianSwapCopula(BivCopula):
 
 if __name__ == "__main__":
     # Quick smoke test
-    for delta in [0.0, 0.2, 0.5]:
+    for delta in [0.1, 0.25, 0.4]:
         cop = MedianSwapCopula(delta=delta)
         print(
             f"delta={delta:.3f} -> beta={cop.blomqvists_beta():.6f}, nu={cop.blests_nu():.6f}"
         )
         # parent class plotting calls work with the wrappers:
-        cop.plot_cdf()
-        cop.plot_cond_distr_1(plot_type="contour")
+        # cop.plot_cdf()
+        cop.plot_cond_distr_1(plot_type="contour", grid_size=500)
