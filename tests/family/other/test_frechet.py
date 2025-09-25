@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from copul.exceptions import PropertyUnavailableException
-from copul.family.other.frechet import Frechet
+from copul.family.frechet.frechet import Frechet
 
 
 @pytest.fixture

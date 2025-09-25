@@ -3,7 +3,7 @@ import sympy
 from typing import TypeAlias
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.family.other.pi_over_sigma_minus_pi import PiOverSigmaMinusPi
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 

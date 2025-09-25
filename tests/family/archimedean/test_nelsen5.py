@@ -1,7 +1,7 @@
 import numpy as np
 
 from copul.family.archimedean.nelsen5 import Frank
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 
 
 def test_frank_special_cases_create():

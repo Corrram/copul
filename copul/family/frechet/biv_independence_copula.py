@@ -1,7 +1,7 @@
 import sympy
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.family.other.frechet import Frechet
+from copul.family.frechet.frechet import Frechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper

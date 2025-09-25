@@ -3,7 +3,7 @@ import pytest
 
 from copul.exceptions import PropertyUnavailableException
 from copul.family.core.biv_copula import BivCopula
-from copul.family.other.mardia import Mardia
+from copul.family.frechet.mardia import Mardia
 
 
 @pytest.fixture

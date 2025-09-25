@@ -5,7 +5,7 @@ import pytest
 import sympy
 
 from copul.family.archimedean.nelsen11 import Nelsen11
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 
 
 @pytest.fixture

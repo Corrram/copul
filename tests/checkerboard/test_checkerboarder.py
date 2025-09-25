@@ -99,6 +99,87 @@ def test_from_data_bivariate():
     assert np.isclose(ccop.matr.sum(), 1.0)
 
 
+def test_from_data_trivariate_gaussian_with_marginals_and_dependence():
+    """3D: from_data should produce a valid checkerboard with ~uniform marginals
+    and a dependence structure similar to the original (via Spearman)."""
+    np.random.seed(42)
+    n_samples = 2000
+
+    # Trivariate correlated normal data
+    Sigma = np.array(
+        [
+            [1.0, 0.6, 0.4],
+            [0.6, 1.0, 0.5],
+            [0.4, 0.5, 1.0],
+        ]
+    )
+    data = np.random.multivariate_normal(mean=[0, 0, 0], cov=Sigma, size=n_samples)
+    df = pd.DataFrame(data, columns=["X", "Y", "Z"])
+
+    # Build 10x10x10 checkerboard from data
+    n_bins = 10
+    checkerboarder = Checkerboarder(n_bins, dim=3)
+    ccop = checkerboarder.from_data(df)
+
+    # --- Basic checks ---
+    assert ccop.matr.shape == (n_bins, n_bins, n_bins)
+    assert np.isclose(ccop.matr.sum(), 1.0)
+    assert np.all(ccop.matr >= 0.0)
+
+    # --- 1D marginals should be ~uniform ---
+    # Sum over the other two axes; each should be ~ 1/n_bins
+    tol_1d = (
+        0.03  # loose tolerance; histogramdd + ranks won't be exactly uniform per bin
+    )
+    m1 = ccop.matr.sum(axis=(1, 2))
+    m2 = ccop.matr.sum(axis=(0, 2))
+    m3 = ccop.matr.sum(axis=(0, 1))
+    expected = np.full(n_bins, 1.0 / n_bins)
+    assert np.allclose(m1, expected, atol=tol_1d)
+    assert np.allclose(m2, expected, atol=tol_1d)
+    assert np.allclose(m3, expected, atol=tol_1d)
+
+    # --- 2D marginals: each should sum to 1 and have uniform 1D marginals ---
+    tol_2d = 0.05
+    M12 = ccop.matr.sum(axis=2)  # shape (n_bins, n_bins)
+    M13 = ccop.matr.sum(axis=1)
+    M23 = ccop.matr.sum(axis=0)
+
+    for M in (M12, M13, M23):
+        assert np.isclose(M.sum(), 1.0)
+        # its 1D marginals (row/column sums) ~ uniform
+        rows = M.sum(axis=1)
+        cols = M.sum(axis=0)
+        assert np.allclose(rows, expected, atol=tol_2d)
+        assert np.allclose(cols, expected, atol=tol_2d)
+
+    # --- Dependence similarity via Spearman correlation ---
+    # Spearman on original data equals Pearson on ranks; compute once here.
+    # Use the same (0,1] pseudo-observations the checkerboarder uses.
+    def _pseudo_obs(x):
+        # ranks in {1,...,n} scaled by n to (0,1]
+        order = np.argsort(x)
+        r = np.empty_like(order, dtype=float)
+        r[order] = (np.arange(len(x)) + 1) / float(len(x))
+        return r
+
+    U = np.column_stack([_pseudo_obs(df[c].values) for c in ["X", "Y", "Z"]])
+    df_u = pd.DataFrame(U, columns=["U1", "U2", "U3"])
+    spearman_orig = df_u.corr(method="spearman").values
+
+    # Sample from checkerboard copula (uniform margins); compare Spearman matrices
+    # If rvs is unavailable for the checkerboard, skip this part gracefully.
+    S = 4000
+    samples = ccop.rvs(S)
+    df_s = pd.DataFrame(samples, columns=["U1", "U2", "U3"])
+    spearman_ccop = df_s.corr(method="spearman").values
+
+    # Compare off-diagonal entries (dependence); allow modest tolerance
+    offdiag_idx = np.triu_indices(3, k=1)
+    diff = np.abs(spearman_ccop[offdiag_idx] - spearman_orig[offdiag_idx])
+    assert np.all(diff < 0.03), f"Spearman off-diagonal diffs too large: {diff}"
+
+
 def test_from_data_numpy_array():
     """Test the from_data method with a numpy array."""
     np.random.seed(42)

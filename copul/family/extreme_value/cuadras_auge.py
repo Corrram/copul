@@ -2,8 +2,8 @@ import logging
 import sympy as sp
 from copul.exceptions import PropertyUnavailableException
 from copul.family.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 
 log = logging.getLogger(__name__)

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from copul.family.archimedean.nelsen20 import Nelsen20
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 
 
 @pytest.fixture

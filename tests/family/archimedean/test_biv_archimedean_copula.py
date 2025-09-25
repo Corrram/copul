@@ -3,8 +3,8 @@ import pytest
 import sympy
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
-from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.lower_frechet import LowerFrechet
 
 
 def test_special_cases_create_method():

@@ -4,7 +4,7 @@ import sympy
 from unittest.mock import patch
 
 from copul.family.archimedean.multivariate_clayton import MultivariateClayton
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

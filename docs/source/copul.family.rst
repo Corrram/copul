@@ -11,6 +11,7 @@ Subpackages
    copul.family.core
    copul.family.elliptical
    copul.family.extreme_value
+   copul.family.frechet
    copul.family.other
 
 Submodules

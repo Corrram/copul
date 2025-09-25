@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from copul.family.archimedean import GumbelHougaard, Nelsen4
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 
 
 def test_nelsen4():

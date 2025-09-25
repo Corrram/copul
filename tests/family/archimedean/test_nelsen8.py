@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from copul.family.archimedean.nelsen8 import Nelsen8
-from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.frechet.lower_frechet import LowerFrechet
 
 
 @pytest.fixture

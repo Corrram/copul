@@ -3,7 +3,7 @@ import pytest
 import sympy as sp
 
 from copul.family.extreme_value.huesler_reiss import HueslerReiss
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from tests.family_representatives import family_representatives
 
 

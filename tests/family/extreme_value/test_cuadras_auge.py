@@ -4,8 +4,8 @@ import sympy as sp
 from unittest.mock import patch
 
 from copul.family.extreme_value import CuadrasAuge
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.exceptions import PropertyUnavailableException
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.cd1_wrapper import CD1Wrapper

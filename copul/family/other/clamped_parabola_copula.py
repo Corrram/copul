@@ -6,8 +6,8 @@ import matplotlib.colors as mcolors
 import types
 
 from copul.family.core.biv_copula import BivCopula
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.upper_frechet import UpperFrechet
 
 # Suppress potential integration warnings in normal use
 import warnings
