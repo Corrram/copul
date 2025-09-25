@@ -20,14 +20,6 @@ copul.family.other.b11 module
    :show-inheritance:
    :undoc-members:
 
-copul.family.other.biv\_independence\_copula module
----------------------------------------------------
-
-.. automodule:: copul.family.other.biv_independence_copula
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 copul.family.other.clamped\_parabola\_copula module
 ---------------------------------------------------
 
@@ -60,6 +52,14 @@ copul.family.other.diagonal\_strip\_copula module
    :show-inheritance:
    :undoc-members:
 
+copul.family.other.end\_swap\_copula module
+-------------------------------------------
+
+.. automodule:: copul.family.other.end_swap_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.family.other.farlie\_gumbel\_morgenstern module
 -----------------------------------------------------
 
@@ -68,34 +68,10 @@ copul.family.other.farlie\_gumbel\_morgenstern module
    :show-inheritance:
    :undoc-members:
 
-copul.family.other.frechet module
----------------------------------
-
-.. automodule:: copul.family.other.frechet
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 copul.family.other.independence\_copula module
 ----------------------------------------------
 
 .. automodule:: copul.family.other.independence_copula
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-copul.family.other.lower\_frechet module
-----------------------------------------
-
-.. automodule:: copul.family.other.lower_frechet
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-copul.family.other.mardia module
---------------------------------
-
-.. automodule:: copul.family.other.mardia
    :members:
    :show-inheritance:
    :undoc-members:
@@ -128,14 +104,6 @@ copul.family.other.raftery module
 ---------------------------------
 
 .. automodule:: copul.family.other.raftery
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-copul.family.other.upper\_frechet module
-----------------------------------------
-
-.. automodule:: copul.family.other.upper_frechet
    :members:
    :show-inheritance:
    :undoc-members:

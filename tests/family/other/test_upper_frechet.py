@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from copul.family.other.frechet import Frechet
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.frechet import Frechet
+from copul.family.frechet.upper_frechet import UpperFrechet
 
 
 @pytest.fixture

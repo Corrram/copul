@@ -17,6 +17,7 @@ Lower boundary: vertical reflection ν_min(D) = -ν_max(D).
 This script computes B_1 numerically (deterministic quadrature), constructs both
 branches, and plots the union as the upper boundary, then mirrors it.
 """
+
 import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -106,8 +107,8 @@ def compute_BKR_for_mu(mu: float, n: int = 600) -> float:
     F = (C - U * V) ** 2
     # integrate over v then u
     I_v = np.trapz(F, v, axis=1)
-    I = np.trapz(I_v, u)
-    return float(I)
+    II = np.trapz(I_v, u)
+    return float(II)
 
 
 # ----------------------------- Upper boundary -----------------------------

@@ -3,8 +3,8 @@ import sympy as sp
 from unittest.mock import patch
 
 from copul.family.elliptical.elliptical_copula import EllipticalCopula
-from copul.family.other.lower_frechet import LowerFrechet
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.lower_frechet import LowerFrechet
+from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

@@ -6,7 +6,7 @@ from copul.family.extreme_value.galambos import Galambos
 from copul.family.extreme_value.gumbel_hougaard import (
     GumbelHougaardEV as GumbelHougaard,
 )
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.upper_frechet import UpperFrechet
 
 
 class BB5(BivExtremeValueCopula):

@@ -3,8 +3,8 @@ import numpy as np
 
 from copul.exceptions import PropertyUnavailableException
 from copul.family.core.biv_copula import BivCopula
-from copul.family.other.upper_frechet import UpperFrechet
-from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.frechet.upper_frechet import UpperFrechet
+from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
 

@@ -4,8 +4,8 @@ from copul.family.elliptical.multivar_elliptical_copula import (
     MultivariateEllipticalCopula,
 )
 from copul.family.core.biv_core_copula import BivCoreCopula
-from copul.family.other.lower_frechet import LowerFrechet
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.lower_frechet import LowerFrechet
+from copul.family.frechet.upper_frechet import UpperFrechet
 
 
 class EllipticalCopula(MultivariateEllipticalCopula, BivCoreCopula):

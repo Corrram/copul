@@ -3,7 +3,7 @@ import sympy
 from sympy import stats
 from scipy.stats import norm
 from copul.family.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 

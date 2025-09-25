@@ -3,8 +3,8 @@ import sympy
 from typing import Optional, TypeAlias
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
-from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper

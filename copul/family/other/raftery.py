@@ -1,8 +1,8 @@
 import sympy
 
 from copul.family.core.biv_copula import BivCopula
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 

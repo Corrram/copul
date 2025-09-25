@@ -101,7 +101,7 @@ def test_special_case_independence():
     copula = Clayton(0)
 
     # Check instance
-    from copul.family.other.biv_independence_copula import BivIndependenceCopula
+    from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 
     # Since we're now returning the instance directly instead of calling it
     assert isinstance(copula, BivIndependenceCopula)
@@ -230,7 +230,7 @@ def test_specific_cdf_values(theta, u, v, expected_cdf):
 def test_theta_boundary_values():
     """Test that the copula correctly changes to special cases at boundary values."""
     # When theta = -1, should return LowerFrechet
-    from copul.family.other.lower_frechet import LowerFrechet
+    from copul.family.frechet.lower_frechet import LowerFrechet
 
     # Make sure we get a LowerFrechet instance directly
     copula = Clayton(-1)
@@ -246,7 +246,7 @@ def test_theta_boundary_values():
     )
 
     # When theta = 0, should return IndependenceCopula
-    from copul.family.other.biv_independence_copula import BivIndependenceCopula
+    from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 
     # Make sure we get an IndependenceCopula instance directly
     copula = Clayton(0)

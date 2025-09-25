@@ -1,4 +1,4 @@
-from copul.family.other.frechet import Frechet
+from copul.family.frechet.frechet import Frechet
 
 
 class LowerFrechet(Frechet):

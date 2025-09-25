@@ -2,7 +2,7 @@
 import sympy as sp
 
 from copul.family.core.biv_copula import BivCopula
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

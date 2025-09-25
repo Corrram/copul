@@ -1,7 +1,7 @@
 import numpy as np
 from copul.checkerboard.biv_bernstein import BivBernsteinCopula
-from copul.family.other.lower_frechet import LowerFrechet
-from copul.family.other.upper_frechet import UpperFrechet
+from copul.family.frechet.lower_frechet import LowerFrechet
+from copul.family.frechet.upper_frechet import UpperFrechet
 
 
 def test_tau_example():

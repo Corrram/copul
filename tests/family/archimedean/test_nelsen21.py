@@ -5,7 +5,7 @@ import pytest
 import sympy
 
 from copul.family.archimedean.nelsen21 import Nelsen21
-from copul.family.other.lower_frechet import LowerFrechet
+from copul.family.frechet.lower_frechet import LowerFrechet
 
 
 @pytest.fixture

@@ -75,7 +75,7 @@ def main() -> None:
     nu_surv = -nu_family
 
     # -------------------------- Plotting ------------------------------
-    BLUE, RED, FILL = "#00529B", "#B03A2E", "#D6EAF8"
+    BLUE, _RED, _FILL = "#00529B", "#B03A2E", "#D6EAF8"
     fig, ax = plt.subplots(figsize=(8, 6))
 
     # Exact boundary arcs

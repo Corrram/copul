@@ -5,7 +5,7 @@ import sympy
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.family.archimedean.heavy_compute_arch import HeavyComputeArch
-from copul.family.other.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 
 log = logging.getLogger(__name__)

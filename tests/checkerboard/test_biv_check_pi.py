@@ -387,9 +387,9 @@ def test_pdf():
     point = (0.1, 0.1)
     expected_pdf = 1 / 30 * 9
     actual_pdf = ccop.pdf(*point)
-    assert np.isclose(
-        actual_pdf, expected_pdf, atol=1e-2
-    ), f"Expected {expected_pdf}, got {actual_pdf}"
+    assert np.isclose(actual_pdf, expected_pdf, atol=1e-2), (
+        f"Expected {expected_pdf}, got {actual_pdf}"
+    )
 
 
 def test_xi_with_small_m_and_large_n():
@@ -442,14 +442,14 @@ def test_footrule_and_gamma_frechet(alpha, beta):
 
     footrule_direct = frechet.spearmans_footrule()
     footrule_check = checkerboard.spearmans_footrule()
-    assert np.isclose(
-        footrule_direct, footrule_check, atol=1e-2
-    ), f"Expected {footrule_direct}, got {footrule_check}"
+    assert np.isclose(footrule_direct, footrule_check, atol=1e-2), (
+        f"Expected {footrule_direct}, got {footrule_check}"
+    )
     gamma_direct = frechet.ginis_gamma()
     gamma_check = checkerboard.ginis_gamma()
-    assert np.isclose(
-        gamma_direct, gamma_check, atol=2e-2
-    ), f"Expected {gamma_direct}, got {gamma_check}"
+    assert np.isclose(gamma_direct, gamma_check, atol=2e-2), (
+        f"Expected {gamma_direct}, got {gamma_check}"
+    )
 
 
 @pytest.mark.parametrize(
@@ -463,19 +463,19 @@ def test_footrule_and_gamma_for_farlie_gumbel_morgenstern(theta):
 
     footrule_direct = fgm.spearmans_footrule()
     footrule_check = checkerboard.spearmans_footrule()
-    assert np.isclose(
-        footrule_direct, footrule_check, atol=1e-2
-    ), f"Expected {footrule_direct}, got {footrule_check}"
+    assert np.isclose(footrule_direct, footrule_check, atol=1e-2), (
+        f"Expected {footrule_direct}, got {footrule_check}"
+    )
     gamma_direct = fgm.ginis_gamma()
     gamma_check = checkerboard.ginis_gamma()
-    assert np.isclose(
-        gamma_direct, gamma_check, atol=1e-2
-    ), f"Expected {gamma_direct}, got {gamma_check}"
+    assert np.isclose(gamma_direct, gamma_check, atol=1e-2), (
+        f"Expected {gamma_direct}, got {gamma_check}"
+    )
     blomqvist_direct = fgm.blomqvists_beta()
     blomqvist_check = checkerboard.blomqvists_beta()
-    assert np.isclose(
-        blomqvist_direct.evalf(), blomqvist_check, atol=1e-2
-    ), f"Expected {blomqvist_direct}, got {blomqvist_check}"
+    assert np.isclose(blomqvist_direct.evalf(), blomqvist_check, atol=1e-2), (
+        f"Expected {blomqvist_direct}, got {blomqvist_check}"
+    )
 
 
 def test_footrule_and_gamma_rectangular_matrix_warning():
