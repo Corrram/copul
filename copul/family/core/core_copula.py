@@ -757,3 +757,98 @@ class CoreCopula:
         new_copula = copy.copy(self)
         new_copula._cdf_expr = reflected_expr
         return new_copula
+
+    def is_fully_specified(self) -> bool:
+        """True iff all parameters have been assigned concrete values."""
+        return len(self.params) == 0
+
+    def _lambdify_cdf_numpy(self):
+        """NumPy-vectorized callable for the current (fully specified) CDF."""
+        if self._cdf_expr is None:
+            raise ValueError("CDF expression is not set for this copula.")
+        return sympy.lambdify(self.u_symbols, self._cdf_expr, "numpy")
+
+    def validate_copula(self, m: int = 21, tol: float = 1e-8, return_details: bool = False):
+        """
+        Numerically validate copula properties on an (m+1)^d grid.
+
+        Parameters
+        ----------
+        m : int
+            Number of intervals per axis (grid has m+1 knots).
+        tol : float
+            Numerical tolerance for checks.
+        return_details : bool
+            If True, returns a dict with diagnostics in addition to the boolean.
+
+        Returns
+        -------
+        ok : bool  (and optionally details : dict)
+        """
+        if not self.is_fully_specified():
+            raise ValueError(
+                "Copula has free parameters; fix all parameters before validation."
+            )
+
+        d = self.dim
+        f = self._lambdify_cdf_numpy()
+        axes = [np.linspace(0.0, 1.0, m + 1) for _ in range(d)]
+        grids = np.meshgrid(*axes, indexing="ij")  # list of d arrays shape (m+1,...,m+1)
+
+        # Evaluate C on the grid
+        C_grid = f(*grids)
+        if not np.all(np.isfinite(C_grid)):
+            details = {"finite": False}
+            return (False, details) if return_details else False
+
+        # Bounds: 0 <= C <= 1
+        bounds_ok = (C_grid.min() >= -tol) and (C_grid.max() <= 1 + tol)
+
+        # Groundedness: any coordinate = 0 => C = 0
+        grounded_ok = True
+        for k in range(d):
+            slicer = [slice(None)] * d
+            slicer[k] = 0  # axis k at 0
+            grounded_ok &= np.all(np.abs(C_grid[tuple(slicer)]) <= tol)
+
+        # Margins: C(1,...,u_k,...,1) == u_k
+        margins_ok = True
+        max_margin_err = 0.0
+        for k in range(d):
+            slicer = [slice(None)] * d
+            for j in range(d):
+                if j != k:
+                    slicer[j] = -1  # set others to 1
+            # extract 1D margin curve over axis k
+            curve = C_grid[tuple(slicer)]
+            err = np.max(np.abs(curve - axes[k]))
+            max_margin_err = max(max_margin_err, err)
+            margins_ok &= (err <= 5 * tol)  # a bit looser because it compounds
+
+        # d-increasing: all cell masses (successive forward differences) >= 0; sum ≈ 1
+        mass = C_grid.copy()
+        for axis in range(d):
+            mass = np.diff(mass, axis=axis)
+        # inclusion–exclusion via successive diffs yields cell masses on shape (m,)*d
+        min_mass = mass.min()
+        sum_mass = mass.sum()
+        increasing_ok = (min_mass >= -1e-10) and (abs(sum_mass - 1.0) <= 1e-6)
+
+        ok = bounds_ok and grounded_ok and margins_ok and increasing_ok
+
+        if not return_details:
+            return ok
+
+        details = {
+            "bounds_ok": bounds_ok,
+            "grounded_ok": grounded_ok,
+            "margins_ok": margins_ok,
+            "max_margin_abs_err": float(max_margin_err),
+            "increasing_ok": increasing_ok,
+            "min_cell_mass": float(min_mass),
+            "sum_cell_mass": float(sum_mass),
+            "grid_size_per_axis": m + 1,
+            "dim": d,
+            "tol": tol,
+        }
+        return ok, details

@@ -783,7 +783,9 @@ class BivCoreCopula:
             f = func
 
         # Evaluate grid ---------------------------------------------------------
-        grid_size = kwargs.pop("grid_size", 200)
+        grid_size = kwargs.pop("grid_size", None)
+        if grid_size is None:
+            grid_size = 2*levels
         x = np.linspace(0.005, 0.995, grid_size)
         y = np.linspace(0.005, 0.995, grid_size)
         X, Y = np.meshgrid(x, y)
@@ -822,7 +824,7 @@ class BivCoreCopula:
         ax.set_xlabel("u")
         ax.set_ylabel("v")
         ax.set_title(title)
-
+        fig.tight_layout()
         plt.show()
         self.intervals = intervals_backup
         return fig
