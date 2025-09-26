@@ -4,6 +4,7 @@ Plot Chatterjee’s ξ versus Kendall’s τ
 with the attainable region correctly shaded
 and the extrema C_{±b_0} marked.
 """
+
 import pathlib
 
 import numpy as np

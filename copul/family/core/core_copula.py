@@ -768,7 +768,9 @@ class CoreCopula:
             raise ValueError("CDF expression is not set for this copula.")
         return sympy.lambdify(self.u_symbols, self._cdf_expr, "numpy")
 
-    def validate_copula(self, m: int = 21, tol: float = 1e-8, return_details: bool = False):
+    def validate_copula(
+        self, m: int = 21, tol: float = 1e-8, return_details: bool = False
+    ):
         """
         Numerically validate copula properties on an (m+1)^d grid.
 
@@ -793,7 +795,9 @@ class CoreCopula:
         d = self.dim
         f = self._lambdify_cdf_numpy()
         axes = [np.linspace(0.0, 1.0, m + 1) for _ in range(d)]
-        grids = np.meshgrid(*axes, indexing="ij")  # list of d arrays shape (m+1,...,m+1)
+        grids = np.meshgrid(
+            *axes, indexing="ij"
+        )  # list of d arrays shape (m+1,...,m+1)
 
         # Evaluate C on the grid
         C_grid = f(*grids)
@@ -823,7 +827,7 @@ class CoreCopula:
             curve = C_grid[tuple(slicer)]
             err = np.max(np.abs(curve - axes[k]))
             max_margin_err = max(max_margin_err, err)
-            margins_ok &= (err <= 5 * tol)  # a bit looser because it compounds
+            margins_ok &= err <= 5 * tol  # a bit looser because it compounds
 
         # d-increasing: all cell masses (successive forward differences) >= 0; sum ≈ 1
         mass = C_grid.copy()

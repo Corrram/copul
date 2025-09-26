@@ -4,12 +4,12 @@ Plot Kendall’s τ versus Chatterjee’s ξ
 with the attainable region correctly shaded
 and the extrema C_{±b_0} marked.
 """
+
 import pathlib
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
-from math import sqrt
 
 
 # ----------------------------------------------------------------------

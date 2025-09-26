@@ -116,8 +116,6 @@ def main():
     # )
 
     # key points
-    key_xi = [0, 1, 1, 0.3, 0.3]
-    key_rho = [0, 1, -1, 0.7, -0.7]
     # ax.scatter(key_xi, key_rho, s=60, color="black", zorder=5)
 
     # nicely positioned labels

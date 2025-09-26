@@ -319,7 +319,8 @@ Nelsen1: TypeAlias = BivClayton
 
 if __name__ == "__main__":
     # Example usage
-    copula = BivClayton(theta=2)
+    copula = BivClayton(theta=1)
+    result = copula.cdf(u=0.5)
     # Test the new rvs method
     print("Generating 5 samples with the fast rvs method:")
     samples = copula.rvs(5, random_state=42)

@@ -1,8 +1,10 @@
 import numpy as np
 from statsmodels.distributions.copula.copulas import Copula
 
+
 class DiagonalCopula(Copula):
     """C(u, v) = min(u, v): Fréchet–Hoeffding upper bound."""
+
     def __init__(self, k_dim=2):
         super().__init__(k_dim=k_dim)
         if k_dim != 2:
@@ -20,6 +22,7 @@ class DiagonalCopula(Copula):
         rng = np.random.default_rng(random_state)
         z = rng.uniform(size=nobs)
         return np.column_stack([z, z])
+
 
 C = DiagonalCopula()
 samples = C.rvs(nobs=5, random_state=123)

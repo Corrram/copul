@@ -8,6 +8,7 @@ Make a single horizontal figure with 3 panels:
 Creates:
 - images/xi_tau_rho_psi_panels.png
 """
+
 import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,6 +18,7 @@ import pandas as pd
 # ----------------------------- Style -------------------------------- #
 BLUE = "#00529B"
 FILL = "#D6EAF8"
+
 
 # ========================= Panel 1: xi–rho =========================== #
 def b_from_x_regime1(x_val: float) -> float:
@@ -29,6 +31,7 @@ def b_from_x_regime1(x_val: float) -> float:
     denom = 10 * (1 - x_val)
     return np.inf if np.isclose(denom, 0) else numer / denom
 
+
 def b_from_x_regime2(x_val: float) -> float:
     """b(x) for x in (0, 3/10]  with 0 < b ≤ 1."""
     if np.isclose(x_val, 0):
@@ -37,6 +40,7 @@ def b_from_x_regime2(x_val: float) -> float:
         return 1.0 if np.isclose(x_val, 3 / 10) else np.nan
     theta = (1 / 3) * np.arccos(np.clip(1 - (108 / 25) * x_val, -1.0, 1.0))
     return np.clip((5 / 6) + (5 / 3) * np.cos(theta - 2 * np.pi / 3), 0.0, 1.0)
+
 
 def M_x_upper_bound_corrected(x_val: float) -> float:
     """Corrected upper bound M_x for rho given xi."""
@@ -62,20 +66,23 @@ def M_x_upper_bound_corrected(x_val: float) -> float:
         return b - (3 * b**2) / 10
     return np.nan
 
+
 def plot_xi_rho(ax: plt.Axes) -> None:
     eps = 1e-9
-    xi_points = np.concatenate([
-        np.linspace(0.0, 3/10 - eps, 150),
-        np.linspace(3/10 - eps, 3/10 + eps, 50),
-        np.linspace(3/10 + eps, 1.0, 150),
-    ])
+    xi_points = np.concatenate(
+        [
+            np.linspace(0.0, 3 / 10 - eps, 150),
+            np.linspace(3 / 10 - eps, 3 / 10 + eps, 50),
+            np.linspace(3 / 10 + eps, 1.0, 150),
+        ]
+    )
     xi_points = np.unique(np.clip(xi_points, 0.0, 1.0))
     rho_up = np.array([M_x_upper_bound_corrected(x) for x in xi_points])
     valid = ~np.isnan(rho_up)
     xi_v, rho_up_v = xi_points[valid], rho_up[valid]
 
     # Envelope ±M_x
-    ax.plot(xi_v,  rho_up_v, color=BLUE, lw=2.2, label=r"$\pm M_\xi$")
+    ax.plot(xi_v, rho_up_v, color=BLUE, lw=2.2, label=r"$\pm M_\xi$")
     ax.plot(xi_v, -rho_up_v, color=BLUE, lw=2.2)
 
     # Fill attainable region
@@ -93,25 +100,31 @@ def plot_xi_rho(ax: plt.Axes) -> None:
     ax.grid(True, linestyle=":", alpha=0.6)
     ax.axhline(0, color="black", lw=0.8)
 
+
 # ========================= Panel 2: xi–tau =========================== #
 def xi_from_b(b: float) -> float:
     """Chatterjee’s ξ(C_b) – even in b."""
     ab = abs(b)
-    return (b*b/10) * (5 - 2*ab) if ab <= 1 else 1 - 1/ab + 3/(10*ab*ab)
+    return (b * b / 10) * (5 - 2 * ab) if ab <= 1 else 1 - 1 / ab + 3 / (10 * ab * ab)
+
 
 def tau_from_b(b: float) -> float:
     """Kendall’s τ(C_b) – odd in b."""
     if b >= 0:
-        return (b*(4-b))/6 if b <= 1 else (6*b*b - 4*b + 1)/(6*b*b)
+        return (b * (4 - b)) / 6 if b <= 1 else (6 * b * b - 4 * b + 1) / (6 * b * b)
     return -tau_from_b(-b)
+
 
 xi_vec, tau_vec = map(np.vectorize, (xi_from_b, tau_from_b))
 
+
 def plot_xi_tau(ax: plt.Axes) -> None:
-    b_pos = np.hstack([
-        np.linspace(0.0, 1.0, 600, endpoint=False)[1:],  # 0<b≤1
-        np.linspace(1.0, 20.0, 1400)                     # long tail
-    ])
+    b_pos = np.hstack(
+        [
+            np.linspace(0.0, 1.0, 600, endpoint=False)[1:],  # 0<b≤1
+            np.linspace(1.0, 20.0, 1400),  # long tail
+        ]
+    )
     xi_pos, tau_pos = xi_vec(b_pos), tau_vec(b_pos)
     idx = np.argsort(xi_pos)
     xi_sorted = xi_pos[idx]
@@ -120,10 +133,12 @@ def plot_xi_tau(ax: plt.Axes) -> None:
     xi_plot = np.concatenate([xi_sorted, [1.0]])
     tau_plot_pos = np.concatenate([tau_sorted_pos, [1.0]])
 
-    ax.plot(xi_plot,  tau_plot_pos, color=BLUE, lw=2.2, label=r"$\pm\tau(\xi)$")
+    ax.plot(xi_plot, tau_plot_pos, color=BLUE, lw=2.2, label=r"$\pm\tau(\xi)$")
     ax.plot(xi_plot, -tau_plot_pos, color=BLUE, lw=2.2)
 
-    ax.fill_between(xi_plot, -tau_plot_pos, tau_plot_pos, color=FILL, alpha=0.7, zorder=0)
+    ax.fill_between(
+        xi_plot, -tau_plot_pos, tau_plot_pos, color=FILL, alpha=0.7, zorder=0
+    )
 
     ax.set_title(r"$(\xi,\tau)$", fontsize=13, pad=2)
     ax.set_xlabel(r"$\xi$")
@@ -135,6 +150,7 @@ def plot_xi_tau(ax: plt.Axes) -> None:
     ax.yaxis.set_major_locator(MultipleLocator(0.25))
     ax.grid(True, linestyle=":", alpha=0.6)
     ax.axhline(0, color="black", lw=0.8)
+
 
 # ========================= Panel 3: xi–psi =========================== #
 def calculate_lower_boundary(mu_values: np.ndarray):
@@ -152,7 +168,10 @@ def calculate_lower_boundary(mu_values: np.ndarray):
     xi_vals = poly_part + log_part + B_sq * b_term_poly
     return xi_vals, psi_vals
 
-def plot_xi_psi(ax: plt.Axes, csv_path: str = "lower_boundary_final_smooth.csv") -> None:
+
+def plot_xi_psi(
+    ax: plt.Axes, csv_path: str = "lower_boundary_final_smooth.csv"
+) -> None:
     xi_upper = np.linspace(0, 1, 500)
     psi_upper = np.sqrt(xi_upper)
     mu_vals = np.logspace(4, -4, 2000) + 0.5
@@ -169,8 +188,14 @@ def plot_xi_psi(ax: plt.Axes, csv_path: str = "lower_boundary_final_smooth.csv")
     ax.plot(xi_lower, psi_lower, color=BLUE, lw=2.2)
     ax.plot([xi_endpoint, 1.0], [-0.5, -0.5], color=BLUE, lw=2.2)
     ax.fill(fill_poly_x, fill_poly_y, color=FILL, alpha=0.7, zorder=0)
-    ax.plot(df["xi"], df["psi"], ls="--", lw=2.2, zorder=4,
-            label=r"$(\xi(C^*_{\mu}), \psi(C^*_{\mu}))$ for $\mu\ge 0$")
+    ax.plot(
+        df["xi"],
+        df["psi"],
+        ls="--",
+        lw=2.2,
+        zorder=4,
+        label=r"$(\xi(C^*_{\mu}), \psi(C^*_{\mu}))$ for $\mu\ge 0$",
+    )
 
     ax.set_title(r"$(\xi,\psi)$", fontsize=13, pad=2)
     ax.set_xlabel(r"$\xi$")
@@ -183,14 +208,11 @@ def plot_xi_psi(ax: plt.Axes, csv_path: str = "lower_boundary_final_smooth.csv")
     ax.grid(True, linestyle=":", alpha=0.6)
     ax.axhline(0, color="black", lw=0.8)
 
+
 # ============================== Main ================================ #
 def main():
     fig, axes = plt.subplots(
-        1, 3,
-        figsize=(10, 5),
-        sharex=True,
-        sharey=True,
-        layout="constrained"
+        1, 3, figsize=(10, 5), sharex=True, sharey=True, layout="constrained"
     )
     fig.set_constrained_layout_pads(w_pad=0.05, h_pad=0.05, wspace=0.01, hspace=0.01)
 
@@ -220,6 +242,7 @@ def main():
     plt.savefig(outfile, dpi=300)
     plt.show()
     print(f"Saved figure to: {outfile}")
+
 
 if __name__ == "__main__":
     main()

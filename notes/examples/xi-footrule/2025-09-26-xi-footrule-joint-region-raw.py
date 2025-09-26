@@ -3,6 +3,7 @@
 Plots the exact attainable region for
 Chatterjee's ξ and Spearman's Footrule ψ, with ξ on the x-axis.
 """
+
 import pathlib
 
 import numpy as np
