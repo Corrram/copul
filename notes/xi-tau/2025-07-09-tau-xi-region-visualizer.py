@@ -4,6 +4,7 @@ Plot Chatterjee’s ξ versus Kendall’s τ
 with the attainable region correctly shaded
 and the extrema C_{±b_0} marked.
 """
+import pathlib
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -161,6 +162,8 @@ def main() -> None:
 
     ax.legend(loc="center", fontsize=12, frameon=True)
     fig.tight_layout()
+    pathlib.Path("images/").mkdir(parents=False, exist_ok=True)
+    plt.savefig("images/tau-xi-region.png")
     plt.show()
 
 

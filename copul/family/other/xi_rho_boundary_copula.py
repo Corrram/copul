@@ -411,5 +411,6 @@ class XiRhoBoundaryCopula(BivCopula):
 
 if __name__ == "__main__":
     # Example usage
-    copula = XiRhoBoundaryCopula(b=0.759)
-    copula.plot_cond_distr_1(plot_type="contour", cmap="viridis")
+    XiRhoBoundaryCopula(b=0.5).plot_pdf(plot_type="contour", levels=1_000, zlim=(0,5))
+    XiRhoBoundaryCopula(b=1).plot_pdf(plot_type="contour", levels=1_000, zlim=(0,6.5))
+    XiRhoBoundaryCopula(b=2).plot_pdf(plot_type="contour", levels=1_000, zlim=(0,8))
