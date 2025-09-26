@@ -79,7 +79,7 @@ jupyter-events==0.12.0
 jupyter-lsp==2.3.0
 jupyter-server==2.17.0
 jupyter-server-terminals==0.5.3
-jupyterlab==4.4.7
+jupyterlab==4.4.8
 jupyterlab-pygments==0.3.0
 jupyterlab-server==2.27.3
 jupyterlab-widgets==3.0.15
@@ -107,7 +107,7 @@ nbconvert==7.16.6
 nbformat==5.10.4
 nest-asyncio==1.6.0
 nh3==0.3.0
-notebook==7.4.5
+notebook==7.4.6
 notebook-shim==0.2.4
 numba==0.62.0
 numpy==2.2.6 ; python_full_version < '3.11'
@@ -117,6 +117,7 @@ overrides==7.7.0 ; python_full_version < '3.12'
 packaging==25.0
 pandas==2.3.2
 pandocfilters==1.5.1
+param==2.2.1
 parso==0.8.5
 pathspec==0.12.1
 patsy==1.0.1
@@ -146,7 +147,7 @@ pytz==2025.2
 pywin32==311 ; platform_python_implementation != 'PyPy' and sys_platform == 'win32'
 pywin32-ctypes==0.2.3 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'win32'
 pywinpty==3.0.0 ; os_name == 'nt'
-pyyaml==6.0.2
+pyyaml==6.0.3
 pyzmq==27.1.0
 readme-renderer==44.0
 referencing==0.36.2
@@ -159,7 +160,7 @@ rfc3987-syntax==1.1.0
 rich==14.1.0
 roman-numerals-py==3.1.0 ; python_full_version >= '3.11'
 rpds-py==0.27.1
-ruff==0.13.1
+ruff==0.13.2
 scikit-learn==1.7.2
 scipy==1.15.3 ; python_full_version < '3.11'
 scipy==1.16.2 ; python_full_version >= '3.11'
@@ -185,7 +186,7 @@ sphinxcontrib-serializinghtml==2.0.0
 stack-data==0.6.3
 statsmodels==0.14.5
 sympy==1.14.0
-sympy-plot-backends==3.4.5
+sympy-plot-backends==4.0.0
 terminado==0.18.1
 threadpoolctl==3.6.0
 tinycss2==1.4.0

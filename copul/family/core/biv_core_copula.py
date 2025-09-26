@@ -785,7 +785,7 @@ class BivCoreCopula:
         # Evaluate grid ---------------------------------------------------------
         grid_size = kwargs.pop("grid_size", None)
         if grid_size is None:
-            grid_size = 2*levels
+            grid_size = 2 * levels
         x = np.linspace(0.005, 0.995, grid_size)
         y = np.linspace(0.005, 0.995, grid_size)
         X, Y = np.meshgrid(x, y)
