@@ -2,7 +2,7 @@
 """
 Plot Chatterjee’s ξ versus Kendall’s τ
 with the attainable region correctly shaded
-and the extrema C_{±b_0} marked.
+and the extrema C_{±b^*} marked.
 """
 
 import pathlib
@@ -131,7 +131,7 @@ def main() -> None:
         va="top",
     )
     ax.annotate(
-        r"$C_{b_0}$",
+        r"$C_{b^*}$",
         (tau0, xi0),
         xytext=(5, 0),
         textcoords="offset points",
@@ -140,7 +140,7 @@ def main() -> None:
         va="top",
     )
     ax.annotate(
-        r"$C_{-b_0}$",
+        r"$C_{-b^*}$",
         (-tau0, xi0),
         xytext=(0, 0),
         textcoords="offset points",
