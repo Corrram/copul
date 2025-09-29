@@ -763,10 +763,14 @@ class CoreCopula:
         return len(self.params) == 0
 
     def _lambdify_cdf_numpy(self):
-        """NumPy-vectorized callable for the current (fully specified) CDF."""
         if self._cdf_expr is None:
             raise ValueError("CDF expression is not set for this copula.")
-        return sympy.lambdify(self.u_symbols, self._cdf_expr, "numpy")
+        # Custom mapping so SymPy Max(...) doesn’t become asarray([...])
+        modules = [
+            {"Max": (lambda *xs: np.maximum.reduce(xs))},  # broadcast-safe
+            "numpy",
+        ]
+        return sympy.lambdify(self.u_symbols, self._cdf_expr, modules=modules)
 
     def validate_copula(
         self, m: int = 21, tol: float = 1e-8, return_details: bool = False
@@ -800,7 +804,8 @@ class CoreCopula:
         )  # list of d arrays shape (m+1,...,m+1)
 
         # Evaluate C on the grid
-        C_grid = f(*grids)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            C_grid = f(*grids)
         if not np.all(np.isfinite(C_grid)):
             details = {"finite": False}
             return (False, details) if return_details else False
