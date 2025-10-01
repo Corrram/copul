@@ -1,5 +1,4 @@
 # tests/test_core_copula.py
-import numpy as np
 import pytest
 import sympy
 
@@ -124,9 +123,9 @@ def test_slice_interval_restricts_bounds_and_closes_when_set():
 
     # Slice to [-0.5, 0.8] (explicit bounds should be closed)
     c.slice_interval("a", -0.5, 0.8)
-    I = c.parameters["a"]
-    assert float(I.inf) == -0.5 and float(I.sup) == 0.8
-    assert (not I.left_open) and (not I.right_open)
+    II = c.parameters["a"]
+    assert float(II.inf) == -0.5 and float(II.sup) == 0.8
+    assert (not II.left_open) and (not II.right_open)
 
 
 def test__cdf_expr_substitutes_free_symbols_from_attributes():
