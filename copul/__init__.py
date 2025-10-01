@@ -1,3 +1,7 @@
+import logging
+import os
+import sys
+
 from copul.chatterjee import xi_ncalculate
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.biv_check_min import BivCheckMin
@@ -10,6 +14,7 @@ from copul.checkerboard.biv_bernstein import BivBernsteinCopula, BivBernstein
 from copul.checkerboard.checkerboarder import Checkerboarder, from_data
 from copul.family.archimedean import (
     AliMikhailHaq,
+    BivClayton,
     Clayton,
     Frank,
     GenestGhoudi,
@@ -60,11 +65,12 @@ from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.mardia import Mardia
 from copul.family.other.plackett import Plackett
 from copul.family.other.raftery import Raftery
+from copul.family.other.diagonal_band_copula import DiagonalBandCopula
 from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.family.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
 from copul.family.other.clamped_parabola_copula import ClampedParabolaCopula
 
-from copul.family_list import Families, families
+from copul.family_list import Families, families, approximations, copulas
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.schur_order.cis_verifier import CISVerifier
 from copul.schur_order.ltd_verifier import LTDVerifier
@@ -81,13 +87,17 @@ __all__ = [
     "BivCheckPi",
     "BivCheckMin",
     "BivCheckW",
+    "BivClayton",
     "CheckMin",
     "CheckPi",
     "Checkerboarder",
     "from_data",
     # Families & Builders
     "BivCopula",
+    "DiagonalBandCopula",
     "from_cdf",
+    "approximations",
+    "copulas",
     "families",
     "Families",
     # Archimedean copulas
@@ -153,3 +163,15 @@ __all__ = [
     "ShuffleOfMin",
     "markov_product",
 ]
+
+logging_format = "%(message)s"
+logging.basicConfig(
+    level="INFO", format=logging_format, handlers=[logging.StreamHandler()]
+)
+log = logging.getLogger("ConsoleLogger")
+
+for logger in logging.root.manager.loggerDict:
+    if logger[:6] == "dedupe":
+        logging.getLogger(logger).setLevel(logging.WARNING)
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))

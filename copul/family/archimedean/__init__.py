@@ -1,4 +1,4 @@
-from copul.family.archimedean.nelsen1 import Clayton, Nelsen1
+from copul.family.archimedean.nelsen1 import BivClayton, Clayton, Nelsen1
 from copul.family.archimedean.nelsen2 import Nelsen2
 from copul.family.archimedean.nelsen3 import AliMikhailHaq, Nelsen3
 from copul.family.archimedean.nelsen4 import GumbelHougaard, Nelsen4
@@ -22,6 +22,7 @@ from copul.family.archimedean.nelsen21 import Nelsen21
 from copul.family.archimedean.nelsen22 import Nelsen22
 
 __all__ = [
+    "BivClayton",
     "Clayton",
     "Nelsen1",
     "Nelsen2",

@@ -2,6 +2,10 @@ import numpy as np
 
 from copul.foci import codec
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 class Check:
     def __init__(self, matr):
@@ -134,6 +138,7 @@ class Check:
     def chatterjees_xi(self, n=100_000, seed=None, i=1, samples=None):
         i0 = i - 1  # Convert to zero-based index
         if samples is None:
+            log.info(f"Estimating xi using {n} samples...")
             samples = self.rvs(n, random_state=seed)
         x = samples[:, i0]
         # exclude i0-th column
