@@ -58,11 +58,11 @@ class BivCheckW(BivCheckPi):
 
     @classmethod
     def generate_randomly(cls, grid_size: int | list | None = None, n=1):
-        generated_copulas = BivCheckPi.generate_randomly(grid_size, n)
+        generated = BivCheckPi.generate_randomly(grid_size, n)
         if n == 1:
-            return cls(generated_copulas)
+            return cls(generated.matr)  # <-- use .matr
         else:
-            return [cls(copula) for copula in generated_copulas]
+            return [cls(c.matr) for c in generated]
 
     def transpose(self):
         """
