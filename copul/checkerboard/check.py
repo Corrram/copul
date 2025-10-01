@@ -1,5 +1,6 @@
 import numpy as np
-import mfoci
+
+from copul.foci import codec
 
 
 class Check:
@@ -137,5 +138,5 @@ class Check:
         x = samples[:, i0]
         # exclude i0-th column
         z = samples[:, np.arange(self.dim) != i0]
-        xi = mfoci.codec(x, z)
+        xi = codec(x, z)
         return xi

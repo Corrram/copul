@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import mfoci
 from pandas.plotting import scatter_matrix
 import copul as cp
 
@@ -33,7 +32,3 @@ df = pd.DataFrame(samples, columns=["U", "V"])
 scatter_matrix(df, diagonal="hist", alpha=0.6)
 plt.suptitle("Khoudraji–Clayton/Gumbel Copula (τ=0.95; shape=(0.95,0.6))")
 plt.show()
-xi = mfoci.codec(df.iloc[:, 0], df.iloc[:, 1])
-xi_transpose = mfoci.codec(df.iloc[:, 1], df.iloc[:, 0])
-tau = df.corr(method="kendall").iloc[0, 1]
-print(f"tau = {tau}, xi = {xi}, xi_transpose = {xi_transpose}")

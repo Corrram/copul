@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "copul"
-version = "0.2.6"
+version = "0.2.8"
 description = "Risk analysis with copulas."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -23,7 +23,6 @@ dependencies = [
     "matplotlib>=3.9",
     "sympy-plot-backends>=3.1",
     "statsmodels>=0.14",
-    "mfoci>=0.2.0",
     "typing-extensions>=4.15.0",
 ]
 
@@ -41,15 +40,11 @@ markers = [
     "instable: marks tests as instable (deselect with '-m \"not instable\"')",
 ]
 
-[dependency-groups]
-dev = [
-    "cvxpy>=1.7.1",
-]
-
 [project.optional-dependencies]
 dev = [
     "black>=24.8",
     "build>=0.10.0",
+    "cvxpy>=1.7.1",
     "jupyter>=1.0.0",
     "mypy>=1.0.0",
     "pylint>=2.17.0",

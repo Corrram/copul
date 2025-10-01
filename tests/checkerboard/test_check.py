@@ -71,10 +71,9 @@ def test_str_representation():
     assert str(check) == "CheckerboardCopula((2, 2))"
 
 
-@patch("mfoci.codec")
+@patch("copul.checkerboard.check.codec")
 def test_xi(mock_codec):
     """Test the calculation of Chatterjee's Xi."""
-    # Setup mock return value for mfoci.codec
     mock_codec.return_value = 0.5
 
     # Create a Check instance
@@ -93,7 +92,6 @@ def test_xi(mock_codec):
     # Verify rvs was called with the expected argument
     check.rvs.assert_called_once_with(n, random_state=None)
 
-    # Verify mfoci.codec was called correctly (avoiding direct NumPy array comparison)
     mock_codec.assert_called_once()
     args, _ = mock_codec.call_args
 
