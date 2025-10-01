@@ -4,8 +4,6 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
-from numba import njit
 
 log = logging.getLogger(__name__)
 
@@ -64,8 +62,6 @@ class Checkerboarder:
             total_cells = np.prod(self.n)
             n_jobs = max(1, min(8, total_cells // 1000))
 
-        if n_jobs > 1 and np.prod(self.n) > 100:
-            return self._compute_checkerboard_parallel(copula, n_jobs)
         return self._compute_checkerboard_serial(copula)
 
     def _compute_checkerboard_vectorized(self, copula, tol=1e-12):
@@ -119,16 +115,6 @@ class Checkerboarder:
         # Ensure the probabilities are clipped between 0 and 1.
         cmatr = np.clip(cmatr, 0, 1)
 
-        return self._get_checkerboard_copula_for(cmatr)
-
-    def _compute_checkerboard_parallel(self, copula, n_jobs):
-        indices = list(np.ndindex(*self.n))
-        results = Parallel(n_jobs=n_jobs)(
-            delayed(self._process_cell)(idx, copula) for idx in indices
-        )
-        cmatr = np.zeros(self.n)
-        for idx, value in zip(indices, results):
-            cmatr[idx] = value
         return self._get_checkerboard_copula_for(cmatr)
 
     def _compute_checkerboard_serial(self, copula):
@@ -241,7 +227,6 @@ class Checkerboarder:
         return self._get_checkerboard_copula_for(cmatr)
 
 
-@njit
 def _fast_rank(x):
     n = len(x)
     ranks = np.empty(n, dtype=np.float64)

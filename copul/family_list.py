@@ -276,8 +276,8 @@ class Families(enum.Enum):
 families = list(dict.fromkeys(f.cls.__name__ for f in Families))
 
 # Add some useful constants
-COMMON_COPULAS = ["CLAYTON", "FRANK", "GUMBEL_HOUGAARD", "GAUSSIAN", "T", "JOE"]
-ARCHIMEDEAN_COPULAS = Families.list_by_category(FamilyCategory.ARCHIMEDEAN)
-ELLIPTICAL_COPULAS = Families.list_by_category(FamilyCategory.ELLIPTICAL)
-EXTREME_VALUE_COPULAS = Families.list_by_category(FamilyCategory.EXTREME_VALUE)
-OTHER_COPULAS = Families.list_by_category(FamilyCategory.OTHER)
+COMMON = ["CLAYTON", "FRANK", "GUMBEL_HOUGAARD", "GAUSSIAN", "T", "JOE"]
+ARCHIMEDEAN = Families.list_by_category(FamilyCategory.ARCHIMEDEAN)
+ELLIPTICAL = Families.list_by_category(FamilyCategory.ELLIPTICAL)
+EXTREME_VALUE = Families.list_by_category(FamilyCategory.EXTREME_VALUE)
+OTHER = Families.list_by_category(FamilyCategory.OTHER)

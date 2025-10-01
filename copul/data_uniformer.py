@@ -42,21 +42,6 @@ class DataUniformer:
         # Preallocate output array
         transformed_data = np.empty_like(data)
 
-        # For large datasets, use parallel processing (optional)
-        if n_samples * n_features > 100000 and n_features > 1:
-            try:
-                from joblib import Parallel, delayed
-
-                results = Parallel(n_jobs=-1)(
-                    delayed(self._transform_column)(data[:, j], touch_boundaries)
-                    for j in range(n_features)
-                )
-                for j, result in enumerate(results):
-                    transformed_data[:, j] = result
-                return transformed_data
-            except ImportError:
-                pass  # fallback to serial
-
         # Serial transformation
         for j in range(n_features):
             transformed_data[:, j] = self._transform_column(
