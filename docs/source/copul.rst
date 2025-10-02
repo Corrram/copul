@@ -72,6 +72,14 @@ copul.foci module
    :show-inheritance:
    :undoc-members:
 
+copul.numerics module
+---------------------
+
+.. automodule:: copul.numerics
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.star\_product module
 --------------------------
 

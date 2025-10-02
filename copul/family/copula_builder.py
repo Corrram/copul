@@ -39,7 +39,7 @@ class CopulaBuilder:
             setattr(obj, key, sympy.symbols(key, real=True))
             value = getattr(obj, key)
             obj.params.append(value)
-            obj.intervals[value] = sympy.Interval(-np.inf, np.inf)
+            obj.intervals[str(value)] = sympy.Interval(-np.inf, np.inf)
         obj._free_symbols = {symbol: getattr(obj, symbol) for symbol in params}
         return obj
 

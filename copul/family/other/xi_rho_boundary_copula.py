@@ -94,7 +94,7 @@ class XiRhoBoundaryCopula(BivCopula):
     special_cases = {0: BivIndependenceCopula}
 
     # convenience symbols
-    u, v = sp.symbols("u v", positive=True)
+    u, v = sp.symbols("u v", nonnegative=True)
 
     def __new__(cls, *args, **kwargs):
         if args and len(args) == 1:

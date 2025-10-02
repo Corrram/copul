@@ -187,35 +187,30 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
     @property
     def cdf(self):
         """
-        Compute the CDF of the multivariate Gumbel-Hougaard copula.
-
-        The explicit formula is:
-        C(u₁, u₂, ..., uₙ) = exp(-((-ln u₁)^θ + (-ln u₂)^θ + ... + (-ln uₙ)^θ)^(1/θ))
-
-        Returns
-        -------
-        CDFWrapper
-            A wrapper around the CDF function.
+        C(u1,...,ud) = exp(-((sum_j (-log uj)^theta)^(1/theta)))
+        With boundary handling:
+          - if any u_j == 0 -> 0
+          - if all u_j == 1 -> 1
+          - else -> interior expression
         """
-        try:
-            # Get the u symbols
-            u_symbols = self.u_symbols
+        u_symbols = self.u_symbols
 
-            # Create the sum of negative logs raised to theta
-            neg_log_sum = sum((-sp.log(u)) ** self.theta for u in u_symbols)
+        # interior expression
+        neg_log_sum = sum((-sp.log(u)) ** self.theta for u in u_symbols)
+        expr = sp.exp(-(neg_log_sum ** (sp.Integer(1) / self.theta)))
 
-            # Create the CDF expression
-            cdf_expr = sp.exp(-((neg_log_sum) ** (1 / self.theta)))
+        # boundaries
+        any_zero = sp.Or(*[sp.Eq(u, 0) for u in u_symbols])
+        all_one = sp.And(*[sp.Eq(u, 1) for u in u_symbols])
 
-            # Create piecewise expression to handle boundary cases
-            boundary_conditions = sp.Or(*[sp.Eq(u, 0) for u in u_symbols])
-            cdf_piecewise = sp.Piecewise((0, boundary_conditions), (cdf_expr, True))
+        # IMPORTANT: order matters (first match wins)
+        cdf_piecewise = sp.Piecewise(
+            (0, any_zero),
+            (1, all_one),
+            (expr, True),
+        )
 
-            return CDFWrapper(cdf_piecewise)
-
-        except Exception:
-            # Fall back to the general implementation in case of errors
-            return super().cdf
+        return CDFWrapper(cdf_piecewise)
 
     def kendalls_tau(self, *args, **kwargs):
         """
@@ -239,55 +234,44 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
 
     def cdf_vectorized(self, *args):
         """
-        Vectorized implementation of the CDF for the Gumbel-Hougaard copula.
-
-        Parameters
-        ----------
-        *args : array_like
-            Arrays of dimension values to evaluate the CDF at.
-
-        Returns
-        -------
-        numpy.ndarray
-            Array of CDF values.
+        Vectorized CDF with correct boundary handling.
         """
-        # Convert inputs to numpy arrays
         arrays = [np.asarray(arg) for arg in args]
-
-        # Check dimensions
         if len(arrays) != self.dim:
             raise ValueError(f"Expected {self.dim} arrays, got {len(arrays)}")
 
-        # Ensure all arrays have compatible shapes
+        # Broadcast shape
         shape = np.broadcast(*arrays).shape
 
-        # Create arrays with small epsilon to avoid log(0)
-        adjusted_arrays = []
+        # Masks for exact boundaries (before any epsilon tricks)
+        any_zero = np.zeros(shape, dtype=bool)
         for arr in arrays:
-            # Add a small epsilon to avoid zeros that cause problems
-            adjusted_arrays.append(np.maximum(arr, 1e-10))
+            any_zero |= (arr == 0)
 
-        result = np.zeros(shape)
+        all_one = np.ones(shape, dtype=bool)
+        for arr in arrays:
+            all_one &= (arr == 1)
 
-        # Get theta value
+        # Stabilize logs only for the interior computation
+        adjusted = [np.maximum(arr, 1e-300) for arr in arrays]  # tiny epsilon
+
+        # Resolve theta to float if symbolic
         theta_val = self.theta
         if not isinstance(theta_val, (int, float)) and hasattr(theta_val, "evalf"):
             theta_val = float(theta_val.evalf())
 
-        # Calculate the sum of negative logs raised to theta for all points
-        neg_log_sum = np.zeros(shape)
-        for arr in adjusted_arrays:
+        # Interior expression
+        neg_log_sum = np.zeros(shape, dtype=float)
+        for arr in adjusted:
             neg_log_sum += (-np.log(arr)) ** theta_val
 
-        # Calculate CDF values
-        result = np.exp(-((neg_log_sum) ** (1 / theta_val)))
+        result = np.exp(-(neg_log_sum ** (1.0 / theta_val)))
 
-        # Check if we have all zeros (or very small values)
-        if np.all(result < 1e-8):
-            # Ensure there's at least one positive value for sampling
-            result.flat[0] = 1e-6
+        # Enforce boundaries exactly
+        result[any_zero] = 0.0
+        result[all_one] = 1.0
 
-        return result  # Define alias
+        return result
 
 
 MultivariateGumbelHougaardEV: TypeAlias = MultivariateGumbelHougaard

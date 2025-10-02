@@ -41,7 +41,7 @@ class ClampedParabolaCopula(BivCopula):
     special_cases = {0: UpperFrechet, sp.oo: BivIndependenceCopula}
 
     # Convenience symbols
-    u, v = sp.symbols("u v", positive=True)
+    u, v = sp.symbols("u v", nonnegative=True)
 
     def __init__(self, *args, **kwargs):
         if args and len(args) == 1:

@@ -50,7 +50,7 @@ class AsymmetricSICopulaWithXiEqualsRho(BivCopula):
     intervals = {}
 
     # convenience symbols
-    u, v = sp.symbols("u v", real=True)
+    u, v = sp.symbols("u v", real=True, nonnegative=True)
 
     # -------- Symbolic CDF -------- #
     @property

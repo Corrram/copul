@@ -4,37 +4,49 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 class CD1Wrapper(SymPyFuncWrapper):
     """
-    Wrapper for the partial derivative of a copula with respect to the first argument.
+    Wrapper for ∂C/∂u (first coordinate). Bivariate boundaries:
+      - CD1(u, 0) = 0
+      - CD1(u, 1) = 1
 
-    This class handles the boundary conditions for conditional distributions:
-    - CD1(u, 0) = 0 (when v=0)
-    - CD1(u, 1) = 1 (when v=1)
+    These boundary rules must hold even after partial substitution of u,
+    i.e., when only v (or u2) remains free.
     """
 
     def __call__(self, *args, **kwargs):
-        free_symbols = {str(f): f for f in self._func.free_symbols}
-
-        # First process the arguments to create variable substitutions
+        # Resolve positional/keyword substitutions into a dict {Symbol -> value}
         vars_, kwargs = self._prepare_call(args, kwargs)
 
-        # Check boundary conditions
-        if {"u", "v"}.issubset(set(free_symbols.keys())):
-            if ("v", 0) in kwargs.items():
-                return SymPyFuncWrapper(sympy.S.Zero)
-            if ("v", 1) in kwargs.items():
-                return SymPyFuncWrapper(sympy.S.One)
+        free_syms = list(self._func.free_symbols)
+        by_name   = {str(s): s for s in free_syms}
+        provided  = {str(s): v for s, v in vars_.items()}
 
-        # Apply substitutions
+        # ---- Boundary rule should trigger whenever v (or u2) is provided,
+        #      even if u was already substituted away. ----
+        # Prefer provided values; if not provided but v (or u2) is still free,
+        # we'll fall through and substitute normally.
+
+        # Case 1: standard names (u, v)
+        if "v" in provided:
+            try:
+                v_val = float(provided["v"])
+                if v_val == 0.0:
+                    return SymPyFuncWrapper(sympy.S.Zero)
+                if v_val == 1.0:
+                    return SymPyFuncWrapper(sympy.S.One)
+            except Exception:
+                pass  # symbolic v value: skip boundary
+
+        # Case 2: index names (u1, u2)
+        if "u2" in provided:
+            try:
+                v_val = float(provided["u2"])
+                if v_val == 0.0:
+                    return SymPyFuncWrapper(sympy.S.Zero)
+                if v_val == 1.0:
+                    return SymPyFuncWrapper(sympy.S.One)
+            except Exception:
+                pass
+
+        # Fallback: apply substitutions and keep wrapper semantics
         func = self._func.subs(vars_)
-
-        # Wrap the result in CD1Wrapper to maintain behavior in chained calls
-        result = CD1Wrapper(func)
-
-        # If we've made a substitution for v, check if it's a boundary value
-        if "v" in kwargs and isinstance(kwargs["v"], (int, float)):
-            if kwargs["v"] == 0:
-                return SymPyFuncWrapper(sympy.S.Zero)
-            if kwargs["v"] == 1:
-                return SymPyFuncWrapper(sympy.S.One)
-
-        return result
+        return CD1Wrapper(func)
