@@ -75,6 +75,7 @@ from copul.schur_order.cis_rearranger import CISRearranger
 from copul.schur_order.cis_verifier import CISVerifier
 from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.schur_order.plod_verifier import PLODVerifier
+from copul.schur_order.bounds_from_xi import bounds_from_xi
 from copul.star_product import markov_product
 
 __all__ = [
@@ -161,6 +162,7 @@ __all__ = [
     "LTDVerifier",
     "PLODVerifier",
     "ShuffleOfMin",
+    "bounds_from_xi",
     "markov_product",
 ]
 

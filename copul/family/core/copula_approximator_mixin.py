@@ -139,7 +139,7 @@ class CopulaApproximatorMixin:
         # Bernstein copula is another type handled by the checkerboard framework
         return self.to_checkerboard(grid_size, checkerboard_type="Bernstein")
 
-    def to_shuffle_of_min(self, grid_size: int = 100):
+    def to_shuffle_of_min(self, grid_size: int = 5000):
         """
         Approximate the copula using a ShuffleOfMin copula.
 
@@ -167,22 +167,25 @@ class CopulaApproximatorMixin:
         AttributeError
             If the object using the mixin doesn't have a 'dim' attribute.
         """
-        # Ensure self has a 'dim' attribute before checking its value
-        if not hasattr(self, "dim"):
-            raise AttributeError(
-                "The object using CopulaApproximatorMixin must have a 'dim' attribute."
-            )
-
-        # ShuffleOfMin is strictly bivariate based on the provided class definition
-        if self.dim != 2:
-            raise ValueError(
-                f"ShuffleOfMin approximation requires a bivariate copula (dim=2), but got dim={self.dim}."
-            )
-
-        # Pass grid_size (which is 'n' for ShuffleOfMin) and the type string.
-        # The Checkerboarder implementation is assumed to know how to handle
-        # the "ShuffleOfMin" type, likely using the grid_size as the order 'n'
-        # and determining the optimal permutation 'pi'.
-        # Note: ShuffleOfMin only needs a single integer 'n' for its order,
-        # which corresponds to an n x n checkerboard grid.
-        return self.to_checkerboard(grid_size, checkerboard_type="ShuffleOfMin")
+        raise NotImplementedError(
+            "ShuffleOfMin approximations not implemented as of now."
+        )
+        # # Ensure self has a 'dim' attribute before checking its value
+        # if not hasattr(self, "dim"):
+        #     raise AttributeError(
+        #         "The object using CopulaApproximatorMixin must have a 'dim' attribute."
+        #     )
+        #
+        # # ShuffleOfMin is strictly bivariate based on the provided class definition
+        # if self.dim != 2:
+        #     raise ValueError(
+        #         f"ShuffleOfMin approximation requires a bivariate copula (dim=2), but got dim={self.dim}."
+        #     )
+        #
+        # # Pass grid_size (which is 'n' for ShuffleOfMin) and the type string.
+        # # The Checkerboarder implementation is assumed to know how to handle
+        # # the "ShuffleOfMin" type, likely using the grid_size as the order 'n'
+        # # and determining the optimal permutation 'pi'.
+        # # Note: ShuffleOfMin only needs a single integer 'n' for its order,
+        # # which corresponds to an n x n checkerboard grid.
+        # return self.to_checkerboard(grid_size, checkerboard_type="ShuffleOfMin")

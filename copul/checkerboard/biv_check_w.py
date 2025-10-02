@@ -594,7 +594,7 @@ class BivCheckW(BivCheckPi):
 
         return results
 
-    def rvs(self, n=1):
+    def rvs(self, n=1, **kwargs):
         """Generate n random samples."""
         # Get cell indices according to their probability weights
         _, idxs = self._weighted_random_selection(self.matr, n)
