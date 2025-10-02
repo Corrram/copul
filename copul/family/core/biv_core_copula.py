@@ -8,6 +8,7 @@ import sympy as sp
 from matplotlib import pyplot as plt
 from matplotlib import colors as mcolors
 
+from copul.numerics import to_numpy_callable
 from copul.schur_order.cis_verifier import CISVerifier
 from copul.family.copula_graphs import CopulaGraphs
 from copul.family.rank_correlation_plotter import RankCorrelationPlotter
@@ -31,7 +32,7 @@ class BivCoreCopula:
     included for visualizing the copula's functions.
     """
 
-    u, v = sp.symbols("u v", nonnegative=True)
+    u, v = sp.symbols("u v", positive=True)
     log_cut_off = 4
     _package_path = pathlib.Path(__file__).parent.parent
     params: list = []
@@ -648,38 +649,24 @@ class BivCoreCopula:
 
         The function can be a SymPy expression wrapped in a SymPyFuncWrapper,
         or any callable that accepts (u, v).
-
-        Parameters
-        ----------
-        func : callable or SymPyFuncWrapper or sp.Expr
-            The function to plot.
-        title : str
-            Title for the plot.
-        zlabel : str
-            Label for the z-axis.
-        zlim : tuple, optional
-            Limits for the z-axis as (min, max).
-
-        Returns
-        -------
-        plt.Figure
-            The generated 3D plot figure.
         """
         intervals = {k: v for k, v in self.intervals.items()}
+
         try:
             _parameters = inspect.signature(func).parameters
         except TypeError:
             pass
         else:
-            if isinstance(func, types.MethodType):  #  and len(parameters) == 0:
+            if isinstance(func, types.MethodType):
                 try:
                     func = func()
                 except ValueError:
                     pass
+
         if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
-            f = sp.lambdify((self.u, self.v), func.func)
+            f = to_numpy_callable(func.func, (self.u, self.v), ae=True)
         elif isinstance(func, sp.Expr):
-            f = sp.lambdify((self.u, self.v), func)
+            f = to_numpy_callable(func, (self.u, self.v), ae=True)
         else:
             f = func
 
@@ -700,7 +687,7 @@ class BivCoreCopula:
             ax.set_zlim(*zlim)
         plt.title(title)
         plt.show()
-        self.intervals = intervals  # otherwise it may have been modified by the plot
+        self.intervals = intervals
         return fig
 
     def _plot_functions(self, func, title, zlabel, xlabel="u", **kwargs) -> plt.Figure:
@@ -717,12 +704,11 @@ class BivCoreCopula:
             pass
 
         if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
-            f = sp.lambdify((self.u, self.v), func.func, "numpy")
+            f = to_numpy_callable(func.func, (self.u, self.v), ae=True)
         elif isinstance(func, sp.Expr):
-            f = sp.lambdify((self.u, self.v), func, "numpy")
-        else:  # already callable
+            f = to_numpy_callable(func, (self.u, self.v), ae=True)
+        else:
             f = func
-
         # -------------------------------------------------------------------
         u_vals = np.linspace(0.01, 0.99, 200)  # x grid
         v_vals = np.linspace(0.1, 0.9, 9)  # the fixed v’s
@@ -759,15 +745,10 @@ class BivCoreCopula:
     ) -> plt.Figure:
         r"""Create a filled contour plot.
 
-        If ``log_z`` is *True*, the colour map is based on
-        :math:`\log(1+z)` (simply `numpy.log1p`). This means zeros map to
-        *exactly* 0 on the log scale instead of being excluded. The colour bar
-        still shows the **original values** (by subtracting 1 again in its tick
-        labels) so that the legend remains interpretable in the natural scale.
+        If ``log_z`` is *True*, the colour map is based on log1p(Z) etc.
         """
         intervals_backup = dict(self.intervals)
 
-        # Resolve callable ------------------------------------------------------
         try:
             _ = inspect.signature(func).parameters
             if isinstance(func, types.MethodType):
@@ -776,13 +757,12 @@ class BivCoreCopula:
             pass
 
         if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):
-            f = sp.lambdify((self.u, self.v), func.func)
+            f = to_numpy_callable(func.func, (self.u, self.v), ae=True)
         elif isinstance(func, sp.Expr):
-            f = sp.lambdify((self.u, self.v), func)
+            f = to_numpy_callable(func, (self.u, self.v), ae=True)
         else:
             f = func
 
-        # Evaluate grid ---------------------------------------------------------
         grid_size = kwargs.pop("grid_size", None)
         if grid_size is None:
             grid_size = 2 * levels
@@ -794,19 +774,16 @@ class BivCoreCopula:
         if zlim is not None:
             Z = np.clip(Z, zlim[0], zlim[1])
 
-        # Colour scaling --------------------------------------------------------
         cmap = kwargs.pop("cmap", "viridis")
         cmap = plt.cm.get_cmap(cmap).copy()
         fig, ax = plt.subplots()
 
         if log_z:
-            # mask negatives, shift by +1 for log1p
             Z_mask = np.ma.masked_less(Z, 0.0)
             Z_for_norm = np.ma.masked_less(Z_mask + 1.0, 1e-12)
             vmin = (zlim[0] + 1) if zlim else Z_for_norm.min()
             vmax = (zlim[1] + 1) if zlim else Z_for_norm.max()
             norm = mcolors.LogNorm(vmin=vmin, vmax=vmax)
-            # use more levels for smoother transitions
             if isinstance(levels, int):
                 levels = np.geomspace(vmin, vmax, levels * 5)
             cf = ax.contourf(X, Y, Z_for_norm, levels=levels, cmap=cmap, norm=norm)

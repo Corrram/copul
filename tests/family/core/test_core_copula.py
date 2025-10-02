@@ -25,7 +25,7 @@ class IndepCopula(CoreCopula):
         super().__init__(dimension)
         # C(u) = product(u_i)
         expr = sympy.Integer(1)
-        for ui in sympy.symbols(f"u1:{dimension + 1}"):
+        for ui in self.u_symbols:
             expr *= ui
         self._cdf_expr = expr
 
@@ -79,8 +79,9 @@ def test_indep_copula_cdf_basic_eval():
 
 def test_pdf_indep_is_one_everywhere():
     c = IndepCopula(2)
+    pdf = c.pdf()
     # PDF is constant 1; with no remaining variables, just call with no args
-    assert pytest.approx(c.pdf()) == 1.0
+    assert pytest.approx(pdf) == 1.0
     # kwargs are fine too (they'll be ignored since pdf has no free symbols)
     assert pytest.approx(c.pdf(u1=0.1, u2=0.2)) == 1.0
 

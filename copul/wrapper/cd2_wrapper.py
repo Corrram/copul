@@ -4,53 +4,47 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 class CD2Wrapper(SymPyFuncWrapper):
     """
-    Wrapper for the partial derivative of a copula with respect to the second argument.
+    Wrapper for ∂C/∂v (second coordinate). Bivariate boundaries:
+      - CD2(0, v) = 0
+      - CD2(1, v) = 1
 
-    This class handles the boundary conditions for conditional distributions:
-    - CD2(0, v) = 0 (when u=0)
-    - CD2(1, v) = 1 (when u=1)
+    These boundary rules must hold even after partial substitution of v
+    (i.e., when only u / u1 remains free).
     """
 
     def __call__(self, *args, **kwargs):
-        import numpy as _np
-
-        free_symbols = {str(f): f for f in self._func.free_symbols}
-
-        # Prepare substitutions
+        # Map positional/keyword args to {Symbol -> value}
         vars_, kwargs = self._prepare_call(args, kwargs)
 
-        # Boundary handling ONLY for scalar u (arrays are handled later by numpy_func)
-        if {"u", "v"}.issubset(set(free_symbols.keys())):
-            u_val = kwargs.get("u", None)
-            if u_val is not None and (
-                _np.isscalar(u_val) or isinstance(u_val, (int, float))
-            ):
-                try:
-                    u_float = float(u_val)
-                except Exception:
-                    u_float = None
-                if u_float == 0.0:
-                    return SymPyFuncWrapper(sympy.S.Zero)
-                if u_float == 1.0:
-                    return SymPyFuncWrapper(sympy.S.One)
+        free_syms = list(self._func.free_symbols)
+        by_name   = {str(s): s for s in free_syms}
+        provided  = {str(s): v for s, v in vars_.items()}
 
-        # Apply substitutions
-        func = self._func.subs(vars_)
+        # ---- Boundary rule should trigger whenever u (or u1) is provided,
+        #      even if v was already substituted away. ----
 
-        # Wrap again to keep CD2 semantics on further calls
-        result = CD2Wrapper(func)
-
-        # Redundant scalar boundary guard (kept for full backward compatibility)
-        if "u" in kwargs and (
-            _np.isscalar(kwargs["u"]) or isinstance(kwargs["u"], (int, float))
-        ):
+        # Standard names (u, v)
+        if "u" in provided:
             try:
-                u_float = float(kwargs["u"])
+                u_val = float(provided["u"])
+                if u_val == 0.0:
+                    return SymPyFuncWrapper(sympy.S.Zero)
+                if u_val == 1.0:
+                    return SymPyFuncWrapper(sympy.S.One)
             except Exception:
-                u_float = None
-            if u_float == 0.0:
-                return SymPyFuncWrapper(sympy.S.Zero)
-            if u_float == 1.0:
-                return SymPyFuncWrapper(sympy.S.One)
+                pass  # symbolic value — skip boundary fast-path
 
-        return result
+        # Index names (u1, u2)
+        if "u1" in provided:
+            try:
+                u_val = float(provided["u1"])
+                if u_val == 0.0:
+                    return SymPyFuncWrapper(sympy.S.Zero)
+                if u_val == 1.0:
+                    return SymPyFuncWrapper(sympy.S.One)
+            except Exception:
+                pass
+
+        # Fallback: apply substitutions and keep wrapper semantics
+        func = self._func.subs(vars_)
+        return CD2Wrapper(func)

@@ -2,6 +2,7 @@ import copy
 import numpy as np
 import sympy
 
+from copul.numerics import to_numpy_callable
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.cdi_wrapper import CDiWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -24,6 +25,10 @@ class CoreCopula:
         None  # Renamed from _cdf to avoid confusion with the new method
     )
     _free_symbols = {}
+
+    def _unwrap_expr(self, maybe_wrapper):
+        """Return the underlying sympy.Expr for wrappers; otherwise return as-is."""
+        return getattr(maybe_wrapper, "func", maybe_wrapper)
 
     @property
     def _cdf_expr(self):
@@ -73,7 +78,7 @@ class CoreCopula:
         from ``self.intervals``; the remaining ones stay symbolic.
         """
 
-        self.u_symbols = sympy.symbols(f"u1:{dimension + 1}")
+        self.u_symbols = sympy.symbols(f"u1:{dimension + 1}", positive=True)
         self.dim = dimension
         self._are_class_vars(kwargs)
         for i in range(len(args)):
@@ -88,33 +93,117 @@ class CoreCopula:
         }
 
     def __call__(self, *args, **kwargs):
-        r"""
-        Create a **new** copula instance with updated parameters.
-
-        Parameters
-        ----------
-        *args : tuple
-            Positional arguments mapped onto the instance’s **remaining** parameters.
-        **kwargs : dict
-            Explicit parameter assignments.
-
-        Returns
-        -------
-        CoreCopula
-            A (shallow) copy of ``self`` with the provided parameter updates applied.
         """
+        Create a new copula instance with updated parameters, or reduce dimension
+        if margins are fixed at 1 via u<i>=1. If the resulting dimension is 2,
+        return a BivCopula instance with symbols remapped to (u, v).
 
+        Supports parameter updates in the same call; parameter updates are applied
+        to the returned object (whether reduced or not).
+        """
+        # --- split parameter updates vs. u<i>=1 margin-fixes -------------------
+        fix_idxs = set()
+        param_kwargs = {}
+
+        # first map positional args to remaining params (like your original code)
+        for i in range(min(len(args), len(self.params))):
+            param_kwargs[str(self.params[i])] = args[i]
+
+        # now handle kwargs
+        for k, v in list(kwargs.items()):
+            if k.startswith("u") and v == 1:
+                try:
+                    idx = int(k[1:])  # 'u3' -> 3
+                except ValueError:
+                    raise ValueError(f"Unrecognized variable keyword {k!r}")
+                fix_idxs.add(idx)
+            else:
+                param_kwargs[k] = v
+
+        # ----------- NO reduction: behave like before (parameter update) -------
+        if not fix_idxs:
+            new_copula = copy.copy(self)
+            self._are_class_vars(param_kwargs)
+            for k, v in param_kwargs.items():
+                if isinstance(v, str):
+                    v = getattr(self.__class__, v)
+                setattr(new_copula, k, v)
+            new_copula.params = [p for p in self.params if str(p) not in param_kwargs]
+            new_copula.intervals = {
+                k: v for k, v in self.intervals.items() if str(k) not in param_kwargs
+            }
+            return new_copula
+
+        # ----------------------- reduction path (u<i>=1) -----------------------
+        if any(not (1 <= j <= self.dim) for j in fix_idxs):
+            raise ValueError(f"indices must be in 1..{self.dim}")
+        if self._cdf_expr is None:
+            raise ValueError("CDF expression is not set for this copula.")
+
+        # 1) substitute u_j = 1
+        subs = {self.u_symbols[j - 1]: 1 for j in fix_idxs}
+        new_expr = sympy.simplify(self._cdf_expr.subs(subs))
+
+        # 2) keep remaining symbols and re-map to u1..u_{d'}
+        keep_pairs = [
+            (j, s) for j, s in enumerate(self.u_symbols, start=1) if j not in fix_idxs
+        ]
+        new_dim = len(keep_pairs)
+        if new_dim == 0:
+            raise ValueError(
+                "All margins were fixed to 1; resulting copula has dimension 0."
+            )
+        new_u_symbols = sympy.symbols(f"u1:{new_dim + 1}", positive=True)
+        remap = {old: new_u_symbols[i] for i, (_, old) in enumerate(keep_pairs)}
+        new_expr = sympy.simplify(new_expr.subs(remap))
+
+        # 3) if new_dim == 2, return a BivCopula with (u1,u2)->(u,v)
+        if new_dim == 2:
+            from copul.family.core.biv_copula import BivCopula  # adjust path if needed
+
+            biv = BivCopula()
+
+            # carry over parameters/intervals/free symbols + any concrete param values
+            biv.params = list(self.params)
+            biv.intervals = dict(self.intervals)
+            biv._free_symbols = dict(getattr(self, "_free_symbols", {}))
+            for p in biv.params:
+                name = str(p)
+                if hasattr(self, name):
+                    setattr(biv, name, getattr(self, name))
+
+            # remap u1,u2 -> biv.u, biv.v
+            u1, u2 = sympy.symbols("u1 u2", positive=True)
+            new_expr_uv = sympy.simplify(new_expr.subs({u1: biv.u, u2: biv.v}))
+
+            biv._cdf_expr = new_expr_uv
+            biv.u_symbols = [biv.u, biv.v]
+
+            # apply any parameter updates passed in this call
+            for k, v in param_kwargs.items():
+                if isinstance(v, str):
+                    v = getattr(biv.__class__, v)
+                setattr(biv, k, v)
+            biv.params = [p for p in biv.params if str(p) not in param_kwargs]
+            biv.intervals = {
+                k: v for k, v in biv.intervals.items() if str(k) not in param_kwargs
+            }
+
+            return biv
+
+        # 4) otherwise return a reduced CoreCopula-like object
         new_copula = copy.copy(self)
-        self._are_class_vars(kwargs)
-        for i in range(len(args)):
-            kwargs[str(self.params[i])] = args[i]
-        for k, v in kwargs.items():
+        new_copula.dim = new_dim
+        new_copula.u_symbols = new_u_symbols
+        new_copula._cdf_expr = new_expr
+        # keep params/intervals/_free_symbols; then apply param updates on the reduced object
+        for k, v in param_kwargs.items():
             if isinstance(v, str):
-                v = getattr(self.__class__, v)
+                v = getattr(new_copula.__class__, v)
             setattr(new_copula, k, v)
-        new_copula.params = [param for param in self.params if str(param) not in kwargs]
+        new_copula.params = [p for p in self.params if str(p) not in param_kwargs]
         new_copula.intervals = {
-            k: v for k, v in self.intervals.items() if str(k) not in kwargs
+            k: v for k, v in self.intervals.items() if str(k) not in param_kwargs
         }
         return new_copula
 
@@ -260,99 +349,82 @@ class CoreCopula:
         r"""
         Evaluate (or partially evaluate) the CDF.
 
-        This method supports single-point evaluation, partial variable substitution,
-        and returning a callable wrapper if not all variables are specified.
-
-        Parameters
-        ----------
-        *args : array-like or float
-            Either
-            - coordinates of a **single** point (as separate scalars or a 1D array), or
-            - a **single** 1D array of remaining coordinates after substitution.
-            (Multi-point arrays are not supported here.)
-        **kwargs : dict
-            Variable substitutions. Supported naming schemes (mixable):
-            - Standard: ``u1=0.3, u2=0.7, ...``
-            - Bivariate alias: ``u=0.3, v=0.7``
-            - Original expression variables (e.g. ``x=..., y=...``)
-
-        Returns
-        -------
-        float or CDFWrapper
-            - A scalar if all variables are provided,
-            - otherwise a partially evaluated ``CDFWrapper`` callable.
-
-        Examples
-        --------
-        Single point as separate args::
-
-            value = copula.cdf(0.3, 0.7)
-
-        Single point as array::
-
-            value = copula.cdf([0.3, 0.7])
-
-        Variable substitution (bivariate alias)::
-
-            value = copula.cdf(u=0.3, v=0.7)
-
-        Partial substitution (returns a function of the remaining variable)::
-
-            f = copula.cdf(u1=0.3)
-            value = f(0.7)
+        Supports:
+          - C(u1,...,ud) via separate scalars or a 1D array
+          - partial substitution via kwargs (u1=..., u2=..., u=..., v=...)
+          - returns a callable wrapper if variables remain, otherwise a scalar
         """
-
         cdf_expr = self._get_cdf_expr()
-        # Apply substitutions
+        # Apply substitutions (kwargs)
         cdf_expr = cdf_expr(**kwargs)
 
-        # If args are also provided, evaluate the resulting expression
-        if args:
-            # Get the remaining symbols in the expression
-            remaining_vars = [str(sym) for sym in self.u_symbols if cdf_expr.has(sym)]
-            remaining_dim = len(remaining_vars)
-
-            # Convert args to a point array for remaining variables
-            if len(args) == 1:
-                arg = args[0]
-                if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                    arr = np.asarray(arg, dtype=float)
-                    if arr.ndim == 1:
-                        if len(arr) != remaining_dim:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
-                            )
-                        point = arr
-                    else:
-                        raise ValueError(
-                            "Cannot mix variable substitution with multi-point evaluation"
-                        )
-                elif hasattr(arg, "__len__"):
-                    if len(arg) != remaining_dim:
-                        raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
-                        )
-                    point = np.array(arg, dtype=float)
-                else:
-                    if remaining_dim != 1:
-                        raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got 1"
-                        )
-                    point = np.array([arg], dtype=float)
-            else:
-                if len(args) != remaining_dim:
-                    raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
-                    )
-                point = np.array(args, dtype=float)
-
-            # Substitute the remaining values
-            cdf_expr = cdf_expr(**{var: val for var, val in zip(remaining_vars, point)})
-            # Evaluate the fully substituted expression
+        # If NO positional args: if expression is constant (no u-symbols), return scalar
+        if not args:
+            expr = self._unwrap_expr(cdf_expr)
+            # which u-symbols remain?
+            rem_syms = [s for s in self.u_symbols if expr.has(s)]
+            if not rem_syms:
+                # fully constant after kwargs → evaluate now
+                return float(expr) if expr.is_number else float(expr.evalf())
+            # still has variables → return partially evaluated wrapper
             return cdf_expr
 
-        # Return a partially evaluated CDF
-        return cdf_expr
+        # If positional args ARE provided:
+        # Fast-path: full-point evaluation via separate scalars/array
+        # - If args represent a single 1D array of length dim
+        if len(args) == 1:
+            arg = args[0]
+            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
+                arr = np.asarray(arg, dtype=float)
+                if arr.ndim == 1 and len(arr) == self.dim:
+                    # full point → map all u_symbols
+                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, arr)}
+                    return cdf_expr(**sub_all)
+            elif hasattr(arg, "__len__"):
+                if len(arg) == self.dim:
+                    point = np.array(arg, dtype=float)
+                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
+                    return cdf_expr(**sub_all)
+                # else: will fall through to partial-remain logic below
+
+        # Case: separate scalars for a full point
+        if len(args) == self.dim and not kwargs:
+            point = np.array(args, dtype=float)
+            sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
+            return cdf_expr(**sub_all)
+
+        # Otherwise: partial substitution + remaining vars provided in *args*
+        expr = self._unwrap_expr(cdf_expr)
+        remaining_vars = [str(sym) for sym in self.u_symbols if expr.has(sym)]
+        remaining_dim = len(remaining_vars)
+
+        # Convert *args* to a 1D point for remaining variables
+        if len(args) == 1:
+            arg = args[0]
+            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
+                arr = np.asarray(arg, dtype=float)
+                if arr.ndim != 1:
+                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
+                if len(arr) != remaining_dim:
+                    raise ValueError(
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}")
+                point = arr
+            elif hasattr(arg, "__len__"):
+                if len(arg) != remaining_dim:
+                    raise ValueError(
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}")
+                point = np.array(arg, dtype=float)
+            else:
+                if remaining_dim != 1:
+                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
+                point = np.array([arg], dtype=float)
+        else:
+            if len(args) != remaining_dim:
+                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
+            point = np.array(args, dtype=float)
+
+        sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}
+        return cdf_expr(**sub_dict)
 
     def _cdf_single_point(self, u):
         r"""
@@ -376,83 +448,63 @@ class CoreCopula:
     def cond_distr(self, i, *args, **kwargs):
         r"""
         Evaluate (or partially evaluate) the conditional distribution
-
-        .. math::
-           F_{U_{-i}\mid U_i}(u_{-i}\mid u_i)
-           \;=\; \frac{\partial}{\partial u_i} \, C(u_1,\ldots,u_d).
-
-        Parameters
-        ----------
-        i : int
-            Index (1-based) of the conditioning coordinate.
-        *args : array-like or float
-            Coordinates of a **single** point for the remaining variables
-            (same rules as :meth:`cdf`).
-        **kwargs : dict
-            Variable substitutions (same schemes as :meth:`cdf`).
-
-        Returns
-        -------
-        float or SymPyFuncWrapper
-            - Scalar if all variables are provided,
-            - otherwise a partially evaluated ``SymPyFuncWrapper`` callable.
+        F_{U_{-i}|U_i}(u_{-i} | u_i) = ∂C/∂u_i.
         """
-
         if i < 1 or i > self.dim:
             raise ValueError(f"Dimension {i} out of range 1..{self.dim}")
 
-        # Get the conditional distribution expression
+        # Build derivative and wrap
         cdf = self.cdf()
         cond_expr = cdf.diff(self.u_symbols[i - 1])
         cond_expr = CDiWrapper(cond_expr, i)(**kwargs)
-        # If args are also provided, evaluate the resulting expression
-        if args:
-            remaining_vars = [str(sym) for sym in self.u_symbols if cond_expr.has(sym)]
-            remaining_dim = len(remaining_vars)
 
-            # Convert args to a point array for remaining variables
-            if len(args) == 1:
-                arg = args[0]
-                if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                    arr = np.asarray(arg, dtype=float)
-                    if arr.ndim == 1:
-                        if len(arr) != remaining_dim:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
-                            )
-                        point = arr
-                    else:
-                        raise ValueError(
-                            "Cannot mix variable substitution with multi-point evaluation"
-                        )
-                elif hasattr(arg, "__len__"):
-                    if len(arg) != remaining_dim:
-                        raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
-                        )
-                    point = np.array(arg, dtype=float)
-                else:
-                    if remaining_dim != 1:
-                        raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got 1"
-                        )
-                    point = np.array([arg], dtype=float)
-            else:
-                if len(args) != remaining_dim:
+        # If no args: if constant w.r.t remaining u’s, return scalar
+        if not args:
+            expr = self._unwrap_expr(cond_expr)
+            rem_syms = [s for s in self.u_symbols if expr.has(s)]
+            if not rem_syms:
+                return float(expr) if expr.is_number else float(expr.evalf())
+            return cond_expr
+
+        # Full-point fallback: if user passed a full coordinate and no kwargs
+        if len(args) == self.dim and not kwargs:
+            point = np.array(args, dtype=float)
+            sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
+            wrapper = CDiWrapper(self._unwrap_expr(cond_expr), i)  # rewrap cleanly
+            return wrapper(**sub_all)
+
+        # Otherwise, remaining-vars path
+        expr = self._unwrap_expr(cond_expr)
+        remaining_vars = [str(sym) for sym in self.u_symbols if expr.has(sym)]
+        remaining_dim = len(remaining_vars)
+
+        if len(args) == 1:
+            arg = args[0]
+            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
+                arr = np.asarray(arg, dtype=float)
+                if arr.ndim != 1:
+                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
+                if len(arr) != remaining_dim:
                     raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
-                    )
-                point = np.array(args, dtype=float)
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}")
+                point = arr
+            elif hasattr(arg, "__len__"):
+                if len(arg) != remaining_dim:
+                    raise ValueError(
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}")
+                point = np.array(arg, dtype=float)
+            else:
+                if remaining_dim != 1:
+                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
+                point = np.array([arg], dtype=float)
+        else:
+            if len(args) != remaining_dim:
+                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
+            point = np.array(args, dtype=float)
 
-            # Create a mapping from remaining variables to values
-            sub_dict = {var: point[i] for i, var in enumerate(remaining_vars)}
-
-            # Substitute the remaining values
-            wrapper = CDiWrapper(cond_expr, i)
-            return wrapper(**sub_dict)
-
-        # Return a partially evaluated conditional distribution
-        return CDiWrapper(cond_expr, i)
+        sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}
+        wrapper = CDiWrapper(expr, i)
+        return wrapper(**sub_dict)
 
     def _cond_distr_single(self, i, u):
         r"""
@@ -536,94 +588,74 @@ class CoreCopula:
 
     def pdf(self, *args, **kwargs):
         r"""
-        Evaluate (or partially evaluate) the PDF.
-
-        This differentiates the CDF once w.r.t. **each** coordinate and then applies
-        the same substitution/evaluation logic as :meth:`cdf`.
-
-        Parameters
-        ----------
-        *args : array-like or float
-            Coordinates of a **single** point (same rules as :meth:`cdf`).
-        **kwargs : dict
-            Variable substitutions (same schemes as :meth:`cdf`).
-
-        Returns
-        -------
-        float or numpy.ndarray or SymPyFuncWrapper
-            - Scalar if all variables are provided,
-            - otherwise a partially evaluated ``SymPyFuncWrapper`` callable.
-
-        Examples
-        --------
-        Single point as separate args::
-
-            value = copula.pdf(0.3, 0.7)
-
-        Variable substitution (bivariate alias)::
-
-            value = copula.pdf(u=0.3, v=0.7)
-
-        Partial substitution::
-
-            f = copula.pdf(u1=0.3)
-            value = f(0.7)
+        Evaluate (or partially evaluate) the PDF:
+          ∂^d C / ∂u1 ... ∂ud
         """
-
-        # Get the PDF expression
+        # Build PDF sympy expr by differentiating C w.r.t. all u_j
         pdf_expr = self._get_cdf_expr()
         for u_symbol in self.u_symbols:
             pdf_expr = pdf_expr.diff(u_symbol)
 
-        pdf_expr = pdf_expr(**kwargs)
+        pdf_expr = pdf_expr(**kwargs)  # apply partial substitutions
 
-        # If args are also provided, evaluate the resulting expression
-        if args:
-            remaining_vars = [str(sym) for sym in self.u_symbols if pdf_expr.has(sym)]
-            remaining_dim = len(remaining_vars)
+        # If no args: if constant, return scalar (important for independence)
+        if not args:
+            expr = self._unwrap_expr(pdf_expr)
+            rem_syms = [s for s in self.u_symbols if expr.has(s)]
+            if not rem_syms:
+                return float(expr) if expr.is_number else float(expr.evalf())
+            return SymPyFuncWrapper(expr)
 
-            # Convert args to a point array for remaining variables
-            if len(args) == 1:
-                arg = args[0]
-                if hasattr(arg, "ndim") and hasattr(arg, "shape"):
-                    arr = np.asarray(arg, dtype=float)
-                    if arr.ndim == 1:
-                        if len(arr) != remaining_dim:
-                            raise ValueError(
-                                f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
-                            )
-                        point = arr
-                    else:
-                        raise ValueError(
-                            "Cannot mix variable substitution with multi-point evaluation"
-                        )
-                elif hasattr(arg, "__len__"):
-                    if len(arg) != remaining_dim:
-                        raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
-                        )
+        # Full-point fallback: separate scalars / array for a full coordinate
+        if len(args) == 1:
+            arg = args[0]
+            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
+                arr = np.asarray(arg, dtype=float)
+                if arr.ndim == 1 and len(arr) == self.dim and not kwargs:
+                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, arr)}
+                    return pdf_expr(**sub_all)
+            elif hasattr(arg, "__len__"):
+                if len(arg) == self.dim and not kwargs:
                     point = np.array(arg, dtype=float)
-                else:
-                    if remaining_dim != 1:
-                        raise ValueError(
-                            f"Expected {remaining_dim} remaining coordinates, got 1"
-                        )
-                    point = np.array([arg], dtype=float)
-            else:
-                if len(args) != remaining_dim:
+                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
+                    return pdf_expr(**sub_all)
+
+        if len(args) == self.dim and not kwargs:
+            point = np.array(args, dtype=float)
+            sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
+            return pdf_expr(**sub_all)
+
+        # Partial path: determine remaining variables robustly
+        expr = self._unwrap_expr(pdf_expr)
+        remaining_vars = [str(sym) for sym in self.u_symbols if expr.has(sym)]
+        remaining_dim = len(remaining_vars)
+
+        if len(args) == 1:
+            arg = args[0]
+            if hasattr(arg, "ndim") and hasattr(arg, "shape"):
+                arr = np.asarray(arg, dtype=float)
+                if arr.ndim != 1:
+                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
+                if len(arr) != remaining_dim:
                     raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
-                    )
-                point = np.array(args, dtype=float)
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}")
+                point = arr
+            elif hasattr(arg, "__len__"):
+                if len(arg) != remaining_dim:
+                    raise ValueError(
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}")
+                point = np.array(arg, dtype=float)
+            else:
+                if remaining_dim != 1:
+                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
+                point = np.array([arg], dtype=float)
+        else:
+            if len(args) != remaining_dim:
+                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
+            point = np.array(args, dtype=float)
 
-            # Create a mapping from remaining variables to values
-            sub_dict = {var: point[i] for i, var in enumerate(remaining_vars)}
-
-            # Substitute the remaining values
-            return pdf_expr(**sub_dict)
-
-        # Return a partially evaluated PDF
-        return SymPyFuncWrapper(pdf_expr)
+        sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}
+        return SymPyFuncWrapper(expr)(**sub_dict)
 
     def _pdf_single_point(self, u):
         r"""
@@ -765,12 +797,7 @@ class CoreCopula:
     def _lambdify_cdf_numpy(self):
         if self._cdf_expr is None:
             raise ValueError("CDF expression is not set for this copula.")
-        # Custom mapping so SymPy Max(...) doesn’t become asarray([...])
-        modules = [
-            {"Max": (lambda *xs: np.maximum.reduce(xs))},  # broadcast-safe
-            "numpy",
-        ]
-        return sympy.lambdify(self.u_symbols, self._cdf_expr, modules=modules)
+        return to_numpy_callable(self._cdf_expr, self.u_symbols, ae=True)
 
     def validate_copula(
         self, m: int = 21, tol: float = 1e-8, return_details: bool = False
