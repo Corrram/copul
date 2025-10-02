@@ -4,6 +4,14 @@ copul.schur\_order package
 Submodules
 ----------
 
+copul.schur\_order.bounds\_from\_xi module
+------------------------------------------
+
+.. automodule:: copul.schur_order.bounds_from_xi
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.schur\_order.cis\_rearranger module
 -----------------------------------------
 

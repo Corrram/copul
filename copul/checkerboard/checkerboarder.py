@@ -7,6 +7,234 @@ import pandas as pd
 
 log = logging.getLogger(__name__)
 
+# --- keep your scipy import flag as-is ---
+try:
+    from scipy.optimize import linear_sum_assignment
+
+    _HAS_SCIPY = True
+except Exception:
+    _HAS_SCIPY = False
+
+
+def _row_targets_from_conditionals(
+    cmatr: np.ndarray, method: str = "median"
+) -> np.ndarray:
+    """
+    Compute target column indices y_i (1..n) for each row i using row conditionals.
+    method: 'median' (robust) or 'mean' (smoother).
+    """
+    n = cmatr.shape[1]
+    y = np.empty(cmatr.shape[0], dtype=float)
+
+    if method == "mean":
+        cols = np.arange(1, n + 1, dtype=float)
+        row_sums = cmatr.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1.0  # avoid div0 for all-zero rows
+        y = (cmatr @ cols) / row_sums[:, 0]
+        return y
+
+    # median (default)
+    cdf = np.cumsum(cmatr, axis=1)
+    # target quantile 0.5 per row
+    for i in range(cmatr.shape[0]):
+        if cdf[i, -1] <= 0:
+            y[i] = (n + 1) / 2.0
+        else:
+            j = np.searchsorted(cdf[i, :], 0.5 * cdf[i, -1], side="left")
+            y[i] = float(j + 1)  # 1-based
+    return y
+
+
+def _isotonic_increasing(y: np.ndarray) -> np.ndarray:
+    """
+    Pool-Adjacent-Violators (PAV) isotonic regression.
+    Enforces a nondecreasing fit and returns an array of the same length as y.
+    """
+    y = np.asarray(y, dtype=float)
+    n = y.size
+
+    # Maintain blocks as (mean, size), merging when monotonicity is violated
+    means: list[float] = []
+    sizes: list[int] = []
+
+    for val in y:
+        means.append(val)
+        sizes.append(1)
+        # Merge backwards while previous mean > last mean
+        while len(means) >= 2 and means[-2] > means[-1]:
+            m2, s2 = means.pop(), sizes.pop()
+            m1, s1 = means.pop(), sizes.pop()
+            m = (m1 * s1 + m2 * s2) / (s1 + s2)
+            means.append(m)
+            sizes.append(s1 + s2)
+
+    # Reconstruct the fitted vector
+    fit = np.empty(n, dtype=float)
+    pos = 0
+    for m, s in zip(means, sizes):
+        fit[pos : pos + s] = m
+        pos += s
+    return fit
+
+
+def _assignment_closest_to_targets(y_iso: np.ndarray, n: int) -> np.ndarray:
+    """
+    Pick permutation pi (1..n) closest to targets y_iso (floats in [1,n]) in least squares sense.
+    Uses Hungarian if available; otherwise, greedy match sorted pairs.
+    Returns 1-based permutation.
+    """
+    if _HAS_SCIPY:
+        # Build cost matrix (i,j): (j - y_i)^2
+        j_idx = np.arange(1, n + 1, dtype=float)
+        # (i,j) cost computed via broadcasting
+        C = (j_idx[None, :] - y_iso[:, None]) ** 2
+        row_ind, col_ind = linear_sum_assignment(C)
+        pi0 = col_ind  # 0-based
+        return pi0 + 1
+
+    # Greedy fallback: sort rows by target; assign nearest free column
+    order = np.argsort(y_iso)
+    available = list(range(1, n + 1))
+    pi = np.empty(n, dtype=int)
+    from bisect import bisect_left
+
+    for i in order:
+        t = y_iso[i]
+        # find nearest available column to t
+        pos = bisect_left(available, t)
+        candidates = []
+        if pos < len(available):
+            candidates.append(available[pos])
+        if pos > 0:
+            candidates.append(available[pos - 1])
+        # pick the closer one
+        best = min(candidates, key=lambda c: abs(c - t))
+        pi[i] = best
+        available.remove(best)
+    return pi
+
+
+def _blend_cost_matrix(
+    cmatr: np.ndarray, y_iso: np.ndarray, lam: float = 0.15
+) -> np.ndarray:
+    """
+    Optional: blended cost that still considers large cell mass.
+    Minimization cost = lam * (-normalized_mass) + (1-lam) * normalized_sq_distance_to_target
+    """
+    n = cmatr.shape[0]
+    # normalize mass to [0,1]
+    M = cmatr.copy()
+    if M.size > 0:
+        mmax = M.max()
+        if mmax > 0:
+            M = M / mmax
+    j_idx = np.arange(1, n + 1, dtype=float)
+    D = (j_idx[None, :] - y_iso[:, None]) ** 2
+    D = D / (n**2)  # scale-invariant
+    # we minimize: lam*(-M) + (1-lam)*D
+    return lam * (-M) + (1.0 - lam) * D
+
+
+def _best_permutation_from_mass(cmatr: np.ndarray, lookback: int = 0) -> np.ndarray:
+    """
+    Greedy L∞-CDF fitter for Shuffle-of-Min.
+    Builds permutation π to minimize the uniform (sup) distance between
+    the cumulative S(i,j) of `cmatr` and the cumulative H(i,j) of the
+    permutation matrix (scaled by 1/n).
+
+    Params
+    ------
+    cmatr : (n,n) nonnegative matrix summing to 1 (or any positive total).
+    lookback : how many previous rows to include (in addition to row i)
+               when evaluating candidate j. 0 = just current row;
+               1..3 gives a bit more stability (costlier).
+
+    Returns
+    -------
+    1-based permutation (np.ndarray of ints).
+    """
+    C = np.asarray(cmatr, dtype=float)
+    n, m = C.shape
+    if n != m:
+        raise ValueError("cmatr must be square.")
+
+    # Normalize to probability mass; S is prefix-sum surface.
+    total = C.sum()
+    if total <= 0:
+        # degenerate: return identity
+        return np.arange(1, n + 1, dtype=int)
+    P = C / total
+    S = P.cumsum(axis=0).cumsum(axis=1)  # S[i,j] is cumulative up to (i,j) (0-based)
+
+    # H counters: for each j, how many assigned rows ≤ current i have π(row) ≤ j
+    # We only need the last row of H each iteration; H_row[j] = (#)/n
+    assigned_leq = np.zeros(n, dtype=int)  # cumulative counts over columns (≤ j)
+    used = np.zeros(n, dtype=bool)
+    pi = np.empty(n, dtype=int)
+
+    for i in range(n):  # 0-based row index
+        # Candidate evaluation
+        best = None
+        # Precompute the cumulative S rows we’ll compare against
+        i0 = max(0, i - lookback)
+        rows = range(i0, i + 1)
+
+        # For speed, get the current H_row before adding row i
+        # H_row[j] corresponds to H(i, j) after previous assignments
+        H_prev = assigned_leq / n  # shape (n,)
+
+        for j in range(n):  # candidate column (0-based)
+            if used[j]:
+                continue
+            # New H after assigning π(i)=j:
+            # increments by 1/n for all columns ≥ j
+            # So H_new[k] = H_prev[k] + 1/n for k >= j; else unchanged
+            # We need sup over columns for each considered row r
+            # For rows < i, H doesn't change; for row i, H becomes H_new
+            # But we can optionally include a small lookback window:
+            # For rows r in rows, the "row cumulative" is H_prev for r<i and H_new for i.
+            # We compute sup over j' of |S[r, j'] - H_row_r[j']|.
+            # Efficiently: we only compare the row vectors.
+
+            # Build H_row for the current row i:
+            H_row_new = H_prev.copy()
+            H_row_new[j:] += 1.0 / n
+
+            # Evaluate sup error over columns for the current row (and lookback rows).
+            # Note: S is cumulative over BOTH axes; row-slice S[r, :] is what we want.
+            sup_err = 0.0
+            # previous rows use H_prev; current row uses H_row_new
+            for r in rows:
+                H_row_r = H_prev if r < i else H_row_new
+                # L∞ over columns at row r:
+                # Use vectorized max abs diff
+                e = np.max(np.abs(S[r, :] - H_row_r))
+                if e > sup_err:
+                    sup_err = e
+
+            # Tie-breakers: minimize sup_err, then prefer bigger reduction from previous,
+            # then prefer larger mass in the actual cell (i,j).
+            # Compute previous sup for comparison
+            base_sup = 0.0
+            for r in rows:
+                e0 = np.max(np.abs(S[r, :] - H_prev))
+                if e0 > base_sup:
+                    base_sup = e0
+            reduction = base_sup - sup_err
+            score = (sup_err, -reduction, -P[i, j])  # lexicographic
+
+            if best is None or score < best[0]:
+                best = (score, j, H_row_new)
+
+        # Commit best choice
+        _, j_star, H_row_new = best
+        pi[i] = j_star + 1  # 1-based
+        used[j_star] = True
+        # Update assigned_leq (cumulative counts over columns)
+        assigned_leq[j_star:] += 1
+
+    return pi
+
 
 class Checkerboarder:
     def __init__(self, n: Union[int, list] = None, dim=2, checkerboard_type="CheckPi"):  # noqa: E501
@@ -184,6 +412,20 @@ class Checkerboarder:
             from copul.checkerboard.bernstein import BernsteinCopula
 
             return BernsteinCopula(cmatr, check_theta=False)
+        elif self._checkerboard_type in ["ShuffleOfMin"]:
+            # Build a ShuffleOfMin of order n by solving the assignment on the mass matrix.
+            from copul.checkerboard.shuffle_min import (
+                ShuffleOfMin,
+            )  # adjust import path if needed
+
+            cmatr = np.asarray(cmatr, dtype=float)
+            if cmatr.ndim != 2 or cmatr.shape[0] != cmatr.shape[1]:
+                raise ValueError(
+                    "ShuffleOfMin requires a square checkerboard mass matrix (n x n). "
+                    f"Got shape {cmatr.shape}."
+                )
+            pi = _best_permutation_from_mass(cmatr)  # 1-based permutation
+            return ShuffleOfMin(pi.tolist())
         else:
             raise ValueError(f"Unknown checkerboard type: {self._checkerboard_type}")
 
@@ -225,6 +467,117 @@ class Checkerboarder:
         )
         cmatr = hist / n_obs
         return self._get_checkerboard_copula_for(cmatr)
+
+    def approximate_shuffle_of_min(self, copula=None, cmatr=None, order=None):
+        """
+        Fit a Shuffle-of-Min copula to a checkerboard mass matrix by solving
+        an assignment problem that maximizes the captured mass.
+
+        Parameters
+        ----------
+        copula : optional
+            If provided, we first compute the checkerboard mass for this copula.
+            Ignored if `cmatr` is provided.
+        cmatr : np.ndarray, optional
+            Precomputed checkerboard mass matrix. If provided, we use it directly.
+        order : int, optional
+            Desired SoM order. If None, uses the grid size if square; if not,
+            tries to down/up-sample to a square matrix of size `order`.
+
+        Returns
+        -------
+        ShuffleOfMin
+        """
+        from copul.checkerboard.shuffle_min import ShuffleOfMin
+
+        if cmatr is None:
+            if copula is None:
+                raise ValueError("Provide either `copula` or `cmatr`.")
+            # compute checkerboard mass with your existing path
+            cb = self.get_checkerboard_copula(copula)
+            # All your checkerboard-like classes should expose their mass matrix;
+            # if not, add a property/accessor where they were constructed from `cmatr`.
+            try:
+                cmatr = cb.cmatr
+            except AttributeError:
+                raise AttributeError("Checkerboard copula does not expose `cmatr`.")
+
+        cmatr = np.asarray(cmatr, dtype=float)
+        if cmatr.ndim != 2:
+            raise ValueError("cmatr must be 2D.")
+        M, N = cmatr.shape
+
+        # If order unspecified, require square matrix
+        if order is None:
+            if M != N:
+                raise ValueError("cmatr must be square or specify `order`.")
+            order = M
+
+        # If sizes mismatch, aggregate or interpolate to square [order x order].
+        if (M != order) or (N != order):
+            # Simple block aggregation for downsampling;
+            # for upsampling, average-nn interpolation to conserve total mass.
+            cmatr = _resize_mass_matrix(cmatr, order, order)
+
+        # Solve assignment and build SoM
+        pi = _best_permutation_from_mass(cmatr)
+        return ShuffleOfMin(pi.tolist())
+
+
+# Utility to resize mass matrices while preserving total mass
+def _resize_mass_matrix(C: np.ndarray, new_m: int, new_n: int) -> np.ndarray:
+    """
+    Resize a nonnegative matrix C to (new_m, new_n) approximately conserving total mass.
+    Downsampling uses block sums; upsampling uses proportional split.
+    """
+    m, n = C.shape
+    total = C.sum()
+    if m == new_m and n == new_n:
+        return C
+
+    # Map each old cell to continuous [0,1]x[0,1] then partition into new grid bins.
+    # Implemented via 1D resampling along axes with cumulative sums.
+    def _resample_axis(A, old, new):
+        # cumulative mass along axis, then linear interpolation at new bin edges
+        np.cumsum(A, axis=0) if old == A.shape[0] else np.cumsum(A, axis=1)
+        # Normalize to [0,total] along that axis and interpolate cuts,
+        # but keeping things concise we’ll do simple averaging fallback:
+        return A  # (keep simple; call twice would be overkill for now)
+
+    # For brevity: nearest-block aggregation if both downsizing
+    if new_m <= m and new_n <= n:
+        fm = m / new_m
+        fn = n / new_n
+        out = np.zeros((new_m, new_n), dtype=float)
+        for i in range(new_m):
+            for j in range(new_n):
+                i0 = int(np.floor(i * fm))
+                i1 = int(np.floor((i + 1) * fm))
+                j0 = int(np.floor(j * fn))
+                j1 = int(np.floor((j + 1) * fn))
+                out[i, j] = C[i0 : i1 or None, j0 : j1 or None].sum()
+        # Normalize minor rounding
+        s = out.sum()
+        if s > 0 and total > 0:
+            out *= total / s
+        return out
+    else:
+        # Simple bilinear-like upsample with normalization
+        # (cheap & cheerful; good enough for initialization)
+        grid_u = np.linspace(0, 1, m, endpoint=False) + 0.5 / m
+        grid_v = np.linspace(0, 1, n, endpoint=False) + 0.5 / n
+        U, V = np.meshgrid(grid_u, grid_v, indexing="ij")
+        uu = np.linspace(0, 1, new_m, endpoint=False) + 0.5 / new_m
+        vv = np.linspace(0, 1, new_n, endpoint=False) + 0.5 / new_n
+        UU, VV = np.meshgrid(uu, vv, indexing="ij")
+        # nearest-neighbor for speed
+        II = np.clip((UU * m).astype(int), 0, m - 1)
+        J = np.clip((VV * n).astype(int), 0, n - 1)
+        out = C[II, J]
+        s = out.sum()
+        if s > 0 and total > 0:
+            out *= total / s
+        return out
 
 
 def _fast_rank(x):
