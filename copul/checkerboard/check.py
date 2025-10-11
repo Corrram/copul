@@ -127,6 +127,110 @@ class Check:
         # 3) Create the copula object (normalizes in __init__)
         return cls(hist)
 
+    def validate_copula(
+        self, tol=1e-10, warn=False, raise_on_fail=False, report_details=False
+    ):
+        """
+        Validate that the checkerboard weights define a proper d-dimensional copula density:
+        - All cell masses are nonnegative (within tol).
+        - Total mass is 1 (within tol).
+        - Each marginal along every axis is uniform: for axis a with size m_a,
+          the marginal vector equals 1/m_a (within tol).
+
+        Parameters
+        ----------
+        tol : float
+            Numerical tolerance for validations.
+        warn : bool
+            If True, emit logging warnings for any violations.
+        raise_on_fail : bool
+            If True, raise ValueError on the first failure. Otherwise return a report.
+
+        Returns
+        -------
+        dict
+            {
+              'ok': bool,
+              'total_mass': float,
+              'mass_error': float,
+              'min_cell': float,
+              'negativity_violation': float,
+              'marginal_errors': list of dicts per axis with keys:
+                   {'axis': int, 'target': float, 'max_abs_dev': float,
+                    'mean': float, 'min': float, 'max': float},
+              'violations': list of str
+            }
+        """
+        violations = []
+
+        A = self.matr
+        shape = A.shape
+        d = self.dim
+
+        # 1) Nonnegativity
+        min_cell = float(np.min(A)) if A.size else 0.0
+        negativity_violation = max(0.0, -min_cell)
+        if negativity_violation > tol:
+            violations.append(
+                f"Negative cell mass: min={min_cell:.3e} < 0 (tol={tol:g})."
+            )
+
+        # 2) Total mass
+        total_mass = float(A.sum())
+        mass_error = abs(total_mass - 1.0)
+        if mass_error > tol:
+            violations.append(
+                f"Total mass != 1: sum={total_mass:.16f} (|err|={mass_error:.3e}, tol={tol:g})."
+            )
+
+        # 3) Uniform margins along each axis
+        marginal_reports = []
+        for ax in range(d):
+            # Sum over all axes except 'ax'
+            axes_to_sum = tuple(i for i in range(d) if i != ax)
+            marg = A.sum(axis=axes_to_sum)
+            # expected uniform value on each bin of this axis
+            target = 1.0 / shape[ax] if shape[ax] > 0 else 0.0
+            dev = np.abs(marg - target)
+            max_abs_dev = float(np.max(dev)) if dev.size else 0.0
+            if max_abs_dev > tol:
+                violations.append(
+                    f"Axis {ax} marginal not uniform: max|marg - {target:.6g}|={max_abs_dev:.3e} (tol={tol:g})."
+                )
+            marginal_reports.append(
+                {
+                    "axis": ax,
+                    "target": target,
+                    "max_abs_dev": max_abs_dev,
+                    "mean": float(np.mean(marg)) if marg.size else 0.0,
+                    "min": float(np.min(marg)) if marg.size else 0.0,
+                    "max": float(np.max(marg)) if marg.size else 0.0,
+                }
+            )
+
+        ok = len(violations) == 0
+        if not report_details:
+            return ok
+        report = {
+            "ok": ok,
+            "total_mass": total_mass,
+            "mass_error": mass_error,
+            "min_cell": min_cell,
+            "negativity_violation": negativity_violation,
+            "marginal_errors": marginal_reports,
+            "violations": violations,
+        }
+
+        # Logging / raising behavior
+        if not ok:
+            msg = "; ".join(violations)
+            if warn:
+                log.warning("Copula validation failed: %s", msg)
+            if raise_on_fail:
+                raise ValueError(f"Copula validation failed: {msg}")
+
+        return ok, report
+
     def lambda_L(self):
         """Lower tail dependence (usually 0 for a checkerboard copula)."""
         return 0

@@ -246,4 +246,4 @@ if __name__ == "__main__":
     ]
 
     for alpha, beta in parameter_pairs:
-        calculate_and_plot(alpha_val=alpha, beta_val=beta)
+        calculate_and_plot(alpha_val=alpha, beta_val=beta, n_points=100)
