@@ -80,7 +80,7 @@ def main() -> None:
         rho_sorted,
         nu_sorted,
         color=BLUE,
-        lw=2.5,
+        lw=2.0,
         label=r"Upper boundary (as $\nu(\rho)$)",
     )
     ax.plot(rho_sorted, nu_lower, color=BLUE, lw=2.0)
@@ -97,57 +97,57 @@ def main() -> None:
     )
 
     # Overlay explicit ν(ρ) for ρ∈[0,1]
-    ax.plot(
-        rho_pos,
-        nu_pos_explicit,
-        linestyle="--",
-        lw=2.0,
-        color="black",
-        label=r"$\nu(\rho)=1-\frac{3}{4}(1-\rho)^{4/3}\ \ (0\leq \rho\leq 1)$",
-    )
+    # ax.plot(
+    #     rho_pos,
+    #     nu_pos_explicit,
+    #     linestyle="--",
+    #     lw=2.0,
+    #     color="black",
+    #     label=r"$\nu(\rho)=1-\frac{3}{4}(1-\rho)^{4/3}\ \ (0\leq \rho\leq 1)$",
+    # )
 
     # -------------------------- Highlight points ----------------------
     # M (1,1); Π (0,0); W (-1,-1); cusp at μ=1: (ρ,ν)=(0,0.25)
-    key_rho = [1, 0, -1, 0]
-    key_nu = [1, 0, -1, 0.25]
-    ax.scatter(key_rho, key_nu, s=60, color="black", zorder=5)
+    # key_rho = [1, 0, -1, 0]
+    # key_nu = [1, 0, -1, 0.25]
+    # ax.scatter(key_rho, key_nu, s=60, color="black", zorder=5)
 
-    ax.annotate(
-        r"$M$",
-        (1, 1),
-        xytext=(-10, 0),
-        textcoords="offset points",
-        fontsize=18,
-        ha="right",
-        va="top",
-    )
-    ax.annotate(
-        r"$\Pi$",
-        (0, 0),
-        xytext=(0, 18),
-        textcoords="offset points",
-        fontsize=18,
-        ha="center",
-        va="bottom",
-    )
-    ax.annotate(
-        r"$W$",
-        (-1, -1),
-        xytext=(10, 0),
-        textcoords="offset points",
-        fontsize=18,
-        ha="left",
-        va="bottom",
-    )
-    ax.annotate(
-        r"$\mu=1$",
-        (0, 0.25),
-        xytext=(8, -2),
-        textcoords="offset points",
-        fontsize=16,
-        ha="left",
-        va="center",
-    )
+    # ax.annotate(
+    #     r"$M$",
+    #     (1, 1),
+    #     xytext=(-10, 0),
+    #     textcoords="offset points",
+    #     fontsize=18,
+    #     ha="right",
+    #     va="top",
+    # )
+    # ax.annotate(
+    #     r"$\Pi$",
+    #     (0, 0),
+    #     xytext=(0, 18),
+    #     textcoords="offset points",
+    #     fontsize=18,
+    #     ha="center",
+    #     va="bottom",
+    # )
+    # ax.annotate(
+    #     r"$W$",
+    #     (-1, -1),
+    #     xytext=(10, 0),
+    #     textcoords="offset points",
+    #     fontsize=18,
+    #     ha="left",
+    #     va="bottom",
+    # )
+    # ax.annotate(
+    #     r"$\mu=1$",
+    #     (0, 0.25),
+    #     xytext=(8, -2),
+    #     textcoords="offset points",
+    #     fontsize=16,
+    #     ha="left",
+    #     va="center",
+    # )
 
     # ------------------------ Axes & cosmetics ------------------------
     ax.set_xlabel(r"Spearman's $\rho$", fontsize=16)
@@ -161,10 +161,10 @@ def main() -> None:
     ax.grid(True, linestyle=":", alpha=0.6)
     ax.axvline(0, color="black", lw=0.8)
     ax.axhline(0, color="black", lw=0.8)
-    ax.legend(loc="lower right", fontsize=11, frameon=True)
+    # ax.legend(loc="lower right", fontsize=11, frameon=True)
     fig.tight_layout()
     pathlib.Path("images").mkdir(exist_ok=True)
-    plt.savefig("images/rho-vs-blest_axes-original.png", dpi=300)
+    plt.savefig("images/nu-rho-region.png", dpi=300)
     plt.show()
 
 

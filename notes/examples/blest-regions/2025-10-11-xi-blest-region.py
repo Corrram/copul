@@ -237,7 +237,7 @@ def plot_region(cfg: PlotCfg, x: np.ndarray, y: np.ndarray):
     if cfg.show_full_box:
         ax.set_xlim(-1.05, 1.05)
     else:
-        ax.set_xlim(-0.02, 1.02)
+        ax.set_xlim(-1.02, 1.02)
     ax.set_ylim(-1.05, 1.05)
     ax.set_aspect("equal", adjustable="box")
     ax.xaxis.set_major_locator(MultipleLocator(0.25))
