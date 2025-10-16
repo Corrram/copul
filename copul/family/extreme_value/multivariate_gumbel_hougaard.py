@@ -246,11 +246,11 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
         # Masks for exact boundaries (before any epsilon tricks)
         any_zero = np.zeros(shape, dtype=bool)
         for arr in arrays:
-            any_zero |= (arr == 0)
+            any_zero |= arr == 0
 
         all_one = np.ones(shape, dtype=bool)
         for arr in arrays:
-            all_one &= (arr == 1)
+            all_one &= arr == 1
 
         # Stabilize logs only for the interior computation
         adjusted = [np.maximum(arr, 1e-300) for arr in arrays]  # tiny epsilon

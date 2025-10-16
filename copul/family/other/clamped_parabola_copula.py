@@ -119,7 +119,10 @@ class ClampedParabolaCopula(BivCopula):
         b = float(self.b)
 
         q = self._get_q_v_vec(v, b)
-        s = np.where(q < 0.0, 1.0, 1.0 - np.sqrt(q))
+        s = np.empty_like(q, dtype=float)
+        mask = q >= 0.0
+        s[~mask] = 1.0
+        s[mask] = 1.0 - np.sqrt(q[mask])
         a = np.maximum(0.0, 1.0 - np.sqrt(q + 1.0 / b))
 
         # primitive T via the convenient "minus" form used earlier
@@ -132,7 +135,10 @@ class ClampedParabolaCopula(BivCopula):
     def _switch_points(self, q, b):
         """Return a(v), s(v) for given q and b."""
         a = np.maximum(0.0, 1.0 - np.sqrt(q + 1.0 / b))
-        s = np.where(q < 0.0, 1.0, 1.0 - np.sqrt(q))
+        s = np.empty_like(q, dtype=float)
+        mask = q >= 0.0
+        s[~mask] = 1.0
+        s[mask] = 1.0 - np.sqrt(q[mask])
         return a, s
 
     def _vprime_of_q(self, q, b):
@@ -518,6 +524,10 @@ if __name__ == "__main__":
     b_values = [0.5, 1, 2]  # corresponds to mu = 0.2, 0.5, 1.0, 2.0
     for b in b_values:
         copula = ClampedParabolaCopula(b=b)
+        copula.plot_pdf(plot_type="contour")
+        copula.plot_cond_distr_1(plot_type="contour")
+        # copula.plot_cond_distr_2(plot_type="contour")
+        copula.plot_cdf(plot_type="contour")
         xi = copula.chatterjees_xi()
         nu = copula.blests_nu()
 
@@ -529,5 +539,5 @@ if __name__ == "__main__":
         print(f"Approx xi = {xi_approx:.6f}, nu = {nu_approx:.6f}")
         # copula.plot_cond_distr_1(plot_type="contour")
         copula.plot_pdf(
-            plot_type="contour", zlim=(0, 5 * np.sqrt(b)), levels=1000, grid_size=1000
+            plot_type="contour", zlim=(0, 5 * np.sqrt(b)), levels=900, grid_size=900
         )

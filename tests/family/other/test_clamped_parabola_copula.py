@@ -6,9 +6,9 @@ import pytest
 from copul.family.other.clamped_parabola_copula import ClampedParabolaCopula
 
 
-@pytest.mark.parametrize("mu", [0.1, 0.5, 1.0, 2.5])
-def test_copula_boundaries(mu):
-    cp = ClampedParabolaCopula(mu=mu)
+@pytest.mark.parametrize("b", [0.1, 0.5, 1.0, 2.5])
+def test_copula_boundaries(b):
+    cp = ClampedParabolaCopula(b=b)
 
     # sample grid
     u = np.linspace(0.0, 1.0, 11)
@@ -23,11 +23,11 @@ def test_copula_boundaries(mu):
     assert np.allclose(cp.cdf_vectorized(u, 1.0), u, atol=5e-7)
 
 
-@pytest.mark.parametrize("mu", [0.2, 0.7, 1.5])
-def test_two_increasing(mu, rng_seed=1234):
+@pytest.mark.parametrize("b", [0.2, 0.7, 1.5])
+def test_two_increasing(b, rng_seed=1234):
     """Random rectangles must have nonnegative C-measure."""
     rng = np.random.default_rng(rng_seed)
-    cp = ClampedParabolaCopula(mu=mu)
+    cp = ClampedParabolaCopula(b=b)
 
     for _ in range(200):
         u1, u2 = np.sort(rng.uniform(0, 1, size=2))
@@ -41,35 +41,35 @@ def test_two_increasing(mu, rng_seed=1234):
         assert rect_mass >= -1e-9
 
 
-@pytest.mark.parametrize("mu_small, mu_large", [(0.2, 3.0), (0.4, 5.0)])
-def test_xi_and_nu_monotone_in_mu(mu_small, mu_large):
-    cp_small = ClampedParabolaCopula(mu=mu_small)
-    cp_large = ClampedParabolaCopula(mu=mu_large)
+@pytest.mark.parametrize("b_small, b_large", [(0.2, 3.0), (0.4, 5.0)])
+def test_xi_and_nu_monotone_in_b(b_small, b_large):
+    cp_small = ClampedParabolaCopula(b=b_small)
+    cp_large = ClampedParabolaCopula(b=b_large)
 
     xi_small = cp_small.chatterjees_xi()
     xi_large = cp_large.chatterjees_xi()
     nu_small = cp_small.blests_nu()
     nu_large = cp_large.blests_nu()
 
-    # As mu increases, both xi and nu should decrease (towards independence).
-    assert xi_small > xi_large
-    assert nu_small > nu_large
+    # As b increases (μ decreases), both xi and nu should increase (towards M).
+    assert xi_small < xi_large
+    assert nu_small < nu_large
 
     # sanity ranges
     assert 0.0 <= xi_small <= 1.0 and 0.0 <= xi_large <= 1.0
     assert 0.0 <= nu_small <= 1.0 and 0.0 <= nu_large <= 1.0
 
 
-@pytest.mark.parametrize("mu", [0.3, 1.0, 2.0])
-def test_h_matches_du_of_C(mu):
+@pytest.mark.parametrize("b", [0.3, 1.0, 2.0])
+def test_h_matches_du_of_C(b):
     """Check that the analytical h_v(t) matches finite-difference ∂_u C."""
-    cp = ClampedParabolaCopula(mu=mu)
+    cp = ClampedParabolaCopula(b=b)
     v = 0.37  # any interior v
-    q = cp._get_q_v(v, float(mu))
+    q = cp._get_q_v(v, float(b))
 
-    # expected h(u,v) from the definition
+    # expected h(u,v) from the definition (with b = 1/μ here as the model parameter)
     def h_expected(u):
-        return np.clip(((1.0 - u) ** 2 - q) / float(mu), 0.0, 1.0)
+        return np.clip(b * ((1.0 - u) ** 2 - q), 0.0, 1.0)
 
     # finite-difference du of C
     u_grid = np.linspace(0.001, 0.999, 200)
@@ -90,8 +90,8 @@ def test_from_xi_hits_target(x_target):
 
 
 def test_limit_independence():
-    """Large mu should approach independence: xi≈0, nu≈0, C(1,v)=v."""
-    cp = ClampedParabolaCopula(mu=50.0)
+    """Small b should approach independence: xi≈0, nu≈0, C(1,v)=v."""
+    cp = ClampedParabolaCopula(b=1e-2)  # b -> 0+ ⇒ Π
     xi = cp.chatterjees_xi()
     nu = cp.blests_nu()
     assert xi < 3e-2
@@ -101,9 +101,9 @@ def test_limit_independence():
     assert np.allclose(cp.cdf_vectorized(1.0, v), v, atol=1e-2)
 
 
-@pytest.mark.parametrize("mu", [0.2, 0.8, 2.0])
-def test_basic_ranges(mu):
-    cp = ClampedParabolaCopula(mu=mu)
+@pytest.mark.parametrize("b", [0.2, 0.8, 2.0])
+def test_basic_ranges(b):
+    cp = ClampedParabolaCopula(b=b)
     xi = cp.chatterjees_xi()
     nu = cp.blests_nu()
     assert 0.0 <= xi <= 1.0
@@ -115,20 +115,20 @@ def test_basic_ranges(mu):
     assert abs(nu - nu_ccop) < 1e-3
 
 
-@pytest.mark.parametrize("mu", [0.4, 1.2])
-def test_q_cache_consistency(mu):
+@pytest.mark.parametrize("b", [0.4, 1.2])
+def test_q_cache_consistency(b):
     """_get_q_v should be stable and cache-consistent."""
-    cp = ClampedParabolaCopula(mu=mu)
+    cp = ClampedParabolaCopula(b=b)
     v_vals = [0.2, 0.5, 0.8]
-    q_first = [cp._get_q_v(v, float(mu)) for v in v_vals]
-    q_second = [cp._get_q_v(v, float(mu)) for v in v_vals]  # served from cache
+    q_first = [cp._get_q_v(v, float(b)) for v in v_vals]
+    q_second = [cp._get_q_v(v, float(b)) for v in v_vals]  # served from cache
     assert np.allclose(q_first, q_second, rtol=0, atol=0)
 
 
-@pytest.mark.parametrize("mu", [0.5, 1.5])
-def test_pdf_nonnegative(mu):
+@pytest.mark.parametrize("b", [0.5, 1.5])
+def test_pdf_nonnegative(b):
     """pdf_vectorized (∂_v h) should be nonnegative almost everywhere."""
-    cp = ClampedParabolaCopula(mu=mu)
+    cp = ClampedParabolaCopula(b=b)
     u = np.linspace(0.05, 0.95, 25)
     v = np.linspace(0.05, 0.95, 11)
     U, V = np.meshgrid(u, v)

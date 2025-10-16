@@ -635,7 +635,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         par_str = ", ".join(f"$\\{key}={value}$" for key, value in par.items())
         par_str = par_str.replace("oo", "\\infty")
         lambda_func = sp.lambdify("t", func)
-        x = np.linspace(0, 1, 1000)
+        x = np.linspace(0, 1, 900)
         y = [lambda_func(i) for i in x]
         plt.plot(x, y, label=par_str)
 

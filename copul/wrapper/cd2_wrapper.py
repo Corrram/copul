@@ -17,8 +17,8 @@ class CD2Wrapper(SymPyFuncWrapper):
         vars_, kwargs = self._prepare_call(args, kwargs)
 
         free_syms = list(self._func.free_symbols)
-        by_name   = {str(s): s for s in free_syms}
-        provided  = {str(s): v for s, v in vars_.items()}
+        {str(s): s for s in free_syms}
+        provided = {str(s): v for s, v in vars_.items()}
 
         # ---- Boundary rule should trigger whenever u (or u1) is provided,
         #      even if v was already substituted away. ----
