@@ -352,3 +352,12 @@ def test_xi_with_large_m_and_small_n():
     ccop = BivCheckW(matr)
     xi = ccop.chatterjees_xi()
     assert np.isclose(xi, 1, atol=0.02)
+
+
+def test_blests_nu():
+    matr = [[0, 1], [1, 0]]
+    ccop = BivCheckW(matr)
+    nu = ccop.blests_nu()
+    assert np.isclose(nu, -1, atol=0.02)
+    ccop2 = BivCheckW([[1]])
+    assert np.isclose(ccop2.blests_nu(), -1, atol=0.02)

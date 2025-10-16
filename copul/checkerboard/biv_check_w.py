@@ -662,34 +662,21 @@ class BivCheckW(BivCheckPi):
         """
         Blest's measure (nu) for a BivCheckW copula.
 
-        Decomposition:
-            nu(W) = nu(CheckPi) - singular_add_on,
-
-        where the singular add-on corresponds to the minimum/maximum completion’s
-        diagonal segments integrated against the (1-u) weight. Consistent with
-        the sign conventions in this class (see footrule/rho/tau), the add-on
-        is subtracted for W.
-
-        Closed forms:
-            nu(CheckPi)     = (24 / (m^2 n)) * tr(Δ^T K) - 2,  (via BivCheckPi.blests_nu)
-            singular_add_on = (24 / m^2) * sum_{i=1}^{min(m,n)} (m - i + 1/2) * Δ_{ii}.
+        nu(W) = nu(CheckPi) - (2 / m^3) * sum_{i=1}^m (m - i + 1/2) * row_sum_i
+        where row_sum_i = sum_j Δ_{ij}.
         """
-        # Absolutely-continuous (checkerboard Pi) contribution
         nu_pi = super().blests_nu()
 
         P = np.asarray(self.matr, dtype=float)
         m, n = P.shape
 
-        # Diagonal weights: average of (1-u) along the unit diagonal segment in row i
-        # weight_i = (m - i + 1/2) / m; overall scale produces 24 / m^2
-        d = np.diag(P)  # length min(m, n)
-        i = np.arange(1, d.size + 1, dtype=float)  # 1..min(m,n)
-        # Use m in the weights (row-scaling) as in Min; consistent with your class conventions
+        # weights depend only on the row index (u-direction)
+        i = np.arange(1, m + 1, dtype=float)
         weight = m - i + 0.5
 
-        singular_add_on = (24.0 / (m * m)) * np.dot(weight, d)
+        row_sums = P.sum(axis=1)
+        singular_add_on = (2.0 / (m**3)) * np.dot(weight, row_sums)
 
-        # For W we subtract the singular component (mirrors footrule/rho/tau behavior)
         return float(nu_pi - singular_add_on)
 
     def spearmans_footrule(self) -> float:

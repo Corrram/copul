@@ -149,7 +149,7 @@ class BivCheckMin(CheckMin, BivCheckPi):
         i = np.arange(1, m + 1, dtype=float)
         weight = m - i + 0.5  # row-wise weights before dividing by m
         diagP = np.diag(P)
-        singular_add_on = (24.0 / (m * m)) * np.dot(weight, diagP)
+        singular_add_on = (2 / (m**3)) * np.dot(weight, diagP)
 
         return float(nu_pi + singular_add_on)
 
