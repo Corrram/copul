@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 import sympy as sp
 import numpy as np
 from scipy.optimize import brentq
@@ -15,7 +17,7 @@ from scipy.integrate import IntegrationWarning
 warnings.filterwarnings("ignore", category=IntegrationWarning)
 
 
-class ClampedParabolaCopula(BivCopula):
+class XiNuBoundaryCopula(BivCopula):
     r"""
     Clamped–parabola copula parameterized by :math:`b=1/\mu>0`:
 
@@ -520,10 +522,12 @@ class ClampedParabolaCopula(BivCopula):
         )
 
 
+ClampedParabolaCopula: TypeAlias = XiNuBoundaryCopula
+
 if __name__ == "__main__":
     b_values = [0.5, 1, 2]  # corresponds to mu = 0.2, 0.5, 1.0, 2.0
     for b in b_values:
-        copula = ClampedParabolaCopula(b=b)
+        copula = XiNuBoundaryCopula(b=b)
         copula.plot_pdf(plot_type="contour")
         copula.plot_cond_distr_1(plot_type="contour")
         # copula.plot_cond_distr_2(plot_type="contour")

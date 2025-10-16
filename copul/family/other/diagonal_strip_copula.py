@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 import sympy as sp
 import numpy as np
 from scipy.integrate import cumulative_trapezoid, trapezoid
@@ -10,7 +12,7 @@ from copul.family.core.biv_copula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
-class DiagonalStripCopula(BivCopula):
+class XiPsiApproxLowerBoundaryCopula(BivCopula):
     r"""
     Two-parameter "diagonal strip" copula with a rectangular hole of vertical thickness
     :math:`\beta\in(0,1)` whose lower boundary along the diagonal (parameterized by
@@ -87,7 +89,9 @@ class DiagonalStripCopula(BivCopula):
         over s∈[0,1] on a fine grid.
         """
         s_fine = np.linspace(0.0, 1.0, n_points)
-        psi_vals = DiagonalStripCopula._psi_vec(s_fine, alpha, beta)  # (n_points,)
+        psi_vals = XiPsiApproxLowerBoundaryCopula._psi_vec(
+            s_fine, alpha, beta
+        )  # (n_points,)
         # is_in_hole[i,j]: for t_grid[i], whether that s_fine[j] falls inside the vertical strip
         is_in_hole = (psi_vals[np.newaxis, :] <= t_grid[:, np.newaxis]) & (
             psi_vals[np.newaxis, :] + beta >= t_grid[:, np.newaxis]
@@ -617,11 +621,13 @@ class DiagonalStripCopula(BivCopula):
             raise ValueError("plot_type must be '3d', 'contour', or 'slices'.")
 
 
+DiagonalStripCopula: TypeAlias = XiPsiApproxLowerBoundaryCopula
+
 if __name__ == "__main__":
     # quick smoke test & plots
     pairs = [(0.20, 0.30), (0.30, 0.50), (0.40, 0.50)]
     for a, b in pairs:
-        cop = DiagonalStripCopula(alpha=a, beta=b)
+        cop = XiPsiApproxLowerBoundaryCopula(alpha=a, beta=b)
         print(f"alpha={a:.2f}, beta={b:.2f}")
         xi = cop.chatterjees_xi(grid_n=800)
         psi = cop.spearmans_footrule(grid_n=800)

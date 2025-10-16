@@ -163,7 +163,7 @@ class Families(enum.Enum):
     CHECK_MIN = "copul.checkerboard.check_min.CheckMin"
     SHUFFLE_OF_MIN = "copul.checkerboard.shuffle_min.ShuffleOfMin"
 
-    DIAGONAL_STRIP_COPULA = "copul.family.other.DiagonalStripCopula"
+    # DIAGONAL_STRIP_COPULA = "copul.family.other.DiagonalStripCopula"
     FARLIE_GUMBEL_MORGENSTERN = "copul.family.other.FarlieGumbelMorgenstern"
     FRECHET = "copul.family.other.Frechet"
     INDEPENDENCE = "copul.family.other.IndependenceCopula"
@@ -175,8 +175,10 @@ class Families(enum.Enum):
     PLACKETT = "copul.family.other.Plackett"
     RAFTERY = "copul.family.other.Raftery"
     UPPER_FRECHET = "copul.family.other.UpperFrechet"
-    CLAMPED_PARABOLA = "copul.family.other.ClampedParabolaCopula"
+    # CLAMPED_PARABOLA = "copul.family.other.ClampedParabolaCopula"
     DIAGONAL_BAND = "copul.family.other.DiagonalBandCopula"
+    XI_NU_BOUNDARY = "copul.family.other.XiNuBoundaryCopula"
+    XI_PSI_BOUNDARY = "copul.family.other.XiPsiApproxLowerBoundaryCopula"
     XI_RHO_BOUNDARY = "copul.family.other.XiRhoBoundaryCopula"
 
     # -----------------------------------------------------------------------

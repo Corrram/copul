@@ -175,11 +175,119 @@ def psi_bounds_from_xi(
         else:
             return (None, psi_max)
 
+# ---------------------- NU (Blest's measure) ----------------------
+def _Xi_of_b(b: float) -> float:
+    """
+    ξ = Xi(b) from Theorem (piecewise in b).
+    s = 1/sqrt(b), t = sqrt((b-1)/b), A = asinh(t/s) = acosh(sqrt(b)).
+    """
+    if b <= 0.0 or not isfinite(b):
+        raise ValueError("b must be a positive finite number.")
+    s = 1.0 / sqrt(b)
+    if b <= 1.0:
+        # Xi(b) = 8(7 s^2 - 3) / (105 s^6)
+        return 8.0 * (7.0 * s * s - 3.0) / (105.0 * s**6)
+    else:
+        t = sqrt((b - 1.0) / b)
+        # asinh(t/s) = asinh(sqrt(b-1))  (since t/s = sqrt(b-1))
+        # numerically stable form via log for large b
+        A = np.arcsinh(sqrt(max(b - 1.0, 0.0)))
+        num = (
+            -105.0 * s**8 * A
+            + 183.0 * s**6 * t
+            - 38.0 * s**4 * t
+            - 88.0 * s**2 * t
+            + 112.0 * s**2
+            + 48.0 * t
+            - 48.0
+        )
+        den = 210.0 * s**6
+        return num / den
+
+
+def _N_of_b(b: float) -> float:
+    """
+    ν = N(b) from Theorem (piecewise in b).
+    """
+    if b <= 0.0 or not isfinite(b):
+        raise ValueError("b must be a positive finite number.")
+    s = 1.0 / sqrt(b)
+    if b <= 1.0:
+        # N(b) = 4(28 s^2 - 9) / (105 s^4)
+        return 4.0 * (28.0 * s * s - 9.0) / (105.0 * s**4)
+    else:
+        t = sqrt((b - 1.0) / b)
+        A = np.arcsinh(sqrt(max(b - 1.0, 0.0)))
+        num = (
+            -105.0 * s**8 * A
+            + 87.0 * s**6 * t
+            + 250.0 * s**4 * t
+            - 376.0 * s**2 * t
+            + 448.0 * s**2
+            + 144.0 * t
+            - 144.0
+        )
+        den = 420.0 * s**4
+        return num / den
+
+
+def _b_from_xi(x: float, *, tol: float = 1e-12, max_iter: int = 200) -> float:
+    """
+    Invert Xi(b)=x for b>0 by monotone bisection.
+    Xi(b) is strictly increasing from 0 (as b->0+) to 1 (as b->∞).
+    """
+    _validate_xi(x)
+    if x == 0.0:
+        return 0.0 + 1e-12   # “near-zero” b
+    if x == 1.0:
+        return 1e12          # “very large” b
+
+    # Bracket: start near b=0 and expand hi until Xi(hi) >= x
+    lo, hi = 1e-12, 1.0
+    Xi_hi = _Xi_of_b(hi)
+    while Xi_hi < x and hi < 1e16:
+        hi *= 2.0
+        Xi_hi = _Xi_of_b(hi)
+    Xi_lo = _Xi_of_b(lo)
+
+    # Safety: if numerical pathologies, fall back to a big hi
+    if Xi_lo > x:
+        return lo
+
+    # Bisection
+    for _ in range(max_iter):
+        mid = 0.5 * (lo + hi)
+        Xi_mid = _Xi_of_b(mid)
+        if abs(Xi_mid - x) <= tol:
+            return mid
+        if Xi_mid < x:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
+
+
+def nu_bounds_from_xi(x: float) -> Tuple[float, float]:
+    """
+    Exact bounds (nu_min, nu_max) given xi=x,
+    via the parametric boundary y = ±N(b) with Xi(b)=x.
+    """
+    _validate_xi(x)
+    if x == 0.0:
+        return (0.0, 0.0)
+    if x == 1.0:
+        return (-1.0, 1.0)  # limiting behavior as b→∞
+
+    b = _b_from_xi(x)
+    N = _N_of_b(b)
+    # Region is symmetric in ν
+    return (-N, N)
+
 
 # ---------------------- Friendly façade ----------------------
 def bounds_from_xi(
     x: float,
-    measure: Literal["rho", "tau", "psi"],
+    measure: Literal["rho", "tau", "psi", "nu"],
     return_lower_bound: bool = False,
     cls: Literal["all", "SI"] = "all",
 ) -> Tuple[Optional[float], float]:
@@ -193,8 +301,10 @@ def bounds_from_xi(
         return tau_bounds_from_xi(x)
     elif measure == "psi":
         return psi_bounds_from_xi(x, cls=cls, return_lower_bound=return_lower_bound)
+    elif measure == "nu":
+        return nu_bounds_from_xi(x)
     else:
-        raise ValueError("measure must be one of: 'rho', 'tau', 'psi'")
+        raise ValueError("measure must be one of: 'rho', 'tau', 'psi', 'nu'")
 
 
 if __name__ == "__main__":
