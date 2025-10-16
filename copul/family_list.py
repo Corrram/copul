@@ -163,6 +163,7 @@ class Families(enum.Enum):
     CHECK_MIN = "copul.checkerboard.check_min.CheckMin"
     SHUFFLE_OF_MIN = "copul.checkerboard.shuffle_min.ShuffleOfMin"
 
+    DIAGONAL_STRIP_COPULA = "copul.family.other.DiagonalStripCopula"
     FARLIE_GUMBEL_MORGENSTERN = "copul.family.other.FarlieGumbelMorgenstern"
     FRECHET = "copul.family.other.Frechet"
     INDEPENDENCE = "copul.family.other.IndependenceCopula"

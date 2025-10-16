@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-from matplotlib import patches
 from scipy.integrate import cumulative_trapezoid, trapezoid
 import os
 
@@ -145,7 +144,7 @@ def calculate_and_plot(alpha_val, beta_val, n_points=1000):
 
     # Ensure the 'images' directory exists
     os.makedirs("images", exist_ok=True)
-    plt.title(f"Diagonal Strip PDF", fontsize=14)
+    plt.title("Diagonal Strip PDF", fontsize=14)
     plt.savefig(
         f"images/two_param_a{alpha_val:.2f}_b{beta_val:.2f}.png",
         dpi=300,

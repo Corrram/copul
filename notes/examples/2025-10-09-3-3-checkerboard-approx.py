@@ -105,7 +105,7 @@ def annotate(ax, M):
             ax.text(
                 j,
                 i,
-                f"{M[i,j]:.2f}",
+                f"{M[i, j]:.2f}",
                 ha="center",
                 va="center",
                 color="black",

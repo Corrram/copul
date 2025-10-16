@@ -69,7 +69,7 @@ def main() -> None:
 
     # Explicit overlay (ν(ρ) for ρ ∈ [0,1])
     rho_pos = np.linspace(0.0, 1.0, 600)
-    nu_pos_explicit = nu_of_rho_pos(rho_pos)
+    nu_of_rho_pos(rho_pos)
 
     # ------------------------------ Plot ------------------------------
     BLUE, FILL = "#00529B", "#D6EAF8"

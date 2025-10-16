@@ -378,12 +378,16 @@ class CoreCopula:
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim == 1 and len(arr) == self.dim:
                     # full point → map all u_symbols
-                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, arr)}
+                    sub_all = {
+                        str(sym): float(val) for sym, val in zip(self.u_symbols, arr)
+                    }
                     return cdf_expr(**sub_all)
             elif hasattr(arg, "__len__"):
                 if len(arg) == self.dim:
                     point = np.array(arg, dtype=float)
-                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
+                    sub_all = {
+                        str(sym): float(val) for sym, val in zip(self.u_symbols, point)
+                    }
                     return cdf_expr(**sub_all)
                 # else: will fall through to partial-remain logic below
 
@@ -404,23 +408,31 @@ class CoreCopula:
             if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim != 1:
-                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
+                    raise ValueError(
+                        "Cannot mix variable substitution with multi-point evaluation"
+                    )
                 if len(arr) != remaining_dim:
                     raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}")
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
+                    )
                 point = arr
             elif hasattr(arg, "__len__"):
                 if len(arg) != remaining_dim:
                     raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}")
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
+                    )
                 point = np.array(arg, dtype=float)
             else:
                 if remaining_dim != 1:
-                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
+                    raise ValueError(
+                        f"Expected {remaining_dim} remaining coordinates, got 1"
+                    )
                 point = np.array([arg], dtype=float)
         else:
             if len(args) != remaining_dim:
-                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
+                raise ValueError(
+                    f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
+                )
             point = np.array(args, dtype=float)
 
         sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}
@@ -483,23 +495,31 @@ class CoreCopula:
             if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim != 1:
-                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
+                    raise ValueError(
+                        "Cannot mix variable substitution with multi-point evaluation"
+                    )
                 if len(arr) != remaining_dim:
                     raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}")
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
+                    )
                 point = arr
             elif hasattr(arg, "__len__"):
                 if len(arg) != remaining_dim:
                     raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}")
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
+                    )
                 point = np.array(arg, dtype=float)
             else:
                 if remaining_dim != 1:
-                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
+                    raise ValueError(
+                        f"Expected {remaining_dim} remaining coordinates, got 1"
+                    )
                 point = np.array([arg], dtype=float)
         else:
             if len(args) != remaining_dim:
-                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
+                raise ValueError(
+                    f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
+                )
             point = np.array(args, dtype=float)
 
         sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}
@@ -612,12 +632,16 @@ class CoreCopula:
             if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim == 1 and len(arr) == self.dim and not kwargs:
-                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, arr)}
+                    sub_all = {
+                        str(sym): float(val) for sym, val in zip(self.u_symbols, arr)
+                    }
                     return pdf_expr(**sub_all)
             elif hasattr(arg, "__len__"):
                 if len(arg) == self.dim and not kwargs:
                     point = np.array(arg, dtype=float)
-                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
+                    sub_all = {
+                        str(sym): float(val) for sym, val in zip(self.u_symbols, point)
+                    }
                     return pdf_expr(**sub_all)
 
         if len(args) == self.dim and not kwargs:
@@ -635,23 +659,31 @@ class CoreCopula:
             if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim != 1:
-                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
+                    raise ValueError(
+                        "Cannot mix variable substitution with multi-point evaluation"
+                    )
                 if len(arr) != remaining_dim:
                     raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}")
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
+                    )
                 point = arr
             elif hasattr(arg, "__len__"):
                 if len(arg) != remaining_dim:
                     raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}")
+                        f"Expected {remaining_dim} remaining coordinates, got {len(arg)}"
+                    )
                 point = np.array(arg, dtype=float)
             else:
                 if remaining_dim != 1:
-                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
+                    raise ValueError(
+                        f"Expected {remaining_dim} remaining coordinates, got 1"
+                    )
                 point = np.array([arg], dtype=float)
         else:
             if len(args) != remaining_dim:
-                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
+                raise ValueError(
+                    f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
+                )
             point = np.array(args, dtype=float)
 
         sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}

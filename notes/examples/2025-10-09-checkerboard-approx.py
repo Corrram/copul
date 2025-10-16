@@ -204,7 +204,7 @@ def plot_matrix_with_blocks(P, blocks, title, fname):
             color="white",
         )
 
-    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     fig.tight_layout()
     fig.savefig(fname, dpi=160, bbox_inches="tight")
     plt.show()

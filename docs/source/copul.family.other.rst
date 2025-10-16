@@ -36,14 +36,6 @@ copul.family.other.diagonal\_band\_copula module
    :show-inheritance:
    :undoc-members:
 
-copul.family.other.diagonal\_strip\_alpha\_copula\_visualization\_two\_param module
------------------------------------------------------------------------------------
-
-.. automodule:: copul.family.other.diagonal_strip_alpha_copula_visualization_two_param
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 copul.family.other.diagonal\_strip\_copula module
 -------------------------------------------------
 
@@ -104,6 +96,14 @@ copul.family.other.raftery module
 ---------------------------------
 
 .. automodule:: copul.family.other.raftery
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.family.other.small\_footrule\_copula module
+-------------------------------------------------
+
+.. automodule:: copul.family.other.small_footrule_copula
    :members:
    :show-inheritance:
    :undoc-members:
