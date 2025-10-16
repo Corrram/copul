@@ -66,10 +66,10 @@ from copul.family.frechet.mardia import Mardia
 from copul.family.other.plackett import Plackett
 from copul.family.other.raftery import Raftery
 from copul.family.other.diagonal_band_copula import DiagonalBandCopula
-from copul.family.other.diagonal_strip_copula import DiagonalStripCopula
+from copul.family.other.diagonal_strip_copula import XiPsiApproxLowerBoundaryCopula
 from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.family.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
-from copul.family.other.clamped_parabola_copula import ClampedParabolaCopula
+from copul.family.other.clamped_parabola_copula import XiNuBoundaryCopula
 
 from copul.family_list import Families, families, approximations, copulas
 from copul.schur_order.cis_rearranger import CISRearranger
@@ -154,9 +154,11 @@ __all__ = [
     "Mardia",
     "Plackett",
     "Raftery",
-    "DiagonalStripCopula",
+    # "DiagonalStripCopula",
+    "XiPsiApproxLowerBoundaryCopula",
     "XiRhoBoundaryCopula",
-    "ClampedParabolaCopula",
+    "XiNuBoundaryCopula",
+    # "ClampedParabolaCopula",
     "UpperFrechet",
     # Miscellaneous
     "CISRearranger",
