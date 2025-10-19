@@ -152,18 +152,18 @@ def main():
         va="top",
     )
     ax.annotate(
-        r"$C_1$",
+        r"$C^{\xi,\rho}_1$",
         (0.7, 0.3),
-        xytext=(5, 0),
+        xytext=(0, 0),
         textcoords="offset points",
         fontsize=18,
         ha="left",
         va="top",
     )
     ax.annotate(
-        r"$C_{-1}$",
+        r"$C^{\xi,\rho}_{-1}$",
         (-0.7, 0.3),
-        xytext=(0, 0),
+        xytext=(-3, 0),
         textcoords="offset points",
         fontsize=18,
         ha="right",
@@ -182,11 +182,11 @@ def main():
     ax.grid(True, linestyle=":", alpha=0.6)
     ax.axvline(0, color="black", lw=0.8)
 
-    ax.legend(loc="center", fontsize=12, frameon=True)
+    # ax.legend(loc="center", fontsize=12, frameon=True)
 
     fig.tight_layout()
     pathlib.Path("images/").mkdir(parents=False, exist_ok=True)
-    plt.savefig("images/attainable_xi_psi_region_final.png", dpi=300)
+    plt.savefig("images/attainable_rho_xi_region.png", dpi=300)
     plt.show()
 
 

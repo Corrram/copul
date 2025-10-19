@@ -1,451 +1,452 @@
+#!/usr/bin/env python3
 """
-Module for plotting rank correlations of copulas.
+Minimal, extensible rank-correlation plotting for copulas.
 
-This module provides tools to visualize various rank correlation measures
-for copulas with different parameter settings.
+How to add a new measure:
+-------------------------
+1) Define a function with signature: f(x, y, rank_x, rank_y) -> float
+2) Decorate it with @measure("Nice Name")
+   (that's all; it will show up automatically in compute/plot/export)
+
+Built-ins: xi, rho, tau, footrule, gini_gamma, blomqvist_beta
 """
 
-import itertools
+from __future__ import annotations
+
 import logging
 import pathlib
 import pickle
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
-import scipy
-import sympy
+import scipy.stats as st
 from matplotlib import pyplot as plt
 from scipy.interpolate import CubicSpline
+import sympy as sp
 
+# If you have it in your project:
 from copul.chatterjee import xi_ncalculate
-from copul.family.copula_graphs import CopulaGraphs
 
-# Set up logger
 log = logging.getLogger(__name__)
+
+# ------------------------ Measure Registry ------------------------
+
+MeasureFn = Callable[[np.ndarray, np.ndarray, np.ndarray, np.ndarray], float]
+MEASURES: Dict[str, MeasureFn] = {}
+
+
+def measure(name: str) -> Callable[[MeasureFn], MeasureFn]:
+    """Decorator to register a rank-correlation-like measure."""
+
+    def _wrap(fn: MeasureFn) -> MeasureFn:
+        MEASURES[name] = fn
+        return fn
+
+    return _wrap
+
+
+# ------------------------ Built-in measures ------------------------
+
+
+@measure("chatterjees_xi")
+def m_xi(x, y, rx, ry) -> float:
+    return float(xi_ncalculate(x, y))
+
+
+@measure("spearmans_rho")
+def m_rho(x, y, rx, ry) -> float:
+    # Pearson correlation of ranks = Spearman's rho
+    r, _ = st.pearsonr(rx, ry)
+    return float(r)
+
+
+@measure("kendalls_tau")
+def m_tau(x, y, rx, ry) -> float:
+    t, _ = st.kendalltau(x, y)
+    return float(t)
+
+
+@measure("spearmans_footrule")
+def m_footrule(x, y, rx, ry) -> float:
+    n = len(rx)
+    d = np.abs(rx - ry).sum()
+    return 1.0 + 3.0 / n - (3.0 / (n * n)) * d
+
+
+@measure("gini_gamma")
+def m_gini_gamma(x, y, rx, ry) -> float:
+    n = len(rx)
+    u, v = rx / n, ry / n
+    integral_1 = np.mean(1 - np.maximum(u, v))
+    integral_2 = np.mean(np.maximum(0.0, 1.0 - u - v))
+    return 4.0 * (integral_1 + integral_2) - 2.0
+
+
+@measure("blomqvist_beta")
+def m_blomqvist_beta(x, y, rx, ry) -> float:
+    n = len(x)
+    med_x, med_y = np.median(x), np.median(y)
+    agree = np.sum(((x <= med_x) & (y <= med_y)) | ((x > med_x) & (y > med_y)))
+    return 2.0 * agree / n - 1.0
+
+
+@measure("blests_nu")
+def m_nu(x, y, rx, ry) -> float:
+    """
+    Blest's rank correlation ν via the empirical copula plug-in.
+
+    Using C_n(u,v) = (1/n) Σ 1{R_j/n ≤ u, S_j/n ≤ v} with ranks R,S∈{1,…,n},
+    we get
+        ∫∫ (1-u) C_n(u,v) du dv
+      = (1/n) Σ [ ∫_{u=R_j/n}^1 (1-u) du ] [ ∫_{v=S_j/n}^1 dv ]
+      = (1/n) Σ [ (1 - R_j/n)^2 / 2 ] [ 1 - S_j/n ].
+
+    Hence the estimator:
+        ν̂ = 24 * ( (1/n) Σ ((1 - R_j/n)^2 / 2) * (1 - S_j/n) ) - 2.
+    """
+    n = len(rx)
+    u = rx / n  # rx,ry are 1..n (from scipy.stats.rankdata)
+    v = ry / n
+    II = np.mean(((1.0 - u) ** 2) * (1.0 - v) / 2.0)
+    return float(24.0 * II - 2.0)
+
+
+# ------------------------ Data container ------------------------
 
 
 @dataclass
 class CorrelationData:
-    """Class to store correlation data for various metrics."""
-
     params: np.ndarray
-    xi: np.ndarray
-    rho: Optional[np.ndarray] = None
-    tau: Optional[np.ndarray] = None
-    footrule: Optional[np.ndarray] = None
-    ginis_gamma: Optional[np.ndarray] = None
-    blomqvists_beta: Optional[np.ndarray] = None
+    values: Dict[str, np.ndarray]  # measure_name -> values (aligned with params)
+
+
+# ------------------------ Runner ------------------------
 
 
 class RankCorrelationPlotter:
     """
-    Class for plotting rank correlations of copulas.
-
-    This class provides functionality to plot Chatterjee's xi, Spearman's rho,
-    Kendall's tau, and other rank correlations for various copula parameters.
+    Minimal runner:
+      - param grid
+      - sample once per param
+      - compute registered measures
+      - plot & export
     """
 
     def __init__(
         self,
         copula: Any,
-        log_cut_off: Optional[Union[float, Tuple[float, float]]] = None,
-        approximate: bool = True,
-        xlim: int = 10,
+        *,
+        measures: Optional[Iterable[str]] = None,
+        images_dir: pathlib.Path | str = "images",
+        save_pickles: bool = True,
     ):
-        """
-        Initialize RankCorrelationPlotter.
+        self.copula = copula
+        self.measures = list(measures) if measures else list(MEASURES)
+        self.images_dir = pathlib.Path(images_dir)
+        self.images_dir.mkdir(parents=True, exist_ok=True)
+        self._data_dir = self.images_dir / "data"
+        self._data_dir.mkdir(parents=True, exist_ok=True)
+        self._splines_dir = self.images_dir / "splines"
+        self._splines_dir.mkdir(parents=True, exist_ok=True)
+        self.save_pickles = save_pickles
 
-        Args:
-            copula: Copula object to analyze.
-            log_cut_off: Cut-off for log scale. Tuple for [10^a, 10^b] or single value for 10^val.
-            approximate: Whether to use approximate sampling.
-        """
-        self.copul = copula
-        self.log_cut_off = log_cut_off
-        self._approximate = approximate
-        self.xlim = xlim
-        self.images_dir = pathlib.Path("images")
-        self.functions_dir = self.images_dir / "functions"
-        self.functions_dir.mkdir(parents=True, exist_ok=True)
-
-    def plot_rank_correlations(
+    def param_grid(
         self,
-        n_obs: int = 10_000,
         n_params: int = 20,
-        params: Optional[Dict[str, Any]] = None,
-        ylim: Tuple[float, float] = (-1, 1),
-    ) -> None:
-        """
-        Plot rank correlations for a given copula with various parameter values.
-
-        Args:
-            n_obs: Number of observations for each copula.
-            n_params: Number of parameter values to evaluate.
-            params: Dictionary of fixed parameter values to create multiple plots.
-            ylim: Y-axis limits for the plot.
-        """
-        log.info(f"Plotting correlation graph for {type(self.copul).__name__} copula")
-        log_scale = self.log_cut_off is not None
-        mixed_params = self._mix_params(params) if params is not None else []
-
-        if not mixed_params:
-            # Plot all correlations for the primary parameter
-            self._compute_and_plot(
-                self.copul, n_obs, n_params, log_scale, plot_all=True
-            )
-        else:
-            # Plot only Chatterjee's xi for each combination of fixed parameters
-            for param_set in mixed_params:
-                try:
-                    new_copula = self.copul(**param_set)
-                    label = self._format_param_label(param_set)
-                    self._compute_and_plot(
-                        new_copula,
-                        n_obs,
-                        n_params,
-                        log_scale,
-                        plot_all=False,
-                        label_prefix=label,
-                    )
-                except Exception as e:
-                    log.error(f"Error plotting for parameters {param_set}: {e}")
-
-        self._finalize_plot(params, ylim, is_mixed=bool(mixed_params))
-
-    def _compute_and_plot(
-        self,
-        copula: Any,
-        n_obs: int,
-        n_params: int,
-        log_scale: bool,
-        plot_all: bool,
-        label_prefix: str = "",
-    ):
-        """Helper to compute, plot, and save correlation data."""
-        param_values = self._get_parameter_values(copula, n_params, log_scale)
-        data = self._compute_correlations(
-            copula, param_values, n_obs, compute_all=plot_all
-        )
-        splines = self._plot_curves(data, log_scale, plot_all, label_prefix)
-        self._save_data(copula, data, splines)
-
-    def _compute_correlations(
-        self, copula: Any, param_values: np.ndarray, n_obs: int, compute_all: bool
-    ) -> CorrelationData:
-        """
-        Compute correlations for a range of parameter values efficiently.
-
-        This version pre-computes ranks to avoid redundant calculations.
-        """
-        results = {
-            "xi": [],
-            "rho": [],
-            "tau": [],
-            "footrule": [],
-            "ginis_gamma": [],
-            "blomqvists_beta": [],
-        }
-
-        for param in param_values:
-            try:
-                specific_copula = copula(**{str(copula.params[0]): param})
-                data_sample = specific_copula.rvs(n_obs, approximate=self._approximate)
-                x, y = data_sample[:, 0], data_sample[:, 1]
-
-                # --- OPTIMIZATION: Compute ranks ONCE per sample ---
-                rank_x = scipy.stats.rankdata(x)
-                rank_y = scipy.stats.rankdata(y)
-
-                # --- Calculate all correlation measures ---
-                results["xi"].append(xi_ncalculate(x, y))
-                results["tau"].append(scipy.stats.kendalltau(x, y)[0])
-
-                if compute_all:
-                    # Spearman's Rho is the Pearson correlation of the ranks. This is faster.
-                    rho, _ = scipy.stats.pearsonr(rank_x, rank_y)
-                    results["rho"].append(rho)
-
-                    # Use pre-computed ranks for our custom functions
-                    results["footrule"].append(self.spearman_footrule(rank_x, rank_y))
-                    results["ginis_gamma"].append(self.ginis_gamma(rank_x, rank_y))
-
-                    # Blomqvist's beta does not use ranks, so pass original data
-                    results["blomqvists_beta"].append(self.blomqvist_beta(x, y))
-
-            except Exception as e:
-                log.warning(f"Error computing correlations for param {param}: {e}")
-                # Append NaN to all lists on failure
-                for key in results:
-                    if (
-                        key in ["rho", "footrule", "ginis_gamma", "blomqvists_beta"]
-                        and not compute_all
-                    ):
-                        continue
-                    results[key].append(np.nan)
-
-        return CorrelationData(
-            params=param_values,
-            xi=np.array(results["xi"]),
-            rho=np.array(results["rho"]) if compute_all else None,
-            tau=np.array(results["tau"]) if compute_all else None,
-            footrule=np.array(results["footrule"]) if compute_all else None,
-            ginis_gamma=np.array(results["ginis_gamma"]) if compute_all else None,
-            blomqvists_beta=(
-                np.array(results["blomqvists_beta"]) if compute_all else None
-            ),
-        )
-
-    def _plot_curves(
-        self, data: CorrelationData, log_scale: bool, plot_all: bool, label_prefix: str
-    ) -> Dict[str, CubicSpline]:
-        """Plot correlation data points and their cubic spline interpolations."""
-        plot_config = {
-            "xi": ("Chatterjee's xi", "o"),
-            "rho": ("Spearman's rho", "^"),
-            "tau": ("Kendall's tau", "s"),
-            "footrule": ("Footrule", "x"),
-            "ginis_gamma": ("Gini's Gamma", "d"),
-            "blomqvists_beta": ("Blomqvist's Beta", "*"),
-        }
-        if not plot_all:
-            plot_config = {"xi": ("$\\xi$", "o")}
-
-        splines = {}
-        inf = float(self.copul.intervals[str(self.copul.params[0])].inf)
-
-        for name, (label, marker) in plot_config.items():
-            y_values = getattr(data, name)
-            if y_values is None:
-                continue
-
-            mask = ~np.isnan(y_values)
-            x, y = data.params[mask], y_values[mask]
-
-            if len(x) < 2:
-                continue
-
-            # Adjust x-axis for log scale with non-zero infimum
-            x_plot = x - inf if log_scale and inf != 0.0 else x
-
-            full_label = f"{label_prefix} {label}".strip()
-            plt.scatter(x_plot, y, label=full_label, marker=marker)
-
-            # Create and plot spline
-            cs = CubicSpline(x, y)
-            splines[name] = cs
-
-            if log_scale:
-                x_dense = self._get_dense_log_x_values(inf)
-                x_dense_plot = x_dense - inf
-            else:
-                x_dense = np.linspace(x.min(), x.max(), 500)
-                x_dense_plot = x_dense
-
-            plt.plot(x_dense_plot, cs(x_dense))
-
-        if log_scale:
-            self._format_log_x_axis(inf, x_plot)
-
-        return splines
-
-    def _finalize_plot(
-        self,
-        params: Optional[Dict[str, Any]],
-        ylim: Tuple[float, float],
-        is_mixed: bool,
-    ) -> None:
-        """Add final titles, labels, and grid to the plot, then show and save it."""
-        plt.legend()
-
-        # Determine the varying parameter for the x-axis label
-        all_params = {str(p) for p in self.copul.params}
-        fixed_params = set(params.keys()) if params else set()
-        varying_params = all_params - fixed_params
-        x_param = varying_params.pop() if varying_params else self.copul.params[0]
-
-        legend_suffix = self._generate_legend_suffix(fixed_params)
-        plt.xlabel(f"$\\{x_param}${legend_suffix}")
-
-        # Set y-axis label and limits
-        plt.ylabel("Correlation")
-        if is_mixed:
-            plt.ylabel(r"$\xi$")
-            plt.ylim(0, 1)
-        else:
-            plt.ylim(*ylim)
-
-        title = CopulaGraphs(self.copul, False).get_copula_title()
-        plt.title(title)
-        plt.grid(True)
-        plt.savefig(self.images_dir / f"{title}_rank_correlations.png")
-        plt.show()
-
-    def _format_log_x_axis(self, inf: float, x_plot: np.ndarray) -> None:
-        """Set x-axis to log scale and format ticks if infimum is non-zero."""
-        plt.xscale("log")
-        if inf != 0.0:
-            ticks = plt.xticks()[0]
-            infimum_str = f"{int(inf)}" if inf.is_integer() else f"{inf:.2f}"
-            new_labels = [
-                f"${infimum_str} + 10^{{{int(np.log10(t))}}}$" for t in ticks if t > 0
-            ]
-            valid_ticks = [t for t in ticks if t > 0]
-            plt.xticks(valid_ticks, new_labels)
-            plt.xlim(x_plot.min(), x_plot.max())
-
-    def _generate_legend_suffix(self, fixed_params: set) -> str:
-        """Generate a legend suffix showing constant parameter values."""
-        const_params = {*self.copul.intervals} - {
-            str(p) for p in self.copul.params
-        } | fixed_params
-        if not const_params:
-            return ""
-
-        parts = []
-        for p in const_params:
-            val = getattr(self.copul, p, None) or self.copul.defaults.get(p)
-            if val is not None:
-                val_str = f"\\{val}" if isinstance(val, (property, str)) else f"{val}"
-                parts.append(f"$\\{p}={val_str}$")
-
-        return f" (with {', '.join(parts)})" if parts else ""
-
-    @staticmethod
-    def _format_param_label(param_dict: Dict[str, Any]) -> str:
-        """Format parameter dictionary for a plot label."""
-        return ", ".join(
-            f"$\\{k}=\\{v}$" if isinstance(v, (property, str)) else f"$\\{k}={v}$"
-            for k, v in param_dict.items()
-        )
-
-    def _get_parameter_values(
-        self, copula: Any, n_params: int, log_scale: bool
+        *,
+        log_cut_off: Optional[Tuple[float, float]] = None,
+        xlim: Optional[Tuple[float, float]] = None,
     ) -> np.ndarray:
-        """Generate an array of parameter values over the copula's valid interval."""
-        if hasattr(copula, "get_params"):
-            return copula.get_params(n_params, log_scale=log_scale)
-        return self.get_params(n_params, log_scale)
+        """
+        Build a grid over the primary parameter interval in the copula.
+        If log_cut_off is provided, use a log grid *shifted by the left boundary (inf)*,
+        matching the behavior of the previous implementation.
+        """
+        # Prefer a family-provided helper if it exists
+        if hasattr(self.copula, "get_params"):
+            return self.copula.get_params(n_params, log_scale=bool(log_cut_off))
 
-    def _save_data(
-        self, copula: Any, data: CorrelationData, splines: Dict[str, CubicSpline]
-    ):
-        """Save computed correlation data and spline objects to files."""
-        try:
-            base_name = CopulaGraphs(copula, False).get_copula_title()
-            with open(self.functions_dir / f"{base_name}_data.pkl", "wb") as f:
-                pickle.dump(data, f)
-            with open(self.functions_dir / f"{base_name}_splines.pkl", "wb") as f:
-                pickle.dump(splines, f)
-        except Exception as e:
-            log.warning(f"Failed to save data: {e}")
+        # Fallback: use interval of the first parameter
+        p = str(self.copula.params[0])
+        interval = self.copula.intervals[p]
 
-    @staticmethod
-    def _mix_params(params: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Generate all combinations of parameter values for multiple plots."""
-        if not params:
-            return []
-
-        keys = list(params.keys())
-        value_lists = [v if isinstance(v, list) else [v] for v in params.values()]
-
-        combinations = list(itertools.product(*value_lists))
-        return [dict(zip(keys, combo)) for combo in combinations]
-
-    def get_params(self, n_params: int, log_scale: bool = False) -> np.ndarray:
-        """Generate parameter values based on the copula's defined interval."""
-        interval = self.copul.intervals[str(self.copul.params[0])]
-        if isinstance(interval, sympy.FiniteSet):
+        # Support FiniteSet (discrete parameter sets)
+        if isinstance(interval, sp.FiniteSet):
             return np.array([float(val) for val in interval])
 
-        inf, sup = float(interval.inf), float(interval.sup)
+        inf = float(interval.inf)
+        sup = float(interval.sup)
 
-        if log_scale:
-            # base = max(1e-4, inf)
-            if isinstance(self.log_cut_off, tuple):
-                return np.logspace(*self.log_cut_off, n_params) + inf
-            return np.logspace(-self.log_cut_off, self.log_cut_off, n_params) + inf
+        # Respect open bounds
+        left = inf + (1e-2 if getattr(interval, "left_open", False) else 0.0)
+        right = sup - (1e-2 if getattr(interval, "right_open", False) else 0.0)
 
-        cut_off = self.log_cut_off or self.xlim
-        if isinstance(cut_off, tuple):
-            left, right = max(inf, cut_off[0]), min(sup, cut_off[1])
-        else:
-            left, right = max(-cut_off, inf), min(cut_off, sup)
+        if log_cut_off is not None:
+            # log grid shifted by inf: inf + 10^a ... inf + 10^b  (or symmetric if scalar)
+            if isinstance(log_cut_off, tuple):
+                lo, hi = log_cut_off
+                return np.logspace(lo, hi, n_params) + inf
+            else:
+                s = float(log_cut_off)
+                return np.logspace(-s, s, n_params) + inf
 
-        if getattr(interval, "left_open", False):
-            left += 1e-2
-        if getattr(interval, "right_open", False):
-            right -= 1e-2
+        # Linear grid (with optional numeric crop)
+        if xlim is not None:
+            left = max(left, xlim[0])
+            right = min(right, xlim[1])
 
         return np.linspace(left, right, n_params)
 
-    def _get_dense_log_x_values(self, left_boundary: float) -> np.ndarray:
-        """Generate dense x values for a smooth curve on a logarithmic scale."""
-        if isinstance(self.log_cut_off, tuple):
-            return np.logspace(*self.log_cut_off, 500) + left_boundary
-        return np.logspace(-self.log_cut_off, self.log_cut_off, 500) + left_boundary
+    # ---- compute ----
+    def compute(
+        self,
+        params: np.ndarray,
+        n_obs: int = 1_000_000,
+        *,
+        approximate: bool = False,
+    ) -> CorrelationData:
+        """
+        For each parameter:
+          - sample (x,y)
+          - compute ranks once
+          - evaluate each registered measure
+        """
+        vals: Dict[str, List[float]] = {m: [] for m in self.measures}
+
+        pname = str(self.copula.params[0])
+        for theta in params:
+            try:
+                c = self.copula(**{pname: theta})
+                data = c.rvs(n_obs, approximate=approximate)
+                x, y = data[:, 0], data[:, 1]
+
+                # ranks once
+                rx = st.rankdata(x)
+                ry = st.rankdata(y)
+
+                # measures
+                for m in self.measures:
+                    fn = MEASURES[m]
+                    vals[m].append(fn(x, y, rx, ry))
+            except Exception as e:
+                log.warning("Param %g failed: %s", theta, e)
+                for m in self.measures:
+                    vals[m].append(np.nan)
+
+        return CorrelationData(
+            params=params, values={k: np.array(v) for k, v in vals.items()}
+        )
+
+    def plot(
+        self,
+        data: "CorrelationData",
+        *,
+        title: Optional[str] = None,
+        ylim: Tuple[float, float] = (-1, 1),
+        log_x: bool = False,
+        log_cut_off: Optional[Tuple[float, float]] = None,  # <— NEW
+    ) -> Dict[str, CubicSpline]:
+        """
+        Scatter + CubicSpline for each measure.
+        If log_x=True, we plot against x - inf, set log scale, and clamp the axis
+        to the exact range implied by log_cut_off (if provided).
+        """
+        if title is None:
+            from copul.family.copula_graphs import CopulaGraphs
+
+            title = CopulaGraphs(self.copula, False).get_copula_title()
+
+        # interval and left boundary (inf) of the first parameter
+        p = str(self.copula.params[0])
+        interval = self.copula.intervals[p]
+        inf = float(getattr(interval, "inf", 0.0))
+
+        splines: Dict[str, CubicSpline] = {}
+        x = data.params
+
+        for m, y in data.values.items():
+            mask = ~np.isnan(y)
+            if mask.sum() < 2:
+                continue
+
+            x_masked = x[mask]
+            y_masked = y[mask]
+
+            # Fit spline in ORIGINAL x-domain (not shifted)
+            cs = CubicSpline(x_masked, y_masked)
+            xs_dense = np.linspace(x_masked.min(), x_masked.max(), 600)
+            ys_dense = cs(xs_dense)
+
+            if log_x:
+                x_plot_pts = x_masked - inf
+                xs_plot = xs_dense - inf
+                plt.scatter(x_plot_pts, y_masked, s=16, label=m)
+                plt.plot(xs_plot, ys_dense)
+            else:
+                plt.scatter(x_masked, y_masked, s=16, label=m)
+                plt.plot(xs_dense, ys_dense)
+
+            splines[m] = cs
+
+        plt.title(title)
+        plt.xlabel(f"${{{self.copula.params[0]}}}$")
+        plt.ylabel("Correlation")
+        plt.ylim(*ylim)
+
+        if log_x:
+            self._format_log_x_axis(
+                inf, x, log_cut_off
+            )  # <— pass both x and the cutoffs
+
+        ax = plt.gca()
+        # after drawing the curves and before saving/showing:
+        if log_x:
+            # ensure the data were plotted against (x - inf) on a log axis
+            self._set_log_ticks(ax, inf, log_cut_off)
+
+        plt.grid(True)
+        plt.legend()
+        out = self.images_dir / f"{title}_rank_correlations.png"
+        plt.savefig(out, dpi=150, bbox_inches="tight")
+        plt.show()
+        return splines
+
+    def _format_log_x_axis(
+        self,
+        inf: float,
+        x_original: np.ndarray,
+        log_cut_off: Optional[Tuple[float, float]] = None,
+    ) -> None:
+        """
+        Apply log x-scale to the *shifted* axis (x - inf).
+        If log_cut_off=(a,b) is given, clamp to [10^a, 10^b] exactly.
+        Format ticks as 'inf + 10^{k}' when inf != 0.
+        """
+        plt.xscale("log")
+
+        # Set limits precisely from log_cut_off if provided
+        if log_cut_off is not None:
+            a, b = (
+                log_cut_off
+                if isinstance(log_cut_off, tuple)
+                else (-log_cut_off, log_cut_off)
+            )
+            xmin, xmax = 10.0**a, 10.0**b
+            plt.xlim(xmin, xmax)
+        else:
+            # fallback to data-driven limits in shifted domain
+            x_plot = x_original - inf
+            x_plot = x_plot[np.isfinite(x_plot) & (x_plot > 0)]
+            if x_plot.size:
+                plt.xlim(x_plot.min(), x_plot.max())
 
     @staticmethod
-    def spearman_footrule(rank_x: np.ndarray, rank_y: np.ndarray):
-        """Calculate Spearman's footrule coefficient from pre-computed ranks."""
-        n = len(rank_x)
-        d_sum = np.sum(np.abs(rank_x - rank_y))
-        return 1 + (3.0 / n) - (3.0 / (n * n)) * d_sum
+    def _set_log_ticks(
+        ax, inf: float, log_cut_off: Optional[Tuple[float, float]] = None
+    ):
+        """
+        On a shifted-log x-axis (x' = x - inf), put ticks at 10^k and label them
+        as 'inf + 10^{k}'. This never creates ticks outside the visible range.
+        """
+        ax.set_xscale("log")
 
-    @staticmethod
-    def ginis_gamma(rank_x: np.ndarray, rank_y: np.ndarray):
-        """Calculate Gini's gamma correlation from pre-computed ranks."""
-        n = len(rank_x)
-        # Convert ranks to pseudo-observations
-        u = rank_x / n
-        v = rank_y / n
+        # 1) Determine visible range on the shifted axis
+        if log_cut_off is not None:
+            a, b = (
+                log_cut_off
+                if isinstance(log_cut_off, tuple)
+                else (-log_cut_off, log_cut_off)
+            )
+            xmin, xmax = 10.0**a, 10.0**b
+            ax.set_xlim(xmin, xmax)
+        else:
+            xmin, xmax = ax.get_xlim()
 
-        integral_1 = np.mean(1 - np.maximum(u, v))
-        integral_2 = np.mean(np.maximum(0, 1 - u - v))
-        return 4 * (integral_1 + integral_2) - 2
+        # 2) Choose integer exponents fully inside [xmin, xmax]
+        k_lo = int(np.ceil(np.log10(max(xmin, np.finfo(float).tiny))))
+        k_hi = int(np.floor(np.log10(xmax)))
+        if k_lo > k_hi:  # degenerate range; just bail with defaults
+            return
 
-    @staticmethod
-    def blomqvist_beta(x: np.ndarray, y: np.ndarray):
-        """Calculate Blomqvist's beta correlation."""
-        n = len(x)
-        med_x, med_y = np.median(x), np.median(y)
-        quad_agree = np.sum(((x <= med_x) & (y <= med_y)) | ((x > med_x) & (y > med_y)))
-        return 2.0 * quad_agree / n - 1.0
+        ticks = 10.0 ** np.arange(k_lo, k_hi + 1)
+
+        # 3) Set ticks and labels without changing limits
+        if inf == 0.0:
+            labels = [rf"$10^{{{k}}}$" for k in range(k_lo, k_hi + 1)]
+        else:
+            inf_str = f"{int(inf)}" if float(inf).is_integer() else f"{inf:.2f}"
+            labels = [rf"${inf_str} + 10^{{{k}}}$" for k in range(k_lo, k_hi + 1)]
+
+        ax.set_xticks(ticks)
+        ax.set_xticklabels(labels)
+
+    # ---- save ----
+    def save(
+        self, base_name: str, data: CorrelationData, splines: Dict[str, CubicSpline]
+    ) -> None:
+        if not self.save_pickles:
+            return
+        try:
+            with open(self._data_dir / f"{base_name}_data.pkl", "wb") as f:
+                pickle.dump(data, f)
+            with open(self._splines_dir / f"{base_name}_splines.pkl", "wb") as f:
+                pickle.dump(splines, f)
+        except Exception as e:
+            log.warning("Failed to save pickles: %s", e)
 
 
-def plot_rank_correlations(
+# ------------------------ Convenience API ------------------------
+
+
+def run_plot(
     copula: Any,
+    *,
+    measures: Optional[Iterable[str]] = None,
     n_obs: int = 10_000,
     n_params: int = 20,
-    params: Optional[Dict[str, Any]] = None,
-    xlim: Optional[Tuple[float, float]] = 10,
+    log_cut_off: Optional[Tuple[float, float]] = None,
+    xlim: Optional[Tuple[float, float]] = None,
     ylim: Tuple[float, float] = (-1, 1),
-    log_cut_off: Optional[Union[float, Tuple[float, float]]] = None,
     approximate: bool = False,
-) -> None:
-    """
-    Convenience function to plot rank correlations for a copula.
+    images_dir: str | pathlib.Path = "images",
+    save_pickles: bool = True,
+):
+    runner = RankCorrelationPlotter(
+        copula, measures=measures, images_dir=images_dir, save_pickles=save_pickles
+    )
+    params = runner.param_grid(
+        n_params=n_params,
+        log_cut_off=log_cut_off,
+        xlim=xlim,
+    )
+    data = runner.compute(params, n_obs=n_obs, approximate=approximate)
+    splines = runner.plot(
+        data,
+        title=None,
+        ylim=ylim,
+        log_x=bool(log_cut_off),
+        log_cut_off=log_cut_off,  # <— add this
+    )
+    # Title again (to name files consistently)
+    from copul.family.copula_graphs import CopulaGraphs
 
-    Args:
-        copula: Copula object to analyze.
-        n_obs: Number of observations per point.
-        n_params: Number of parameter values to evaluate.
-        params: Dictionary of parameter values to mix.
-        xlim: X-axis limits for the plot.
-        ylim: Y-axis limits.
-        log_cut_off: Cut-off value(s) for logarithmic scale.
-        approximate: Whether to use approximate sampling.
-    """
-    plotter = RankCorrelationPlotter(copula, log_cut_off, approximate, xlim)
-    plotter.plot_rank_correlations(n_obs, n_params, params, ylim)
+    base = CopulaGraphs(copula, False).get_copula_title()
+    runner.save(base, data, splines)
 
+
+# ------------------------ Example ------------------------
 
 if __name__ == "__main__":
-    # Example usage
     import copul
+    from pathlib import Path
 
-    families = [e.name for e in copul.family_list.Families]
+    # Families we want to run
+    main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE", "GAUSSIAN"]
+    # main_families = ["JOE", "GUMBEL_HOUGAARD", "GAUSSIAN"]
+    main_families = ["GAUSSIAN"]
 
+    # Per-family settings (log grids, x-lims, fixed params, etc.)
     params_dict = {
         "CLAYTON": {"log_cut_off": (-1.5, 1.5)},
         "NELSEN1": {"log_cut_off": (-1.5, 1.5)},
@@ -468,25 +469,39 @@ if __name__ == "__main__":
         "PLACKETT": {"log_cut_off": (-3, 3)},
     }
 
-    main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE", "GAUSSIAN"]
-    main_families = ["JOE", "GUMBEL_HOUGAARD", "GAUSSIAN"]
-    # main_families = ["GAUSSIAN"]
+    # Measures to show (registered via @measure); include ν ("nu")
+    measures = [
+        "chatterjees_xi",
+        "blests_nu",
+        "spearmans_rho",
+        "kendalls_tau",
+        "spearmans_footrule",
+        "gini_gamma",
+        "blomqvist_beta",
+    ]
+
+    images_dir = Path("images")
+    images_dir.mkdir(parents=True, exist_ok=True)
+
     for family in main_families:
         print(f"Plotting rank correlations for {family} copula...")
         copula_class = copul.family_list.Families.create(family)
-        run_params = params_dict.get(family, {})
 
-        # Instantiate copula with fixed params if they exist
-        if "params" in run_params:
-            copula_instance = copula_class(**run_params.pop("params"))
-        else:
-            copula_instance = copula_class()
+        # Pull per-family settings
+        run_params = dict(params_dict.get(family, {}))  # shallow copy
 
-        # Call the standalone function with the copula instance
-        plot_rank_correlations(
+        # Instantiate with any fixed constructor params, if given
+        ctor_params = run_params.pop("params", None)
+        copula_instance = copula_class(**ctor_params) if ctor_params else copula_class()
+
+        # Hand remaining plotting/grid kwargs to the new API
+        run_plot(
             copula=copula_instance,
+            measures=measures,
             n_obs=1_000_000,
             n_params=50,
             approximate=False,
-            **run_params,
+            images_dir=images_dir,
+            save_pickles=True,
+            **run_params,  # e.g. log_cut_off, xlim, ylim
         )

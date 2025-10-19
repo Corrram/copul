@@ -1,211 +1,247 @@
-"""
-Tests for the RankCorrelationPlotter class.
-"""
-
-from unittest.mock import MagicMock, patch
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 import pytest
-import sympy
+import sympy as sp
+import matplotlib
 
-from copul.family.rank_correlation_plotter import RankCorrelationPlotter
+matplotlib.use("Agg")
+from matplotlib import pyplot as plt
 
-
-class TestRankCorrelationPlotter:
-    """Tests for the RankCorrelationPlotter class."""
-
-    def setup_method(self):
-        """Setup test fixtures."""
-        # Create a mock copula for testing
-        self.mock_copula = MagicMock()
-        self.mock_copula.params = [sympy.symbols("theta")]
-        self.mock_copula.intervals = {
-            "theta": MagicMock(inf=0, sup=5, left_open=False, right_open=False)
-        }
-
-        # Setup return value for get_params method on the mock copula
-        self.mock_copula.get_params.return_value = np.linspace(0.1, 4.9, 10)
-
-        # Create mock random data for the copula
-        self.mock_data = np.random.random((100, 2))
-        self.mock_xi = 0.7
-        self.mock_rho = (0.8, 0.01)  # value, p-value
-        self.mock_tau = (0.75, 0.01)  # value, p-value
-
-        # Initialize the plotter
-        self.plotter = RankCorrelationPlotter(self.mock_copula)
-
-        # Create a version with log cut-off
-        self.log_plotter = RankCorrelationPlotter(self.mock_copula, log_cut_off=5)
-
-    def test_initialization(self):
-        """Test initialization of RankCorrelationPlotter."""
-        # Test with default log_cut_off
-        plotter1 = RankCorrelationPlotter(self.mock_copula)
-        assert plotter1.copul == self.mock_copula
-        assert plotter1.log_cut_off is None
-
-        # Test with numeric log_cut_off
-        plotter2 = RankCorrelationPlotter(self.mock_copula, log_cut_off=5)
-        assert plotter2.copul == self.mock_copula
-        assert plotter2.log_cut_off == 5
-
-        # Test with tuple log_cut_off
-        plotter3 = RankCorrelationPlotter(self.mock_copula, log_cut_off=(-3, 3))
-        assert plotter3.copul == self.mock_copula
-        assert plotter3.log_cut_off == (-3, 3)
-
-    def test_mix_params_single_value(self):
-        """Test _mix_params with single value parameters."""
-        result = RankCorrelationPlotter._mix_params({"alpha": 1.0, "beta": 2.0})
-        # Based on the implementation, we need to adjust expectations
-        # The function appears to only handle lists/arrays as values for cross-product
-        assert len(result) == 1
-        # The exact content depends on how the implementation selects keys for cross-product
-        assert isinstance(result[0], dict)
-
-    def test_mix_params_multiple_values(self):
-        """Test _mix_params with multiple value parameters."""
-        result = RankCorrelationPlotter._mix_params(
-            {"alpha": [1.0, 2.0], "beta": [3.0, 4.0]}
-        )
-        assert len(result) == 4
-        assert {"alpha": 1.0, "beta": 3.0} in result
-        assert {"alpha": 1.0, "beta": 4.0} in result
-        assert {"alpha": 2.0, "beta": 3.0} in result
-        assert {"alpha": 2.0, "beta": 4.0} in result
-
-    def test_mix_params_mixed_types(self):
-        """Test _mix_params with mixed parameter types."""
-
-        # Create a property for testing
-        class DummyClass:
-            @property
-            def test_prop(self):
-                return "prop_value"
-
-        DummyClass()
-
-        # The function only includes keys for which the value is a list, string, or property
-        result = RankCorrelationPlotter._mix_params(
-            {
-                "alpha": [1.0, 2.0],
-                "beta": 3.0,  # This won't be in the cross-product keys
-                "gamma": "string_value",  # This will be included
-            }
-        )
-
-        assert len(result) == 2
-        # Only alpha and gamma should be in the result dicts
-        # beta may or may not be in the result, depending on the implementation
-        assert all("alpha" in item for item in result)
-        assert all("gamma" in item for item in result)
-
-    def test_get_params_linear(self):
-        """Test get_params with linear spacing."""
-        # Setup mock interval
-        interval = MagicMock(inf=0, sup=5, left_open=False, right_open=False)
-        self.mock_copula.intervals = {"theta": interval}
-
-        result = self.plotter.get_params(10)
-
-        # Verify result
-        assert len(result) == 10
-        assert np.isclose(result[0], 0)
-        assert np.isclose(result[-1], 5)
-        assert np.all(np.diff(result) > 0)  # Ensure increasing
-
-    @patch("copul.family.rank_correlation_plotter.RankCorrelationPlotter.get_params")
-    def test_get_params_log(self, mock_get_params):
-        """Test get_params with logarithmic spacing."""
-        # Setup mock interval
-        interval = MagicMock(inf=0, sup=5, left_open=False, right_open=False)
-        self.mock_copula.intervals = {"theta": interval}
-
-        # Create a logarithmic sequence with correct spacing properties
-        log_sequence = np.logspace(-5, 5, 10)
-        mock_get_params.return_value = log_sequence
-
-        # Call the method (actual implementation will be mocked)
-        result = self.log_plotter.get_params(10, log_scale=True)
-
-        # Verify result is our mocked logarithmic sequence
-        assert np.array_equal(result, log_sequence)
-
-        # Verify proper logarithmic spacing in our test data
-        ratios = log_sequence[1:] / log_sequence[:-1]
-        assert np.allclose(ratios, ratios[0], rtol=1e-5)
-
-    def test_get_params_finite_set(self):
-        """Test get_params with a finite set of values."""
-        # Setup a FiniteSet interval
-        finite_set = sympy.FiniteSet(1.0, 2.0, 3.0)
-        self.mock_copula.intervals = {"theta": finite_set}
-
-        result = self.plotter.get_params(10)
-
-        # Verify result contains the exact values from the finite set
-        assert len(result) == 3
-        assert set(result) == {1.0, 2.0, 3.0}
-
-    def test_get_params_with_open_intervals(self):
-        """Test get_params with open intervals."""
-        # Setup mock interval with open bounds
-        interval = MagicMock(inf=0, sup=5, left_open=True, right_open=True)
-        self.mock_copula.intervals = {"theta": interval}
-
-        result = self.plotter.get_params(10)
-
-        # Verify result respects open intervals
-        assert len(result) == 10
-        assert result[0] > 0  # Should be slightly larger than inf due to left_open
-        assert result[-1] < 5  # Should be slightly smaller than sup due to right_open
-
-    def test_get_params_with_cutoff_tuple(self):
-        """Test get_params with cutoff tuple."""
-        # Setup mock interval
-        interval = MagicMock(inf=-10, sup=10, left_open=False, right_open=False)
-        self.mock_copula.intervals = {"theta": interval}
-
-        # Create plotter with cutoff tuple
-        plotter = RankCorrelationPlotter(self.mock_copula, log_cut_off=(-1, 1))
-
-        # The actual implementation may not apply the cutoff as we expected
-        # Let's adjust our expectations
-        result_linear = plotter.get_params(10, log_scale=False)
-        assert len(result_linear) == 10
-
-
-@pytest.mark.parametrize(
-    "log_cut_off,log_scale,min_bound,max_bound",
-    [
-        (None, False, -10, 10),  # Linear scale, no cut_off (using interval bounds)
-        (5, True, -10, None),  # Log scale with numeric cut_off
-        ((-2, 2), False, -10, 10),  # Linear scale with tuple cut_off
-        ((-2, 2), True, -10, None),  # Log scale with tuple cut_off
-    ],
+from copul.family.rank_correlation_plotter import (
+    RankCorrelationPlotter,
+    CorrelationData,
+    MEASURES,
+    measure,
 )
-def test_get_params_ranges(log_cut_off, log_scale, min_bound, max_bound):
-    """Parametrized test for different combinations of log_cut_off and log_scale."""
-    # Create mock copula
-    mock_copula = MagicMock()
-    mock_copula.params = [sympy.symbols("theta")]
-    interval = MagicMock(inf=-10, sup=10, left_open=False, right_open=False)
-    mock_copula.intervals = {"theta": interval}
 
-    # Create plotter
-    plotter = RankCorrelationPlotter(mock_copula, log_cut_off=log_cut_off)
+# ----------------------------
+# Helpers / fixtures
+# ----------------------------
 
-    # Get parameters
-    result = plotter.get_params(10, log_scale=log_scale)
 
-    # Verify result length
-    assert len(result) == 10
+class _BaseDummy:
+    params = [sp.symbols("theta")]
 
-    # Verify minimum bound if specified
-    if min_bound is not None:
-        assert result[0] >= min_bound
+    def __init__(
+        self, interval=(0.0, 5.0), left_open=False, right_open=False, theta=None
+    ):
+        self._interval = SimpleNamespace(
+            inf=float(interval[0]),
+            sup=float(interval[1]),
+            left_open=left_open,
+            right_open=right_open,
+        )
+        self.intervals = {"theta": self._interval}
+        self.theta = theta
 
-    # Verify maximum bound if specified
-    if max_bound is not None:
-        assert result[-1] <= max_bound
+    def __call__(self, **kwargs):
+        theta = kwargs.get("theta", self.theta)
+        return self.__class__(
+            interval=(self._interval.inf, self._interval.sup),
+            left_open=self._interval.left_open,
+            right_open=self._interval.right_open,
+            theta=theta,
+        )
+
+    def rvs(self, n_obs, approximate=False):
+        t = 0.0 if self.theta is None else float(self.theta)
+        rng = np.random.default_rng(1234 + int(round(t * 10)))
+        x = rng.normal(loc=t, scale=1.0, size=n_obs)
+        y = x * 0.8 + rng.normal(scale=0.2, size=n_obs)
+        return np.column_stack([x, y])
+
+
+class DummyCopulaNoGet(_BaseDummy):
+    """No get_params present (hasattr -> False)."""
+
+    pass
+
+
+class DummyCopulaWithGet(_BaseDummy):
+    """Provides get_params; used to test preference branch."""
+
+    def get_params(self, n_params, log_scale=False):
+        if log_scale:
+            return np.logspace(-1, 1, n_params) + float(self._interval.inf)
+        return np.linspace(self._interval.inf, self._interval.sup, n_params)
+
+
+@pytest.fixture(autouse=True)
+def no_show():
+    with patch.object(plt, "show", return_value=None):
+        yield
+
+
+@pytest.fixture
+def restore_measures():
+    snapshot = dict(MEASURES)
+    try:
+        yield
+    finally:
+        MEASURES.clear()
+        MEASURES.update(snapshot)
+
+
+# ----------------------------
+# param_grid tests
+# ----------------------------
+
+
+def test_param_grid_prefers_family_get_params():
+    cop = DummyCopulaWithGet()
+    runner = RankCorrelationPlotter(cop)
+    grid = runner.param_grid(n_params=7, log_cut_off=None)
+    assert len(grid) == 7
+    assert np.isclose(grid[0], cop.intervals["theta"].inf)
+    assert np.isclose(grid[-1], cop.intervals["theta"].sup)
+
+
+def test_param_grid_finite_set_fallback():
+    cop = DummyCopulaNoGet()
+    cop.intervals = {"theta": sp.FiniteSet(1.0, 3.0, 2.0)}
+    runner = RankCorrelationPlotter(cop)
+    grid = runner.param_grid(n_params=10)
+    assert set(grid.tolist()) == {1.0, 2.0, 3.0}
+
+
+def test_param_grid_linear_with_open_bounds_and_xlim():
+    cop = DummyCopulaNoGet(interval=(0.0, 5.0), left_open=True, right_open=True)
+    runner = RankCorrelationPlotter(cop)
+    grid = runner.param_grid(n_params=5, xlim=(0.5, 4.5))
+    assert len(grid) == 5
+    assert grid[0] >= 0.5
+    assert grid[-1] <= 4.5
+    assert np.all(np.diff(grid) > 0)
+
+
+def test_param_grid_shifted_log_from_bounds_tuple():
+    cop = DummyCopulaNoGet(interval=(2.0, 100.0))  # inf = 2.0
+    runner = RankCorrelationPlotter(cop)
+    a, b = -2.0, 2.0
+    grid = runner.param_grid(n_params=9, log_cut_off=(a, b))
+    expected = np.logspace(a, b, 9) + 2.0
+    assert np.allclose(grid, expected)
+
+
+# ----------------------------
+# compute tests
+# ----------------------------
+
+
+def test_compute_calls_registered_measures_and_handles_exceptions(restore_measures):
+    calls = {"good": 0, "maybe_bad": 0}
+
+    @measure("good_measure")
+    def good_m(x, y, rx, ry):
+        calls["good"] += 1
+        return float(np.corrcoef(rx, ry)[0, 1])
+
+    @measure("fragile_measure")
+    def fragile_m(x, y, rx, ry):
+        calls["maybe_bad"] += 1
+        t_est = float(np.mean(x))
+        if t_est > 2.5:
+            raise ValueError("boom")
+        return 42.0
+
+    cop = DummyCopulaNoGet()
+    # Put the fragile measure FIRST so if it fails, nothing has been appended yet
+    runner = RankCorrelationPlotter(
+        cop, measures=["fragile_measure", "good_measure"], save_pickles=False
+    )
+    params = np.array([0.0, 1.0, 3.0])
+    data = runner.compute(params=params, n_obs=5000, approximate=False)
+
+    assert set(data.values.keys()) == {"good_measure", "fragile_measure"}
+    # Exactly one value per theta
+    assert len(data.values["good_measure"]) == 3
+    assert len(data.values["fragile_measure"]) == 3
+    # Last theta failed -> NaN for both
+    assert np.isnan(data.values["fragile_measure"][-1])
+    assert np.isnan(data.values["good_measure"][-1])
+
+    # Call counts: fragile called for all 3 thetas; good only for the first 2
+    assert calls["maybe_bad"] == 3
+    assert calls["good"] == 2
+
+
+# ----------------------------
+# plot tests
+# ----------------------------
+
+
+def test_plot_returns_splines_and_writes_png(tmp_path):
+    cop = DummyCopulaNoGet()
+    runner = RankCorrelationPlotter(cop, images_dir=tmp_path, save_pickles=False)
+
+    params = np.array([0.5, 1.0, 1.5])
+    values = {
+        "m1": np.array([0.1, 0.2, 0.25]),
+        "m2": np.array([np.nan, 0.0, 0.05]),
+    }
+    data = CorrelationData(params=params, values=values)
+
+    splines = runner.plot(
+        data,
+        title="DummyTitle",
+        ylim=(-1, 1),
+        log_x=False,
+    )
+    assert "m1" in splines and "m2" in splines
+
+    out = tmp_path / "DummyTitle_rank_correlations.png"
+    assert out.exists()
+
+
+def test_plot_log_axis_with_shift_and_cutoffs(tmp_path):
+    cop = DummyCopulaNoGet(interval=(2.0, 10.0))
+    runner = RankCorrelationPlotter(cop, images_dir=tmp_path, save_pickles=False)
+
+    params = np.array([2.1, 3.0, 6.0, 9.0])
+    values = {"m": np.array([0.0, 0.2, 0.4, 0.6])}
+    data = CorrelationData(params=params, values=values)
+
+    _ = runner.plot(
+        data,
+        title="Loggy",
+        ylim=(-1, 1),
+        log_x=True,
+        log_cut_off=(-1.0, 1.0),
+    )
+    out = tmp_path / "Loggy_rank_correlations.png"
+    assert out.exists()
+
+
+# ----------------------------
+# save tests
+# ----------------------------
+
+
+def test_save_pickles_toggle(tmp_path):
+    cop = DummyCopulaNoGet()
+    runner_yes = RankCorrelationPlotter(cop, images_dir=tmp_path, save_pickles=True)
+    RankCorrelationPlotter(cop, images_dir=tmp_path, save_pickles=False)
+
+    params = np.array([0.0, 1.0])
+    values = {"m": np.array([0.1, 0.2])}
+    data = CorrelationData(params=params, values=values)
+
+    from scipy.interpolate import CubicSpline
+
+    cs = CubicSpline(params, values["m"])
+    splines = {"m": cs}
+
+    runner_yes.save("Base", data, splines)
+    data_pkl = tmp_path / "data" / "Base_data.pkl"
+    cs_pkl = tmp_path / "splines" / "Base_splines.pkl"
+    assert data_pkl.exists()
+    assert cs_pkl.exists()
+
+    tmp2 = tmp_path / "off"
+    tmp2.mkdir()
+    runner_no2 = RankCorrelationPlotter(cop, images_dir=tmp2, save_pickles=False)
+    runner_no2.save("Base", data, splines)
+    assert not (tmp2 / "data" / "Base_data.pkl").exists()
+    assert not (tmp2 / "splines" / "Base_splines.pkl").exists()

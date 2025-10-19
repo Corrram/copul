@@ -175,6 +175,7 @@ def psi_bounds_from_xi(
         else:
             return (None, psi_max)
 
+
 # ---------------------- NU (Blest's measure) ----------------------
 def _Xi_of_b(b: float) -> float:
     """
@@ -238,9 +239,9 @@ def _b_from_xi(x: float, *, tol: float = 1e-12, max_iter: int = 200) -> float:
     """
     _validate_xi(x)
     if x == 0.0:
-        return 0.0 + 1e-12   # “near-zero” b
+        return 0.0 + 1e-12  # “near-zero” b
     if x == 1.0:
-        return 1e12          # “very large” b
+        return 1e12  # “very large” b
 
     # Bracket: start near b=0 and expand hi until Xi(hi) >= x
     lo, hi = 1e-12, 1.0

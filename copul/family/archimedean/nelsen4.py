@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import sympy
 
@@ -59,6 +61,52 @@ class GumbelHougaard(BivArchimedeanCopula):
         self._set_params(args, kwargs)
         theta = float(self.theta)
         return 6.0 / (2.0 ** (1.0 / theta) + 1.0) - 2.0
+
+    def rvs(
+        self, n: int = 1, random_state: Optional[int] = None, approximate: bool = False
+    ) -> np.ndarray:
+        """
+        Fast vectorized Marshall–Olkin sampler for Gumbel–Hougaard.
+
+        Steps:
+          1) α = 1/θ
+          2) Sample V ~ positive α-stable via Kanter's method
+          3) Sample E1,E2 ~ Exp(1) i.i.d.
+          4) Return (U, V) with U = exp(-(E1/V)^α), V = exp(-(E2/V)^α)
+
+        Independence (θ≈1) is handled by returning U(0,1)^2 directly.
+        """
+        rng = np.random.default_rng(random_state)
+        theta = float(self.theta)
+
+        # Independence shortcut (θ = 1)
+        if np.isclose(theta, 1.0):
+            return rng.random((n, 2))
+
+        # α-stable index (0 < α <= 1)
+        alpha = 1.0 / theta
+
+        # --- Kanter's sampler for positive α-stable -----------------------
+        # U ~ Uniform(0, π), W ~ Exp(1)
+        U = rng.uniform(0.0, np.pi, size=n)
+        W = rng.exponential(scale=1.0, size=n)
+
+        # Kanter (1975) representation:
+        # S = [ sin(αU) / (sin U)^(1/α) ] * [ sin((1-α)U) / W ]^((1-α)/α)
+        # S > 0 has Laplace transform E[e^{-s S}] = exp(-s^α)
+        sinU = np.sin(U)
+        # guard against rare 0s
+        sinU[sinU == 0.0] = np.finfo(float).tiny
+
+        part1 = np.sin(alpha * U) / (sinU ** (1.0 / alpha))
+        part2 = (np.sin((1.0 - alpha) * U) / W) ** ((1.0 - alpha) / alpha)
+        S = part1 * part2  # V in the frailty construction
+
+        # --- Marshall–Olkin transform ------------------------------------
+        E = rng.exponential(scale=1.0, size=(n, 2))
+        # U_i = ψ(E_i / S) with ψ(s)=exp(-s^α)
+        out = np.exp(-((E / S[:, None]) ** alpha))
+        return out  # shape (n, 2)
 
 
 Nelsen4 = GumbelHougaard
