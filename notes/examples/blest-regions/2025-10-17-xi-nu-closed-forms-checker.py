@@ -126,45 +126,62 @@ def nu_numeric(b, Nt=400, Nv=400):
 # ----------------------------
 
 
-def xi_closed(b):
+# ----------------------------
+# Closed-form xi and nu from the theorem (Exact (xi,nu)-region)
+# ----------------------------
+
+
+def xi_closed(b: float) -> float:
+    """
+    Xi(b) from Theorem:
+      - 0 < b <= 1:  8 b^2 (7 - 3 b) / 105
+      - b > 1: [ 183 γ - 38 b γ - 88 b^2 γ + 111 b^2 + 48 b^3 γ - 48 b^3
+                 - (105 acosh(sqrt(b)))/b ] / 210,
+        where γ = sqrt((b-1)/b).
+    """
     assert b > 0.0, "Closed-form given here assumes b>0."
-    s = 1.0 / np.sqrt(b)
     if b <= 1.0:
-        return (8.0 * (7.0 * s**2 - 3.0)) / (105.0 * s**6)
+        return (8.0 * b**2 * (7.0 - 3.0 * b)) / 105.0
     # b > 1
-    t = np.sqrt((b - 1.0) / b)
-    A = np.arccosh(np.sqrt(b))  # = asinh(t/s)
+    gamma = np.sqrt((b - 1.0) / b)
+    A = np.arccosh(np.sqrt(b))
     num = (
-        -105.0 * s**8 * A
-        + 183.0 * s**6 * t
-        - 38.0 * s**4 * t
-        - 88.0 * s**2 * t
-        + 112.0 * s**2
-        + 48.0 * t
-        - 48.0
+        183.0 * gamma
+        - 38.0 * b * gamma
+        - 88.0 * b**2 * gamma
+        + 112.0 * b**2
+        + 48.0 * b**3 * gamma
+        - 48.0 * b**3
+        - (105.0 * A) / b
     )
-    den = 210.0 * s**6
+    den = 210.0
     return num / den
 
 
-def nu_closed(b):
+def nu_closed(b: float) -> float:
+    """
+    N(b) from Theorem:
+      - 0 < b <= 1:  4 b (28 - 9 b) / 105
+      - b > 1: [ (87 γ)/b + 250 γ - 376 b γ + 447 b + 144 b^2 γ - 144 b^2
+                 - (105 acosh(sqrt(b)))/b^2 ] / 420,
+        where γ = sqrt((b-1)/b).
+    """
     assert b > 0.0, "Closed-form given here assumes b>0."
-    s = 1.0 / np.sqrt(b)
     if b <= 1.0:
-        return (4.0 * (28.0 * s**2 - 9.0)) / (105.0 * s**4)
+        return (4.0 * b * (28.0 - 9.0 * b)) / 105.0
     # b > 1
-    t = np.sqrt((b - 1.0) / b)
-    A = np.arccosh(np.sqrt(b))  # = asinh(t/s)
+    gamma = np.sqrt((b - 1.0) / b)
+    A = np.arccosh(np.sqrt(b))
     num = (
-        -105.0 * s**8 * A
-        + 87.0 * s**6 * t
-        + 250.0 * s**4 * t
-        - 37.0 * s**2 * t
-        + 448.0 * s**2
-        + 144.0 * t
-        - 144.0
+        (87.0 * gamma) / b
+        + 250.0 * gamma
+        - 376.0 * b * gamma
+        + 448.0 * b
+        + 144.0 * b**2 * gamma
+        - 144.0 * b**2
+        - (105.0 * A) / (b**2)
     )
-    den = 420.0 * s**4
+    den = 420.0
     return num / den
 
 
