@@ -286,6 +286,45 @@ class BivCoreCopula:
         log.debug("tau latex: %s", sp.latex(tau))
         return tau
 
+    def blests_nu(self, *args, **kwargs):
+        """
+        Compute Blest's rank correlation ν.
+
+        Uses the copula form
+            ν(C) = 24 ∫_0^1 ∫_0^1 (1 - u) C(u, v) du dv - 2
+        which is linear in C and generally symbolic-friendly.
+
+        Returns
+        -------
+        sympy.Expr
+            The symbolic expression for Blest's ν.
+        """
+        self._set_params(args, kwargs)
+        nu = self._nu()
+        log.debug("nu sympy: %s", nu)
+        log.debug("nu latex: %s", sp.latex(nu))
+        return nu
+
+    def _nu(self):
+        """
+        Internal method to compute Blest's ν via C(u,v).
+        """
+        return sp.simplify(24 * self._nu_int_2() - 2)
+
+    def _nu_int_2(self):
+        """
+        Outer integral over v for Blest's ν.
+            ∫_0^1 [ ∫_0^1 (1 - u) C(u, v) du ] dv
+        """
+        return sp.simplify(sp.integrate(self._nu_int_1(), (self.v, 0, 1)))
+
+    def _nu_int_1(self):
+        """
+        Inner integral over u for Blest's ν.
+            ∫_0^1 (1 - u) C(u, v) du
+        """
+        return sp.simplify(sp.integrate((1 - self.u) * self.cdf.func, (self.u, 0, 1)))
+
     def _tau(self):
         """
         Internal method to compute Kendall's tau.

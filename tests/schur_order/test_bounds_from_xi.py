@@ -18,6 +18,7 @@ from copul.schur_order.bounds_from_xi import (
 
 # ------------------------- Validation -------------------------
 
+
 @pytest.mark.parametrize("bad_x", [float("nan"), float("inf"), -0.1, 1.1, "0.2"])
 def test_validate_xi_rejects_bad_inputs(bad_x):
     with pytest.raises(Exception):
@@ -25,6 +26,7 @@ def test_validate_xi_rejects_bad_inputs(bad_x):
 
 
 # ------------------------- Rho / Tau --------------------------
+
 
 @pytest.mark.parametrize("x", [0.0, 0.05, 0.3, 0.7, 1.0])
 def test_rho_symmetry_and_range(x):
@@ -39,6 +41,7 @@ def test_rho_symmetry_and_range(x):
         assert rmin == 0.0 and rmax == 0.0
     if x == 1.0:
         assert rmin == -1.0 and rmax == 1.0
+
 
 @pytest.mark.parametrize("x", [0.0, 0.05, 0.3, 0.7, 1.0])
 def test_tau_symmetry_and_range(x):
@@ -56,6 +59,7 @@ def test_tau_symmetry_and_range(x):
 
 
 # ------------------------- Psi -------------------------------
+
 
 @pytest.mark.parametrize("x", [0.0, 0.1, 0.25, 0.49, 0.5, 0.8, 1.0])
 def test_psi_bounds_all_and_SI(x):
@@ -77,6 +81,7 @@ def test_psi_bounds_all_and_SI(x):
 
 
 # ------------------------- Nu (Blest) ------------------------
+
 
 @pytest.mark.parametrize("x", [0.0, 0.05, 0.3, 0.7, 0.95, 1.0])
 def test_nu_symmetry_and_range(x):
@@ -112,6 +117,7 @@ def test_nu_parametric_consistency_via_b(b):
 
 # ------------------------- Dispatcher ------------------------
 
+
 @pytest.mark.parametrize("x", [0.0, 0.2, 0.3, 0.8, 1.0])
 def test_dispatcher_matches_direct_calls(x):
     # rho
@@ -131,13 +137,13 @@ def test_dispatcher_rejects_unknown_measure():
         bounds_from_xi(0.3, measure="oops")  # type: ignore[arg-type]
 
 
-@pytest.mark.parametrize("x", [0,0.1, 0.2, 0.3, 0.8, 0.9, 1])
+@pytest.mark.parametrize("x", [0, 0.1, 0.2, 0.3, 0.8, 0.9, 1])
 def test_nu_bound_larger_than_rho(x):
     nmin, nmax = nu_bounds_from_xi(x)
     assert np.isfinite(nmin) and np.isfinite(nmax)
     rho_nmin, rho_nmax = rho_bounds_from_xi(x)
     assert np.isfinite(rho_nmin) and np.isfinite(rho_nmax)
-    if x not in [0,1]:
+    if x not in [0, 1]:
         assert nmin < rho_nmin < rho_nmax < nmax
     elif x == 0.0:
         assert nmin == rho_nmin == rho_nmax == nmax
