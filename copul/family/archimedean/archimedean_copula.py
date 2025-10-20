@@ -334,3 +334,26 @@ class ArchimedeanCopula(Copula, ABC):
                 0,
             )
         return sympy.simplify(limit)
+
+
+def from_generator(generator, params=None):
+    """
+    Create an Archimedean copula from a generator function.
+
+    Parameters
+    ----------
+    generator : str or sympy expression
+        The generator function φ
+    params : list or None
+        List of parameters if needed
+
+    Returns
+    -------
+    ArchimedeanCopula
+        A new copula instance using the provided generator
+    """
+    sp_generator = sympy.sympify(generator)
+    func_vars, params = ArchimedeanCopula._segregate_symbols(sp_generator, "t", params)
+    obj = ArchimedeanCopula._from_string(params)
+    obj._generator = sp_generator.subs(func_vars[0], ArchimedeanCopula.t)
+    return obj

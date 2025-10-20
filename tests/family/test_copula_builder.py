@@ -1,7 +1,7 @@
 import matplotlib
 import numpy as np
 
-from copul.family.copula_builder import from_cdf
+from copul.family.copula_builder import from_cdf, from_pdf
 
 matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
 
@@ -83,3 +83,58 @@ def test_from_cdf_with_gumbel_barnett_different_var_names_and_theta():
     copula = copula_family(0.5)
     result = copula.cdf(0.5, 0.5).evalf()
     assert np.isclose(result, 0.19661242613985133)
+
+
+def test_from_pdf_bivariate_independence():
+    """
+    Build a bivariate copula from a simple independence PDF.
+    We include u and v as free symbols so they’re recognized as variables.
+    """
+    pdf = "1 + 0*u + 0*v"
+    copula_family = from_pdf(pdf)
+    copula = copula_family()  # no params
+    val = float(copula.pdf(0.3, 0.7))
+    assert np.isclose(val, 1.0, atol=1e-12)
+
+
+def test_from_pdf_trivariate_independence():
+    """
+    Build a 3D copula from a simple independence PDF with three variables.
+    """
+    pdf = "1 + 0*x + 0*y + 0*z"
+    copula_family = from_pdf(pdf)
+    copula = copula_family()
+    # Should bind to u1,u2,u3 internally
+    val = float(copula.pdf(u1=0.2, u2=0.4, u3=0.8))
+    assert np.isclose(val, 1.0, atol=1e-12)
+
+
+def test_from_pdf_greek_parameters_detected_and_substituted():
+    """
+    Ensure greek-letter symbols are treated as parameters and can be assigned.
+    Here the PDF still evaluates to 1, but the presence of alpha/beta should
+    register as parameters on the family.
+    """
+    pdf = "1 + 0*alpha*u + 0*beta*v"
+    copula_family = from_pdf(pdf)
+    # Parameters discovered should include alpha and beta
+    assert {"alpha", "beta"}.issubset({str(p) for p in copula_family.params})
+
+    copula = copula_family(alpha=2.0, beta=3.0)
+    val = float(copula.pdf(0.4, 0.6))
+    assert np.isclose(val, 1.0, atol=1e-12)
+
+
+def test_from_cdf_with_alpha_param():
+    """
+    Like your theta test, but ensure greek 'alpha' is accepted as a parameter.
+    """
+    cdf = "u*v*exp(-alpha*ln(u)*ln(v))"
+    copula_family = from_cdf(cdf)
+    # alpha should be detected as a parameter
+    assert "alpha" in {str(p) for p in copula_family.params}
+
+    copula = copula_family(alpha=0.5)
+    result = float(copula.cdf(0.5, 0.5).evalf())
+    # Same numeric as theta=0.5 case
+    assert np.isclose(result, 0.19661242613985133, atol=1e-12)

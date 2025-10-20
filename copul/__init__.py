@@ -12,6 +12,9 @@ from copul.checkerboard.bernstein import BernsteinCopula, Bernstein
 from copul.checkerboard.shuffle_min import ShuffleOfMin
 from copul.checkerboard.biv_bernstein import BivBernsteinCopula, BivBernstein
 from copul.checkerboard.checkerboarder import Checkerboarder, from_data
+from copul.family.archimedean.archimedean_copula import from_generator
+from copul.family.extreme_value.biv_extreme_value_copula import from_pickands
+from copul.checkerboard.matrix import from_matrix
 from copul.family.archimedean import (
     AliMikhailHaq,
     BivClayton,
@@ -45,7 +48,7 @@ from copul.family.archimedean import (
     Nelsen22,
 )
 from copul.family.core.biv_copula import BivCopula
-from copul.family.copula_builder import from_cdf
+from copul.family.copula_builder import from_cdf, from_pdf
 from copul.family.elliptical import Gaussian, Laplace, StudentT
 from copul.family.extreme_value import (
     BB5,
@@ -98,6 +101,7 @@ __all__ = [
     "BivCopula",
     "DiagonalBandCopula",
     "from_cdf",
+    "from_pdf",
     "approximations",
     "copulas",
     "families",
@@ -167,6 +171,9 @@ __all__ = [
     "PLODVerifier",
     "ShuffleOfMin",
     "bounds_from_xi",
+    "from_generator",
+    "from_pickands",
+    "from_matrix",
     "markov_product",
 ]
 

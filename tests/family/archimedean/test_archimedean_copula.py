@@ -428,3 +428,66 @@ class TestEdgeCases:
 
                 # Verify the result
                 assert inv_gen is inv_gen_wrapper
+
+
+def test_from_generator_with_sympy_expr(monkeypatch):
+    """Create copula from a sympy generator expression (patch missing helpers)."""
+    # Avoid real Copula.__init__ side effects
+    monkeypatch.setattr("copul.family.core.copula.Copula.__init__", MockCopula.__init__)
+
+    # Patch helpers on the BASE class so cls._segregate_symbols works via MRO
+    t_sym = sympy.symbols("t")
+    monkeypatch.setattr(
+        ArchimedeanCopula,
+        "_segregate_symbols",
+        classmethod(lambda cls, expr, tname, params=None: ([t_sym], params)),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        ArchimedeanCopula,
+        "_from_string",
+        classmethod(lambda cls, params=None: ConcreteArchimedeanCopula(theta=2)),
+        raising=False,
+    )
+
+    # Sympy generator (Clayton-like)
+    t, theta = sympy.symbols("t theta", positive=True)
+    generator_expr = ((1 / t) ** theta - 1) / theta
+
+    copula = ConcreteArchimedeanCopula.from_generator(generator_expr, params=[theta])
+
+    assert isinstance(copula, ArchimedeanCopula)
+    # from_generator substitutes the function var with cls.t
+    assert str(copula._generator) == str(
+        generator_expr.subs(t, ConcreteArchimedeanCopula.t)
+    )
+
+
+def test_from_generator_with_string(monkeypatch):
+    """Create copula from a string generator (patch missing helpers)."""
+    # Avoid real Copula.__init__ side effects
+    monkeypatch.setattr("copul.family.core.copula.Copula.__init__", MockCopula.__init__)
+
+    # Patch helpers on the BASE class so cls._segregate_symbols works via MRO
+    t_sym = sympy.symbols("t")
+    monkeypatch.setattr(
+        ArchimedeanCopula,
+        "_segregate_symbols",
+        classmethod(lambda cls, expr, tname, params=None: ([t_sym], params)),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        ArchimedeanCopula,
+        "_from_string",
+        classmethod(lambda cls, params=None: ConcreteArchimedeanCopula(theta=3)),
+        raising=False,
+    )
+
+    generator_str = "((1/t)**theta - 1)/theta"
+    copula = ConcreteArchimedeanCopula.from_generator(generator_str, params=["theta"])
+
+    assert isinstance(copula, ArchimedeanCopula)
+    expected = (
+        (1 / ConcreteArchimedeanCopula.t) ** ConcreteArchimedeanCopula.theta - 1
+    ) / ConcreteArchimedeanCopula.theta
+    assert str(copula._generator) == str(expected)
