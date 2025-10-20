@@ -92,6 +92,14 @@ copul.checkerboard.checkerboarder module
    :show-inheritance:
    :undoc-members:
 
+copul.checkerboard.matrix module
+--------------------------------
+
+.. automodule:: copul.checkerboard.matrix
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.checkerboard.shuffle\_min module
 --------------------------------------
 

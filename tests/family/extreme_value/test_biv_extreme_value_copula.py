@@ -467,3 +467,62 @@ def test_cdf_vectorized_vs_cdf(copula):
     assert vector_time < scalar_time * 0.2, (
         f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
     )
+
+
+def test_from_pickands_auto_symbol_detection():
+    """
+    If the Pickands expression uses a variable not named 't' (e.g., 'x') and no params are provided,
+    from_pickands should:
+      - detect 'x' as the function variable and replace it with class-level 't';
+      - detect 'alpha' as the parameter and expose it as an attribute;
+      - make the wrapper evaluable when we assign a numeric alpha.
+    """
+    alpha = sp.symbols("alpha", positive=True)
+    x = sp.symbols("x", positive=True)
+    pickands_expr = 1 - alpha * x * (1 - x)  # A(t) = 1 - alpha t(1-t), written with x
+
+    evc = BivExtremeValueCopula.from_pickands(pickands_expr)  # params=None on purpose
+
+    # The internal expression should have x → t substitution
+    assert str(evc._pickands) == str(pickands_expr.subs(x, BivExtremeValueCopula.t))
+
+    # 'alpha' should be recognized as a parameter and present in 'params'
+    assert len(evc.params) == 1
+    assert str(evc.params[0]) == "alpha"
+    assert hasattr(evc, "alpha")
+
+    # Set alpha numerically and evaluate the Pickands wrapper at t=0.5
+    evc.alpha = 0.7
+    val = float(evc.pickands(t=0.5))
+    expected = 1 - 0.7 * 0.5 * (0.5)  # 1 - 0.7 * 0.25 = 0.825
+    assert abs(val - expected) < 1e-12
+
+
+def test_from_pickands_with_string_param_and_t_var():
+    """
+    If the Pickands expression already uses 't' and we pass params as a string,
+    from_pickands should:
+      - keep 't' as the function variable;
+      - register the parameter given by the params string;
+      - allow numeric evaluation via the wrapper.
+    """
+    pickands_str = "1 - alpha * t * (1 - t)"
+    evc = BivExtremeValueCopula.from_pickands(pickands_str, params="alpha")
+
+    # Expression should remain in terms of class-level t
+    assert str(evc._pickands) == str(
+        sp.sympify(pickands_str).subs(sp.Symbol("t"), BivExtremeValueCopula.t)
+    )
+
+    # Parameter list should contain a single symbol named 'alpha'
+    assert len(evc.params) == 1
+    assert str(evc.params[0]) == "alpha"
+    assert hasattr(evc, "alpha")
+
+    # Evaluate with a numeric alpha
+    evc = evc(alpha=0.3)
+    val = float(evc.pickands(t=0.25))
+    expected = 1 - 0.3 * 0.25 * (
+        1 - 0.25
+    )  # 1 - 0.3 * 0.25 * 0.75 = 1 - 0.05625 = 0.94375
+    assert abs(val - expected) < 1e-12

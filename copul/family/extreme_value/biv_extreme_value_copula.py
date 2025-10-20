@@ -100,8 +100,8 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         ----------
         pickands : str or sympy.Expr
             Pickands dependence function. May contain ``t`` or another symbol.
-        params : list or str, optional
-            Parameter names. If ``None``, symbols are detected automatically.
+        params : list[str|sympy.Symbol] | str | None
+            Parameter names/symbols. If ``None``, symbols are detected automatically.
 
         Returns
         -------
@@ -109,87 +109,109 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             Instance with the specified Pickands function.
         """
 
-        # Special case for the Galambos test
+        # Special case for the Galambos test (kept as-is)
         if isinstance(pickands, str):
             if pickands == "1 - (x ** (-delta) + (1 - x) ** (-delta)) ** (-1 / delta)":
-                # Special handling for x variable Galambos (test case)
                 obj = cls()
                 x, delta = sp.symbols("x delta", positive=True)
                 galambos_expr = 1 - (x ** (-delta) + (1 - x) ** (-delta)) ** (
                     -1 / delta
                 )
-
-                # Create the expression with t instead of x
                 obj._pickands = galambos_expr.subs(x, cls.t)
-
-                # Setup the parameter
                 obj.params = [delta]
                 obj._free_symbols = {"delta": delta}
                 setattr(obj, "delta", delta)
-
                 return obj
 
-        # Convert pickands to sympy expression
+        # Parse to sympy expression
         sp_pickands = sp.sympify(pickands)
-
-        # Handle string parameter
-        if isinstance(params, str):
-            params = [sp.symbols(params, positive=True)]
-
-        # Get all free symbols in the expression
         all_symbols = list(sp_pickands.free_symbols)
 
-        # Identify function variable (the one to be replaced by t)
-        func_var = None
+        # Helper: find the exact symbol object in `all_symbols` by name (if present)
+        def _find_symbol_by_name(name: str):
+            for s in all_symbols:
+                if str(s) == name:
+                    return s
+            return None
+
+        # Resolve param symbols
         param_symbols = []
 
-        if params is not None:
-            # Convert any string params to symbols if needed
-            param_symbols = []
-            for p in params:
-                if isinstance(p, str):
-                    param_symbols.append(sp.symbols(p, positive=True))
-                else:
-                    param_symbols.append(p)
-
-            # The function variable is any symbol that's not a parameter
-            for sym in all_symbols:
-                if sym not in param_symbols:
-                    func_var = sym
+        if params is None:
+            # Auto-detect:
+            # - prefer function variable 't' (then 'x') if present,
+            # - treat all other symbols as parameters,
+            # - in particular this catches Greek names (alpha, beta, ..., omega)
+            prefer_names = ["t", "x"]
+            func_var = None
+            for nm in prefer_names:
+                cand = _find_symbol_by_name(nm)
+                if cand is not None:
+                    func_var = cand
                     break
-        else:
-            # Look for a symbol named 't' first
-            t_symbols = [s for s in all_symbols if str(s) == "t"]
-            if t_symbols:
-                func_var = t_symbols[0]
+            if func_var is None:
+                # pick the first available symbol as function variable
+                func_var = all_symbols[0] if all_symbols else None
+
+            # Parameters = all remaining symbols (this naturally includes greek names)
+            if func_var is not None:
                 param_symbols = [s for s in all_symbols if s != func_var]
             else:
-                # If no 't', take the first symbol as function variable
-                # (this handles the case with 'x' as variable)
-                if all_symbols:
-                    func_var = all_symbols[0]
-                    param_symbols = all_symbols[1:]
+                param_symbols = all_symbols[:]  # degenerate case (no func var)
 
-        # Create a new instance
+        else:
+            # Normalize params to a list
+            if isinstance(params, (str, sp.Symbol)):
+                params = [params]
+
+            # For string names, reuse the *exact* symbol from the expression if it exists.
+            # This avoids creating a second 'alpha' with different assumptions.
+            for p in params:
+                if isinstance(p, str):
+                    found = _find_symbol_by_name(p)
+                    if found is not None:
+                        param_symbols.append(found)
+                    else:
+                        # Create if not present in the expression
+                        param_symbols.append(sp.symbols(p, positive=True))
+                else:
+                    # Already a SymPy Symbol; prefer the identical-by-name one found in expr
+                    found = _find_symbol_by_name(str(p))
+                    param_symbols.append(found if found is not None else p)
+
+            # Function variable = any symbol in the expression NOT in param_symbols;
+            # prefer 't', then 'x'
+            param_set = set(param_symbols)
+            func_var = None
+            for nm in ["t", "x"]:
+                cand = _find_symbol_by_name(nm)
+                if cand is not None and cand not in param_set:
+                    func_var = cand
+                    break
+            if func_var is None:
+                # pick first non-parameter symbol
+                for s in all_symbols:
+                    if s not in param_set:
+                        func_var = s
+                        break
+            # if still None, there may be no free non-parameter symbol (rare but safe)
+
+        # Build the instance
         obj = cls()
 
-        # Set the pickands function with the function variable replaced by t
-        if func_var:
+        # Replace the function variable by the class's canonical `t`
+        if func_var is not None:
             obj._pickands = sp_pickands.subs(func_var, cls.t)
         else:
             obj._pickands = sp_pickands
 
-        # Set the parameters
+        # Register parameters and expose them for substitution in .pickands
         obj.params = param_symbols
-
-        # Initialize free_symbols dictionary
         obj._free_symbols = {}
-
-        # Make parameters available as attributes
         for param in param_symbols:
-            param_name = str(param)
-            setattr(obj, param_name, param)
-            obj._free_symbols[param_name] = param
+            name = str(param)
+            setattr(obj, name, param)  # default attribute is the symbol itself
+            obj._free_symbols[name] = param  # map name -> exact symbol from expr
 
         return obj
 
@@ -712,3 +734,22 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         """
 
         return True
+
+
+def from_pickands(pickands, params=None):
+    r"""Construct a bivariate extreme value copula from a Pickands function.
+
+    Parameters
+    ----------
+    pickands : str or sympy.Expr
+        Pickands dependence function. May contain ``t`` or another symbol.
+    params : list or str, optional
+        Parameter names. If ``None``, symbols are detected automatically.
+
+    Returns
+    -------
+    BivExtremeValueCopula
+        Instance with the specified Pickands function.
+    """
+
+    return BivExtremeValueCopula.from_pickands(pickands, params=params)

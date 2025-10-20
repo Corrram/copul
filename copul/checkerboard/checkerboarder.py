@@ -604,7 +604,3 @@ def from_data(data, checkerboard_size=None, checkerboard_type="CheckPi"):  # noq
 
 def from_samples(samples, checkerboard_size=None, checkerboard_type="CheckPi"):  # noqa: E501
     return from_data(samples, checkerboard_size, checkerboard_type)
-
-
-def from_matrix(matrix, checkerboard_size=None, checkerboard_type="CheckPi"):  # noqa: E501
-    return from_data(matrix, checkerboard_size, checkerboard_type)
