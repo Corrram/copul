@@ -323,7 +323,7 @@ class BivCoreCopula:
         Inner integral over u for Blest's ν.
             ∫_0^1 (1 - u) C(u, v) du
         """
-        return sp.simplify(sp.integrate((1 - self.u) * self.cdf.func, (self.u, 0, 1)))
+        return sp.simplify(sp.integrate((1 - self.u) * self.cdf().func, (self.u, 0, 1)))
 
     def _tau(self):
         """
