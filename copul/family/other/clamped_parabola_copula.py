@@ -113,26 +113,65 @@ class XiNuBoundaryCopula(BivCopula):
     def cdf(self):
         return self._cdf_expr
 
-    def cdf_vectorized(self, u, v):
-        """
-        C(u,v) with h(u,v) = clamp(b ((1-u)^2 - q(v)), 0, 1).
-        """
+    # --- base (|b|) helpers used by both signs ---
+    def _base_cdf_vectorized(self, u, v):
+        """CDF for the upright copula with parameter b_abs = |b| > 0."""
         u, v = np.asarray(u), np.asarray(v)
-        b = float(self.b)
+        b_abs = float(abs(self.b))
 
-        q = self._get_q_v_vec(v, b)
+        q = self._get_q_v_vec(v, b_abs)
         s = np.empty_like(q, dtype=float)
         mask = q >= 0.0
         s[~mask] = 1.0
         s[mask] = 1.0 - np.sqrt(q[mask])
-        a = np.maximum(0.0, 1.0 - np.sqrt(q + 1.0 / b))
+        a = np.maximum(0.0, 1.0 - np.sqrt(q + 1.0 / b_abs))
 
-        # primitive T via the convenient "minus" form used earlier
         val_at_u = -((1.0 - u) ** 3) / 3.0 - q * u
         val_at_a = -((1.0 - a) ** 3) / 3.0 - q * a
-        middle = a + b * (val_at_u - val_at_a)
+        middle = a + b_abs * (val_at_u - val_at_a)
 
         return np.select([u <= a, u <= s], [u, middle], default=v)
+
+    def _base_pdf_vectorized(self, u, v):
+        """PDF for the upright copula with parameter b_abs = |b| > 0."""
+        u = np.asarray(u, dtype=float)
+        v = np.asarray(v, dtype=float)
+        out = np.zeros_like(u, dtype=float)
+        b_abs = float(abs(self.b))
+
+        q = self._get_q_v_vec(v, b_abs)
+        a, s = self._switch_points(q, b_abs)
+
+        vprime = self._vprime_of_q(q, b_abs)
+        eps = 1e-14
+        qprime = 1.0 / np.where(np.abs(vprime) < eps, np.sign(vprime) * eps, vprime)
+
+        height = -b_abs * qprime
+        mask = (u > a) & (u < s)
+        out[mask] = height[mask]
+        return out.reshape(u.shape)
+
+    def cdf_vectorized(self, u, v):
+        """
+        If b >= 0: C(u,v) = C_base(u,v; |b|).
+        If b < 0 : C(u,v) = u - C_base(u, 1-v; |b|)   (σ2 reflection).
+        """
+        if float(self.b) >= 0:
+            return self._base_cdf_vectorized(u, v)
+        else:
+            u_arr, v_arr = np.asarray(u), np.asarray(v)
+            return u_arr - self._base_cdf_vectorized(u_arr, 1.0 - v_arr)
+
+    def pdf_vectorized(self, u, v):
+        """
+        If b >= 0: c(u,v) = c_base(u,v; |b|).
+        If b < 0 : c(u,v) = c_base(u, 1-v; |b|)       (chain rule for σ2).
+        """
+        if float(self.b) >= 0:
+            return self._base_pdf_vectorized(u, v)
+        else:
+            u_arr, v_arr = np.asarray(u), np.asarray(v)
+            return self._base_pdf_vectorized(u_arr, 1.0 - v_arr)
 
     def _switch_points(self, q, b):
         """Return a(v), s(v) for given q and b."""
@@ -173,47 +212,22 @@ class XiNuBoundaryCopula(BivCopula):
 
         return vprime
 
-    def pdf_vectorized(self, u, v):
-        """
-        Analytic copula density c(u,v) = ∂_v h(u,v).
-        It equals -b*q'(v) on the interior a(v) < u < s(v), and 0 elsewhere.
-        (Dirac masses on the switching curves are ignored for plotting.)
-        """
-        u = np.asarray(u, dtype=float)
-        v = np.asarray(v, dtype=float)
-        out = np.zeros_like(u, dtype=float)
-        b = float(self.b)
-
-        # Get q(v) once, smoothly
-        q = self._get_q_v_vec(v, b)
-
-        # Compute a(v), s(v)
-        a, s = self._switch_points(q, b)
-
-        # v'(q) and hence q'(v) = 1 / v'(q)
-        vprime = self._vprime_of_q(q, b)
-        # Guard against division by ~0 at regime boundaries
-        eps = 1e-14
-        qprime = 1.0 / np.where(np.abs(vprime) < eps, np.sign(vprime) * eps, vprime)
-
-        # Constant (in u) density height on the interior band
-        height = -b * qprime  # should be ≥ 0
-        # broadcast to u’s shape
-        # interior mask a(v) < u < s(v)
-        mask = (u > a) & (u < s)
-        out[mask] = height[mask]  # numpy broadcasting handles shapes if u,v meshgrid
-
-        return out.reshape(u.shape)
-
-    # ---------------------------
-    # Symbolic helpers
-    # ---------------------------
     def cond_distr_1(self):
-        q = sp.Function("q")(self.v)
-        return sp.Min(sp.Max(0, self.b * ((1 - self.u) ** 2 - q)), 1)
+        """
+        h(u,v) = ∂_u C(u,v).
+        If b >= 0: h = clamp(|b|((1-u)^2 - q(v)),0,1).
+        If b < 0 : h = 1 - clamp(|b|((1-u)^2 - q(1-v)),0,1).   (since C^σ2)
+        NOTE: q(·) will be evaluated with |b| in the lambdify bridge.
+        """
+        b = sp.Abs(self.b)
+        q = sp.Function("q")
+        h_base = sp.Min(sp.Max(0, b * ((1 - self.u) ** 2 - q(self.v))), 1)
+        h_ref = 1 - sp.Min(sp.Max(0, b * ((1 - self.u) ** 2 - q(1 - self.v))), 1)
+        return sp.Piecewise((h_base, self.b >= 0), (h_ref, True))
 
     @property
     def _cdf_expr(self):
+        # C(u,v) = ∫_0^u h(x,v) dx — this matches the σ2 wrapper as well.
         return sp.Integral(self.cond_distr_1(), (self.u, 0, self.u))
 
     def _pdf_expr(self):
@@ -259,21 +273,14 @@ class XiNuBoundaryCopula(BivCopula):
         mu_val = brentq(f, lo, hi, maxiter=200, xtol=1e-14, rtol=1e-12)
         return cls(b=1.0 / mu_val)
 
-    # ---------------------------
-    # Rank measures (closed forms via μ=1/b)
-    # ---------------------------
     def chatterjees_xi(self):
-        """
-        ξ(b) via μ=1/b (same corrected closed form).
-        """
         import numpy as _np
 
-        b = float(self.b)
-        if b <= 0.0:
-            raise ValueError("b must be > 0.")
-        mu = 1.0 / b
+        b_abs = float(abs(self.b))
+        if b_abs <= 0.0:
+            raise ValueError("b must be nonzero.")
+        mu = 1.0 / b_abs
         s = _np.sqrt(mu)
-
         if mu < 1.0:
             t = _np.sqrt(1.0 - mu)
             A = _np.asinh(t / s)
@@ -293,14 +300,18 @@ class XiNuBoundaryCopula(BivCopula):
 
     def blests_nu(self):
         """
-        ν(b) via μ=1/b (same corrected closed form).
+        Signed Blest's ν(b). Under the σ₂ reflection (b<0) the dependence reverses,
+        so ν must satisfy ν(-b) = -ν(b). We therefore return sign(b) * ν(|b|),
+        where ν(|b|) is the closed form in terms of μ = 1/|b|.
         """
         import numpy as _np
 
         b = float(self.b)
-        if b <= 0.0:
-            raise ValueError("b must be > 0.")
-        mu = 1.0 / b
+        if b == 0.0:
+            return 0.0  # limit = independence
+
+        sgn = 1.0 if b > 0.0 else -1.0
+        mu = 1.0 / abs(b)
         s = _np.sqrt(mu)
 
         if mu < 1.0:
@@ -316,9 +327,9 @@ class XiNuBoundaryCopula(BivCopula):
                 - 144
             )
             den = 420 * s**4
-            return num / den
+            return sgn * (num / den)
         else:
-            return 4.0 * (28.0 * mu - 9.0) / (105.0 * mu**2)
+            return sgn * (4.0 * (28.0 * mu - 9.0) / (105.0 * mu**2))
 
     # ===================================================================
     # START: Rich plotting capabilities (restored, adapted to b)

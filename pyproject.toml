@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "copul"
-version = "0.3.7"
-description = "Risk analysis with copulas."
+version = "0.3.8"
+description = "A Python package for copula analysis and computation."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
