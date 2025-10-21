@@ -369,9 +369,9 @@ class XiRhoBoundaryCopula(BivCopula):
 
           .. math:: \rho = \operatorname{sgn}(b)\,\!\left(1 - \frac{\lvert b\rvert^{2}}{2}\right) + \frac{\lvert b\rvert^{3}}{5}.
         """
-        b = self.b
+        b = 1 / self.b
         rho_large = sp.sign(b) * (1 / sp.Abs(b) - sp.Rational(3, 10) / sp.Abs(b) ** 2)
-        rho_small = sp.sign(b) * (1 - sp.Abs(b) ** 2 / 2) + sp.Abs(b) ** 3 / 5
+        rho_small = sp.sign(b) * (1 - sp.Abs(b) ** 2 / 2 + sp.Abs(b) ** 3 / 5)
         return sp.Piecewise(
             (rho_large, sp.Abs(b) >= 1),  # |b_new| ≥ 1
             (rho_small, True),  # |b_new|  < 1
@@ -407,6 +407,9 @@ class XiRhoBoundaryCopula(BivCopula):
             (tau_large_b, b_abs >= 1),
             (tau_small_b, True),
         )
+
+    def blests_nu(self, *args, **kwargs):
+        return self.spearmans_rho()
 
 
 if __name__ == "__main__":

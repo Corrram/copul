@@ -1,7 +1,6 @@
 import cvxpy as cp
 import numpy as np
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 
 
 def get_boundary_point_nu_lower(mu, n=32, verbose=False, solver="OSQP"):
@@ -67,7 +66,7 @@ if __name__ == "__main__":
     boundary_points = []
 
     print("Tracing the lower boundary for (xi, nu)...")
-    for mu in tqdm(mu_values):
+    for mu in mu_values:
         xi, nu, _ = get_boundary_point_nu_lower(mu, n=32)
         if xi is not None:
             boundary_points.append((xi, nu))
