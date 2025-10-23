@@ -339,7 +339,7 @@ class XiPsiApproxLowerBoundaryCopula(BivCopula):
         return fig
 
     def plot_pdf(self, *, plot_type="contour", log_z=False, **kwargs):
-        title = kwargs.pop("title", "Diagonal Strip PDF")
+        title = kwargs.pop("title", "XiPsiApproxLowerBoundaryCopula")
         zlabel = kwargs.pop("zlabel", "PDF")
         if plot_type == "3d":
             return self._plot3d(self.pdf_vectorized, title, zlabel, **kwargs)
@@ -628,11 +628,4 @@ if __name__ == "__main__":
     pairs = [(0.20, 0.30), (0.30, 0.50), (0.40, 0.50)]
     for a, b in pairs:
         cop = XiPsiApproxLowerBoundaryCopula(alpha=a, beta=b)
-        print(f"alpha={a:.2f}, beta={b:.2f}")
-        xi = cop.chatterjees_xi(grid_n=800)
-        psi = cop.spearmans_footrule(grid_n=800)
-        print(f"  xi ≈ {xi:.4f},  psi ≈ {psi:.4f}")
-        cop.plot_pdf(plot_type="3d", levels=600, grid_size=600)
-        cop.plot_cond_distr_1(plot_type="3d", levels=600, grid_size=600)
-        cop.plot_cond_distr_2(plot_type="3d", levels=600, grid_size=600)
-        cop.plot_cdf(plot_type="3d", levels=600, grid_size=600)
+        cop.plot_pdf(plot_type="contour", levels=999, grid_size=2000)

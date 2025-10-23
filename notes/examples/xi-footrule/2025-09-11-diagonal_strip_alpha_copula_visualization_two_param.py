@@ -187,7 +187,7 @@ def calculate_and_plot(alpha_val, beta_val, n_points=1000):
     )
 
     # Overlay the "hole" band outline
-    s = np.linspace(0, 1, 400)
+    s = np.linspace(0, 1, n_points)
     psi_vals = spearmans_footrule(s, alpha_val, beta_val)
     ax.plot(s, psi_vals, color=zero_density_color, lw=1.5, label=r"$\psi(s)$")
     ax.plot(
@@ -201,8 +201,8 @@ def calculate_and_plot(alpha_val, beta_val, n_points=1000):
     ax.fill_between(s, psi_vals, psi_vals + beta_val, color=zero_density_color, alpha=0)
 
     title = (
-        f"Diagonal Hole Copula (α = {alpha_val:.2f}, β = {beta_val:.2f})\n"
-        f"ξ ≈ {chatterjee_xi:.3f} | ψ ≈ {spearman_psi:.3f}"
+        r"$C^{\xi,\psi}_{" + f"{alpha_val},{beta_val}" + "}$,"
+        f" ξ ≈ ${chatterjee_xi:.3f}$, ψ ≈ ${spearman_psi:.3f}$"
     )
     ax.set_title(title, fontsize=14)
     ax.set_xlabel("u", fontsize=12)
@@ -217,8 +217,8 @@ def calculate_and_plot(alpha_val, beta_val, n_points=1000):
     # Ensure the 'images' directory exists
     os.makedirs("images", exist_ok=True)
     plt.savefig(
-        f"images/two_param_a{alpha_val:.2f}_b{beta_val:.2f}.png",
-        dpi=300,
+        f"images/two_param_a{alpha_val:.2f}_b{beta_val:.2f}_commented.png",
+        # dpi=300,
         bbox_inches="tight",
     )
     plt.show()
@@ -233,11 +233,11 @@ if __name__ == "__main__":
         # (0.10, 0.16),  # Small corners, very wide band
         # (0.12, 0.2),  # Medium corners, medium band
         # (0.15, 0.25),  # Medium corners, wider band
-        (0.20, 0.3),  # Wide corners, thin band
+        (0.2, 0.3),  # Wide corners, thin band
         # (0.22, 0.35),  # Wide corners, medium band
         # (0.25, 0.4),  # Medium corners, wider band
         # (0.28, 0.5),  # Wide corners, very thin band
-        (0.30, 0.5),
+        (0.3, 0.5),
         # (0.35, 0.5),
         # (0.40, 0.5),  # Wide corners, very wide band
         # (0.45, 0.5),  # Very wide corners, very wide band
@@ -246,4 +246,4 @@ if __name__ == "__main__":
     ]
 
     for alpha, beta in parameter_pairs:
-        calculate_and_plot(alpha_val=alpha, beta_val=beta, n_points=100)
+        calculate_and_plot(alpha_val=alpha, beta_val=beta, n_points=10_000)

@@ -494,7 +494,7 @@ class XiNuBoundaryCopula(BivCopula):
 
     def plot_pdf(self, *, plot_type="3d", log_z=False, **kwargs):
         """Plot the PDF using the numerical :meth:`pdf_vectorized` implementation."""
-        title = kwargs.pop("title", "Clamped Parabola PDF")
+        title = kwargs.pop("title", "XiNuBoundaryCopula")
         zlabel = kwargs.pop("zlabel", "PDF")
 
         if plot_type == "3d":
@@ -539,20 +539,5 @@ if __name__ == "__main__":
     b_values = [0.5, 1, 2]  # corresponds to mu = 0.2, 0.5, 1.0, 2.0
     for b in b_values:
         copula = XiNuBoundaryCopula(b=b)
-        copula.plot_pdf(plot_type="contour")
-        copula.plot_cond_distr_1(plot_type="contour")
-        # copula.plot_cond_distr_2(plot_type="contour")
-        copula.plot_cdf(plot_type="contour")
-        xi = copula.chatterjees_xi()
-        nu = copula.blests_nu()
-
-        ccop = copula.to_checkerboard(grid_size=50)
-        xi_approx = ccop.chatterjees_xi()
-        nu_approx = ccop.blests_nu()
-        print(f"--- Copula with b = {copula.b} ---")
-        print(f"Exact xi = {xi:.6f}, nu = {nu:.6f}")
-        print(f"Approx xi = {xi_approx:.6f}, nu = {nu_approx:.6f}")
-        # copula.plot_cond_distr_1(plot_type="contour")
-        copula.plot_pdf(
-            plot_type="contour", zlim=(0, 5 * np.sqrt(b)), levels=900, grid_size=900
-        )
+        copula.plot_pdf(plot_type="contour", levels=999, grid_size=999)
+        copula.plot_cond_distr_1(plot_type="contour", levels=999, grid_size=999)
