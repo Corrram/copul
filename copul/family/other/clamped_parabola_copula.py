@@ -433,6 +433,7 @@ class XiNuBoundaryCopula(BivCopula):
         ax.set_ylabel("v")
         ax.set_title(title)
         plt.tight_layout()
+        plt.savefig(f"images/xi_nu_boundary_{self.b}.png")
         plt.show()
         return fig
 
@@ -539,5 +540,5 @@ if __name__ == "__main__":
     b_values = [0.5, 1, 2]  # corresponds to mu = 0.2, 0.5, 1.0, 2.0
     for b in b_values:
         copula = XiNuBoundaryCopula(b=b)
-        copula.plot_pdf(plot_type="contour", levels=999, grid_size=999)
-        copula.plot_cond_distr_1(plot_type="contour", levels=999, grid_size=999)
+        copula.plot_pdf(plot_type="contour", levels=999, grid_size=2000, zlim=(0, 8))
+        # copula.plot_cond_distr_1(plot_type="contour", levels=999, grid_size=999)

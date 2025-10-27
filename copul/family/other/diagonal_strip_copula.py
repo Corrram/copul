@@ -335,6 +335,7 @@ class XiPsiApproxLowerBoundaryCopula(BivCopula):
         ax.set_ylabel("v")
         ax.set_title(title)
         plt.tight_layout()
+        plt.savefig(f"images/two_param_a{self.alpha}_b{self.beta}.png", dpi=300)
         plt.show()
         return fig
 
@@ -628,4 +629,4 @@ if __name__ == "__main__":
     pairs = [(0.20, 0.30), (0.30, 0.50), (0.40, 0.50)]
     for a, b in pairs:
         cop = XiPsiApproxLowerBoundaryCopula(alpha=a, beta=b)
-        cop.plot_pdf(plot_type="contour", levels=999, grid_size=2000)
+        cop.plot_pdf(plot_type="contour", levels=999, grid_size=5000)
