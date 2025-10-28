@@ -157,6 +157,149 @@ class CopulaBuilder:
         ]
         return character.lower() in greek_letters
 
+    @classmethod
+    def from_cond_distr_1(cls, cond):
+        """
+        Build a bivariate copula from the conditional CDF F_{V|U=u}(v) = ∂C/∂u (u, v).
+        """
+        greek_names = [
+            "alpha",
+            "beta",
+            "gamma",
+            "delta",
+            "epsilon",
+            "zeta",
+            "eta",
+            "theta",
+            "iota",
+            "kappa",
+            "lambda",
+            "mu",
+            "nu",
+            "xi",
+            "omicron",
+            "rho",
+            "sigma",
+            "tau",
+            "upsilon",
+            "phi",
+            "chi",
+            "psi",
+            "omega",
+        ]
+        local_dict = {name: sympy.symbols(name, real=True) for name in greek_names}
+
+        sp_cond = sympy.sympify(cond, locals=local_dict, evaluate=False)
+
+        # split symbols into params vs. function vars
+        free_syms = list(sp_cond.free_symbols)
+        param_syms = [s for s in free_syms if cls._is_greek(str(s)) and str(s) != "pi"]
+        func_syms = [s for s in free_syms if s not in param_syms]
+
+        obj = cls._from_string(2, [str(s) for s in param_syms])
+
+        # map variables robustly to (u, v)
+        sub_map = {}
+        for s in func_syms:
+            if str(s) == "u":
+                sub_map[s] = obj.u
+            elif str(s) == "v":
+                sub_map[s] = obj.v
+        remaining = [s for s in func_syms if s not in sub_map]
+        if obj.u not in sub_map.values() and remaining:
+            sub_map[remaining.pop(0)] = obj.u
+        if obj.v not in sub_map.values() and remaining:
+            sub_map[remaining.pop(0)] = obj.v
+
+        sp_cond = sp_cond.xreplace(sub_map)
+        for ps in param_syms:
+            sp_cond = sp_cond.subs(ps, obj._free_symbols[str(ps)])
+
+        # keep u and v visible to wrappers expecting both symbols
+        if obj.u not in sp_cond.free_symbols:
+            sp_cond = sympy.Add(sp_cond, obj.u, -obj.u, evaluate=False)
+        if obj.v not in sp_cond.free_symbols:
+            sp_cond = sympy.Add(sp_cond, obj.v, -obj.v, evaluate=False)
+
+        # C(u,v) = ∫_0^u F_{V|U=s}(v) ds
+        s = sympy.symbols("__int_u", real=True, nonnegative=True)
+        cdf_expr = sympy.integrate(sp_cond.subs(obj.u, s), (s, 0, obj.u))
+        cdf_expr = sympy.Add(cdf_expr, obj.u**2 / 2, -(obj.u**2) / 2, evaluate=False)
+        obj._cdf_expr = cdf_expr
+        obj._pdf_expr = sympy.diff(cdf_expr, obj.u, obj.v)
+        return obj
+
+    @classmethod
+    def from_cond_distr_2(cls, cond):
+        """
+        Build a bivariate copula from the conditional CDF F_{U|V=v}(u) = ∂C/∂v (u, v).
+        """
+        greek_names = [
+            "alpha",
+            "beta",
+            "gamma",
+            "delta",
+            "epsilon",
+            "zeta",
+            "eta",
+            "theta",
+            "iota",
+            "kappa",
+            "lambda",
+            "mu",
+            "nu",
+            "xi",
+            "omicron",
+            "rho",
+            "sigma",
+            "tau",
+            "upsilon",
+            "phi",
+            "chi",
+            "psi",
+            "omega",
+        ]
+        local_dict = {name: sympy.symbols(name, real=True) for name in greek_names}
+
+        sp_cond = sympy.sympify(cond, locals=local_dict, evaluate=False)
+
+        free_syms = list(sp_cond.free_symbols)
+        param_syms = [s for s in free_syms if cls._is_greek(str(s)) and str(s) != "pi"]
+        func_syms = [s for s in free_syms if s not in param_syms]
+
+        obj = cls._from_string(2, [str(s) for s in param_syms])
+
+        # map variables robustly to (u, v)
+        sub_map = {}
+        for s in func_syms:
+            if str(s) == "u":
+                sub_map[s] = obj.u
+            elif str(s) == "v":
+                sub_map[s] = obj.v
+        remaining = [s for s in func_syms if s not in sub_map]
+        if obj.u not in sub_map.values() and remaining:
+            sub_map[remaining.pop(0)] = obj.u
+        if obj.v not in sub_map.values() and remaining:
+            sub_map[remaining.pop(0)] = obj.v
+
+        sp_cond = sp_cond.xreplace(sub_map)
+        for ps in param_syms:
+            sp_cond = sp_cond.subs(ps, obj._free_symbols[str(ps)])
+
+        # keep u and v visible to wrappers expecting both symbols
+        if obj.u not in sp_cond.free_symbols:
+            sp_cond = sympy.Add(sp_cond, obj.u, -obj.u, evaluate=False)
+        if obj.v not in sp_cond.free_symbols:
+            sp_cond = sympy.Add(sp_cond, obj.v, -obj.v, evaluate=False)
+
+        # C(u,v) = ∫_0^v F_{U|V=t}(u) dt
+        t = sympy.symbols("__int_v", real=True, nonnegative=True)
+        cdf_expr = sympy.integrate(sp_cond.subs(obj.v, t), (t, 0, obj.v))
+        cdf_expr = sympy.Add(cdf_expr, obj.v**2 / 2, -(obj.v**2) / 2, evaluate=False)
+        obj._cdf_expr = cdf_expr
+        obj._pdf_expr = sympy.diff(cdf_expr, obj.u, obj.v)
+        return obj
+
 
 def from_cdf(cdf):
     return CopulaBuilder.from_cdf(cdf)
@@ -164,3 +307,19 @@ def from_cdf(cdf):
 
 def from_pdf(pdf):
     return CopulaBuilder.from_pdf(pdf)
+
+
+def from_cond_distr_1(cond):
+    """Build from F_{V|U=u}(v) = ∂C/∂u (u, v)."""
+    return CopulaBuilder.from_cond_distr_1(cond)
+
+
+def from_cond_distr_2(cond):
+    """Build from F_{U|V=v}(u) = ∂C/∂v (u, v)."""
+    return CopulaBuilder.from_cond_distr_2(cond)
+
+
+if __name__ == "__main__":
+    cond1_str = "Piecewise((v, v > 1/2), (1/2, (v <= 1/2) & (u < 2*v)), (0, True))"
+    copula = from_cond_distr_1(cond1_str)
+    copula.plot_cond_distr_1()

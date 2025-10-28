@@ -1,7 +1,12 @@
 import matplotlib
 import numpy as np
 
-from copul.family.copula_builder import from_cdf, from_pdf
+from copul.family.copula_builder import (
+    from_cdf,
+    from_cond_distr_1,
+    from_cond_distr_2,
+    from_pdf,
+)
 
 matplotlib.use("Agg")  # Use the 'Agg' backend to suppress the pop-up
 
@@ -138,3 +143,155 @@ def test_from_cdf_with_alpha_param():
     result = float(copula.cdf(0.5, 0.5).evalf())
     # Same numeric as theta=0.5 case
     assert np.isclose(result, 0.19661242613985133, atol=1e-12)
+
+
+def test_from_cond_distr_1():
+    cond1_str = "Piecewise((v, v > 1/2), (1/2, (v <= 1/2) & (u < 2*v)), (0, True))"
+    copula = from_cond_distr_1(cond1_str)
+    assert copula.validate_copula()
+    ccop = copula.to_checkerboard(80)
+    xi = ccop.chatterjees_xi()
+    rho = ccop.spearmans_rho()
+    assert xi > rho**2
+
+
+def test_from_cond_distr_1_independence():
+    # F_{V|U=u}(v) = v  ->  C(u,v) = ∫_0^u v ds = u*v (independence)
+    cond1_str = "v"
+    copula = from_cond_distr_1(cond1_str)
+
+    # CDF should be uv
+    u, v = 0.3, 0.7
+    c_val = float(copula.cdf(u, v))
+    assert np.isclose(c_val, u * v, atol=1e-12)
+
+    # PDF should be 1 everywhere (a.e.)
+    p_val = float(copula.pdf(0.4, 0.2))
+    assert np.isclose(p_val, 1.0, atol=1e-12)
+
+    # Conditional CDFs should be v and u, respectively
+    cd1_fun = copula.cond_distr_1()
+    cd1 = float(cd1_fun(u, v))
+    assert np.isclose(cd1, v, atol=1e-12)
+
+    cd2 = float(copula.cond_distr_2(u, v))
+    assert np.isclose(cd2, u, atol=1e-12)
+
+
+def test_from_cond_distr_2_independence():
+    # F_{U|V=v}(u) = u  ->  C(u,v) = ∫_0^v u dt = u*v (independence)
+    cond2_str = "u"
+    copula = from_cond_distr_2(cond2_str)
+
+    # CDF should be uv
+    u, v = 0.3, 0.7
+    c_val = float(copula.cdf(u, v))
+    assert np.isclose(c_val, u * v, atol=1e-12)
+
+    # PDF should be 1 everywhere (a.e.)
+    p_val = float(copula.pdf(0.4, 0.2))
+    assert np.isclose(p_val, 1.0, atol=1e-12)
+
+    # Conditional CDFs should be v and u, respectively
+    cd1 = float(copula.cond_distr_1(u, v))
+    assert np.isclose(cd1, v, atol=1e-12)
+
+    cd2_fun = copula.cond_distr_2()
+    cd2 = float(cd2_fun(u, v))
+    assert np.isclose(cd2, u, atol=1e-12)
+
+
+def test_from_pdf_independence():
+    # c(u,v) = 1  ->  C(u,v) = ∫_0^u ∫_0^v 1 dt ds = u*v (independence)
+    pdf_str = "1 + 0*u + 0*v"  # keep u,v as free symbols
+    copula_family = from_pdf(pdf_str)
+    copula = copula_family()  # no params
+
+    # CDF should be uv
+    u, v = 0.3, 0.7
+    c_val = float(copula.cdf(u, v))
+    assert np.isclose(c_val, u * v, atol=1e-12)
+
+    # PDF should be 1 everywhere (a.e.)
+    p_val = float(copula.pdf(0.4, 0.2))
+    assert np.isclose(p_val, 1.0, atol=1e-12)
+
+    # Conditional CDFs should be v and u, respectively
+    cd1_fun = copula.cond_distr_1()
+    cd1 = float(cd1_fun(u, v))
+    assert np.isclose(cd1, v, atol=1e-12)
+
+    cd2 = float(copula.cond_distr_2(u, v))
+    assert np.isclose(cd2, u, atol=1e-12)
+
+
+def test_from_cdf_independence():
+    # C(u,v) = u*v (independence)
+    cdf_str = "u*v"
+    copula = from_cdf(cdf_str)  # from_cdf returns a copula (no params)
+
+    # CDF should be uv
+    u, v = 0.3, 0.7
+    c_val = float(copula.cdf(u, v))
+    assert np.isclose(c_val, u * v, atol=1e-12)
+
+    # PDF should be 1 everywhere (a.e.)
+    p_val = float(copula.pdf(0.4, 0.2))
+    assert np.isclose(p_val, 1.0, atol=1e-12)
+
+    # Conditional CDFs should be v and u, respectively
+    cd1_fun = copula.cond_distr_1()
+    cd1 = float(cd1_fun(u, v))
+    assert np.isclose(cd1, v, atol=1e-12)
+
+    cd2 = float(copula.cond_distr_2(u, v))
+    assert np.isclose(cd2, u, atol=1e-12)
+
+
+def test_from_cond_distr_2_independence_and_crosscheck():
+    # F_{U|V=v}(u) = u  ->  C(u,v) = ∫_0^v u dt = u*v (independence)
+    cond2_str = "u"
+    copula2 = from_cond_distr_2(cond2_str)
+
+    # CDF should be uv
+    u, v = 0.45, 0.25
+    c_val = float(copula2.cdf(u, v))
+    assert np.isclose(c_val, u * v, atol=1e-12)
+
+    # Cross-check: from_cond_distr_1("v") must match from_cond_distr_2("u")
+    copula1 = from_cond_distr_1("v")
+    pts = [(0.1, 0.2), (0.6, 0.4), (0.9, 0.9)]
+    for uu, vv in pts:
+        c1 = float(copula1.cdf(uu, vv))
+        c2 = float(copula2.cdf(uu, vv))
+        assert np.isclose(c1, c2, atol=1e-12)
+
+
+def test_from_conditional_comonotone_M():
+    # For M(u,v)=min(u,v):
+    #   F_{V|U=u}(v) = ∂C/∂u = 1_{v>u}
+    #   F_{U|V=v}(u) = ∂C/∂v = 1_{u>v}
+    cond1_M = "Piecewise((0, v <= u), (1, True))"
+    cond2_M = "Piecewise((0, u <= v), (1, True))"
+
+    copula1 = from_cond_distr_1(cond1_M)
+    copula2 = from_cond_distr_2(cond2_M)
+
+    # Check a few CDF values against min(u,v)
+    points = [(0.2, 0.8), (0.8, 0.2), (0.4, 0.4), (0.9, 0.1), (0.1, 0.9)]
+    for u, v in points:
+        c1 = float(copula1.cdf(u, v))
+        c2 = float(copula2.cdf(u, v))
+        target = min(u, v)
+        assert np.isclose(c1, target, atol=1e-12)
+        assert np.isclose(c2, target, atol=1e-12)
+
+    # Conditional distributions: step behavior away from the diagonal
+    u0, v0 = 0.3, 0.7  # v0 > u0
+    cd1_fun = copula1.cond_distr_1()
+    assert float(cd1_fun(u0, v0)) == 1.0  # 1_{v>u}
+    assert float(copula1.cond_distr_2(u0, v0)) == 0.0  # 1_{u>v}
+
+    u1, v1 = 0.8, 0.2  # u1 > v1
+    assert float(cd1_fun(u1, v1)) == 0.0
+    assert float(copula1.cond_distr_2(u1, v1)) == 1.0
