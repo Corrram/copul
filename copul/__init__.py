@@ -48,7 +48,12 @@ from copul.family.archimedean import (
     Nelsen22,
 )
 from copul.family.core.biv_copula import BivCopula
-from copul.family.copula_builder import from_cdf, from_pdf
+from copul.family.copula_builder import (
+    from_cdf,
+    from_pdf,
+    from_cond_distr_1,
+    from_cond_distr_2,
+)
 from copul.family.elliptical import Gaussian, Laplace, StudentT
 from copul.family.extreme_value import (
     BB5,
@@ -102,6 +107,8 @@ __all__ = [
     "DiagonalBandCopula",
     "from_cdf",
     "from_pdf",
+    "from_cond_distr_1",
+    "from_cond_distr_2",
     "approximations",
     "copulas",
     "families",

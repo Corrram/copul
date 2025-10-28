@@ -145,8 +145,29 @@ class CDiWrapper(ConditionalWrapper):
         CDiWrapper or SymPyFuncWrapper
             A new wrapper with the substituted expression.
         """
-        # Get all u-symbols in the expression
+        # Get all u-symbols in the expression (names present in the sympy expr)
         u_symbols = self._get_u_symbols()
+
+        # --- NEW: eager positional mapping for the common bivariate signature (u, v)
+        # If user passed 2 positional args and no kwargs, interpret as (u, v)
+        # regardless of how many free symbols are in the underlying expression.
+        if args and not kwargs:
+            if len(args) == 2:
+                # Standardize bivariate call signature
+                kwargs = {"u": args[0], "v": args[1]}
+                args = ()
+            elif len(args) == 1:
+                # If expression only uses one of {'u','v'}, map the single arg to that one.
+                # Prefer 'u' if present, else 'v'. Fall back to 'u1' if neither present.
+                if "u" in u_symbols:
+                    kwargs = {"u": args[0]}
+                elif "v" in u_symbols:
+                    kwargs = {"v": args[0]}
+                else:
+                    # Multivariate fallback: map to the conditioning variable ui
+                    i = self.condition_index
+                    kwargs = {f"u{i}": args[0]}
+                args = ()
 
         # Process arguments to create variable substitutions
         vars_, kwargs = self._prepare_call(args, kwargs)

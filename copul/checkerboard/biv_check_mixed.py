@@ -319,8 +319,9 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
 # -------------------------------------------------------------------------- #
 if __name__ == "__main__":  # pragma: no cover
     Δ = np.full((2, 2), 0.25)
-    S = np.array([[0, 1], [-1, 1]])
-    cop = BivCheckMixed(Δ, sign=S)
+    Delta = [[1, 0], [0, 1]]
+    S = np.array([[0, 0], [0, 1]])
+    cop = BivCheckMixed(Delta, sign=S)
     print(
         "τ:", cop.kendalls_tau(), "ρ:", cop.spearmans_rho(), "ξ:", cop.chatterjees_xi()
     )

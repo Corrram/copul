@@ -4,7 +4,7 @@ from copul.family.archimedean.multivariate_clayton import MultivariateClayton
 
 def main():
     # func_2d = "(x**(-theta) + y**(-theta) - 1)**(-1/theta)"
-    # copulas_2d = copul.from_cdf(func_2d)
+    # copul.from_cdf(func_2d)
     # copula_2d = copulas_2d(theta=3)
     # copula_2d.scatter_plot()
 

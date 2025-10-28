@@ -96,7 +96,7 @@ class CISRearranger:
             The density matrix of the rearranged copula, with shape (n_rows, n_cols).
             Each entry is a sympy-compatible expression (usually float).
         """
-        log.info("Rearranging checkerboard...")
+        log.debug("Rearranging checkerboard...")
 
         # ------------------------------------------------------
         # 1. Extract matrix from BivCheckPi or direct input
@@ -170,7 +170,7 @@ class CISRearranger:
         # ------------------------------------------------------
         rearranged_sp = sympy.Matrix(rearranged_np)
 
-        log.info("Rearrangement complete.")
+        log.debug("Rearrangement complete.")
         return rearranged_sp
 
     @staticmethod
