@@ -8,11 +8,12 @@ from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.biv_check_min import BivCheckMin
 from copul.checkerboard.biv_check_w import BivCheckW
 from copul.family.core.biv_core_copula import BivCoreCopula
+from copul.family.core.copula_approximator_mixin import CopulaApproximatorMixin
 from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
 from copul.schur_order.cis_verifier import CISVerifier
 
 
-class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
+class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
     r"""
     Mixed checkerboard copula (per–cell choice of :math:`\Pi` / ↗ / ↘).
 
@@ -318,6 +319,12 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin):
 # quick manual check
 # -------------------------------------------------------------------------- #
 if __name__ == "__main__":  # pragma: no cover
+    Delta = [[1, 1]]
+    S = [[1,0]]
+    cop = BivCheckMixed(Delta, sign=S)
+    print(cop.chatterjees_xi())
+    print(cop.spearmans_rho())
+    cop.plot_cond_distr_1()
     Δ = np.full((2, 2), 0.25)
     Delta = [[1, 0], [0, 1]]
     S = np.array([[0, 0], [0, 1]])
