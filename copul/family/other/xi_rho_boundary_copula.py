@@ -256,9 +256,66 @@ class XiRhoBoundaryCopula(BivCopula):
         return C_full
 
     def _pdf_expr(self):
-        """Joint density c(u,v) = ∂²C/∂u∂v."""
-        expr = self.cdf.func.diff(self.u).diff(self.v)
-        return SymPyFuncWrapper(expr)
+        r"""
+        Explicit Joint density :math:`c(u,v)` derived from the property
+        :math:`c(u,v) = \lvert b \rvert \cdot s_v'(v)` inside the diagonal band,
+        and 0 outside.
+
+        For :math:`\lvert b \rvert \ge 1`:
+            Density is :math:`\sqrt{\lvert b \rvert / 2v}` near 0, :math:`\lvert b \rvert` in the middle,
+            and :math:`\sqrt{\lvert b \rvert / 2(1-v)}` near 1.
+
+        For :math:`\lvert b \rvert < 1`:
+            Density is :math:`\sqrt{\lvert b \rvert / 2v}` near 0, :math:`1` in the middle,
+            and :math:`\sqrt{\lvert b \rvert / 2(1-v)}` near 1.
+        """
+        b, u, v = self.b, self.u, self.v
+        b_abs = sp.Abs(b)
+
+        # 1. Determine the transition threshold for v
+        # If |b| >= 1, the linear section starts at v = 1/(2|b|)
+        # If |b| < 1, the linear section starts at v = |b|/2
+        v_thresh = sp.Piecewise(
+            (1 / (2 * b_abs), b_abs >= 1), (b_abs / 2, True)  # covers |b| < 1
+        )
+
+        # 2. Determine density value in the middle linear section
+        # If |b| >= 1, density = |b|
+        # If |b| < 1, density = 1
+        mid_density_val = sp.Piecewise((b_abs, b_abs >= 1), (1, True))
+
+        # 3. Construct the explicit density value function (ignoring band boundaries for a moment)
+        # s'(v)*|b| logic:
+        # Near 0: sqrt(|b| / 2v)
+        # Near 1: sqrt(|b| / 2(1-v))
+        density_on_band = sp.Piecewise(
+            (sp.sqrt(b_abs / (2 * v)), v <= v_thresh),
+            (sp.sqrt(b_abs / (2 * (1 - v))), v >= 1 - v_thresh),
+            (mid_density_val, True),
+        )
+
+        # 4. Define the diagonal band boundaries
+        # We fetch s_v for the parameter |b|
+        s = XiRhoBoundaryCopula._s_expr(v, b)
+
+        # 5. Combine density with spatial indicator
+        # For b > 0: band is (s - 1/b < u < s)
+        # For b < 0: symmetry implies c(u,v) = c(|b|)(1-u, v).
+        # We can implement this by swapping u -> 1-u in the indicator check if b < 0.
+
+        # Note: s is computed based on b. If b < 0, _s_expr uses |b| internally.
+        # So 's' represents the shift for C_|b|.
+
+        # Condition for being inside the band (assuming positive parameter logic)
+        # We use u_eff (effective u) to handle reflection
+        u_eff = sp.Piecewise((u, b > 0), (1 - u, True))
+
+        # Check: 0 < |b|(s - u_eff) < 1  <=>  s - 1/|b| < u_eff < s
+        in_band = (u_eff > s - 1 / b_abs) & (u_eff < s)
+
+        pdf_full = sp.Piecewise((density_on_band, in_band), (0, True))
+
+        return SymPyFuncWrapper(pdf_full)
 
     # ===================================================================
     # START: Vectorized CDF implementation for performance improvement
@@ -414,6 +471,6 @@ class XiRhoBoundaryCopula(BivCopula):
 
 if __name__ == "__main__":
     # Example usage
-    XiRhoBoundaryCopula(b=0.5).plot_pdf(plot_type="contour", levels=1_000, zlim=(0, 5))
-    XiRhoBoundaryCopula(b=1).plot_pdf(plot_type="contour", levels=1_000, zlim=(0, 6.5))
-    XiRhoBoundaryCopula(b=2).plot_pdf(plot_type="contour", levels=1_000, zlim=(0, 8))
+    XiRhoBoundaryCopula(b=0.5).plot_pdf(plot_type="contour", levels=100, zlim=(0, 5))
+    XiRhoBoundaryCopula(b=1).plot_pdf(plot_type="contour", levels=100, zlim=(0, 6.5))
+    XiRhoBoundaryCopula(b=2).plot_pdf(plot_type="contour", levels=100, zlim=(0, 8))
