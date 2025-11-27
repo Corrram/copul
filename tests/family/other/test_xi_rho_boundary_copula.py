@@ -6,7 +6,7 @@ from copul.family.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
 from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
-
+from scipy.integrate import dblquad
 
 RTOL = 1e-9
 ATOL = 1e-9
@@ -207,3 +207,81 @@ def test_order_of_params():
     ccop2 = XiRhoBoundaryCopula(b=2).to_checkerboard()
     assert ccop1.chatterjees_xi() < ccop2.chatterjees_xi()
     assert ccop1.spearmans_rho() < ccop2.spearmans_rho()
+
+
+# @pytest.mark.slow
+# @pytest.mark.parametrize("b", [0.5, 2.0])
+# def test_pdf_integration_is_one(b):
+#     """
+#     Integrate the explicit PDF over the unit square [0,1]^2.
+#     Must equal 1.0.
+#     """
+#     C = XiRhoBoundaryCopula(b=b)
+#     pdf_func = C.pdf  # This uses the sympy-compiled lambda
+#
+#     # We use a slight epsilon to avoid singularities at boundary if any
+#     res, err = dblquad(
+#         lambda v, u: float(pdf_func(u, v)), 0, 1, 0, 1, epsabs=1e-5, epsrel=1e-5
+#     )
+#
+#     assert np.isclose(res, 1.0, rtol=1e-3, atol=1e-3)
+
+
+@pytest.mark.parametrize("b", [2.0])
+def test_pdf_value_in_center_large_b(b):
+    """
+    For |b| >= 1, the density in the 'middle' band (near v=0.5)
+    should be exactly |b|.
+    """
+    C = XiRhoBoundaryCopula(b=b)
+    # v=0.5 is definitely in the middle linear section for |b| >= 1
+    # Check u=0.5 (which is on the diagonal u=v approx)
+    val = float(C.pdf(0.5, 0.5))
+    assert np.isclose(val, abs(b), rtol=RTOL, atol=ATOL)
+
+
+@pytest.mark.parametrize("b", [0.5])
+def test_pdf_value_in_center_small_b(b):
+    """
+    For |b| < 1, the density in the 'middle' band (near v=0.5)
+    should be exactly 1.
+    """
+    C = XiRhoBoundaryCopula(b=b)
+    # v=0.5 is in the middle section for |b| < 1
+    val = float(C.pdf(0.5, 0.5))
+    assert np.isclose(val, 1.0, rtol=RTOL, atol=ATOL)
+
+
+@pytest.mark.parametrize("b", [1.5])
+def test_pdf_symmetry_explicit(b):
+    """
+    Check that pdf_neg(u, v) == pdf_pos(1-u, v).
+    """
+    Cpos = XiRhoBoundaryCopula(b=b)
+    Cneg = XiRhoBoundaryCopula(b=-b)
+
+    # Check a few points
+    pts = [(0.2, 0.3), (0.8, 0.8), (0.4, 0.6)]
+    for u, v in pts:
+        val_pos = float(Cpos.pdf(1 - u, v))
+        val_neg = float(Cneg.pdf(u, v))
+        assert np.isclose(val_pos, val_neg, rtol=RTOL, atol=ATOL)
+
+
+def test_pdf_zero_outside_band():
+    """
+    Check that the PDF is zero outside the diagonal band.
+    Using b=2, s_v approx v + 0.25 in middle.
+    Band is [s - 0.5, s].
+    """
+    b = 2.0
+    C = XiRhoBoundaryCopula(b=b)
+
+    # at v=0.5, s_v = 0.5 + 1/4 = 0.75.
+    # Band is roughly [0.25, 0.75].
+    # u=0.1 is outside. u=0.9 is outside.
+
+    assert np.isclose(float(C.pdf(0.1, 0.5)), 0.0, atol=ATOL)
+    assert np.isclose(float(C.pdf(0.9, 0.5)), 0.0, atol=ATOL)
+    # Inside
+    assert float(C.pdf(0.5, 0.5)) > 0
