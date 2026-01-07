@@ -211,34 +211,98 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin)
         extra = np.sum(self.sign * self.matr) / (self.m * self.n)
         return core + extra
 
-    # ------------------------------------------------------------------ #
-    #         simple numeric conditional distributions (plots)           #
-    # ------------------------------------------------------------------ #
-    def cond_distr(self, i: int, u: float, v: float):
-        r"""Quick numeric conditional (uses Π-behaviour; suitable for plots).
+    def cond_distr(
+        self,
+        dim: int,
+        u: float | np.ndarray | None = None,
+        v: float | np.ndarray | None = None,
+    ):
+        r"""
+        Compute conditional distribution F_{U_{-dim}|U_{dim}}.
 
-        This auxiliary routine reuses the independence checkerboard to produce
-        a simple conditional CDF, which is sufficient for visualization.
-
-        Parameters
-        ----------
-        i : int
-            Dimension index to condition on (1-based).
-        u, v : float
-            Evaluation point.
-
-        Returns
-        -------
-        float
-            Conditional CDF value.
+        Calculates the partial derivative of the Copula.
+        If dim=1, returns dC(u,v)/du = P(V <= v | U=u).
+        If dim=2, returns dC(u,v)/dv = P(U <= u | V=v).
         """
+        if u is None or v is None:
+            raise ValueError("u and v must be provided for numeric evaluation")
 
-        return self._pi.cond_distr(i, u, v)
+        u = np.asarray(u)
+        v = np.asarray(v)
 
-    def cond_distr_1(self, u: float, v: float):
+        # Clip inputs to [0, 1] to prevent indexing errors
+        u = np.clip(u, 0.0, 1.0)
+        v = np.clip(v, 0.0, 1.0)
+
+        # Broadcast if necessary so operations work on matching shapes
+        if u.shape != v.shape:
+            u, v = np.broadcast_arrays(u, v)
+
+        # Standardize to: x (conditioning variable), y (target variable)
+        if dim == 1:
+            x, y = u, v
+            matr = self.matr
+            sign = self.sign
+            m_cond, n_target = self.m, self.n
+        else:
+            x, y = v, u
+            matr = self.matr.T
+            sign = self.sign.T
+            m_cond, n_target = self.n, self.m
+
+        # 1. Identify grid indices
+        x_scaled = x * m_cond
+        y_scaled = y * n_target
+
+        # Integer indices
+        i = np.floor(x_scaled).astype(int)
+        j = np.floor(y_scaled).astype(int)
+
+        # Clamp to valid range (FIX: removed out= argument to support scalars)
+        i = np.clip(i, 0, m_cond - 1)
+        j = np.clip(j, 0, n_target - 1)
+
+        # Local coordinates within the cell [0, 1]
+        x_loc = x_scaled - i
+        y_loc = y_scaled - j
+
+        # 2. Base Probability (Accumulated mass from cells below y in the current column)
+        # Precompute cumsum along the target axis (axis 1)
+        weights = matr * m_cond
+        # Add a column of zeros at the start for cumsum logic
+        cum_weights = np.hstack([np.zeros((m_cond, 1)), np.cumsum(weights, axis=1)])
+
+        # Extract base values
+        # cum_weights[i, j] gives sum(weights[i, :j])
+        # Note: we use tuple(i,j) indexing for correct broadcasting if inputs are arrays
+        base_val = cum_weights[i, j]
+
+        # 3. Local Contribution from the current cell (i, j)
+        p_cell = weights[i, j]
+        s_cell = sign[i, j]
+
+        # Case S=0 (Independence): Linear growth
+        val_0 = p_cell * y_loc
+
+        # Case S=1 (Min / Ascending): Step function when y_loc >= x_loc
+        val_1 = p_cell * (y_loc >= x_loc).astype(float)
+
+        # Case S=-1 (W / Descending): Step function when y_loc >= 1 - x_loc
+        val_w = p_cell * (y_loc >= (1.0 - x_loc)).astype(float)
+
+        # Select the correct value based on the sign of the cell
+        local_val = np.select(
+            [s_cell == 0, s_cell == 1, s_cell == -1],
+            [val_0, val_1, val_w],
+            default=0.0,
+        )
+
+        return base_val + local_val
+
+    def cond_distr_1(self, u: float | None = None, v: float | None = None):
         return self.cond_distr(1, u, v)
 
-    def cond_distr_2(self, u: float, v: float):
+    def cond_distr_2(self, u: float | None = None, v: float | None = None):
         return self.cond_distr(2, u, v)
 
     # ------------------------------------------------------------------ #
@@ -320,11 +384,12 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin)
 # -------------------------------------------------------------------------- #
 if __name__ == "__main__":  # pragma: no cover
     Delta = [[1, 1]]
-    S = [[1,0]]
+    S = [[1, 0]]
     cop = BivCheckMixed(Delta, sign=S)
-    print(cop.chatterjees_xi())
+    print(np.sqrt(cop.chatterjees_xi()))
     print(cop.spearmans_rho())
-    cop.plot_cond_distr_1()
+    cop.plot_cond_distr_1(plot_type="contour")
+    cop.plot_cond_distr_2()
     Δ = np.full((2, 2), 0.25)
     Delta = [[1, 0], [0, 1]]
     S = np.array([[0, 0], [0, 1]])

@@ -169,3 +169,13 @@ def MarshallOlkinDiag():
     # Using the correct parameter name alpha_2 instead of alpha2
     copula.alpha_2 = copula.alpha_1
     return copula
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    cop = MarshallOlkin()
+    cop.alpha_1 = 0.5
+    cop.alpha_2 = 0.8
+    # sample = cop.rvs(100000)
+    cop.scatter_plot()
+    print("Done!")
