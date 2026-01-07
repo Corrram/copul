@@ -431,7 +431,7 @@ def run_plot(
     # Title again (to name files consistently)
     from copul.family.copula_graphs import CopulaGraphs
 
-    base = CopulaGraphs(copula, False).get_copula_title()
+    base = CopulaGraphs(copula, False).get_copula_name()
     runner.save(base, data, splines)
 
 
@@ -442,9 +442,8 @@ if __name__ == "__main__":
     from pathlib import Path
 
     # Families we want to run
-    main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE", "GAUSSIAN"]
-    # main_families = ["JOE", "GUMBEL_HOUGAARD", "GAUSSIAN"]
-    main_families = ["GAUSSIAN"]
+    main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE"]  # , "GAUSSIAN"]
+    # main_families = ["GAUSSIAN"]
 
     # Per-family settings (log grids, x-lims, fixed params, etc.)
     params_dict = {
@@ -498,8 +497,8 @@ if __name__ == "__main__":
         run_plot(
             copula=copula_instance,
             measures=measures,
-            n_obs=1_000_000,
-            n_params=50,
+            n_obs=2_000_000,
+            n_params=200,
             approximate=False,
             images_dir=images_dir,
             save_pickles=True,
