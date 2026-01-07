@@ -699,7 +699,7 @@ class BivCoreCopula:
             if isinstance(func, types.MethodType):
                 try:
                     func = func()
-                except ValueError:
+                except (ValueError, TypeError):
                     pass
 
         if isinstance(func, (SymPyFuncWrapper, CD1Wrapper, CD2Wrapper, CDiWrapper)):

@@ -230,12 +230,14 @@ class XiRhoBoundaryCopula(BivCopula):
         b_old = 1 / b
         s = XiRhoBoundaryCopula._s_expr(v, b)
         a = sp.Max(s - b_old, 0)
-        t = s
-        middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
+
+        # Simplified formula: u - (b/2)(u-a)^2
+        # Replaces: a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
+        middle = u - (b / 2) * (u - a) ** 2
 
         return sp.Piecewise(
-            (u, u <= a),
-            (middle, u <= t),
+            (sp.Min(u, v), u <= a),
+            (middle, u <= s),
             (v, True),
         )
 
@@ -363,11 +365,14 @@ class XiRhoBoundaryCopula(BivCopula):
 
         s = XiRhoBoundaryCopula._s_expr_numpy(v, b)
         a = np.maximum(s - b_old, 0)
-        t = s
 
-        middle = a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
+        # Condition for being inside the diagonal band
+        in_band = (u > a) & (u <= s)
 
-        return np.select([u <= a, u <= t], [u, middle], default=v)
+        # Optimized formula inside the band: u - (b/2)*(u-a)^2
+        middle = u - (b / 2.0) * (u - a) ** 2
+
+        return np.where(in_band, middle, np.minimum(u, v))
 
     def cdf_vectorized(self, u, v):
         """
@@ -470,88 +475,89 @@ class XiRhoBoundaryCopula(BivCopula):
     def blests_nu(self, *args, **kwargs):
         return self.spearmans_rho()
 
-    def cond_distr_1(self, u=None, v=None):
-        """
-        First conditional distribution function: ∂C(u,v)/∂u
-
-        Parameters
-        ----------
-        u, v : float or None, optional
-            Values to evaluate at. If None, returns the symbolic expression.
-
-        Returns
-        -------
-        CD1Wrapper
-            The conditional distribution
-        """
-        b = self.b
-        b_abs = sp.Abs(b)
-
-        # Symmetry: ∂₁C_b(u,v) = ∂₁C_|b|(1-u, v) for b < 0
-        u_sym = self.u
-        u_eff = sp.Piecewise((u_sym, b > 0), (1 - u_sym, True))
-
-        # Get shift s_v using |b|
-        s = self._s_expr(self.v, b_abs)
-
-        # The generator formula is h(t) = clamp(|b|*(s - t), 0, 1)
-        # where t is the effective u
-        val = b_abs * (s - u_eff)
-
-        # Clamp between 0 and 1
-        res = sp.Max(sp.Min(val, 1), 0)
-
-        return CD1Wrapper(res)(u, v)
-
-    def cond_distr_2(self, u=None, v=None):
-        """
-        Second conditional distribution function: ∂C(u,v)/∂v
-
-        Parameters
-        ----------
-        u, v : float or None, optional
-            Values to evaluate at. If None, returns the symbolic expression.
-
-        Returns
-        -------
-        CD2Wrapper
-            The conditional distribution
-        """
-        b = self.b
-        b_abs = sp.Abs(b)
-
-        # 1. Construct the CD2 for the positive parameter case |b|
-        # The density inside the band is constant in u: c(u,v) = |b| * s'_v(v)
-        s = self._s_expr(self.v, b_abs)
-        ds_dv = s.diff(self.v)
-        density = b_abs * ds_dv
-
-        # Support boundaries for |b| case
-        # Lower: max(0, s - 1/|b|)
-        # Upper: min(1, s)
-        b_old = 1 / b_abs
-        L = sp.Max(0, s - b_old)
-        R = sp.Min(1, s)
-
-        # 2. Determine effective u based on symmetry
-        # For b < 0: C_b(u,v) = v - C_|b|(1-u, v)
-        # Therefore: ∂₂C_b(u,v) = 1 - ∂₂C_|b|(1-u, v)
-        u_sym = self.u
-        u_target = sp.Piecewise((u_sym, b > 0), (1 - u_sym, True))
-
-        # 3. Calculate CD2_|b|(u_target, v)
-        # Since density is constant in u, CD2 is a linear ramp from 0 to 1
-        val_pos = density * (u_target - L)
-        cd2_pos_expr = sp.Piecewise(
-            (0, u_target <= L),
-            (1, u_target >= R),
-            (val_pos, True),
-        )
-
-        # 4. Apply reflection if b < 0
-        result = sp.Piecewise((cd2_pos_expr, b > 0), (1 - cd2_pos_expr, True))
-
-        return CD2Wrapper(result)(u, v)
+    #
+    # def cond_distr_1(self, u=None, v=None):
+    #     """
+    #     First conditional distribution function: ∂C(u,v)/∂u
+    #
+    #     Parameters
+    #     ----------
+    #     u, v : float or None, optional
+    #         Values to evaluate at. If None, returns the symbolic expression.
+    #
+    #     Returns
+    #     -------
+    #     CD1Wrapper
+    #         The conditional distribution
+    #     """
+    #     b = self.b
+    #     b_abs = sp.Abs(b)
+    #
+    #     # Symmetry: ∂₁C_b(u,v) = ∂₁C_|b|(1-u, v) for b < 0
+    #     u_sym = self.u
+    #     u_eff = sp.Piecewise((u_sym, b > 0), (1 - u_sym, True))
+    #
+    #     # Get shift s_v using |b|
+    #     s = self._s_expr(self.v, b_abs)
+    #
+    #     # The generator formula is h(t) = clamp(|b|*(s - t), 0, 1)
+    #     # where t is the effective u
+    #     val = b_abs * (s - u_eff)
+    #
+    #     # Clamp between 0 and 1
+    #     res = sp.Max(sp.Min(val, 1), 0)
+    #
+    #     return CD1Wrapper(res)(u, v)
+    #
+    # def cond_distr_2(self, u=None, v=None):
+    #     """
+    #     Second conditional distribution function: ∂C(u,v)/∂v
+    #
+    #     Parameters
+    #     ----------
+    #     u, v : float or None, optional
+    #         Values to evaluate at. If None, returns the symbolic expression.
+    #
+    #     Returns
+    #     -------
+    #     CD2Wrapper
+    #         The conditional distribution
+    #     """
+    #     b = self.b
+    #     b_abs = sp.Abs(b)
+    #
+    #     # 1. Construct the CD2 for the positive parameter case |b|
+    #     # The density inside the band is constant in u: c(u,v) = |b| * s'_v(v)
+    #     s = self._s_expr(self.v, b_abs)
+    #     ds_dv = s.diff(self.v)
+    #     density = b_abs * ds_dv
+    #
+    #     # Support boundaries for |b| case
+    #     # Lower: max(0, s - 1/|b|)
+    #     # Upper: min(1, s)
+    #     b_old = 1 / b_abs
+    #     L = sp.Max(0, s - b_old)
+    #     R = sp.Min(1, s)
+    #
+    #     # 2. Determine effective u based on symmetry
+    #     # For b < 0: C_b(u,v) = v - C_|b|(1-u, v)
+    #     # Therefore: ∂₂C_b(u,v) = 1 - ∂₂C_|b|(1-u, v)
+    #     u_sym = self.u
+    #     u_target = sp.Piecewise((u_sym, b > 0), (1 - u_sym, True))
+    #
+    #     # 3. Calculate CD2_|b|(u_target, v)
+    #     # Since density is constant in u, CD2 is a linear ramp from 0 to 1
+    #     val_pos = density * (u_target - L)
+    #     cd2_pos_expr = sp.Piecewise(
+    #         (0, u_target <= L),
+    #         (1, u_target >= R),
+    #         (val_pos, True),
+    #     )
+    #
+    #     # 4. Apply reflection if b < 0
+    #     result = sp.Piecewise((cd2_pos_expr, b > 0), (1 - cd2_pos_expr, True))
+    #
+    #     return CD2Wrapper(result)(u, v)
 
 
 if __name__ == "__main__":

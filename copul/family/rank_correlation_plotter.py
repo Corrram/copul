@@ -443,7 +443,7 @@ if __name__ == "__main__":
 
     # Families we want to run
     main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE"]  # , "GAUSSIAN"]
-    # main_families = ["GAUSSIAN"]
+    main_families = ["MARSHALL_OLKIN"]
 
     # Per-family settings (log grids, x-lims, fixed params, etc.)
     params_dict = {
@@ -466,6 +466,7 @@ if __name__ == "__main__":
         "JOEEV": {"params": {"alpha_1": 0.9, "alpha_2": 0.9}, "log_cut_off": (-1, 2)},
         "TAWN": {"params": {"alpha_1": 0.9, "alpha_2": 0.9}, "log_cut_off": (-2, 2)},
         "PLACKETT": {"log_cut_off": (-3, 3)},
+        "MARSHALL_OLKIN": {"params": {"alpha_2": 0.8}},
     }
 
     # Measures to show (registered via @measure); include ν ("nu")
