@@ -40,6 +40,11 @@ markers = [
     "instable: marks tests as instable (deselect with '-m \"not instable\"')",
 ]
 
+[dependency-groups]
+dev = [
+    "tqdm>=4.67.1",
+]
+
 [project.optional-dependencies]
 dev = [
     "black>=24.8",

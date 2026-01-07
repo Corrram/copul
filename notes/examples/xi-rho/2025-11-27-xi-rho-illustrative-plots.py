@@ -27,11 +27,23 @@ def generate_plots():
     fig, axes = plt.subplots(3, 3, figsize=(16, 12))
     plt.subplots_adjust(hspace=0.4, wspace=0.3)
 
+    def sinusoidal(r, x, e):
+        # Left side: e^-x (approx 7.4 down to 1)
+        # Right side: 3x - 2 (approx -2 up to 4)
+        signal = np.where(
+            x < 0, 4 * np.sin(-(x**2)), (2 - x) * (2 + x) + 4 * np.sin(-(x**2))
+        )
+        return r * signal + (1 - r) * e
+
     # REPLACED Model 3 with a Sinusoidal model
     models = [
         ("Linear", lambda r, x, e: r * x + (1 - r) * e),
         ("Quadratic", lambda r, x, e: r * x**2 + (1 - r) * e),
-        ("Sinusoidal", lambda r, x, e: r * np.sin(2 * x) + (1 - r) * e),
+        # ("Sinusoidal", lambda r, x, e: r * np.sin(2 * x) + (1 - r) * e),
+        (
+            "Sinusoidal",
+            sinusoidal,
+        ),
     ]
 
     latex_formulas = [
