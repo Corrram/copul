@@ -443,7 +443,7 @@ if __name__ == "__main__":
 
     # Families we want to run
     main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE"]  # , "GAUSSIAN"]
-    main_families = ["MARSHALL_OLKIN"]
+    main_families = ["JOE"]
 
     # Per-family settings (log grids, x-lims, fixed params, etc.)
     params_dict = {

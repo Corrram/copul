@@ -174,8 +174,9 @@ def MarshallOlkinDiag():
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     cop = MarshallOlkin()
-    cop.alpha_1 = 0.5
-    cop.alpha_2 = 0.8
+    cop.alpha_1 = 1
+    cop.alpha_2 = 0.3
+    cop.plot_cond_distr_1()
     # sample = cop.rvs(100000)
-    cop.scatter_plot()
+    # cop.scatter_plot()
     print("Done!")

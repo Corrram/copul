@@ -296,7 +296,7 @@ Nelsen5 = Frank
 # B3 = Frank
 
 if __name__ == "__main__":
-    copula = Nelsen5(theta=4.0)
+    copula = Nelsen5(theta=0.2)
     print("--- Testing Frank Copula with theta = 4.0 ---")
     print(f"Spearman's rho: {copula.spearmans_rho():.4f}")
     print(f"Kendall's tau: {copula.kendalls_tau():.4f}")
