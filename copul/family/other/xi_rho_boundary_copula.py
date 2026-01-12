@@ -121,57 +121,6 @@ class XiRhoBoundaryCopula(BivCopula):
             return special_case_cls()
         return super().__call__(**kwargs)
 
-    @classmethod
-    def from_xi(cls, x):
-        r"""
-        Instantiate the copula from a target value :math:`x` for Chatterjee's :math:`\xi`.
-
-        This method inverts the relationship between :math:`b` and :math:`\xi`
-        to find the :math:`b` that produces the given :math:`x`. It assumes
-        positive dependence (:math:`b>0`).
-
-        .. math::
-
-           b_x =
-           \begin{cases}
-           \dfrac{\sqrt{6x}}
-                 {2\cos\!\left(\tfrac13\arccos\!\bigl(-\tfrac{3\sqrt{6x}}{5}\bigr)\right)},
-               & 0<x\le\tfrac{3}{10},\\[4ex]
-           \dfrac{5+\sqrt{5(6x-1)}}{10(1-x)},
-               & \tfrac{3}{10}<x<1.
-           \end{cases}
-
-        Parameters
-        ----------
-        x : float or sympy expression
-            Target value for Chatterjee's :math:`\xi`, in :math:`(0,1)`.
-        """
-        if x == 0:
-            return cls(
-                b=0.0
-            )  # Special case for xi = 0, which corresponds to independence
-        elif x == 1:
-            return UpperFrechet()
-        elif x == -1:
-            return LowerFrechet()
-        x_sym = sp.sympify(x)
-
-        # Case 1: 0 < x <= 3/10  (corresponds to |b| >= 1)
-        b_ge_1 = sp.sqrt(6 * x_sym) / (
-            2 * sp.cos(sp.acos(-3 * sp.sqrt(6 * x_sym) / 5) / 3)
-        )
-
-        # Case 2: 3/10 < x < 1  (corresponds to |b| < 1)
-        b_lt_1 = (5 + sp.sqrt(5 * (6 * x_sym - 1))) / (10 * (1 - x_sym))
-
-        # Create the piecewise expression for b
-        b_expr = sp.Piecewise(
-            (b_ge_1, (x_sym > 0) & (x_sym <= sp.Rational(3, 10))),
-            (b_lt_1, (x_sym > sp.Rational(3, 10)) & (x_sym < 1)),
-        )
-
-        return cls(b=float(b_expr))
-
     # -------- Maximal Spearman’s rho M(b) -------- #
     @staticmethod
     def _M_expr(b):
@@ -224,22 +173,37 @@ class XiRhoBoundaryCopula(BivCopula):
     @staticmethod
     def _base_cdf_expr(u, v, b):
         r"""
-        “Upright” CDF formula valid when :math:`b_{\text{new}} > 0`
-        (here :math:`b_{\text{old}} = 1/b_{\text{new}}`).
+        Explicit integration of the clamped density:
+        :math:`h_v(t) = \operatorname{clamp}(b(s_v - t), 0, 1)`.
+
+        This robust implementation correctly handles cases where the linear
+        section starts before :math:`t=0` (i.e., when :math:`a_v < 0`).
         """
-        b_old = 1 / b
         s = XiRhoBoundaryCopula._s_expr(v, b)
-        a = sp.Max(s - b_old, 0)
+        a = s - 1 / b
 
-        # Simplified formula: u - (b/2)(u-a)^2
-        # Replaces: a + (2 * s * (u - a) - u**2 + a**2) / (2 * b_old)
-        middle = u - (b / 2) * (u - a) ** 2
+        # We integrate density from 0 to u.
+        # The density has two potential active regions on [0, 1]:
+        # 1. Flat region (val=1): t <= a
+        # 2. Linear region (val=b(s-t)): a < t <= s
 
-        return sp.Piecewise(
-            (sp.Min(u, v), u <= a),
-            (middle, u <= s),
-            (v, True),
+        # 1. Flat part integration: Intersection of [0, u] and [0, a]
+        # If a < 0, this intersection is empty (Max(0, a) handles this).
+        upper_flat = sp.Min(u, sp.Max(0, a))
+        term_flat = upper_flat  # Integral of 1 * dt is just the length
+
+        # 2. Linear part integration: Intersection of [0, u] and [a, s]
+        L = sp.Max(0, a)
+        R = sp.Min(u, s)
+
+        # Integral of b(s-t) dt from L to R:
+        # Area = (R - L) * average_height
+        # average_height = b*s - (b/2)*(R + L)
+        term_linear = sp.Piecewise(
+            ((R - L) * (b * s - (b / 2) * (R + L)), R > L), (0, True)
         )
+
+        return term_flat + term_linear
 
     # -------- CDF / PDF definitions -------- #
     @property
@@ -321,58 +285,213 @@ class XiRhoBoundaryCopula(BivCopula):
 
         return SymPyFuncWrapper(pdf_full)
 
-    # ===================================================================
-    # START: Vectorized CDF implementation for performance improvement
-    # ===================================================================
+    @classmethod
+    def from_xi(cls, x):
+        """Instantiate from xi. Optimized to use float arithmetic if x is float."""
+        if x == 0:
+            return cls(b=0.0)
+        elif x == 1:
+            return UpperFrechet()
+        elif x == -1:
+            return LowerFrechet()
+
+        # Fast path for floats to avoid symbolic solver overhead
+        if isinstance(x, (float, np.floating)):
+            # Case 1: 0 < x <= 3/10
+            if 0 < x <= 0.3:
+                denom = 2.0 * np.cos(np.arccos(-3.0 * np.sqrt(6.0 * x) / 5.0) / 3.0)
+                b_val = np.sqrt(6.0 * x) / denom
+                return cls(b=float(b_val))
+            # Case 2: 3/10 < x < 1
+            elif 0.3 < x < 1:
+                numer = 5.0 + np.sqrt(5.0 * (6.0 * x - 1.0))
+                denom = 10.0 * (1.0 - x)
+                b_val = numer / denom
+                return cls(b=float(b_val))
+
+        # Fallback to symbolic for general expressions
+        x_sym = sp.sympify(x)
+        b_ge_1 = sp.sqrt(6 * x_sym) / (
+            2 * sp.cos(sp.acos(-3 * sp.sqrt(6 * x_sym) / 5) / 3)
+        )
+        b_lt_1 = (5 + sp.sqrt(5 * (6 * x_sym - 1))) / (10 * (1 - x_sym))
+
+        b_expr = sp.Piecewise(
+            (b_ge_1, (x_sym > 0) & (x_sym <= sp.Rational(3, 10))),
+            (b_lt_1, (x_sym > sp.Rational(3, 10)) & (x_sym < 1)),
+        )
+
+        return cls(b=float(b_expr))
 
     @staticmethod
     def _s_expr_numpy(v, b):
         """
-        Numpy-based vectorized implementation of the shift function s_v.
-        This is a helper for `cdf_vectorized`.
+        Calculates shift s_v.
+        Optimized: Uses boolean masks to compute only required branches, avoiding unnecessary ops.
         """
         v = np.asarray(v)
-        b_old = 1 / np.abs(b)
+        b = float(b)
+        b_abs = abs(b)
+        b_old = 1.0 / b_abs
 
-        if np.abs(b) >= 1:  # Corresponds to |b_old| <= 1
-            v1_s_s = b_old / 2
-            s1_s_s = np.sqrt(2 * v * b_old)
-            s2_s_s = v + b_old / 2
-            s3_s_s = 1 + b_old - np.sqrt(2 * b_old * (1 - v))
+        s = np.empty_like(v, dtype=float)
 
-            # np.select evaluates conditions in order, mimicking sympy.Piecewise
-            return np.select(
-                [v <= v1_s_s, v <= 1 - v1_s_s], [s1_s_s, s2_s_s], default=s3_s_s
-            )
-        else:  # Corresponds to |b_old| > 1
-            v1_s_L = 1 / (2 * b_old)
-            s1_s_L = np.sqrt(2 * v * b_old)
-            s2_s_L = v * b_old + 0.5
-            s3_s_L = 1 + b_old - np.sqrt(2 * b_old * (1 - v))
+        if b_abs >= 1.0:
+            # |b| >= 1 implies |b_old| <= 1
+            thresh_lower = b_old / 2.0
+            thresh_upper = 1.0 - thresh_lower
 
-            return np.select(
-                [v <= v1_s_L, v <= 1 - v1_s_L], [s1_s_L, s2_s_L], default=s3_s_L
-            )
+            mask1 = v <= thresh_lower
+            mask3 = v > thresh_upper
+            mask2 = ~(mask1 | mask3)
+
+            if np.any(mask1):
+                s[mask1] = np.sqrt(2.0 * v[mask1] * b_old)
+            if np.any(mask2):
+                s[mask2] = v[mask2] + b_old / 2.0
+            if np.any(mask3):
+                s[mask3] = 1.0 + b_old - np.sqrt(2.0 * b_old * (1.0 - v[mask3]))
+
+        else:
+            # |b| < 1 implies |b_old| > 1
+            thresh_lower = 1.0 / (2.0 * b_old)
+            thresh_upper = 1.0 - thresh_lower
+
+            mask1 = v <= thresh_lower
+            mask3 = v > thresh_upper
+            mask2 = ~(mask1 | mask3)
+
+            if np.any(mask1):
+                s[mask1] = np.sqrt(2.0 * v[mask1] * b_old)
+            if np.any(mask2):
+                s[mask2] = v[mask2] * b_old + 0.5
+            if np.any(mask3):
+                s[mask3] = 1.0 + b_old - np.sqrt(2.0 * b_old * (1.0 - v[mask3]))
+
+        return s
 
     @staticmethod
     def _base_cdf_numpy(u, v, b):
         """
-        Numpy-based vectorized implementation of the base CDF for b > 0.
-        This is a helper for `cdf_vectorized`.
+        Optimized base CDF calculation for b > 0.
+        Uses masking to calculate linear terms only where active.
+        Explicitly broadcasts inputs to handle scalar/array mixes.
         """
-        u, v = np.asarray(u), np.asarray(v)
-        b_old = 1 / b
+        # Ensure inputs are arrays
+        u = np.asarray(u)
+        v = np.asarray(v)
+        b = float(b)
+
+        # Explicit broadcasting to ensure u and v have compatible shapes
+        # for boolean indexing operations later.
+        if u.shape != v.shape:
+            u, v = np.broadcast_arrays(u, v)
+
+        # At this point, u and v (and thus s, a, L, R) share the same shape
 
         s = XiRhoBoundaryCopula._s_expr_numpy(v, b)
-        a = np.maximum(s - b_old, 0)
+        a = s - 1.0 / b
 
-        # Condition for being inside the diagonal band
-        in_band = (u > a) & (u <= s)
+        # 1. Flat top part (density = 1) -> valid for t <= a
+        # Intersect [0, u] with [0, max(0, a)]
+        term_flat = np.maximum(0.0, np.minimum(u, np.maximum(0.0, a)))
 
-        # Optimized formula inside the band: u - (b/2)*(u-a)^2
-        middle = u - (b / 2.0) * (u - a) ** 2
+        # 2. Linear slope part (density = b(s-t)) -> valid for a < t <= s
+        L = np.maximum(0.0, a)
+        R = np.minimum(u, s)
 
-        return np.where(in_band, middle, np.minimum(u, v))
+        # Only compute linear term where R > L
+        mask_linear = R > L
+
+        # Initialize result with correct broadcasted shape
+        term_linear = np.zeros_like(u, dtype=float)
+
+        if np.any(mask_linear):
+            # Safe to index because term_linear, R, L, s, and mask_linear
+            # all have the same broadcasted shape
+            R_sub = R[mask_linear]
+            L_sub = L[mask_linear]
+            s_sub = s[mask_linear]
+
+            # Integral: (R-L) * (b*s - 0.5*b*(R+L))
+            val = (R_sub - L_sub) * (b * s_sub - 0.5 * b * (R_sub + L_sub))
+            term_linear[mask_linear] = val
+
+        return term_flat + term_linear
+
+    def pdf_vectorized(self, u, v):
+        """
+        Fully vectorized PDF implementation.
+        Computes density c(u,v) = |b| * s'_v(v) inside the band, 0 outside.
+        Replaces symbolic logic for high performance.
+        """
+        u = np.asarray(u)
+        v = np.asarray(v)
+        b = self.b
+        b_abs = abs(b)
+
+        # Symmetry handling: if b < 0, c(u,v) = c(|b|)(1-u, v)
+        u_eff = u if b > 0 else (1.0 - u)
+
+        # 1. Calculate Shift s_v
+        s = self._s_expr_numpy(v, b_abs)
+
+        # 2. Calculate Derivative s'_v (ds/dv)
+        # We need to replicate the thresholds from _s_expr_numpy to get derivatives
+        ds_dv = np.empty_like(v, dtype=float)
+        b_old = 1.0 / b_abs
+
+        if b_abs >= 1.0:
+            thresh_lower = b_old / 2.0
+            thresh_upper = 1.0 - thresh_lower
+
+            mask1 = v <= thresh_lower
+            mask3 = v > thresh_upper
+            mask2 = ~(mask1 | mask3)
+
+            if np.any(mask1):
+                # Avoid div by zero at v=0 (density infinite there anyway)
+                with np.errstate(divide="ignore"):
+                    ds_dv[mask1] = np.sqrt(b_old / (2.0 * v[mask1]))
+
+            if np.any(mask2):
+                ds_dv[mask2] = 1.0
+
+            if np.any(mask3):
+                with np.errstate(divide="ignore"):
+                    ds_dv[mask3] = np.sqrt(b_old / (2.0 * (1.0 - v[mask3])))
+        else:
+            thresh_lower = 1.0 / (2.0 * b_old)
+            thresh_upper = 1.0 - thresh_lower
+
+            mask1 = v <= thresh_lower
+            mask3 = v > thresh_upper
+            mask2 = ~(mask1 | mask3)
+
+            if np.any(mask1):
+                with np.errstate(divide="ignore"):
+                    ds_dv[mask1] = np.sqrt(b_old / (2.0 * v[mask1]))
+
+            if np.any(mask2):
+                ds_dv[mask2] = b_old
+
+            if np.any(mask3):
+                with np.errstate(divide="ignore"):
+                    ds_dv[mask3] = np.sqrt(b_old / (2.0 * (1.0 - v[mask3])))
+
+        # 3. Calculate Density
+        # c(u,v) = |b| * s'(v)   if   a < u_eff < s   else 0
+        # where a = s - 1/|b|
+        density_val = b_abs * ds_dv
+
+        lower_bound = s - (1.0 / b_abs)
+        upper_bound = s
+
+        in_band = (u_eff > lower_bound) & (u_eff < upper_bound)
+
+        result = np.where(in_band, density_val, 0.0)
+
+        return result
 
     def cdf_vectorized(self, u, v):
         """
@@ -562,10 +681,10 @@ class XiRhoBoundaryCopula(BivCopula):
 
 if __name__ == "__main__":
     # Example usage
-    XiRhoBoundaryCopula(b=-0.5).plot_cond_distr_1(plot_type="contour")
-    XiRhoBoundaryCopula(b=-0.5).plot_cond_distr_2(plot_type="contour")
-    XiRhoBoundaryCopula(b=-1).plot_cond_distr_1(plot_type="contour")
-    XiRhoBoundaryCopula(b=-1).plot_cond_distr_2(plot_type="contour")
-    # XiRhoBoundaryCopula(b=-0.5).plot_pdf(plot_type="contour", levels=100, zlim=(0, 5))
-    # XiRhoBoundaryCopula(b=-1).plot_pdf(plot_type="contour", levels=100, zlim=(0, 6.5))
-    # XiRhoBoundaryCopula(b=-2).plot_pdf(plot_type="contour", levels=100, zlim=(0, 8))
+    # XiRhoBoundaryCopula(b=-0.5).plot_cond_distr_1(plot_type="contour")
+    # XiRhoBoundaryCopula(b=-0.5).plot_cond_distr_2(plot_type="contour")
+    # XiRhoBoundaryCopula(b=-1).plot_cond_distr_1(plot_type="contour")
+    # XiRhoBoundaryCopula(b=-1).plot_cond_distr_2(plot_type="contour")
+    XiRhoBoundaryCopula(b=-0.5).plot_pdf(plot_type="contour", levels=100, zlim=(0, 5))
+    XiRhoBoundaryCopula(b=-1).plot_pdf(plot_type="contour", levels=100, zlim=(0, 6.5))
+    XiRhoBoundaryCopula(b=-2).plot_pdf(plot_type="contour", levels=100, zlim=(0, 8))
