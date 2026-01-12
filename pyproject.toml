@@ -40,6 +40,11 @@ markers = [
     "instable: marks tests as instable (deselect with '-m \"not instable\"')",
 ]
 
+[tool.ruff]
+exclude = [
+    "notes/examples/xi-rho",
+]
+
 [dependency-groups]
 dev = [
     "tqdm>=4.67.1",

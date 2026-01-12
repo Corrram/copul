@@ -6,8 +6,6 @@ from copul.family.core.biv_copula import BivCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.upper_frechet import UpperFrechet
-from copul.wrapper.cd1_wrapper import CD1Wrapper
-from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -244,7 +242,8 @@ class XiRhoBoundaryCopula(BivCopula):
         # If |b| >= 1, the linear section starts at v = 1/(2|b|)
         # If |b| < 1, the linear section starts at v = |b|/2
         v_thresh = sp.Piecewise(
-            (1 / (2 * b_abs), b_abs >= 1), (b_abs / 2, True)  # covers |b| < 1
+            (1 / (2 * b_abs), b_abs >= 1),
+            (b_abs / 2, True),  # covers |b| < 1
         )
 
         # 2. Determine density value in the middle linear section

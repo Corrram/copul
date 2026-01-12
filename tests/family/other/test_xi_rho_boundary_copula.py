@@ -6,7 +6,6 @@ from copul.family.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
 from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
-from scipy.integrate import dblquad
 
 RTOL = 1e-5
 ATOL = 1e-5
