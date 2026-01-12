@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+
 def solve_lower_bound_ccp(target_xi, n=32, max_iter=10, verbose=False):
     """
     Minimizes Spearman's rho for a FIXED lower bound on Chatterjee's xi
@@ -41,9 +42,9 @@ def solve_lower_bound_ccp(target_xi, n=32, max_iter=10, verbose=False):
         constraints = [
             H >= 0,
             H <= 1,
-            cp.sum(H, axis=0) == np.arange(n), # Marginal constraint
-            H[:, :-1] <= H[:, 1:],             # Increasing in v (std copula)
-            H[:-1, :] >= H[1:, :]              # Decreasing in t (SI condition)
+            cp.sum(H, axis=0) == np.arange(n),  # Marginal constraint
+            H[:, :-1] <= H[:, 1:],  # Increasing in v (std copula)
+            H[:-1, :] >= H[1:, :],  # Decreasing in t (SI condition)
         ]
 
         # --- Linearized Xi Constraint ---
@@ -52,7 +53,7 @@ def solve_lower_bound_ccp(target_xi, n=32, max_iter=10, verbose=False):
         # Convex inequality: f(x) >= f(x0) + g^T(x-x0) >= target
 
         # Calculate xi and gradient for current H_val
-        coeff_xi = (6 / n**2)
+        coeff_xi = 6 / n**2
         xi_current = coeff_xi * np.sum(H_val**2) - 2
         grad_xi = 2 * coeff_xi * H_val
 
@@ -87,6 +88,7 @@ def solve_lower_bound_ccp(target_xi, n=32, max_iter=10, verbose=False):
 
     return xi_final, rho_final, H_opt_final
 
+
 # --- Main simulation loop ---
 if __name__ == "__main__":
     # We sweep target xi from 0 to 1
@@ -112,7 +114,13 @@ if __name__ == "__main__":
     # 1. Plot the Numerical Lower Bound
     if lower_bound_points:
         lb_arr = np.array(lower_bound_points)
-        plt.plot(lb_arr[:, 0], lb_arr[:, 1], "o-", color="blue", label="Numerical SI Lower Bound (Min ρ)")
+        plt.plot(
+            lb_arr[:, 0],
+            lb_arr[:, 1],
+            "o-",
+            color="blue",
+            label="Numerical SI Lower Bound (Min ρ)",
+        )
 
     # 2. Theoretical Reference Lines
     x_grid = np.linspace(0, 1, 100)
@@ -121,9 +129,17 @@ if __name__ == "__main__":
     # Theoretical lower bound for GENERAL copulas (approximate) is much lower.
     # For SI copulas, it is known that rho >= (3*xi - 1)/2 is a loose bound,
     # but the tightness is often debated.
-    plt.plot(x_grid, (3*x_grid - 1)/2, "r--", alpha=0.3, label="General Lower Bound (ρ = (3ξ-1)/2)")
+    plt.plot(
+        x_grid,
+        (3 * x_grid - 1) / 2,
+        "r--",
+        alpha=0.3,
+        label="General Lower Bound (ρ = (3ξ-1)/2)",
+    )
 
-    plt.title("Attainable Region for SI Copulas: Min Spearman's ρ for given Chatterjee's ξ")
+    plt.title(
+        "Attainable Region for SI Copulas: Min Spearman's ρ for given Chatterjee's ξ"
+    )
     plt.xlabel("Chatterjee's ξ")
     plt.ylabel("Spearman's ρ")
     plt.grid(True, linestyle=":")
@@ -135,11 +151,18 @@ if __name__ == "__main__":
     # We pick 3 representative points from our run
     if len(H_maps) >= 3:
         fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-        indices_to_plot = [0, len(H_maps)//2, -1]
+        indices_to_plot = [0, len(H_maps) // 2, -1]
 
         for ax, idx in zip(axes, indices_to_plot):
             xi_val, rho_val, H_mat = H_maps[idx]
-            im = ax.imshow(H_mat, origin="lower", extent=[0,1,0,1], cmap="viridis", vmin=0, vmax=1)
+            im = ax.imshow(
+                H_mat,
+                origin="lower",
+                extent=[0, 1, 0, 1],
+                cmap="viridis",
+                vmin=0,
+                vmax=1,
+            )
             ax.set_title(f"ξ ≈ {xi_val:.2f}, ρ ≈ {rho_val:.2f}")
             ax.set_xlabel("v")
             ax.set_ylabel("t")

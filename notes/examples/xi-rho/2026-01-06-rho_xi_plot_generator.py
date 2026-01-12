@@ -5,7 +5,7 @@ import importlib.resources as pkg_resources
 from pathlib import Path
 from scipy.signal import savgol_filter
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
+from typing import Dict
 
 
 # ------------------------------------------------------------------
@@ -23,10 +23,7 @@ class CorrelationData:
 def load_family_data(family: str, data_dir: Path):
     """Loads CorrelationData object from the pickle file."""
 
-    candidates = [
-        data_dir / f"{family}_data.pkl",
-        data_dir / f"{family}.pkl"
-    ]
+    candidates = [data_dir / f"{family}_data.pkl", data_dir / f"{family}.pkl"]
 
     file_path = next((c for c in candidates if c.exists()), None)
 
@@ -59,26 +56,34 @@ def load_family_data(family: str, data_dir: Path):
 # 3. Analytic Models
 # ------------------------------------------------------------------
 
+
 def get_gaussian_curve(n_points=300):
     r = np.linspace(0, 0.9999, n_points)
     rho_s = (6 / np.pi) * np.arcsin(r / 2)
     tau = (2 / np.pi) * np.arcsin(r)
-    xi = (3 / np.pi) * np.arcsin((1 + r ** 2) / 2) - 0.5
+    xi = (3 / np.pi) * np.arcsin((1 + r**2) / 2) - 0.5
     return xi, rho_s, tau
 
 
 def get_cb_curve(n_points=1000):
     b_vals = np.concatenate([np.linspace(0, 1, 1_000), np.linspace(1, 100, 1_000)[1:]])
 
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
+
         def vec_xi(b):
-            return np.where(b <= 1, (b ** 2 / 10) * (5 - 2 * b), 1 - 1 / b + 3 / (10 * b ** 2))
+            return np.where(
+                b <= 1, (b**2 / 10) * (5 - 2 * b), 1 - 1 / b + 3 / (10 * b**2)
+            )
 
         def vec_rho(b):
-            return np.where(b <= 1, b - 3 * b ** 2 / 10, 1 - 1 / (2 * b ** 2) + 1 / (5 * b ** 3))
+            return np.where(
+                b <= 1, b - 3 * b**2 / 10, 1 - 1 / (2 * b**2) + 1 / (5 * b**3)
+            )
 
         def vec_tau(b):
-            return np.where(b <= 1, 2 * b / 3 - b ** 2 / 6, 1 - 2 / (3 * b) + 1 / (6 * b ** 2))
+            return np.where(
+                b <= 1, 2 * b / 3 - b**2 / 6, 1 - 2 / (3 * b) + 1 / (6 * b**2)
+            )
 
     xi, rho, tau = vec_xi(b_vals), vec_rho(b_vals), vec_tau(b_vals)
     mask = np.isfinite(xi) & np.isfinite(rho)
@@ -114,6 +119,7 @@ def get_marshall_olkin_alpha1_1_curve(n_points=1000):
 # 4. Plotting
 # ------------------------------------------------------------------
 
+
 def main():
     # --- Robust Data Path Finding ---
     data_dir = Path("rank_correlation_estimates")
@@ -130,7 +136,9 @@ def main():
 
     if not found:
         script_location = Path(__file__).parent
-        relative_candidate = script_location / "../../../docs/rank_correlation_estimates"
+        relative_candidate = (
+            script_location / "../../../docs/rank_correlation_estimates"
+        )
         if relative_candidate.resolve().exists():
             data_dir = relative_candidate.resolve()
             found = True
@@ -139,7 +147,8 @@ def main():
         print(f"Loading data from: {data_dir.resolve()}")
     else:
         print(
-            "Warning: Could not find 'rank_correlation_estimates'. Plotting analytic curves only.")
+            "Warning: Could not find 'rank_correlation_estimates'. Plotting analytic curves only."
+        )
 
     families = ["Clayton", "Frank", "GumbelHougaard", "Joe", "MarshallOlkin"]
 
@@ -156,7 +165,7 @@ def main():
     display_labels = {
         "GumbelHougaard": "Gumbel",
         "C_b": r"$(C_b)_{b>0}$",
-        "MarshallOlkin": r"Marshall-Olkin ($\alpha_1=1$)"
+        "MarshallOlkin": r"Marshall-Olkin ($\alpha_1=1$)",
     }
 
     plt.figure(figsize=(9, 7))
@@ -166,8 +175,11 @@ def main():
     # C_b
     xi_cb, rho_cb, tau_cb = get_cb_curve()
     plt.plot(
-        xi_cb, rho_cb - xi_cb,
-        color=colors["C_b"], linewidth=2, label=display_labels["C_b"]
+        xi_cb,
+        rho_cb - xi_cb,
+        color=colors["C_b"],
+        linewidth=2,
+        label=display_labels["C_b"],
     )
     plt.plot(xi_cb, tau_cb - xi_cb, color=colors["C_b"], linewidth=2, linestyle="--")
 
@@ -181,10 +193,19 @@ def main():
     # Marshall-Olkin (alpha_1 = 1)
     xi_mo, rho_mo, tau_mo = get_marshall_olkin_alpha1_1_curve()
     plt.plot(
-        xi_mo, rho_mo - xi_mo,
-        color=colors["MarshallOlkin"], linewidth=2, label=display_labels["MarshallOlkin"]
+        xi_mo,
+        rho_mo - xi_mo,
+        color=colors["MarshallOlkin"],
+        linewidth=2,
+        label=display_labels["MarshallOlkin"],
     )
-    plt.plot(xi_mo, tau_mo - xi_mo, color=colors["MarshallOlkin"], linewidth=2, linestyle="--")
+    plt.plot(
+        xi_mo,
+        tau_mo - xi_mo,
+        color=colors["MarshallOlkin"],
+        linewidth=2,
+        linestyle="--",
+    )
 
     # --- 2. Empirical Families (Apply Smoothing) ---
     for fam in families:
@@ -205,15 +226,23 @@ def main():
             # Only smooth if enough points
             if len(x_plot) > window:
                 try:
-                    y_rho_smooth = savgol_filter(y_rho, window_length=window, polyorder=poly)
-                    plt.plot(x_plot, y_rho_smooth, label=label_name, color=c, linewidth=2)
+                    y_rho_smooth = savgol_filter(
+                        y_rho, window_length=window, polyorder=poly
+                    )
+                    plt.plot(
+                        x_plot, y_rho_smooth, label=label_name, color=c, linewidth=2
+                    )
                 except Exception:
                     plt.plot(x_plot, y_rho, label=label_name, color=c, linewidth=2)
 
                 if not np.all(np.isnan(y_tau)):
                     try:
-                        y_tau_smooth = savgol_filter(y_tau, window_length=window, polyorder=poly)
-                        plt.plot(x_plot, y_tau_smooth, color=c, linewidth=2, linestyle="--")
+                        y_tau_smooth = savgol_filter(
+                            y_tau, window_length=window, polyorder=poly
+                        )
+                        plt.plot(
+                            x_plot, y_tau_smooth, color=c, linewidth=2, linestyle="--"
+                        )
                     except Exception:
                         plt.plot(x_plot, y_tau, color=c, linewidth=2, linestyle="--")
             else:
@@ -231,15 +260,22 @@ def main():
     # Legend Logic
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
-    leg1 = plt.legend(by_label.values(), by_label.keys(), loc="upper right", frameon=True,
-                      fontsize=10, ncol=2)
+    leg1 = plt.legend(
+        by_label.values(),
+        by_label.keys(),
+        loc="upper right",
+        frameon=True,
+        fontsize=10,
+        ncol=2,
+    )
     plt.gca().add_artist(leg1)
 
     # Style legend
     from matplotlib.lines import Line2D
+
     style_handles = [
-        Line2D([0], [0], color='gray', lw=2, linestyle='-', label=r'$\rho - \xi$'),
-        Line2D([0], [0], color='gray', lw=2, linestyle='--', label=r'$\tau - \xi$')
+        Line2D([0], [0], color="gray", lw=2, linestyle="-", label=r"$\rho - \xi$"),
+        Line2D([0], [0], color="gray", lw=2, linestyle="--", label=r"$\tau - \xi$"),
     ]
     plt.legend(handles=style_handles, loc="upper center", fontsize=10, frameon=False)
 

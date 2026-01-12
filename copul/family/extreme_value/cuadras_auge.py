@@ -162,9 +162,10 @@ class CuadrasAuge(BivExtremeValueCopula):
             return 0
         return self.delta / (2 - self.delta)
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     cop = CuadrasAuge()
     cop.delta = 0.5
-    print(cop.spearmans_rho()**2 - cop.chatterjees_xi())
+    print(cop.spearmans_rho() ** 2 - cop.chatterjees_xi())
     print("Done!")
