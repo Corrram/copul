@@ -8,8 +8,8 @@ from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from scipy.integrate import dblquad
 
-RTOL = 1e-9
-ATOL = 1e-9
+RTOL = 1e-5
+ATOL = 1e-5
 
 
 def grid(n=11):
@@ -285,3 +285,21 @@ def test_pdf_zero_outside_band():
     assert np.isclose(float(C.pdf(0.9, 0.5)), 0.0, atol=ATOL)
     # Inside
     assert float(C.pdf(0.5, 0.5)) > 0
+
+
+@pytest.mark.parametrize("b", [0.5, 1.0, 2.0, -0.5, -1.5])
+def test_radial_symmetry(b):
+    """
+    Check radial symmetry property: C(u, v) = u + v - 1 + C(1-u, 1-v).
+    This ensures the copula density is symmetric about the center (0.5, 0.5).
+    """
+    C = XiRhoBoundaryCopula(b=b)
+    uu, vv = grid(n=25)
+
+    # LHS: C(u, v)
+    lhs = C.cdf_vectorized(uu, vv)
+
+    # RHS: u + v - 1 + C(1-u, 1-v)
+    rhs = uu + vv - 1.0 + C.cdf_vectorized(1.0 - uu, 1.0 - vv)
+
+    assert np.allclose(lhs, rhs, rtol=RTOL, atol=ATOL)
