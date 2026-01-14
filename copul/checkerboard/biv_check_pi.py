@@ -10,6 +10,7 @@ from typing import Union, List
 import warnings
 
 import sympy
+from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.checkerboard.check_pi import CheckPi
 from copul.family.core.biv_core_copula import BivCoreCopula
 from copul.schur_order.cis_verifier import CISVerifier
@@ -159,6 +160,9 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         Check if the copula is cis.
         """
         return CISVerifier(i).is_cis(self)
+
+    def is_ltd(self):
+        return LTDVerifier().is_ltd(self)
 
     def transpose(self):
         """
@@ -310,18 +314,30 @@ class BivCheckPi(CheckPi, BivCoreCopula):
 
 
 if __name__ == "__main__":
-    matr = [[4, 0, 0], [0, 1, 3], [0, 3, 1]]
-    # matr = [[1,0], [0, 1]]
-    ccop = BivCheckPi(matr)
-    # ccop.plot_c_over_u()
-    # ccop.plot_cond_distr_1()
-    xi = ccop.chatterjees_xi()
-    rho = ccop.spearmans_rho()
-    footrule = ccop.spearmans_footrule()
-    gini = ccop.ginis_gamma()
-    beta = ccop.blomqvists_beta()
-    # ccop.plot_cdf()
-    # ccop.plot_pdf()
-    print(
-        f"xi = {xi:.3f}, rho = {rho:.3f}, footrule = {footrule:.3f}, gini = {gini:.3f}, beta = {beta:.3f}"
-    )
+    for alpha in range(0, 11):
+        matr = [
+            [3, 0, 0],
+            [0, 1 + alpha * 0.1, 2 - alpha * 0.1],
+            [0, 2 - alpha * 0.1, 1 + alpha * 0.1],
+        ]
+        # matr = [
+        #     [3, 0, 0],
+        #     [0, 0.5 * alpha, 0.5 * (6 - alpha)],
+        #     [0, 0.5 * (6 - alpha), 0.5 * alpha],
+        # ]
+        # matr = [[1,0], [0, 1]]
+        ccop = BivCheckPi(matr)
+        result = ccop.is_ltd()
+        # ccop.plot_c_over_u()
+        # ccop.plot_cond_distr_1()
+        xi = ccop.chatterjees_xi()
+        rho = ccop.spearmans_footrule()
+        print(f"Alpha={alpha}, 6-Alpha= {6-alpha}, LTD={result}, xi={xi}, rho={rho}")
+    # footrule = ccop.spearmans_footrule()
+    # gini = ccop.ginis_gamma()
+    # beta = ccop.blomqvists_beta()
+    # # ccop.plot_cdf()
+    # # ccop.plot_pdf()
+    # print(
+    #     f"xi = {xi:.3f}, rho = {rho:.3f}, footrule = {footrule:.3f}, gini = {gini:.3f}, beta = {beta:.3f}"
+    # )
