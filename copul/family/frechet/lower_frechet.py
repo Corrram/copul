@@ -12,3 +12,8 @@ class LowerFrechet(Frechet):
     @property
     def beta(self):
         return 1
+
+
+if __name__ == "__main__":
+    lf = LowerFrechet()
+    print(lf.cdf(0.2, 0.3))
