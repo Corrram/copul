@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate a 2x2 contour plot of the conditional distribution C(v|u) = \partial_u C(u,v)
-for the XiBetaBoundaryCopula at b = -0.7, -0.3, 0.3, and 0.7.
+for the XiBetaBoundaryCopula at a = 0.075, 0.175, 0.325, and 0.425.
 """
 
 import numpy as np
@@ -10,10 +10,10 @@ from pathlib import Path
 import matplotlib.ticker as ticker
 
 
-def cond_cdf_u(u, v, b):
+def cond_cdf_u(u, v, a):
     """
     Computes the conditional distribution P(V <= v | U = u) = \partial C(u,v) / \partial u
-    for the 2x2 checkerboard boundary copula.
+    for the 2x2 checkerboard boundary copula parameterized by a.
     """
     u = np.asarray(u)
     v = np.asarray(v)
@@ -25,11 +25,11 @@ def cond_cdf_u(u, v, b):
     q3 = (u > 0.5) & (v <= 0.5)
     q4 = (u > 0.5) & (v > 0.5)
 
-    # Partial derivatives wrt u based on the exact region paper
-    res[q1] = (1.0 + b) * v[q1]
-    res[q2] = v[q2] + b * (1.0 - v[q2])
-    res[q3] = (1.0 - b) * v[q3]
-    res[q4] = v[q4] - b * (1.0 - v[q4])
+    # Partial derivatives wrt u parameterized by a (where b = 4a - 1)
+    res[q1] = 4.0 * a * v[q1]
+    res[q2] = v[q2] + (4.0 * a - 1.0) * (1.0 - v[q2])
+    res[q3] = (2.0 - 4.0 * a) * v[q3]
+    res[q4] = v[q4] - (4.0 * a - 1.0) * (1.0 - v[q4])
 
     return res
 
@@ -40,7 +40,8 @@ def main():
     v_vals = np.linspace(0, 1, 500)
     U, V = np.meshgrid(u_vals, v_vals)
 
-    b_values = [-0.7, -0.3, 0.3, 0.7]
+    # Corresponding a_values for the previous b_values [-0.7, -0.3, 0.3, 0.7]
+    a_values = [0.1, 0.2, 0.3, 0.4]
 
     # Configure publication-ready plot settings
     plt.rcParams.update({
@@ -56,8 +57,8 @@ def main():
     # Create the contour plots
     contour_levels = np.linspace(0, 1, 50)  # 50 levels looks very smooth
 
-    for ax, b in zip(axes, b_values):
-        Z = cond_cdf_u(U, V, b)
+    for ax, a in zip(axes, a_values):
+        Z = cond_cdf_u(U, V, a)
 
         # Use a clean colormap like 'viridis' or 'Blues'
         cf = ax.contourf(U, V, Z, levels=contour_levels, cmap='viridis', vmin=0, vmax=1)
@@ -66,7 +67,7 @@ def main():
         ax.axhline(0.5, color='white', linestyle='--', linewidth=1, alpha=0.7)
         ax.axvline(0.5, color='white', linestyle='--', linewidth=1, alpha=0.7)
 
-        ax.set_title(rf"$b = {b}$")
+        ax.set_title(rf"$a = {a}$")
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
         ax.set_aspect('equal')
@@ -89,7 +90,7 @@ def main():
     cbar.locator = ticker.MaxNLocator(nbins=5)
     cbar.update_ticks()
 
-    fig.suptitle(r"Conditional CDF of the $C_b^\#$ Boundary Family", y=0.95, fontsize=16)
+    fig.suptitle(r"Conditional CDF of the $C_a^\#$ Boundary Family", y=0.95, fontsize=16)
 
     # Save to file
     Path("figs").mkdir(exist_ok=True)

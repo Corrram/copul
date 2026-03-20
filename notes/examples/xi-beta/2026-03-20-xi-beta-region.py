@@ -84,7 +84,7 @@ def main() -> None:
     # Pushed straight down into the blue area
     ax.scatter([0.5], [1.0], s=60, color="black", zorder=6)
     ax.annotate(
-        r"$C_{1}^{\#}$",
+        r"$C_{1/2}^{\#}$",
         (0.5, 1.0),
         xytext=(0, -10),
         textcoords="offset points",
@@ -96,7 +96,7 @@ def main() -> None:
     # Pushed straight up into the blue area
     ax.scatter([0.5], [-1.0], s=60, color="black", zorder=6)
     ax.annotate(
-        r"$C_{-1}^{\#}$",
+        r"$C_{0}^{\#}$",
         (0.5, -1.0),
         xytext=(0, 10),
         textcoords="offset points",
