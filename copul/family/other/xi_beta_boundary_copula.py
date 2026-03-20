@@ -219,11 +219,11 @@ class XiBetaBoundaryCopula(BivCopula):
 
 
 if __name__ == "__main__":
-    XiBetaBoundaryCopula(b=-1).plot_cond_distr_1(plot_type="contour", levels=50)
-    XiBetaBoundaryCopula(b=-0.8).plot_cond_distr_1(plot_type="contour", levels=50)
-    XiBetaBoundaryCopula(b=-0.5).plot_cond_distr_1(plot_type="contour", levels=50)
-    XiBetaBoundaryCopula(b=-0.2).plot_cond_distr_1(plot_type="contour", levels=50)
-    XiBetaBoundaryCopula(b=0.2).plot_cond_distr_1(plot_type="contour", levels=50)
-    XiBetaBoundaryCopula(b=0.5).plot_cond_distr_1(plot_type="contour", levels=50)
-    XiBetaBoundaryCopula(b=0.8).plot_cond_distr_1(plot_type="contour", levels=50)
-    XiBetaBoundaryCopula(b=1).plot_cond_distr_1(plot_type="contour", levels=50)
+    #XiBetaBoundaryCopula(b=-1).plot_cond_distr_1(plot_type="contour", levels=500)
+    XiBetaBoundaryCopula(b=-0.7).plot_cond_distr_1(plot_type="contour", levels=500)
+    # XiBetaBoundaryCopula(b=-0.5).plot_cond_distr_1(plot_type="contour", levels=500)
+    XiBetaBoundaryCopula(b=-0.3).plot_cond_distr_1(plot_type="contour", levels=500)
+    XiBetaBoundaryCopula(b=0.3).plot_cond_distr_1(plot_type="contour", levels=500)
+    # XiBetaBoundaryCopula(b=0.5).plot_cond_distr_1(plot_type="contour", levels=500)
+    XiBetaBoundaryCopula(b=0.7).plot_cond_distr_1(plot_type="contour", levels=500)
+    # XiBetaBoundaryCopula(b=1).plot_cond_distr_1(plot_type="contour", levels=500)
