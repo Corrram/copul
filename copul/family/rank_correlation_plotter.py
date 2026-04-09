@@ -8,7 +8,7 @@ How to add a new measure:
 2) Decorate it with @measure("Nice Name")
    (that's all; it will show up automatically in compute/plot/export)
 
-Built-ins: xi, rho, tau, footrule, gini_gamma, blomqvist_beta
+Built-ins: xi, rho, tau, footrule, gini_gamma, blomqvists_beta
 """
 
 from __future__ import annotations
@@ -83,8 +83,8 @@ def m_gini_gamma(x, y, rx, ry) -> float:
     return 4.0 * (integral_1 + integral_2) - 2.0
 
 
-@measure("blomqvist_beta")
-def m_blomqvist_beta(x, y, rx, ry) -> float:
+@measure("blomqvists_beta")
+def m_blomqvists_beta(x, y, rx, ry) -> float:
     n = len(x)
     med_x, med_y = np.median(x), np.median(y)
     agree = np.sum(((x <= med_x) & (y <= med_y)) | ((x > med_x) & (y > med_y)))
@@ -442,8 +442,8 @@ if __name__ == "__main__":
     from pathlib import Path
 
     # Families we want to run
-    main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE"]  # , "GAUSSIAN"]
-    main_families = ["JOE"]
+    main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE", "GAUSSIAN"]
+    # main_families = ["JOE"]
 
     # Per-family settings (log grids, x-lims, fixed params, etc.)
     params_dict = {
@@ -477,7 +477,7 @@ if __name__ == "__main__":
         "kendalls_tau",
         "spearmans_footrule",
         "gini_gamma",
-        "blomqvist_beta",
+        "blomqvists_beta",
     ]
 
     images_dir = Path("images")
