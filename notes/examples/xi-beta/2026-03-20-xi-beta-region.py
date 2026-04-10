@@ -29,6 +29,9 @@ def main() -> None:
     ax.plot(xi, beta_max, color=BLUE, lw=2.5, label=r"$\beta_{\max}(\xi)$")
     ax.plot(xi, beta_min, color=BLUE, lw=2.5, label=r"$\beta_{\min}(\xi)$")
 
+    # Connect the right border
+    ax.plot([1.0, 1.0], [-1.0, 1.0], color=BLUE, lw=2.5)
+
     # Shade the attainable region
     ax.fill_between(
         xi,
