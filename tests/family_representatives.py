@@ -137,7 +137,7 @@ additional_representatives = NormalizedDict(
         "GumbelHougaardEV": 3,
         "HueslerReiss": 2,
         "Tawn": (0.5, 0.5, 2),
-        "tEV": (0.5, 2),
+        "tEV": (2, 0.5),  # (nu=2, rho=0.5) — params=[nu, rho]; rho must be in (-1,1)
         "MarshallOlkin": (0.8, 0.5),
         "Gaussian": 0.5,
         "StudentT": (0.5, 2),

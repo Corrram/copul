@@ -13,11 +13,12 @@ from pathlib import Path
 # 1. Analytic Helper Functions (Bounds & Families for Beta vs Xi)
 # ------------------------------------------------------------------
 
+
 def get_gaussian_curve(n_points=300):
     """Analytic curve for the Gaussian copula."""
     r = np.linspace(0, 1.0, n_points)
     beta = (2 / np.pi) * np.arcsin(r)
-    xi = (3 / np.pi) * np.arcsin((1 + r ** 2) / 2) - 0.5
+    xi = (3 / np.pi) * np.arcsin((1 + r**2) / 2) - 0.5
     return xi, beta
 
 
@@ -27,7 +28,7 @@ def get_boundary_checkerboard_curve(n_points=1000):
     This traces the exact lower boundary of the attainable region.
     """
     beta = np.linspace(0, 1.0, n_points)
-    xi = (beta ** 2) / 2
+    xi = (beta**2) / 2
     return xi, beta
 
 
@@ -37,7 +38,7 @@ def get_marshall_olkin_alpha1_1_curve(n_points=1000):
     """
     a2 = np.linspace(0, 1, n_points)
     # C(1/2, 1/2) = (1/2)^(2 - a2), hence beta = 4*C(1/2,1/2) - 1 = 2^a2 - 1
-    beta = 2 ** a2 - 1
+    beta = 2**a2 - 1
     xi = 2 * a2 / (3 - a2)
     return xi, beta
 
@@ -46,6 +47,7 @@ def get_marshall_olkin_alpha1_1_curve(n_points=1000):
 # 2. Data Loader
 # ------------------------------------------------------------------
 
+
 @dataclass
 class CorrelationData:
     params: np.ndarray
@@ -53,8 +55,11 @@ class CorrelationData:
 
 
 def load_family_data(family: str, data_dir: Path):
-    candidates = [data_dir / f"{family}_data.pkl", data_dir / f"{family}.pkl",
-                  data_dir / f"{family} Copula_data.pkl"]
+    candidates = [
+        data_dir / f"{family}_data.pkl",
+        data_dir / f"{family}.pkl",
+        data_dir / f"{family} Copula_data.pkl",
+    ]
     file_path = next((c for c in candidates if c.exists()), None)
 
     if not file_path:
@@ -69,9 +74,14 @@ def load_family_data(family: str, data_dir: Path):
             return None, None
 
         # Filter for positive dependence and valid values within the theoretical bounds
-        mask = (np.isfinite(xi) & np.isfinite(beta)
-                & (beta > 0.001) & (beta <= 1.0)
-                & (xi >= 0.0) & (xi <= 1.0))
+        mask = (
+            np.isfinite(xi)
+            & np.isfinite(beta)
+            & (beta > 0.001)
+            & (beta <= 1.0)
+            & (xi >= 0.0)
+            & (xi <= 1.0)
+        )
         return xi[mask], beta[mask]
     except Exception as e:
         print(f"Error loading {family}: {e}")
@@ -81,6 +91,7 @@ def load_family_data(family: str, data_dir: Path):
 # ------------------------------------------------------------------
 # 3. Main Plotting
 # ------------------------------------------------------------------
+
 
 def main():
     # --- Data Import Logic ---
@@ -100,7 +111,7 @@ def main():
         # Check relative path
         script_location = Path(__file__).parent
         relative_candidate = (
-                script_location / "../../../docs/rank_correlation_estimates"
+            script_location / "../../../docs/rank_correlation_estimates"
         )
         if relative_candidate.resolve().exists():
             data_dir = relative_candidate.resolve()
@@ -139,18 +150,26 @@ def main():
     families = ["BivClayton", "Frank", "GumbelHougaard", "Joe"]
 
     # --- Global Plot Aesthetics ---
-    plt.rcParams.update({
-        "axes.spines.top": False, 
-        "axes.spines.right": False,
-        "axes.labelsize": 15,
-        "axes.titlesize": 16,
-        "xtick.labelsize": 12,
-        "ytick.labelsize": 12,
-        "legend.fontsize": 13
-    })
+    plt.rcParams.update(
+        {
+            "axes.spines.top": False,
+            "axes.spines.right": False,
+            "axes.labelsize": 15,
+            "axes.titlesize": 16,
+            "xtick.labelsize": 12,
+            "ytick.labelsize": 12,
+            "legend.fontsize": 13,
+        }
+    )
 
     # Use constrained layout for better spacing and proportion handling
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6.5), layout="constrained", gridspec_kw={'width_ratios': [1, 1.2]})
+    fig, (ax1, ax2) = plt.subplots(
+        1,
+        2,
+        figsize=(14, 6.5),
+        layout="constrained",
+        gridspec_kw={"width_ratios": [1, 1.2]},
+    )
 
     # ----------------------------------------------------------
     # PLOT 1: Attainable Region (Left)
@@ -160,7 +179,7 @@ def main():
 
     # Exact Envelope for Beta (y^2 <= 2x -> xi >= beta^2 / 2)
     beta_env = np.linspace(0, 1.0, 300)
-    xi_env_lower = (beta_env ** 2) / 2
+    xi_env_lower = (beta_env**2) / 2
     xi_env_upper = np.ones_like(beta_env)
 
     # Draw boundaries
@@ -170,7 +189,9 @@ def main():
     ax1.plot([1, 1], [0.5, 1], color=BLUE_ENV, lw=2.5)  # Right edge closure
 
     # Fill region
-    ax1.fill_between(beta_env, xi_env_lower, xi_env_upper, color=FILL_ENV, alpha=0.5, zorder=0)
+    ax1.fill_between(
+        beta_env, xi_env_lower, xi_env_upper, color=FILL_ENV, alpha=0.5, zorder=0
+    )
 
     # Diagonal
     ax1.plot([0, 1], [0, 1], color="gray", linestyle="-", lw=1.5, alpha=0.4)
@@ -243,9 +264,10 @@ def main():
 
     # Apply Legend Left
     handles1, labels1 = get_sorted_handles_labels(ax1)
-    leg1 = ax1.legend(handles1, labels1, loc="upper left", framealpha=0.9, edgecolor="none")
+    leg1 = ax1.legend(
+        handles1, labels1, loc="upper left", framealpha=0.9, edgecolor="none"
+    )
     ax1.add_artist(leg1)
-
 
     # ----------------------------------------------------------
     # PLOT 2: Differences (Right)
@@ -294,11 +316,15 @@ def main():
 
     # Apply Legend Right
     handles2, labels2 = get_sorted_handles_labels(ax2)
-    ax2.legend(handles2, labels2, loc="upper right", framealpha=0.9, edgecolor="none", ncol=2)
+    ax2.legend(
+        handles2, labels2, loc="upper right", framealpha=0.9, edgecolor="none", ncol=2
+    )
 
     # --- Save and Show ---
     Path("images/").mkdir(parents=False, exist_ok=True)
-    plt.savefig("images/combined_region_and_diffs_beta.png", dpi=300, bbox_inches="tight")
+    plt.savefig(
+        "images/combined_region_and_diffs_beta.png", dpi=300, bbox_inches="tight"
+    )
     plt.show()
 
 

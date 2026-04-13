@@ -184,7 +184,7 @@ class BivCoreCopula:
         callable
             A callable (wrapped via CD1Wrapper) representing the conditional distribution.
         """
-        result = self.cdf.diff(self.u)
+        result = self.cdf().diff(self.u)
         return result(u, v)
 
     def cond_distr_2(self, u=None, v=None):
@@ -205,7 +205,7 @@ class BivCoreCopula:
         callable
             A callable (wrapped via CD2Wrapper) representing the conditional distribution.
         """
-        result = CD2Wrapper(sp.diff(self.cdf, self.v))
+        result = CD2Wrapper(sp.diff(self.cdf().func, self.v))
         return result(u, v)
 
     def chatterjees_xi(self, *args, **kwargs):
@@ -407,7 +407,7 @@ class BivCoreCopula:
         sympy.Expr
             The simplified expression of the integrand.
         """
-        return sp.simplify(sp.integrate(self.cdf.func, (self.u, 0, 1)))
+        return sp.simplify(sp.integrate(self.cdf().func, (self.u, 0, 1)))
 
     def _tau_int_1(self):
         """
@@ -418,7 +418,7 @@ class BivCoreCopula:
         sympy.Expr
             The simplified expression of the integrand.
         """
-        return sp.simplify(sp.integrate(self.cdf.func * self.pdf, (self.u, 0, 1)))
+        return sp.simplify(sp.integrate(self.cdf().func * self.pdf, (self.u, 0, 1)))
 
     def _squared_cond_distr_1(self, u, v):
         """
@@ -907,3 +907,236 @@ class BivCoreCopula:
         Blomqvist’s β   :=  4·C(½,½) – 1
         """
         return 4.0 * self.cdf(u=0.5, v=0.5) - 1.0
+
+    # ------------------------------------------------------------------
+    # Gini’s gamma  γ(C) = 4[∫₀¹ C(t,t) dt + ∫₀¹ C(t,1-t) dt] − 2
+    # ------------------------------------------------------------------
+
+    def gini_gamma(self, *args, **kwargs):
+        r"""
+        Compute Gini’s gamma concordance coefficient.
+
+        .. math::
+
+           \gamma(C) = 4\!\left[\int_0^1 C(t,t)\,dt
+                        + \int_0^1 C(t,1-t)\,dt\right] - 2
+
+        Range: :math:`[-1, 1]`.
+        :math:`\gamma = 1` for the upper Fréchet bound (comonotonic),
+        :math:`\gamma = -1` for the lower Fréchet bound (countermonotonic),
+        :math:`\gamma = 0` for independence.
+
+        Returns
+        -------
+        sympy.Expr
+            The symbolic expression for Gini’s gamma.
+        """
+        self._set_params(args, kwargs)
+        return self._gini_gamma()
+
+    def _gini_gamma(self):
+        t = sp.Symbol("t", positive=True)
+        cdf_expr = self.cdf().func
+        cdf_diag = cdf_expr.subs([(self.u, t), (self.v, t)])
+        cdf_anti = cdf_expr.subs([(self.u, t), (self.v, 1 - t)])
+        int1 = sp.simplify(sp.integrate(cdf_diag, (t, 0, 1)))
+        int2 = sp.simplify(sp.integrate(cdf_anti, (t, 0, 1)))
+        return sp.simplify(4 * (int1 + int2) - 2)
+
+    # ------------------------------------------------------------------
+    # Spearman’s footrule  ψ(C) = 6·∫₀¹ C(t,t) dt − 2
+    # ------------------------------------------------------------------
+
+    def spearman_footrule(self, *args, **kwargs):
+        r"""
+        Compute Spearman’s footrule coefficient :math:`\psi`.
+
+        .. math::
+
+           \psi(C) = 6 \int_0^1 C(t,t)\,dt - 2
+
+        Equivalently, :math:`\psi(C) = 6\,\mathbb{E}[\min(U,V)] - 2`
+        where :math:`(U,V) \sim C`.
+
+        Range: :math:`[-\tfrac{1}{2}, 1]`.
+        :math:`\psi = 1` for the upper Fréchet bound,
+        :math:`\psi = -\tfrac{1}{2}` for the lower Fréchet bound,
+        :math:`\psi = 0` for independence.
+
+        Returns
+        -------
+        sympy.Expr
+            The symbolic expression for Spearman’s footrule coefficient.
+        """
+        self._set_params(args, kwargs)
+        return self._spearman_footrule()
+
+    def _spearman_footrule(self):
+        t = sp.Symbol("t", positive=True)
+        cdf_expr = self.cdf().func
+        cdf_diag = cdf_expr.subs([(self.u, t), (self.v, t)])
+        integral = sp.simplify(sp.integrate(cdf_diag, (t, 0, 1)))
+        return sp.simplify(6 * integral - 2)
+
+    # ------------------------------------------------------------------
+    # Tail concentration functions
+    # ------------------------------------------------------------------
+
+    def lower_tail_concentration(self, t_val=None):
+        r"""
+        Lower tail concentration function :math:`L(t) = C(t,t)\,/\,t`.
+
+        This function interpolates between :math:`L(t)\to\lambda_L` as
+        :math:`t\to 0^+` (lower tail dependence coefficient) and
+        :math:`L(1) = C(1,1) = 1`.  A plot of :math:`L(t)` vs :math:`t`
+        visualises how tail dependence builds up.
+
+        Parameters
+        ----------
+        t_val : float or None
+            If given, evaluate numerically at this point in :math:`(0,1)`.
+            If ``None``, return the SymPy expression in the symbol ``t``.
+
+        Returns
+        -------
+        sympy.Expr or float
+        """
+        t = sp.Symbol("t", positive=True)
+        cdf_expr = self.cdf().func
+        cdf_diag = cdf_expr.subs([(self.u, t), (self.v, t)])
+        L_expr = cdf_diag / t
+        if t_val is not None:
+            return float(L_expr.subs(t, t_val))
+        return L_expr
+
+    def upper_tail_concentration(self, t_val=None):
+        r"""
+        Upper tail concentration function
+        :math:`R(t) = (1 - 2t + C(t,t))\,/\,(1-t)`.
+
+        This function satisfies :math:`R(t)\to\lambda_U` as :math:`t\to 1^-`
+        (upper tail dependence coefficient) and :math:`R(0) = 1`.
+
+        Parameters
+        ----------
+        t_val : float or None
+            If given, evaluate numerically at this point in :math:`(0,1)`.
+            If ``None``, return the SymPy expression in the symbol ``t``.
+
+        Returns
+        -------
+        sympy.Expr or float
+        """
+        t = sp.Symbol("t", positive=True)
+        cdf_expr = self.cdf().func
+        cdf_diag = cdf_expr.subs([(self.u, t), (self.v, t)])
+        R_expr = (1 - 2 * t + cdf_diag) / (1 - t)
+        if t_val is not None:
+            return float(R_expr.subs(t, t_val))
+        return R_expr
+
+    def plot_tail_concentration(self, n_pts: int = 200) -> "plt.Figure":
+        r"""
+        Plot the lower and upper tail concentration functions on one figure.
+
+        The lower curve :math:`L(t)=C(t,t)/t` and the upper curve
+        :math:`R(t)=(1-2t+C(t,t))/(1-t)` are drawn against :math:`t\in(0,1)`.
+        Horizontal dashed lines mark the tail dependence coefficients
+        :math:`\lambda_L` and :math:`\lambda_U`.
+
+        Parameters
+        ----------
+        n_pts : int
+            Number of grid points (default 200).
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+        """
+        t_sym = sp.Symbol("t", positive=True)
+        cdf_expr = self.cdf().func
+        cdf_diag = cdf_expr.subs([(self.u, t_sym), (self.v, t_sym)])
+
+        L_expr = cdf_diag / t_sym
+        R_expr = (1 - 2 * t_sym + cdf_diag) / (1 - t_sym)
+
+        f_L = to_numpy_callable(L_expr, [t_sym], ae=True)
+        f_R = to_numpy_callable(R_expr, [t_sym], ae=True)
+
+        t_vals = np.linspace(0.01, 0.99, n_pts)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            L_vals = np.vectorize(f_L)(t_vals)
+            R_vals = np.vectorize(f_R)(t_vals)
+
+        fig, ax = plt.subplots(figsize=(7, 4))
+        ax.plot(t_vals, L_vals, label=r"$L(t) = C(t,t)/t$", linewidth=2)
+        ax.plot(t_vals, R_vals, label=r"$R(t) = (1-2t+C(t,t))/(1-t)$", linewidth=2)
+
+        try:
+            lam_L = float(self.lambda_L())
+            lam_U = float(self.lambda_U())
+            ax.axhline(
+                lam_L,
+                color="C0",
+                linestyle="--",
+                alpha=0.6,
+                label=rf"$\lambda_L={lam_L:.3f}$",
+            )
+            ax.axhline(
+                lam_U,
+                color="C1",
+                linestyle="--",
+                alpha=0.6,
+                label=rf"$\lambda_U={lam_U:.3f}$",
+            )
+        except Exception:
+            pass
+
+        ax.set_xlabel("$t$")
+        ax.set_ylabel("Concentration")
+        title = CopulaGraphs(self).get_copula_title()
+        ax.set_title(f"{title} — Tail concentration")
+        ax.legend()
+        ax.grid(True)
+        fig.tight_layout()
+        plt.show()
+        return fig
+
+    # ------------------------------------------------------------------
+    # Concordance ordering
+    # ------------------------------------------------------------------
+
+    def concordance_order(
+        self, other: "BivCoreCopula", n_grid: int = 20, tol: float = 1e-9
+    ) -> bool:
+        r"""
+        Numerically check whether *self* is concordance-ordered below *other*.
+
+        Returns ``True`` if :math:`C_1(u,v) \le C_2(u,v)` for all
+        :math:`(u,v)` on a uniform :math:`n\_grid \times n\_grid` grid over
+        :math:`(0.05, 0.95)^2`, i.e. whether
+        :math:`C_1 \preceq_c C_2` in the concordance partial order.
+
+        Parameters
+        ----------
+        other : BivCoreCopula
+            The copula to compare against.
+        n_grid : int
+            Number of evaluation points per axis (default 20).
+        tol : float
+            Numerical tolerance for the inequality (default 1e-9).
+
+        Returns
+        -------
+        bool
+            ``True`` if *self* ≤_c *other* on the grid, ``False`` otherwise.
+        """
+        grid = np.linspace(0.05, 0.95, n_grid)
+        for u in grid:
+            for v in grid:
+                u_f, v_f = float(u), float(v)
+                c1 = float(self.cdf(u=u_f, v=v_f))
+                c2 = float(other.cdf(u=u_f, v=v_f))
+                if c1 > c2 + tol:
+                    return False
+        return True

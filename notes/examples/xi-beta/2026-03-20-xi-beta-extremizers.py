@@ -44,12 +44,14 @@ def main():
     a_values = [0.1, 0.2, 0.3, 0.4]
 
     # Configure publication-ready plot settings
-    plt.rcParams.update({
-        'font.size': 12,
-        'axes.labelsize': 14,
-        'axes.titlesize': 14,
-        'text.usetex': False  # Set to True if you have a full LaTeX engine installed
-    })
+    plt.rcParams.update(
+        {
+            "font.size": 12,
+            "axes.labelsize": 14,
+            "axes.titlesize": 14,
+            "text.usetex": False,  # Set to True if you have a full LaTeX engine installed
+        }
+    )
 
     fig, axes = plt.subplots(2, 2, figsize=(8, 8), sharex=True, sharey=True)
     axes = axes.flatten()
@@ -61,16 +63,16 @@ def main():
         Z = cond_cdf_u(U, V, a)
 
         # Use a clean colormap like 'viridis' or 'Blues'
-        cf = ax.contourf(U, V, Z, levels=contour_levels, cmap='viridis', vmin=0, vmax=1)
+        cf = ax.contourf(U, V, Z, levels=contour_levels, cmap="viridis", vmin=0, vmax=1)
 
         # Add a subtle grid and crosshairs at the quadrant boundaries (0.5, 0.5)
-        ax.axhline(0.5, color='white', linestyle='--', linewidth=1, alpha=0.7)
-        ax.axvline(0.5, color='white', linestyle='--', linewidth=1, alpha=0.7)
+        ax.axhline(0.5, color="white", linestyle="--", linewidth=1, alpha=0.7)
+        ax.axvline(0.5, color="white", linestyle="--", linewidth=1, alpha=0.7)
 
         ax.set_title(rf"$a = {a}$")
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
 
         # Clean up tick marks
         ax.xaxis.set_major_locator(ticker.MultipleLocator(0.25))
@@ -90,12 +92,14 @@ def main():
     cbar.locator = ticker.MaxNLocator(nbins=5)
     cbar.update_ticks()
 
-    fig.suptitle(r"Conditional CDF of the $C_a^\#$ Boundary Family", y=0.95, fontsize=16)
+    fig.suptitle(
+        r"Conditional CDF of the $C_a^\#$ Boundary Family", y=0.95, fontsize=16
+    )
 
     # Save to file
     Path("figs").mkdir(exist_ok=True)
     out_path = "figs/cond_cdf_boundary.pdf"
-    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.savefig(out_path, dpi=300, bbox_inches="tight")
     print(f"Plot saved to {out_path}")
 
     plt.show()

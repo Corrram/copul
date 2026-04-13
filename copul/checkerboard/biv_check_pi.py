@@ -332,7 +332,7 @@ if __name__ == "__main__":
         # ccop.plot_cond_distr_1()
         xi = ccop.chatterjees_xi()
         rho = ccop.spearmans_footrule()
-        print(f"Alpha={alpha}, 6-Alpha= {6-alpha}, LTD={result}, xi={xi}, rho={rho}")
+        print(f"Alpha={alpha}, 6-Alpha= {6 - alpha}, LTD={result}, xi={xi}, rho={rho}")
     # footrule = ccop.spearmans_footrule()
     # gini = ccop.ginis_gamma()
     # beta = ccop.blomqvists_beta()

@@ -11,11 +11,6 @@ def raw_section(t, b, q):
 
 
 def clamped_section(t, b, q):
-    return clamp(raw_section(t, b), 0.0, 1.0)
-
-
-# fixed bug from previous helper
-def clamped_section(t, b, q):
     return clamp(raw_section(t, b, q), 0.0, 1.0)
 
 
@@ -58,18 +53,20 @@ def classify_regime(b, q):
 
 
 def setup_style():
-    plt.rcParams.update({
-        "font.size": 11,
-        "axes.titlesize": 15,
-        "axes.labelsize": 12,
-        "xtick.labelsize": 10.5,
-        "ytick.labelsize": 10.5,
-        "legend.fontsize": 10.5,
-        "mathtext.fontset": "dejavuserif",
-        "font.family": "DejaVu Sans",
-        "axes.spines.top": True,
-        "axes.spines.right": True,
-    })
+    plt.rcParams.update(
+        {
+            "font.size": 11,
+            "axes.titlesize": 15,
+            "axes.labelsize": 12,
+            "xtick.labelsize": 10.5,
+            "ytick.labelsize": 10.5,
+            "legend.fontsize": 10.5,
+            "mathtext.fontset": "dejavuserif",
+            "font.family": "DejaVu Sans",
+            "axes.spines.top": True,
+            "axes.spines.right": True,
+        }
+    )
 
 
 def plot_panel(ax, b, q, panel_title):
@@ -88,17 +85,22 @@ def plot_panel(ax, b, q, panel_title):
     ax.axhline(1, color="0.80", lw=0.9, ls=":", zorder=0)
 
     # raw and clamped curves
-    raw_line, = ax.plot(
-        t, y_raw,
-        ls="--", lw=2.0, color="#1f77b4",
+    (raw_line,) = ax.plot(
+        t,
+        y_raw,
+        ls="--",
+        lw=2.0,
+        color="#1f77b4",
         label=r"raw parabola $b((1-t)^2-q)$",
-        zorder=2
+        zorder=2,
     )
-    clamp_line, = ax.plot(
-        t, y_clamped,
-        lw=2.8, color="#ff7f0e",
+    (clamp_line,) = ax.plot(
+        t,
+        y_clamped,
+        lw=2.8,
+        color="#ff7f0e",
         label=r"clamped section $h_b^{(q)}(t)$",
-        zorder=3
+        zorder=3,
     )
 
     # switching lines and labels
@@ -114,7 +116,7 @@ def plot_panel(ax, b, q, panel_title):
             xytext=(0, 10),
             textcoords="offset points",
             ha="center",
-            fontsize=12
+            fontsize=12,
         )
 
     if s is not None and 0 < s < 1:
@@ -128,29 +130,24 @@ def plot_panel(ax, b, q, panel_title):
             textcoords="offset points",
             ha="center",
             va="top",
-            fontsize=12
+            fontsize=12,
         )
 
     # subtle regime tag
     ax.text(
-        0.03, 0.96, regime,
+        0.03,
+        0.96,
+        regime,
         transform=ax.transAxes,
-        ha="left", va="top",
+        ha="left",
+        va="top",
         fontsize=10.5,
         color="0.20",
-        bbox=dict(
-            boxstyle="round,pad=0.2",
-            fc="0.96",
-            ec="0.85",
-            lw=0.8
-        )
+        bbox=dict(boxstyle="round,pad=0.2", fc="0.96", ec="0.85", lw=0.8),
     )
 
     # titles and labels
-    ax.set_title(
-        panel_title + "\n" + rf"$b={b},\ q={q}$",
-        pad=8
-    )
+    ax.set_title(panel_title + "\n" + rf"$b={b},\ q={q}$", pad=8)
     ax.set_xlabel(r"$t$")
     ax.set_ylabel(r"$h_b^{(q)}(t)$")
 
@@ -167,8 +164,8 @@ def main():
     examples = [
         (2.5, -0.2, "Upper-clamped"),
         (0.7, -0.2, "Unclamped"),
-        (4.0,  0.12, "Double-clamped"),
-        (2.5,  0.7, "Lower-clamped"),
+        (4.0, 0.12, "Double-clamped"),
+        (2.5, 0.7, "Lower-clamped"),
     ]
 
     fig, axes = plt.subplots(2, 2, figsize=(12, 8.2))
@@ -185,7 +182,7 @@ def main():
         loc="upper center",
         ncol=2,
         frameon=False,
-        bbox_to_anchor=(0.5, 1.02)
+        bbox_to_anchor=(0.5, 1.02),
     )
 
     # fig.suptitle(
@@ -195,12 +192,7 @@ def main():
     # )
 
     fig.subplots_adjust(
-        top=0.89,
-        bottom=0.09,
-        left=0.08,
-        right=0.98,
-        hspace=0.35,
-        wspace=0.16
+        top=0.89, bottom=0.09, left=0.08, right=0.98, hspace=0.35, wspace=0.16
     )
 
     # Uncomment for export

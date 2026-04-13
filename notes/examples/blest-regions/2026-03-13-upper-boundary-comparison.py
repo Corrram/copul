@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 # Numerical integration / discretization settings
 # ============================================================
 
-N_T = 801      # grid size in t
-N_V = 301      # grid size in v
-N_B = 160      # number of b-values on the parameter grid
+N_T = 801  # grid size in t
+N_V = 301  # grid size in v
+N_B = 160  # number of b-values on the parameter grid
 B_MIN = 1e-4
 B_MAX = 1e3
 
@@ -21,6 +21,7 @@ v_grid = np.linspace(0.0, 1.0, N_V)
 # ============================================================
 # Utilities
 # ============================================================
+
 
 def clip01(x):
     return np.clip(x, 0.0, 1.0)
@@ -36,6 +37,7 @@ def solve_section_offset(v, b, weight):
     Solve for a in
         ∫_0^1 clip(a + b * weight(t), 0, 1) dt = v.
     """
+
     def f(a):
         h = clip01(a + b * weight)
         return np.trapezoid(h, t_grid) - v
@@ -68,6 +70,7 @@ def build_H_matrix(kind, b):
 # Functionals from H = ∂_1 C
 # ============================================================
 
+
 def xi_from_H(H):
     return 6.0 * trapz2(H**2, t_grid, v_grid) - 2.0
 
@@ -85,6 +88,7 @@ def nu_from_H(H):
 # ============================================================
 # Boundary construction
 # ============================================================
+
 
 def boundary_curve(kind, b_min=B_MIN, b_max=B_MAX, n_b=N_B):
     """
@@ -131,6 +135,7 @@ def boundary_curve(kind, b_min=B_MIN, b_max=B_MAX, n_b=N_B):
 # Explicit upper boundary for (xi, psi)
 # ============================================================
 
+
 def upper_psi(x):
     """
     For Fréchet mixtures:
@@ -144,6 +149,7 @@ def upper_psi(x):
 # ============================================================
 # Formatting helpers
 # ============================================================
+
 
 def fmt(x, digits=6):
     return f"{x:.{digits}f}"
@@ -206,6 +212,7 @@ def latex_summary_sentence(results, digits=4):
 # ============================================================
 # Main comparison routine
 # ============================================================
+
 
 def compute_max_gaps(make_plots=True):
     xi_rho, U_rho_vals, _ = boundary_curve("rho")
@@ -307,7 +314,7 @@ def compute_max_gaps(make_plots=True):
             xs_rho,
             [gap_rho_psi(x) for x in xs_rho],
             label=r"$U_\rho(\xi)-U_\psi(\xi)$",
-            lw=2
+            lw=2,
         )
 
         plt.axvline(x_star_1, linestyle="--", lw=2)
