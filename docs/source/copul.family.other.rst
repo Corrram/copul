@@ -100,18 +100,18 @@ copul.family.other.raftery module
    :show-inheritance:
    :undoc-members:
 
-copul.family.other.small\_footrule\_copula module
--------------------------------------------------
-
-.. automodule:: copul.family.other.small_footrule_copula
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 copul.family.other.v\_threshold\_copula module
 ----------------------------------------------
 
 .. automodule:: copul.family.other.v_threshold_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+copul.family.other.xi\_beta\_boundary\_copula module
+----------------------------------------------------
+
+.. automodule:: copul.family.other.xi_beta_boundary_copula
    :members:
    :show-inheritance:
    :undoc-members:

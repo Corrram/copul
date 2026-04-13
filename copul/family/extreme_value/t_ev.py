@@ -128,6 +128,32 @@ class tEV(BivExtremeValueCopula):
 
         return SafePickandsWrapper(pickands_expr)
 
+    def cdf(self, u=None, v=None, **kwargs):
+        """
+        Evaluate the tEV CDF numerically.
+
+        The symbolic Pickands function of the tEV copula involves
+        ``sympy.stats.cdf(StudentT(…))``, which is prohibitively slow to
+        evaluate symbolically.  This override routes all calls through the
+        fast vectorised implementation instead.
+
+        Accepts the same keyword-argument signature as other bivariate copulas
+        so the standard ``cop.cdf(u=0.3, v=0.7)`` API works correctly.
+        """
+        # Allow positional args as well
+        if u is None:
+            u = kwargs.pop("u", None)
+        if v is None:
+            v = kwargs.pop("v", None)
+        if u is None or v is None:
+            raise TypeError("cdf() requires keyword arguments u and v")
+        scalar_in = not hasattr(u, "__len__")
+        result = self.cdf_vectorized(
+            np.atleast_1d(np.asarray(u, dtype=float)),
+            np.atleast_1d(np.asarray(v, dtype=float)),
+        )
+        return float(result[0]) if scalar_in else result
+
     def cdf_vectorized(self, u, v):
         """
         Optimized vectorized implementation of the CDF.

@@ -59,6 +59,51 @@ class CoreCopula:
     def __str__(self):
         return self.__class__.__name__
 
+    def __repr__(self):
+        """
+        Informative representation showing parameter values.
+
+        Examples
+        --------
+        >>> Clayton(2.0)
+        Clayton(theta=2.0)
+        >>> GumbelHougaard()
+        GumbelHougaard(theta=<symbolic>)
+        >>> Gaussian(0.5)
+        Gaussian(rho=0.5)
+        """
+        cls = type(self)
+        cls_name = cls.__name__
+
+        # Collect the *class-level* params list (unmodified by __init__).
+        # After instantiation with concrete values, self.params loses those
+        # entries; type(self).params still holds the full list of symbols.
+        class_params = getattr(cls, "params", [])
+        if not class_params:
+            return f"{cls_name}()"
+
+        parts = []
+        for p in class_params:
+            name = str(p)
+            val = getattr(self, name, None)
+            if val is None:
+                parts.append(f"{name}=?")
+            elif isinstance(val, sympy.Basic) and val.is_symbol:
+                parts.append(f"{name}=<symbolic>")
+            elif isinstance(val, sympy.Basic):
+                try:
+                    parts.append(f"{name}={float(val):.6g}")
+                except Exception:
+                    parts.append(f"{name}={val}")
+            elif isinstance(val, float):
+                parts.append(f"{name}={val:.6g}")
+            elif isinstance(val, int):
+                parts.append(f"{name}={val}")
+            else:
+                parts.append(f"{name}={val!r}")
+
+        return f"{cls_name}({', '.join(parts)})"
+
     def __init__(self, dimension, *args, **kwargs):
         r"""
         Initialize a copula.

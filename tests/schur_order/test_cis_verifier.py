@@ -49,6 +49,6 @@ from copul.checkerboard.biv_check_pi import BivCheckPi
 def test_checkerboards(matr, expected):
     cb = BivCheckPi(matr)
     result = cb.is_cis()[0]
-    assert (
-        result == expected
-    ), f"Expected {expected}, but got {result} for matrix:\n{matr}"
+    assert result == expected, (
+        f"Expected {expected}, but got {result} for matrix:\n{matr}"
+    )

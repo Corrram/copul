@@ -120,7 +120,7 @@ def test_conditional_distributions(alpha, beta):
     v = np.linspace(0.1, 0.9, 9)  # avoid extreme endpoints
     Vg, Ug = np.meshgrid(v, u, indexing="ij")
 
-    H = C.cond_distr_1(Ug, Vg)  # shape (Nv, Nu)
+    C.cond_distr_1(Ug, Vg)  # shape (Nv, Nu)
 
     # Check boundaries in u: h(0|v) is not necessarily 0, but h(1|v) should check out or be monotonic
     # Actually, h(u|v) is a CDF in v, but varying u? No.
