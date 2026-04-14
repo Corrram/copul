@@ -46,6 +46,7 @@ pytestmark = pytest.mark.slow
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 # Cache copula instances so each (name, params) pair is instantiated once
 # across all axiom tests in the session rather than once per test function.
 @lru_cache(maxsize=None)

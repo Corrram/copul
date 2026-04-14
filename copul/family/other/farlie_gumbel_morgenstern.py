@@ -159,7 +159,7 @@ class FarlieGumbelMorgenstern(BivCopula):
              = \frac{\theta^2}{10}
         """
         self._set_params(args, kwargs)
-        return self.theta ** 2 / 10
+        return self.theta**2 / 10
 
     def lp_concordance(self, p: int = 2, *args, **kwargs):
         r"""
@@ -181,7 +181,7 @@ class FarlieGumbelMorgenstern(BivCopula):
             raise ValueError(f"k({p}) not tabulated; supported p: {sorted(k_table)}")
         # B(p+1, p+1) = (p!)^2 / (2p+1)!
         beta_val = factorial(p) ** 2 / factorial(2 * p + 1)
-        return k * abs(self.theta) ** p * beta_val ** 2
+        return k * abs(self.theta) ** p * beta_val**2
 
     def mutual_information(self, *args, **kwargs):
         r"""

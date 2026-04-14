@@ -84,7 +84,7 @@ def test_piecewise_regions_match_cdf_definition(b, v):
     C = XiNuBoundaryCopula(b=b)
     q = C._get_q_v_vec(np.array([v]), float(b))[0]
     a, s = C._switch_points(np.array([q]), float(b))
-    a, s = float(a), float(s)
+    a, s = float(np.asarray(a).ravel()[0]), float(np.asarray(s).ravel()[0])
 
     # Pick u below a (if possible) → C(u,v) ≈ u
     if a > 1e-6:
@@ -123,7 +123,7 @@ def test_du_cdf_matches_clamp_formula(b, v):
 
     # mask out a small band around the switch points where h is discontinuous
     a, s = C._switch_points(np.array([q]), float(b))
-    a, s = float(a), float(s)
+    a, s = float(np.asarray(a).ravel()[0]), float(np.asarray(s).ravel()[0])
     mask = np.ones_like(u, dtype=bool)
     eps = 5e-3
     if a > 0:
