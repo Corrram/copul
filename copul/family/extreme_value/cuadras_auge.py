@@ -162,6 +162,110 @@ class CuadrasAuge(BivExtremeValueCopula):
             return 0
         return self.delta / (2 - self.delta)
 
+    # ------------------------------------------------------------------
+    # Additional dependence measures — closed forms
+    # ------------------------------------------------------------------
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""
+        Blomqvist's :math:`\beta` for the Cuadras-Augé copula.
+
+        .. math::
+
+           \beta = 4\,C(\tfrac12,\tfrac12) - 1
+                 = 4\cdot 2^{-\delta}\cdot 2^{-(2-2\delta)} - 1
+                 = 2^{2-\delta} \cdot 2^{-2+2\delta}\cdot 4 - 1
+                 \;=\; 2^{\delta} - 1
+        """
+        self._set_params(args, kwargs)
+        d = float(self.delta)
+        if d == 0:
+            return 0
+        return 2.0 ** d - 1.0
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""
+        Schweizer–Wolff :math:`\sigma` for the Cuadras-Augé copula.
+
+        The CA copula is PQD for all :math:`\delta \in (0,1]`, so
+        :math:`\sigma = \rho_S = 3\delta/(4-\delta)`.
+        """
+        self._set_params(args, kwargs)
+        d = float(self.delta)
+        if d == 0:
+            return 0
+        return 3 * d / (4 - d)
+
+    def hoeffdings_d(self, *args, **kwargs):
+        r"""
+        Hoeffding's :math:`D` for the Cuadras-Augé copula.
+
+        Expanding the double integral
+        :math:`90\iint(C-uv)^2\,du\,dv` over the two regions
+        :math:`\{v \le u\}` and :math:`\{u < v\}` (using symmetry) gives:
+
+        .. math::
+
+           D(\delta) = \frac{10\,\delta^{2}}
+                            {18 - 9\,\delta + \delta^{2}}
+
+        which satisfies :math:`D(0)=0` and :math:`D(1)=1`.
+        """
+        self._set_params(args, kwargs)
+        d = float(self.delta)
+        if d == 0:
+            return 0
+        return 10 * d ** 2 / (18 - 9 * d + d ** 2)
+
+    def gini_gamma(self, *args, **kwargs):
+        r"""
+        Gini's :math:`\gamma` for the Cuadras-Augé copula.
+
+        .. math::
+
+           \gamma = 4\!\left[\int_0^1 C(t,t)\,dt
+                     + \int_0^1 C(t,1{-}t)\,dt\right] - 2
+
+        For the CA copula, :math:`C(t,t) = t^{2-\delta}` (since
+        :math:`\min(t,t)=t`), so the diagonal integral is
+        :math:`1/(3-\delta)`.
+        The anti-diagonal :math:`C(t,1-t)` requires splitting at
+        :math:`t=1/2`.
+        """
+        self._set_params(args, kwargs)
+        d = float(self.delta)
+        if d == 0:
+            return 0
+        # Diagonal: int_0^1 t^{2-delta} dt = 1/(3-delta)
+        I_diag = 1.0 / (3 - d)
+        # Anti-diagonal: C(t, 1-t) = min(t,1-t)^delta * (t(1-t))^{1-delta}
+        # For t in [0,1/2]: min(t,1-t) = t, so C = t^delta * (t(1-t))^{1-d} = t * (1-t)^{1-d}
+        # For t in [1/2,1]: min(t,1-t) = 1-t, so C = (1-t) * t^{1-d}
+        # By substitution s=1-t, the two halves are equal.
+        # I_anti = 2 * int_0^{1/2} t * (1-t)^{1-d} dt
+        # = 2 * [B_{1/2}(2, 2-d)]  (incomplete beta)
+        # We can compute via the regularised incomplete beta:
+        from scipy.special import betainc as _betainc_reg
+        from scipy.special import beta as _beta_fn
+        I_anti = 2 * _betainc_reg(2, 2 - d, 0.5) * _beta_fn(2, 2 - d)
+        return float(4 * (I_diag + I_anti) - 2)
+
+    def spearman_footrule(self, *args, **kwargs):
+        r"""
+        Spearman's footrule :math:`\psi` for the Cuadras-Augé copula.
+
+        .. math::
+
+           \psi = 6\int_0^1 C(t,t)\,dt - 2
+                = \frac{6}{3-\delta} - 2
+                = \frac{2\delta}{3-\delta}
+        """
+        self._set_params(args, kwargs)
+        d = float(self.delta)
+        if d == 0:
+            return 0
+        return 2 * d / (3 - d)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)

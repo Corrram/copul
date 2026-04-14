@@ -290,6 +290,36 @@ class Frank(BivArchimedeanCopula):
     def blomqvist(self):
         return 4 / self.theta * sympy.log(sympy.cosh(self.theta / 4))
 
+    # ------------------------------------------------------------------
+    # Additional dependence measures
+    # ------------------------------------------------------------------
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""
+        Schweizer–Wolff :math:`\sigma` for the Frank copula.
+
+        The Frank copula is PQD for :math:`\theta > 0` and NQD for
+        :math:`\theta < 0`, so :math:`\sigma = |\rho_S|`.
+        """
+        self._set_params(args, kwargs)
+        return abs(self.spearmans_rho())
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""
+        Blomqvist's :math:`\beta` for the Frank copula.
+
+        .. math::
+
+           \beta = 1 - \frac{4}{\theta}\,\ln\!\cosh\!\bigl(\tfrac{\theta}{4}\bigr)
+
+        (The Frank CDF at :math:`(1/2,1/2)` has a neat log-cosh form.)
+        """
+        self._set_params(args, kwargs)
+        theta = float(self.theta)
+        if theta == 0:
+            return 0
+        return 1.0 - 4.0 / theta * np.log(np.cosh(theta / 4.0))
+
 
 Nelsen5 = Frank
 

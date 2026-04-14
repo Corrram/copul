@@ -8,7 +8,8 @@ How to add a new measure:
 2) Decorate it with @measure("Nice Name")
    (that's all; it will show up automatically in compute/plot/export)
 
-Built-ins: xi, rho, tau, footrule, gini_gamma, blomqvists_beta
+Built-ins: xi, rho, tau, footrule, gini_gamma, blomqvists_beta,
+           schweizer_wolff_sigma, hoeffdings_d
 """
 
 from __future__ import annotations
@@ -89,6 +90,59 @@ def m_blomqvists_beta(x, y, rx, ry) -> float:
     med_x, med_y = np.median(x), np.median(y)
     agree = np.sum(((x <= med_x) & (y <= med_y)) | ((x > med_x) & (y > med_y)))
     return 2.0 * agree / n - 1.0
+
+
+@measure("schweizer_wolff_sigma")
+def m_schweizer_wolff(x, y, rx, ry) -> float:
+    """
+    Schweizer–Wolff sigma via the empirical copula.
+
+    σ̂ = 12 * mean(|Ĉ_n(u_i, v_i) - u_i * v_i|)
+
+    where u_i = R_i/n, v_i = S_i/n and Ĉ_n is the empirical copula.
+    The O(n²) exact sum is replaced by a fast rank-based estimator
+    using the same identity that yields Spearman's rho.
+    """
+    n = len(rx)
+    u = rx / (n + 1)  # pseudo-observations (Hazen plotting position)
+    v = ry / (n + 1)
+    # Empirical copula value at each pseudo-observation: C_n(u_i,v_i)
+    # = (1/n) * #{j : U_j <= u_i AND V_j <= v_i}
+    # Direct O(n^2) is too slow for large n; use rank-based approach.
+    # For moderate n, the midpoint-grid approximation is accurate:
+    n_grid = min(200, n)
+    h = 1.0 / n_grid
+    mid = np.linspace(h / 2, 1 - h / 2, n_grid)
+    uu, vv = np.meshgrid(mid, mid, indexing="ij")
+    # Empirical CDF on the grid
+    C_emp = np.empty_like(uu)
+    for i in range(n_grid):
+        for j in range(n_grid):
+            C_emp[i, j] = np.mean((u <= mid[i]) & (v <= mid[j]))
+    Pi = uu * vv
+    return float(12 * np.mean(np.abs(C_emp - Pi)))
+
+
+@measure("hoeffdings_d")
+def m_hoeffdings_d(x, y, rx, ry) -> float:
+    """
+    Hoeffding's D (dependence index) via empirical copula grid.
+
+    D̂ = 90 * mean((Ĉ_n(u,v) - u*v)^2)
+    """
+    n = len(rx)
+    u = rx / (n + 1)
+    v = ry / (n + 1)
+    n_grid = min(200, n)
+    h = 1.0 / n_grid
+    mid = np.linspace(h / 2, 1 - h / 2, n_grid)
+    uu, vv = np.meshgrid(mid, mid, indexing="ij")
+    C_emp = np.empty_like(uu)
+    for i in range(n_grid):
+        for j in range(n_grid):
+            C_emp[i, j] = np.mean((u <= mid[i]) & (v <= mid[j]))
+    Pi = uu * vv
+    return float(90 * np.mean((C_emp - Pi) ** 2))
 
 
 @measure("blests_nu")

@@ -228,6 +228,30 @@ class IndependenceCopula(Copula, CopulaPlottingMixin):
         """
         return 0
 
+    def blomqvists_beta(self, *args, **kwargs):
+        return 0
+
+    def gini_gamma(self, *args, **kwargs):
+        return 0
+
+    def spearman_footrule(self, *args, **kwargs):
+        return 0
+
+    def blests_nu(self, *args, **kwargs):
+        return 0
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        return 0
+
+    def hoeffdings_d(self, *args, **kwargs):
+        return 0
+
+    def lp_concordance(self, p: int = 2, *args, **kwargs):
+        return 0
+
+    def mutual_information(self, *args, **kwargs):
+        return 0.0
+
     def lambda_L(self):
         """
         Compute the lower tail dependence coefficient.

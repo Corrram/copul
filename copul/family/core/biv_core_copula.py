@@ -1140,3 +1140,261 @@ class BivCoreCopula:
                 if c1 > c2 + tol:
                     return False
         return True
+
+    # ==================================================================
+    # Schweizer–Wolff sigma
+    # ==================================================================
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""
+        Schweizer–Wolff's :math:`\sigma` dependence measure.
+
+        .. math::
+
+           \sigma(C)
+             = 12 \iint_{[0,1]^2} \lvert C(u,v) - uv \rvert\,du\,dv
+
+        Unlike Spearman's :math:`\rho` (which uses the signed deviation
+        :math:`C - \Pi`), this measure takes the absolute value and therefore
+        captures *any* departure from independence, including non-monotone
+        dependence.
+
+        Range: :math:`[0, 1]`.
+        :math:`\sigma = 0` iff :math:`C = \Pi` (independence).
+
+        When the integral cannot be evaluated symbolically (because
+        :math:`|C - \Pi|` introduces piecewise terms that SymPy cannot
+        always simplify), the method falls back to numerical quadrature on
+        a 50 × 50 grid.
+
+        Returns
+        -------
+        sympy.Expr or float
+        """
+        self._set_params(args, kwargs)
+        return self._schweizer_wolff_sigma()
+
+    def _schweizer_wolff_sigma(self):
+        cdf_expr = self.cdf().func
+        Pi = self.u * self.v  # independence copula
+        integrand = sp.Abs(cdf_expr - Pi)
+
+        # Try symbolic integration first
+        try:
+            inner = sp.integrate(integrand, (self.v, 0, 1))
+            result = sp.simplify(12 * sp.integrate(inner, (self.u, 0, 1)))
+            # If SymPy returns an unevaluated Integral, fall through
+            if not result.has(sp.Integral):
+                return result
+        except Exception:
+            pass
+
+        # Numerical fallback
+        return self._schweizer_wolff_sigma_numerical()
+
+    def _schweizer_wolff_sigma_numerical(self, n_grid: int = 50) -> float:
+        r"""Evaluate :math:`\sigma` by midpoint-rule quadrature."""
+        cdf_expr = self.cdf().func
+        f_cdf = to_numpy_callable(cdf_expr, [self.u, self.v])
+        h = 1.0 / n_grid
+        mid = np.linspace(h / 2, 1 - h / 2, n_grid)
+        uu, vv = np.meshgrid(mid, mid, indexing="ij")
+        C_vals = np.vectorize(f_cdf)(uu, vv)
+        Pi_vals = uu * vv
+        return float(12 * np.mean(np.abs(C_vals - Pi_vals)))
+
+    # ==================================================================
+    # Hoeffding's D  (dependence index)
+    # ==================================================================
+
+    def hoeffdings_d(self, *args, **kwargs):
+        r"""
+        Hoeffding's :math:`D` dependence measure (also called the
+        *dependence index* or :math:`\Phi^2`).
+
+        .. math::
+
+           D(C) = 90 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,du\,dv
+
+        This is the squared :math:`L_2` analogue of Spearman's :math:`\rho`
+        (which uses an :math:`L_1` integral of the signed deviation).
+        It measures any departure from independence, monotone or not.
+
+        Range: :math:`[0, 1]`.
+        :math:`D = 0` iff :math:`C = \Pi` (independence).
+
+        Falls back to numerical quadrature when SymPy cannot evaluate the
+        double integral in closed form.
+
+        Returns
+        -------
+        sympy.Expr or float
+
+        References
+        ----------
+        Hoeffding, W. (1940). "Masstabinvariante Korrelationstheorie."
+        Schweizer, B. & Wolff, E. F. (1981). "On Nonparametric Measures of
+        Dependence for Random Variables." *Ann. Statist.* 9(4).
+        """
+        self._set_params(args, kwargs)
+        return self._hoeffdings_d()
+
+    def _hoeffdings_d(self):
+        cdf_expr = self.cdf().func
+        Pi = self.u * self.v
+        integrand = (cdf_expr - Pi) ** 2
+
+        try:
+            inner = sp.integrate(integrand, (self.v, 0, 1))
+            result = sp.simplify(90 * sp.integrate(inner, (self.u, 0, 1)))
+            if not result.has(sp.Integral):
+                return result
+        except Exception:
+            pass
+
+        return self._hoeffdings_d_numerical()
+
+    def _hoeffdings_d_numerical(self, n_grid: int = 50) -> float:
+        r"""Evaluate :math:`D` by midpoint-rule quadrature."""
+        cdf_expr = self.cdf().func
+        f_cdf = to_numpy_callable(cdf_expr, [self.u, self.v])
+        h = 1.0 / n_grid
+        mid = np.linspace(h / 2, 1 - h / 2, n_grid)
+        uu, vv = np.meshgrid(mid, mid, indexing="ij")
+        C_vals = np.vectorize(f_cdf)(uu, vv)
+        Pi_vals = uu * vv
+        return float(90 * np.mean((C_vals - Pi_vals) ** 2))
+
+    # ==================================================================
+    # Lp concordance distance  (generalisation of rho, sigma, D)
+    # ==================================================================
+
+    # Normalisation constants k(p) so that the measure equals 1 at the
+    # Fréchet upper bound M(u,v)=min(u,v).
+    _LP_NORM_CONSTANTS = {1: 12, 2: 90, 3: 560, 4: 3150, 5: 16632}
+
+    def lp_concordance(self, p: int = 2, *args, **kwargs):
+        r"""
+        :math:`L_p` concordance distance from independence.
+
+        .. math::
+
+           \delta_p(C) = k(p)\,
+             \iint_{[0,1]^2} \lvert C(u,v) - uv \rvert^{p}\,du\,dv
+
+        where :math:`k(p)` is chosen so that :math:`\delta_p(M) = 1` for the
+        Fréchet upper bound :math:`M(u,v) = \min(u,v)`.
+
+        Special cases:
+
+        ============ ======== ======================================
+        :math:`p`    :math:`k(p)` Equivalent measure
+        ============ ======== ======================================
+        1            12       Schweizer–Wolff :math:`\sigma`
+        2            90       Hoeffding :math:`D`
+        ============ ======== ======================================
+
+        Parameters
+        ----------
+        p : int
+            The exponent (default 2).  Pre-tabulated for *p* = 1 … 5.
+
+        Returns
+        -------
+        sympy.Expr or float
+        """
+        self._set_params(args, kwargs)
+        return self._lp_concordance(p)
+
+    def _lp_concordance(self, p: int):
+        k = self._LP_NORM_CONSTANTS.get(p)
+        if k is None:
+            raise ValueError(
+                f"Normalisation constant k({p}) not tabulated.  "
+                f"Supported p values: {sorted(self._LP_NORM_CONSTANTS)}"
+            )
+
+        cdf_expr = self.cdf().func
+        Pi = self.u * self.v
+        integrand = sp.Abs(cdf_expr - Pi) ** p
+
+        # Symbolic attempt
+        try:
+            inner = sp.integrate(integrand, (self.v, 0, 1))
+            result = sp.simplify(k * sp.integrate(inner, (self.u, 0, 1)))
+            if not result.has(sp.Integral):
+                return result
+        except Exception:
+            pass
+
+        # Numerical fallback
+        return self._lp_concordance_numerical(p, k)
+
+    def _lp_concordance_numerical(self, p: int, k: int, n_grid: int = 50) -> float:
+        cdf_expr = self.cdf().func
+        f_cdf = to_numpy_callable(cdf_expr, [self.u, self.v])
+        h = 1.0 / n_grid
+        mid = np.linspace(h / 2, 1 - h / 2, n_grid)
+        uu, vv = np.meshgrid(mid, mid, indexing="ij")
+        C_vals = np.vectorize(f_cdf)(uu, vv)
+        Pi_vals = uu * vv
+        return float(k * np.mean(np.abs(C_vals - Pi_vals) ** p))
+
+    # ==================================================================
+    # Mutual information  I(C)  (copula entropy)
+    # ==================================================================
+
+    def mutual_information(self, *args, **kwargs):
+        r"""
+        Copula-based mutual information (negative copula entropy).
+
+        .. math::
+
+           I(C) = -\iint_{[0,1]^2} c(u,v)\,\ln c(u,v)\,du\,dv
+
+        where :math:`c(u,v) = \partial^2 C/\partial u\,\partial v` is the
+        copula density.  This equals the mutual information of a pair
+        :math:`(X,Y)` whose copula is :math:`C`, regardless of the marginals.
+
+        Range: :math:`[0, \infty)`.
+        :math:`I = 0` iff :math:`C = \Pi` (independence).
+
+        Because the integrand involves :math:`\ln(c)`, symbolic evaluation
+        rarely succeeds; the method defaults to numerical quadrature.
+
+        Parameters
+        ----------
+        n_grid : int
+            Number of grid points per axis for quadrature (default 80).
+
+        Returns
+        -------
+        float
+        """
+        self._set_params(args, kwargs)
+        n_grid = kwargs.pop("n_grid", 80)
+        return self._mutual_information_numerical(n_grid)
+
+    def _mutual_information_numerical(self, n_grid: int = 80) -> float:
+        from copul.exceptions import PropertyUnavailableException
+
+        pdf_expr = self.pdf
+        if callable(pdf_expr) and not isinstance(pdf_expr, sp.Basic):
+            # pdf might be a wrapper callable
+            pass
+        try:
+            f_pdf = to_numpy_callable(pdf_expr, [self.u, self.v])
+        except (TypeError, AttributeError):
+            raise PropertyUnavailableException(
+                "mutual_information requires a symbolic PDF expression."
+            )
+
+        h = 1.0 / n_grid
+        mid = np.linspace(h / 2, 1 - h / 2, n_grid)
+        uu, vv = np.meshgrid(mid, mid, indexing="ij")
+        with np.errstate(divide="ignore", invalid="ignore"):
+            c_vals = np.vectorize(f_pdf)(uu, vv)
+            c_vals = np.maximum(c_vals, 0.0)  # clip negative numerical noise
+            log_c = np.where(c_vals > 1e-300, np.log(c_vals), 0.0)
+            integrand = c_vals * log_c
+        return float(-np.mean(integrand))

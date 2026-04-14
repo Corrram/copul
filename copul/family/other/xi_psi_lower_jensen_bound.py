@@ -144,7 +144,7 @@ class XiPsiLowerJensenBound(BivCopula):
 
     def _pdf_expr(self):
         """Joint density c(u,v) = ∂²C/∂u∂v."""
-        expr = self.cdf.func.diff(self.u).diff(self.v)
+        expr = self.cdf().func.diff(self.u).diff(self.v)
         return SymPyFuncWrapper(expr)
 
     # ===================================================================

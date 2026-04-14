@@ -281,6 +281,47 @@ class BivClayton(BivArchimedeanCopula):
         """
         return self.theta >= 0
 
+    # ------------------------------------------------------------------
+    # Additional dependence measures
+    # ------------------------------------------------------------------
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""
+        Blomqvist's :math:`\beta` for the Clayton copula.
+
+        .. math::
+
+           \beta = 4\,(2^{-\theta}+2^{-\theta}-1)^{-1/\theta}\cdot
+                   \bigl[(\text{at } u=v=\tfrac12)\bigr] - 1
+
+        For :math:`\theta > 0`:
+
+        .. math::
+
+           C(\tfrac12,\tfrac12) = (2^{1-\theta}-1)^{-1/\theta} \cdot 2^{-1}
+                                \;\Longrightarrow\;
+           \beta = 4\,(2\cdot 2^{-\theta}-1)^{-1/\theta} - 1
+        """
+        self._set_params(args, kwargs)
+        theta = float(self.theta)
+        if theta == 0:
+            return 0
+        c_half = max(2 * 2.0 ** (-theta) - 1, 0) ** (-1.0 / theta)
+        return 4.0 * c_half - 1.0
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""
+        Schweizer–Wolff :math:`\sigma` for the Clayton copula.
+
+        For :math:`\theta \ge 0` the Clayton copula is PQD so
+        :math:`\sigma = \rho_S`.  For :math:`\theta \in [-1,0)` it is NQD
+        so :math:`\sigma = -\rho_S`.  In both cases
+        :math:`\sigma = |\rho_S|`.
+        """
+        self._set_params(args, kwargs)
+        rho = self.spearmans_rho()
+        return abs(rho)
+
     def lambda_L(self):
         """
         Lower tail dependence coefficient.
