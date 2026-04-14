@@ -181,7 +181,7 @@ class CuadrasAuge(BivExtremeValueCopula):
         d = float(self.delta)
         if d == 0:
             return 0
-        return 2.0 ** d - 1.0
+        return 2.0**d - 1.0
 
     def schweizer_wolff_sigma(self, *args, **kwargs):
         r"""
@@ -215,7 +215,7 @@ class CuadrasAuge(BivExtremeValueCopula):
         d = float(self.delta)
         if d == 0:
             return 0
-        return 10 * d ** 2 / (18 - 9 * d + d ** 2)
+        return 10 * d**2 / (18 - 9 * d + d**2)
 
     def gini_gamma(self, *args, **kwargs):
         r"""
@@ -247,6 +247,7 @@ class CuadrasAuge(BivExtremeValueCopula):
         # We can compute via the regularised incomplete beta:
         from scipy.special import betainc as _betainc_reg
         from scipy.special import beta as _beta_fn
+
         I_anti = 2 * _betainc_reg(2, 2 - d, 0.5) * _beta_fn(2, 2 - d)
         return float(4 * (I_diag + I_anti) - 2)
 

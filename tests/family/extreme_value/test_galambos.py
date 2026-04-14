@@ -4,8 +4,6 @@ import sympy as sp
 from unittest.mock import patch
 
 from copul.family.extreme_value.galambos import Galambos
-from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class TestGalambos:
@@ -65,28 +63,28 @@ class TestGalambos:
 
     def test_cdf_at_specific_points(self, galambos_copula):
         """Test CDF computation at specific points"""
-        # We'll patch the CDF evaluation to directly test the result
-        with patch.object(CDFWrapper, "__call__") as mock_call:
-            mock_call.return_value = 0.5  # Mock return value
+        # Galambos.cdf routes to cdf_vectorized, so we patch that
+        with patch.object(Galambos, "cdf_vectorized") as mock_cdf:
+            mock_cdf.return_value = np.array([0.5])
 
             # Call CDF at specific points
             result = galambos_copula.cdf(0.5, 0.5)
 
-            # Verify CDF was called correctly
-            mock_call.assert_called_once_with(0.5, 0.5)
+            # Verify cdf_vectorized was called and result is correct
+            mock_cdf.assert_called_once()
             assert result == 0.5
 
     def test_pdf_at_specific_points(self, galambos_copula):
         """Test PDF computation at specific points"""
-        # Similar to CDF test, patch the PDF evaluation
-        with patch.object(SymPyFuncWrapper, "__call__") as mock_call:
-            mock_call.return_value = 1.25  # Mock return value
+        # Galambos.pdf routes to _pdf_numerical, so we patch that
+        with patch.object(Galambos, "_pdf_numerical") as mock_pdf:
+            mock_pdf.return_value = 1.25  # Mock return value
 
             # Call PDF at specific points
             result = galambos_copula.pdf(0.5, 0.5)
 
-            # Verify PDF was called correctly
-            mock_call.assert_called_once_with(0.5, 0.5)
+            # Verify _pdf_numerical was called and result is correct
+            mock_pdf.assert_called_once()
             assert result == 1.25
 
     def test_subexpressions(self, galambos_copula):

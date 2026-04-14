@@ -7,7 +7,6 @@ from copul.family.extreme_value.gumbel_hougaard import (
     GumbelHougaardEV as GumbelHougaard,
 )
 from copul.family.frechet.upper_frechet import UpperFrechet
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class BB5(BivExtremeValueCopula):

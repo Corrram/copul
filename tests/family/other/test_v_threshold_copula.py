@@ -127,9 +127,12 @@ def _rho_nu_from_cdf_grid(C, u, v):
     """
     Compute rho and nu from a sampled CDF grid via trapezoidal integration.
     """
+    # np.trapezoid was introduced in NumPy 2.0 as the preferred name;
+    # np.trapz was removed in NumPy 2.0.
+    _trapz = getattr(np, "trapezoid", None) or np.trapz
     U, V = np.meshgrid(u, v, indexing="ij")
-    I1 = np.trapz(np.trapz(C, v, axis=1), u, axis=0)  # ∬ C
-    I2 = np.trapz(np.trapz((1.0 - U) * C, v, axis=1), u, axis=0)  # ∬ (1-u) C
+    I1 = _trapz(_trapz(C, v, axis=1), u, axis=0)  # ∬ C
+    I2 = _trapz(_trapz((1.0 - U) * C, v, axis=1), u, axis=0)  # ∬ (1-u) C
     rho = 12.0 * I1 - 3.0
     nu = 24.0 * I2 - 2.0
     return rho, nu

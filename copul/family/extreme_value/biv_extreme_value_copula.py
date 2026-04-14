@@ -723,6 +723,88 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         else:
             return simplified_sol.evalf()
 
+    def cond_distr_1(self, u=None, v=None):
+        r"""First conditional distribution :math:`\partial C/\partial u`.
+
+        Uses exact boundary values where possible, otherwise numerical
+        finite differences on :meth:`cdf_vectorized`.
+
+        Parameters
+        ----------
+        u, v : float or tuple
+            Evaluation point in :math:`[0,1]^2`.  If ``u`` is a tuple/list
+            ``(u_val, v_val)`` and ``v`` is ``None``, the values are unpacked
+            automatically.
+
+        Returns
+        -------
+        float
+            Value of :math:`\partial C(u,v)/\partial u`.
+        """
+        import numpy as _np
+
+        # Support calling as cond_distr_1((u, v)) with a tuple
+        if isinstance(u, (tuple, list)) and v is None:
+            u, v = u[0], u[1]
+
+        u_f = float(u) if u is not None else None
+        v_f = float(v) if v is not None else None
+
+        # Boundary cases for ∂C/∂u
+        if v_f == 0.0:
+            return 0.0
+        if v_f == 1.0:
+            return 1.0
+        if u_f is not None and u_f <= 0.0:
+            return 0.0
+
+        h = 1e-7
+        h = min(h, u_f / 2.0, (1.0 - u_f) / 2.0)
+        cu = self.cdf_vectorized(_np.array([u_f + h]), _np.array([v_f]))[0]
+        cm = self.cdf_vectorized(_np.array([u_f - h]), _np.array([v_f]))[0]
+        return float((cu - cm) / (2.0 * h))
+
+    def cond_distr_2(self, u=None, v=None):
+        r"""Second conditional distribution :math:`\partial C/\partial v`.
+
+        Uses exact boundary values where possible, otherwise numerical
+        finite differences on :meth:`cdf_vectorized`.
+
+        Parameters
+        ----------
+        u, v : float or tuple
+            Evaluation point in :math:`[0,1]^2`.  If ``u`` is a tuple/list
+            ``(u_val, v_val)`` and ``v`` is ``None``, the values are unpacked
+            automatically.
+
+        Returns
+        -------
+        float
+            Value of :math:`\partial C(u,v)/\partial v`.
+        """
+        import numpy as _np
+
+        # Support calling as cond_distr_2((u, v)) with a tuple
+        if isinstance(u, (tuple, list)) and v is None:
+            u, v = u[0], u[1]
+
+        u_f = float(u) if u is not None else None
+        v_f = float(v) if v is not None else None
+
+        # Boundary cases for ∂C/∂v
+        if u_f == 0.0:
+            return 0.0
+        if u_f == 1.0:
+            return 1.0
+        if v_f is not None and v_f <= 0.0:
+            return 0.0
+
+        h = 1e-7
+        h = min(h, v_f / 2.0, (1.0 - v_f) / 2.0)
+        cv = self.cdf_vectorized(_np.array([u_f]), _np.array([v_f + h]))[0]
+        cm = self.cdf_vectorized(_np.array([u_f]), _np.array([v_f - h]))[0]
+        return float((cv - cm) / (2.0 * h))
+
     @property
     def is_ci(self):
         r"""Whether the copula is conditionally increasing.
