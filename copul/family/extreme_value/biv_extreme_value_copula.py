@@ -805,6 +805,149 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         cm = self.cdf_vectorized(_np.array([u_f]), _np.array([v_f - h]))[0]
         return float((cv - cm) / (2.0 * h))
 
+    # ------------------------------------------------------------------
+    # Analytical tail dependence via Pickands function
+    # ------------------------------------------------------------------
+
+    def lambda_L(self):
+        r"""Lower tail dependence coefficient for extreme value copulas.
+
+        All bivariate extreme value copulas have :math:`\lambda_L = 0`.
+
+        Returns
+        -------
+        float
+            Always 0.
+        """
+        return 0.0
+
+    def lambda_U(self):
+        r"""Upper tail dependence coefficient for extreme value copulas.
+
+        .. math::
+
+           \lambda_U = 2\bigl(1 - A(\tfrac12)\bigr)
+
+        where :math:`A` is the Pickands dependence function.
+
+        Returns
+        -------
+        float
+
+        References
+        ----------
+        Gudendorf & Segers (2010), *Extreme-Value Copulas*.
+        """
+        A_half = float(self.pickands(0.5))
+        return 2.0 * (1.0 - A_half)
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta` for extreme value copulas.
+
+        Since :math:`C(\tfrac12,\tfrac12) = (\tfrac14)^{A(1/2)}`:
+
+        .. math::
+
+           \beta = 4 \cdot (1/4)^{A(1/2)} - 1
+
+        Returns
+        -------
+        float
+        """
+        if args or kwargs:
+            self._set_params(args, kwargs)
+        A_half = float(self.pickands(0.5))
+        return 4.0 * (0.25 ** A_half) - 1.0
+
+    def gini_gamma(self, *args, **kwargs):
+        r"""Gini's :math:`\gamma` for extreme value copulas.
+
+        .. math::
+
+           \gamma = 4\!\left[
+               \int_0^1 t^{A(1/2)}\,dt
+             + \int_0^1 \bigl(t(1-t)\bigr)^{A\!\left(\frac{\ln(1-t)}
+                       {\ln(t(1-t))}\right)}\,dt
+           \right] - 2
+
+        Computed numerically via the vectorized CDF.
+
+        Returns
+        -------
+        float
+        """
+        if args or kwargs:
+            self._set_params(args, kwargs)
+        from scipy.integrate import quad
+
+        def diag(t):
+            if t <= 0 or t >= 1:
+                return 0.0
+            return float(self.cdf_vectorized(
+                np.array([t]), np.array([t])
+            )[0])
+
+        def anti(t):
+            if t <= 0 or t >= 1:
+                return 0.0
+            return float(self.cdf_vectorized(
+                np.array([t]), np.array([1.0 - t])
+            )[0])
+
+        int1, _ = quad(diag, 0, 1, limit=100)
+        int2, _ = quad(anti, 0, 1, limit=100)
+        return 4.0 * (int1 + int2) - 2.0
+
+    def tail_dependence_function(self, t, lower=True):
+        r"""Evaluate the tail dependence function at :math:`t \in [0,1]`.
+
+        For bivariate extreme value copulas the *upper* TDF has the
+        closed form
+
+        .. math::
+
+           b_U(t) = 1 - A(t)
+
+        The lower TDF is identically 0 (since :math:`\lambda_L = 0`).
+
+        Parameters
+        ----------
+        t : float or array_like
+            Point(s) in :math:`[0,1]`.
+        lower : bool
+            If ``True``, return the lower TDF (always 0).
+            If ``False``, return the upper TDF.
+
+        Returns
+        -------
+        float or numpy.ndarray
+        """
+        t = np.asarray(t, dtype=float)
+        if lower:
+            return np.zeros_like(t) if t.ndim > 0 else 0.0
+        # Upper TDF: b(t) = 1 - A(t)
+        if t.ndim == 0:
+            return 1.0 - float(self.pickands(float(t)))
+        return np.array([1.0 - float(self.pickands(float(ti))) for ti in t.ravel()]).reshape(t.shape)
+
+    def tail_order(self):
+        r"""Tail order :math:`\kappa` for extreme value copulas.
+
+        For any bivariate extreme value copula the lower tail order is
+        :math:`\kappa_L = 1 / A(1/2)` and the upper tail order is 1
+        whenever :math:`\lambda_U > 0`, or the rate at which
+        :math:`A(t) \to 1` near the endpoints.
+
+        Returns
+        -------
+        dict
+            ``{"lower": kappa_L, "upper": kappa_U}``
+        """
+        A_half = float(self.pickands(0.5))
+        kappa_L = 1.0 / A_half if A_half > 0 else float("inf")
+        kappa_U = 1.0 if A_half < 1.0 else float("inf")
+        return {"lower": kappa_L, "upper": kappa_U}
+
     @property
     def is_ci(self):
         r"""Whether the copula is conditionally increasing.

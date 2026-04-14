@@ -504,3 +504,54 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         rho = float(self.rho)
         rho = max(-1.0, min(1.0, rho))
         return (2.0 / np.pi) * np.arcsin(rho)
+
+    def lambda_L(self):
+        r"""Lower tail dependence for the Gaussian copula.
+
+        The Gaussian copula has **no tail dependence** for
+        :math:`\rho < 1`:
+
+        .. math::
+
+           \lambda_L = 0 \quad\text{for } \rho \in [-1, 1).
+
+        Returns
+        -------
+        float
+            Always 0 (unless :math:`\rho = 1`, comonotonic limit).
+        """
+        rho_val = float(self.rho)
+        if rho_val >= 1.0:
+            return 1.0
+        return 0.0
+
+    def lambda_U(self):
+        r"""Upper tail dependence for the Gaussian copula.
+
+        Same as :meth:`lambda_L` — zero for :math:`\rho < 1`.
+
+        Returns
+        -------
+        float
+        """
+        return self.lambda_L()
+
+    def tail_order(self):
+        r"""Tail order for the Gaussian copula.
+
+        .. math::
+
+           \kappa_L = \kappa_U = \frac{1}{1 - \rho}
+
+        for :math:`-1 \le \rho < 1`.
+
+        Returns
+        -------
+        dict
+        """
+        rho_val = float(self.rho)
+        if rho_val >= 1.0:
+            kappa = 1.0
+        else:
+            kappa = 1.0 / (1.0 - rho_val)
+        return {"lower": kappa, "upper": kappa}

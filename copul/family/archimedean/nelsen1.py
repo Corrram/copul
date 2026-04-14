@@ -306,7 +306,8 @@ class BivClayton(BivArchimedeanCopula):
         theta = float(self.theta)
         if theta == 0:
             return 0
-        c_half = max(2 * 2.0 ** (-theta) - 1, 0) ** (-1.0 / theta)
+        # C(1/2,1/2) = (2·2^θ - 1)^{-1/θ}
+        c_half = (2.0 * 2.0 ** theta - 1.0) ** (-1.0 / theta)
         return 4.0 * c_half - 1.0
 
     def schweizer_wolff_sigma(self, *args, **kwargs):

@@ -393,6 +393,93 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         )
         return sympy.simplify(2 - sympy.limit(expr, self.y, 0, dir="+"))
 
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta` for Archimedean copulas.
+
+        Uses the generator-based formula:
+
+        .. math::
+
+           \beta = 4\,\varphi^{[-1]}\!\bigl(2\,\varphi(\tfrac12)\bigr) - 1
+
+        where :math:`\varphi` is the generator and
+        :math:`\varphi^{[-1]}` is the (pseudo-)inverse generator.
+
+        Returns
+        -------
+        float or sympy.Expr
+        """
+        self._set_params(args, kwargs)
+        # φ(1/2)
+        gen_half = self.generator(t=sympy.Rational(1, 2)).func
+        # φ^{-1}(2·φ(1/2))
+        c_half = self.inv_generator(y=2 * gen_half).func
+        result = 4 * c_half - 1
+        try:
+            return float(result)
+        except (TypeError, ValueError):
+            return sympy.simplify(result)
+
+    def tail_order(self):
+        r"""Tail order for Archimedean copulas.
+
+        Lower tail order:
+
+        .. math::
+
+           \kappa_L = \lim_{s\to\infty}
+                      \frac{\log\,\varphi^{[-1]}(2s)}{\log\,\varphi^{[-1]}(s)}
+
+        Upper tail order is determined via the survival copula.
+
+        Computed numerically from the generator.
+
+        Returns
+        -------
+        dict
+            ``{"lower": kappa_L, "upper": kappa_U}``
+        """
+        import numpy as _np
+
+        try:
+            gen_np = sympy.lambdify(self.t, self.generator.func, "numpy")
+            inv_np = sympy.lambdify(self.y, self.inv_generator.func, "numpy")
+        except Exception:
+            # Fall back to base class numerical approach
+            return super().tail_order()
+
+        # Lower tail order: kappa_L via log(φ^{-1}(2s)) / log(φ^{-1}(s))
+        try:
+            ss = _np.array([10.0, 50.0, 100.0, 500.0, 1000.0])
+            inv_s = _np.array([float(inv_np(si)) for si in ss])
+            inv_2s = _np.array([float(inv_np(2.0 * si)) for si in ss])
+            pos = (inv_s > 0) & (inv_2s > 0)
+            if _np.sum(pos) >= 2:
+                ratios = _np.log(inv_2s[pos]) / _np.log(inv_s[pos])
+                kappa_L = float(_np.median(ratios))
+            else:
+                kappa_L = float("inf")
+        except Exception:
+            kappa_L = float("inf")
+
+        # Upper tail order: kappa_U via log(1 - φ^{-1}(2s)) / log(1 - φ^{-1}(s))
+        try:
+            ss_u = _np.array([0.001, 0.005, 0.01, 0.05, 0.1])
+            inv_s_u = _np.array([float(inv_np(si)) for si in ss_u])
+            inv_2s_u = _np.array([float(inv_np(2.0 * si)) for si in ss_u])
+            surv_s = 1.0 - inv_s_u
+            surv_2s = 1.0 - inv_2s_u
+            pos_u = (surv_s > 0) & (surv_2s > 0)
+            if _np.sum(pos_u) >= 2:
+                ratios_u = _np.log(surv_2s[pos_u]) / _np.log(surv_s[pos_u])
+                kappa_U = float(_np.median(ratios_u))
+            else:
+                kappa_U = float("inf")
+        except Exception:
+            kappa_U = float("inf")
+
+        return {"lower": kappa_L, "upper": kappa_U}
+
     def plot_generator(self, start=0, stop=1):
         """
         Plot the generator and inverse generator functions.
