@@ -169,6 +169,49 @@ class MarshallOlkin(BivExtremeValueCopula):
             / (3 - sympy.Min(self.alpha_1, self.alpha_2))
         )
 
+    # ------------------------------------------------------------------
+    # Additional dependence measures — closed forms
+    # ------------------------------------------------------------------
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""
+        Schweizer–Wolff :math:`\sigma` for the Marshall-Olkin copula.
+
+        The MO copula is PQD for all :math:`\alpha_1, \alpha_2 \ge 0`, so
+
+        .. math::
+
+           \sigma = \rho_S
+                  = \frac{3\,\alpha_1\,\alpha_2}
+                         {2\alpha_1 + 2\alpha_2 - \alpha_1\alpha_2}
+        """
+        self._set_params(args, kwargs)
+        a1, a2 = self.alpha_1, self.alpha_2
+        if a1 == 0 and a2 == 0:
+            return 0
+        return 3 * a1 * a2 / (2 * a1 + 2 * a2 - a1 * a2)
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""
+        Blomqvist's :math:`\beta` for the Marshall-Olkin copula.
+
+        .. math::
+
+           \beta = 4\,C(\tfrac12,\tfrac12) - 1
+                 = 4 \cdot 2^{-\max(\alpha_1,\alpha_2)} \cdot
+                   (\tfrac14)^{1-?} - 1
+
+        Uses the general :math:`4C(1/2,1/2)-1` formula directly.
+        """
+        self._set_params(args, kwargs)
+        a1 = float(self.alpha_1)
+        a2 = float(self.alpha_2)
+        # C(1/2,1/2) = min(0.5^{1-a1} * 0.5, 0.5 * 0.5^{1-a2})
+        #            = min(0.5^{2-a1}, 0.5^{2-a2})
+        #            = 0.5^{max(2-a1, 2-a2)} = 0.5^{2 - min(a1,a2)}
+        c_half = 0.5 ** (2 - min(a1, a2))
+        return 4 * c_half - 1
+
 
 def MarshallOlkinDiag():
     """Creates a Marshall-Olkin copula with alpha_1 = alpha_2"""

@@ -62,6 +62,37 @@ class GumbelHougaard(BivArchimedeanCopula):
         theta = float(self.theta)
         return 6.0 / (2.0 ** (1.0 / theta) + 1.0) - 2.0
 
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""
+        Blomqvist's :math:`\beta` for the Gumbel-Hougaard copula.
+
+        .. math::
+
+           \beta = 4\,(2^{-1/\theta} + 2^{-1/\theta} - 1)^{1/\theta}\cdot ... - 1
+
+        The diagonal section :math:`C(t,t) = t^{2-2^{1-1/\theta}}` is NOT
+        exact for GH (it uses the Pickands form).  Evaluate directly:
+
+        .. math::
+
+           C(\tfrac12,\tfrac12) = \exp\!\bigl(-[(-\ln\tfrac12)^\theta
+                                  + (-\ln\tfrac12)^\theta]^{1/\theta}\bigr)
+                                = \exp\bigl(-2^{1/\theta}\ln 2\bigr)
+                                = 2^{-2^{1/\theta}}
+        """
+        self._set_params(args, kwargs)
+        theta = float(self.theta)
+        return 4.0 * 2.0 ** (-(2.0 ** (1.0 / theta))) - 1.0
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""
+        Schweizer–Wolff :math:`\sigma` for the Gumbel-Hougaard copula.
+
+        GH is PQD for :math:`\theta \ge 1`, so :math:`\sigma = \rho_S`.
+        """
+        self._set_params(args, kwargs)
+        return abs(self.spearmans_rho())
+
     def rvs(
         self, n: int = 1, random_state: Optional[int] = None, approximate: bool = False
     ) -> np.ndarray:

@@ -425,3 +425,82 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
 
         footrule = (3.0 / np.pi) * np.arcsin((1.0 + rho) / 2.0) - 0.5
         return footrule
+
+    # ------------------------------------------------------------------
+    # Dependence measures with known closed forms
+    # ------------------------------------------------------------------
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""
+        Schweizer–Wolff :math:`\sigma` for the Gaussian copula.
+
+        The bivariate Gaussian copula is PQD when :math:`\rho \ge 0` and
+        NQD when :math:`\rho < 0`, so the absolute value in the definition
+        of :math:`\sigma` is redundant:
+
+        .. math::
+
+           \sigma(\rho)
+             = \lvert\rho_S\rvert
+             = \frac{6}{\pi}\,\bigl|\!\arcsin(\rho/2)\bigr|
+
+        Returns
+        -------
+        float
+        """
+        self._set_params(args, kwargs)
+        rho = float(self.rho)
+        rho = max(-1.0, min(1.0, rho))
+        return (6.0 / np.pi) * abs(np.arcsin(rho / 2.0))
+
+    def hoeffdings_d(self, *args, **kwargs):
+        r"""
+        Hoeffding's :math:`D` for the Gaussian copula (numerical).
+
+        No simple closed form is known.  Falls back to base-class
+        numerical quadrature.
+
+        Returns
+        -------
+        float
+        """
+        self._set_params(args, kwargs)
+        return self._hoeffdings_d_numerical()
+
+    def gini_gamma(self, *args, **kwargs):
+        r"""
+        Gini's :math:`\gamma` for the Gaussian copula.
+
+        .. math::
+
+           \gamma(\rho)
+             = \frac{8}{\pi}\,\arcsin(\rho/2)
+
+        See Nelsen (2006), Exercise 5.19.
+
+        Returns
+        -------
+        float
+        """
+        self._set_params(args, kwargs)
+        rho = float(self.rho)
+        rho = max(-1.0, min(1.0, rho))
+        return (8.0 / np.pi) * np.arcsin(rho / 2.0)
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""
+        Blomqvist's :math:`\beta` for the Gaussian copula.
+
+        .. math::
+
+           \beta(\rho) = \frac{2}{\pi}\,\arcsin(\rho)
+
+        Returns
+        -------
+        float
+        """
+        if args or kwargs:
+            self._set_params(args, kwargs)
+        rho = float(self.rho)
+        rho = max(-1.0, min(1.0, rho))
+        return (2.0 / np.pi) * np.arcsin(rho)

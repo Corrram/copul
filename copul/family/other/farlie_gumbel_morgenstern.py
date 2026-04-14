@@ -124,9 +124,75 @@ class FarlieGumbelMorgenstern(BivCopula):
         """
         Calculate Gini's gamma for the FGM copula.
 
-        For FGM, Gini's gamma = 2 * theta / 3
+        For FGM, Gini's gamma = 4*theta/15
         """
         return 4 * self.theta / 15
+
+    # ------------------------------------------------------------------
+    # Dependence measures with known closed forms
+    # ------------------------------------------------------------------
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""
+        Schweizer–Wolff :math:`\sigma` for the FGM copula.
+
+        Since :math:`C - \Pi = \theta\,u\,v\,(1-u)(1-v)` has constant sign
+        (PQD when :math:`\theta>0`, NQD when :math:`\theta<0`):
+
+        .. math::
+
+           \sigma = 12\,|\theta|\,
+             \left[\int_0^1 t(1-t)\,dt\right]^2
+             = \frac{|\theta|}{3}
+        """
+        self._set_params(args, kwargs)
+        return abs(self.theta) / 3
+
+    def hoeffdings_d(self, *args, **kwargs):
+        r"""
+        Hoeffding's :math:`D` for the FGM copula.
+
+        .. math::
+
+           D = 90\,\theta^2
+             \left[\int_0^1 t^2(1-t)^2\,dt\right]^2
+             = \frac{\theta^2}{10}
+        """
+        self._set_params(args, kwargs)
+        return self.theta ** 2 / 10
+
+    def lp_concordance(self, p: int = 2, *args, **kwargs):
+        r"""
+        :math:`L_p` concordance distance for the FGM copula.
+
+        .. math::
+
+           \delta_p = k(p)\,|\theta|^p
+             \left[\operatorname{B}(p+1,\,p+1)\right]^2
+
+        where :math:`\operatorname{B}` is the beta function.
+        """
+        self._set_params(args, kwargs)
+        from math import factorial
+
+        k_table = {1: 12, 2: 90, 3: 560, 4: 3150, 5: 16632}
+        k = k_table.get(p)
+        if k is None:
+            raise ValueError(f"k({p}) not tabulated; supported p: {sorted(k_table)}")
+        # B(p+1, p+1) = (p!)^2 / (2p+1)!
+        beta_val = factorial(p) ** 2 / factorial(2 * p + 1)
+        return k * abs(self.theta) ** p * beta_val ** 2
+
+    def mutual_information(self, *args, **kwargs):
+        r"""
+        Mutual information for the FGM copula (numerical).
+
+        The density is :math:`c(u,v) = 1 + \theta(1-2u)(1-2v)`. No known
+        simple closed form for :math:`\int c \ln c`; delegates to the
+        base-class numerical quadrature.
+        """
+        self._set_params(args, kwargs)
+        return self._mutual_information_numerical()
 
 
 if __name__ == "__main__":
