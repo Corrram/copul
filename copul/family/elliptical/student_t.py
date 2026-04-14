@@ -1,3 +1,4 @@
+import numpy as np
 import sympy
 from scipy.stats import multivariate_t
 from scipy.stats import t as student_t
@@ -189,3 +190,161 @@ class StudentT(EllipticalCopula):
         return lambda u, v: SymPyFuncWrapper(
             sympy.S(StudentTCopula(self.rho, df=self.nu).pdf([u, v]))
         )
+
+    # ------------------------------------------------------------------
+    # Analytical dependence measures
+    # ------------------------------------------------------------------
+
+    def lambda_L(self):
+        r"""Lower tail dependence coefficient for the Student-t copula.
+
+        .. math::
+
+           \lambda_L = 2\,t_{\nu+1}\!\left(
+               -\sqrt{\frac{(\nu+1)(1-\rho)}{1+\rho}}
+           \right)
+
+        where :math:`t_{\nu+1}` is the CDF of the univariate Student-t
+        distribution with :math:`\nu + 1` degrees of freedom.
+
+        Returns
+        -------
+        float
+            Lower tail dependence coefficient in :math:`[0, 1]`.
+
+        References
+        ----------
+        Demarta & McNeil (2005), *The t Copula and Related Copulas*,
+        International Statistical Review 73(1), 111--129.
+        """
+        rho_val = float(self.rho)
+        nu_val = float(self.nu)
+        arg = -np.sqrt((nu_val + 1.0) * (1.0 - rho_val) / (1.0 + rho_val))
+        return 2.0 * student_t.cdf(arg, df=nu_val + 1.0)
+
+    def lambda_U(self):
+        r"""Upper tail dependence coefficient for the Student-t copula.
+
+        The Student-t copula is radially symmetric, so
+        :math:`\lambda_U = \lambda_L`.
+
+        Returns
+        -------
+        float
+            Upper tail dependence coefficient in :math:`[0, 1]`.
+        """
+        return self.lambda_L()
+
+    def kendalls_tau(self, *args, **kwargs):
+        r"""Kendall's :math:`\tau` for the Student-t copula.
+
+        .. math::
+
+           \tau = \frac{2}{\pi}\,\arcsin(\rho)
+
+        (same formula as the Gaussian copula — independent of :math:`\nu`).
+
+        Returns
+        -------
+        float
+        """
+        self._set_params(args, kwargs)
+        rho_val = float(self.rho)
+        return (2.0 / np.pi) * np.arcsin(rho_val)
+
+    def spearmans_rho(self, *args, **kwargs):
+        r"""Spearman's :math:`\rho_S` for the Student-t copula.
+
+        .. math::
+
+           \rho_S = \frac{6}{\pi}\,\arcsin\!\left(\frac{\rho}{2}\right)
+
+        (same formula as the Gaussian copula — independent of :math:`\nu`).
+
+        Returns
+        -------
+        float
+        """
+        self._set_params(args, kwargs)
+        rho_val = float(self.rho)
+        return (6.0 / np.pi) * np.arcsin(rho_val / 2.0)
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta` for the Student-t copula.
+
+        .. math::
+
+           \beta = \frac{2}{\pi}\,\arcsin(\rho)
+
+        (same formula as the Gaussian copula).
+
+        Returns
+        -------
+        float
+        """
+        self._set_params(args, kwargs)
+        rho_val = float(self.rho)
+        return (2.0 / np.pi) * np.arcsin(rho_val)
+
+    def tail_dependence_function(self, t, lower=True):
+        r"""Evaluate the tail dependence function at :math:`t \in [0,1]`.
+
+        For the Student-t copula:
+
+        .. math::
+
+           b_L(t) = (1-t)\,t_{\nu+1}\!\left(
+                    -\sqrt{\frac{(\nu+1)(1 - \rho_{t})}{1 + \rho_{t}}}
+                    \right)
+                  + t\,t_{\nu+1}\!\left(
+                    -\sqrt{\frac{(\nu+1)(1 - \tilde\rho_{t})}{1 + \tilde\rho_{t}}}
+                    \right)
+
+        where the mixed-quantile correlations involve the parameter.
+        The simple diagonal case is :math:`b_L(1/2) = \lambda_L / 2`.
+
+        Parameters
+        ----------
+        t : float or array_like
+            Point(s) in :math:`[0, 1]`.
+        lower : bool
+            If True, evaluate the lower TDF. If False, upper TDF.
+
+        Returns
+        -------
+        float or numpy.ndarray
+        """
+        # For the symmetric Student-t copula, the full bivariate TDF has a
+        # closed form.  We use the numerically stable diagonal approach:
+        #   b(t) = lim_{s→0+} C(s·(1-t), s·t) / s         (lower)
+        #   b(t) = lim_{s→0+} Ĉ(s·(1-t), s·t) / s         (upper)
+        # Evaluated via the R(t) representation using the Pickands-like
+        # decomposition.  For the t-copula, the full analytical form is
+        # non-trivial, so we use a stable numerical approximation.
+        t = np.asarray(t, dtype=float)
+        rho_val = float(self.rho)
+        nu_val = float(self.nu)
+
+        eps = 1e-7
+        out = np.empty_like(t)
+
+        for i in np.ndindex(t.shape):
+            ti = t[i]
+            if ti <= 0:
+                out[i] = 0.0
+            elif ti >= 1:
+                out[i] = 0.0
+            else:
+                u_s = eps * (1 - ti)
+                v_s = eps * ti
+                if lower:
+                    c_val = self._calculate_student_t_cdf(u_s, v_s, rho_val, nu_val)
+                else:
+                    c_val = u_s + v_s - 1 + self._calculate_student_t_cdf(
+                        1 - u_s, 1 - v_s, rho_val, nu_val
+                    )
+                out[i] = c_val / eps
+
+        if out.ndim == 0:
+            return float(out)
+        return out

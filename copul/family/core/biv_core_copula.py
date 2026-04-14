@@ -1035,6 +1035,127 @@ class BivCoreCopula:
             return float(R_expr.subs(t, t_val))
         return R_expr
 
+    def tail_dependence_function(self, t, lower=True):
+        r"""Tail dependence function (TDF) evaluated numerically.
+
+        The *lower* TDF is defined as
+
+        .. math::
+
+           b_L(t) = \lim_{s\to 0^+}
+                    \frac{C\bigl(s(1-t),\, st\bigr)}{s},
+                    \qquad t\in[0,1],
+
+        and the *upper* TDF as
+
+        .. math::
+
+           b_U(t) = \lim_{s\to 0^+}
+                    \frac{\hat C\bigl(s(1-t),\, st\bigr)}{s}
+
+        where :math:`\hat C` is the survival copula.
+
+        The diagonal value :math:`b(1/2)` equals :math:`\lambda / 2`
+        where :math:`\lambda` is the corresponding tail dependence
+        coefficient.  The full function describes *how* probability
+        mass concentrates in the tail.
+
+        Parameters
+        ----------
+        t : float or array_like
+            Point(s) in :math:`[0,1]`.
+        lower : bool
+            ``True`` for the lower TDF, ``False`` for the upper TDF.
+
+        Returns
+        -------
+        float or numpy.ndarray
+
+        References
+        ----------
+        Joe & Li (2011), *Tail Risk of Multivariate Regular Variation*,
+        Methodology and Computing in Applied Probability 13, 671--693.
+        """
+        t = np.asarray(t, dtype=float)
+        eps = 1e-7
+
+        if hasattr(self, "cdf_vectorized"):
+            def _cdf_scalar(u, v):
+                return float(self.cdf_vectorized(
+                    np.array([u]), np.array([v])
+                )[0])
+        else:
+            def _cdf_scalar(u, v):
+                return float(self.cdf(u=u, v=v))
+
+        def _eval(ti):
+            if ti <= 0 or ti >= 1:
+                return 0.0
+            u_s = eps * (1.0 - ti)
+            v_s = eps * ti
+            if lower:
+                return _cdf_scalar(u_s, v_s) / eps
+            else:
+                return (u_s + v_s - 1.0 + _cdf_scalar(1.0 - u_s, 1.0 - v_s)) / eps
+
+        if t.ndim == 0:
+            return _eval(float(t))
+        return np.array([_eval(float(ti)) for ti in t.ravel()]).reshape(t.shape)
+
+    def tail_order(self):
+        r"""Tail order :math:`\kappa` (lower and upper).
+
+        The tail order describes the polynomial rate at which
+        :math:`C(t,t)` vanishes as :math:`t\to 0^+`:
+
+        .. math::
+
+           C(t,t) \sim t^{\kappa_L} \ell(t), \qquad t \to 0^+.
+
+        Analogously, :math:`\hat C(t,t) \sim t^{\kappa_U}\ell(t)` as
+        :math:`t\to 0^+` defines the upper tail order.
+
+        - :math:`\kappa = 1` ⟹ tail dependence (:math:`\lambda > 0`).
+        - :math:`1 < \kappa < 2` ⟹ intermediate tail dependence.
+        - :math:`\kappa = 2` ⟹ tail independence (same rate as Π).
+
+        Computed here by a log--log regression on small quantiles.
+
+        Returns
+        -------
+        dict
+            ``{"lower": kappa_L, "upper": kappa_U}``
+
+        References
+        ----------
+        Ledford & Tawn (1996), *Statistics for near independence in
+        multivariate extreme values*, Biometrika 83, 169--187.
+        """
+        ts = np.array([1e-5, 5e-5, 1e-4, 5e-4, 1e-3])
+        log_t = np.log(ts)
+
+        if hasattr(self, "cdf_vectorized"):
+            c_diag = self.cdf_vectorized(ts, ts)
+        else:
+            c_diag = np.array([float(self.cdf(u=t, v=t)) for t in ts])
+
+        # Lower tail order: C(t,t) ~ t^kappa_L
+        pos_mask = c_diag > 0
+        if np.sum(pos_mask) >= 2:
+            kappa_L = float(np.polyfit(log_t[pos_mask], np.log(c_diag[pos_mask]), 1)[0])
+        else:
+            kappa_L = float("inf")
+
+        # Upper tail order: Chat(t,t) ~ t^kappa_U
+        c_surv = 1.0 - 2.0 * ts + c_diag  # Ĉ(t,t)
+        pos_mask_u = c_surv > 0
+        if np.sum(pos_mask_u) >= 2:
+            kappa_U = float(np.polyfit(log_t[pos_mask_u], np.log(c_surv[pos_mask_u]), 1)[0])
+        else:
+            kappa_U = float("inf")
+
+        return {"lower": kappa_L, "upper": kappa_U}
+
     def plot_tail_concentration(self, n_pts: int = 200) -> "plt.Figure":
         r"""
         Plot the lower and upper tail concentration functions on one figure.
