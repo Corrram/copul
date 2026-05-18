@@ -527,6 +527,11 @@ class XiNuBoundaryCopula(BivCopula):
         else:
             raise ValueError("plot_type must be '3d', 'contour', or 'slices'.")
 
+    @property
+    def is_absolutely_continuous(self) -> bool:
+        """XiNuBoundaryCopula has a density everywhere on (0,1)^2."""
+        return True
+
     def plot_cond_distr_2(self, *, plot_type="3d", log_z=False, **kwargs):
         """Not available: q(v) is implicit and prevents a closed form."""
         raise NotImplementedError(
@@ -540,5 +545,7 @@ if __name__ == "__main__":
     b_values = [0.5, 1, 2]  # corresponds to mu = 0.2, 0.5, 1.0, 2.0
     for b in b_values:
         copula = XiNuBoundaryCopula(b=b)
-        copula.plot_pdf(plot_type="contour", levels=999, grid_size=2000, zlim=(0, 8))
+        tp2 = copula.is_tp2()
+        print(f"{b}: {tp2}")
+        # copula.plot_pdf(plot_type="contour", levels=999, grid_size=2000, zlim=(0, 8))
         # copula.plot_cond_distr_1(plot_type="contour", levels=999, grid_size=999)

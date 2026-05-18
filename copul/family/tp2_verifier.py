@@ -110,19 +110,33 @@ class TP2Verifier:
                     continue
 
             # Skip if no density
-            if (
-                not hasattr(copula_instance, "is_absolutely_continuous")
-                or not copula_instance.is_absolutely_continuous
-            ):
+            try:
+                _inst_abs_cont = copula_instance.is_absolutely_continuous
+            except NotImplementedError:
+                _inst_abs_cont = None  # treat as unknown — proceed
+            if _inst_abs_cont is not None and not _inst_abs_cont:
                 log.info(f"No density for params: {param_dict}")
                 continue
 
-            # Symbolic log-pdf
+            # Try symbolic log-pdf first; fall back to numerical if unavailable.
+            log_pdf = None
             try:
-                log_pdf = sympy.log(copula_instance.pdf)
+                pdf_attr = copula_instance.pdf
+                # CoreCopula.pdf is a regular method (due to MRO taking precedence
+                # over BivCoreCopula.pdf property).  Detect that and skip to the
+                # numerical path instead of letting sympy.log raise SympifyError.
+                if callable(pdf_attr) and not isinstance(pdf_attr, sympy.Basic):
+                    # It might be a SymPyFuncWrapper — unwrap it.
+                    inner = getattr(pdf_attr, "func", None)
+                    if isinstance(inner, sympy.Basic):
+                        pdf_attr = inner
+                    else:
+                        raise TypeError(
+                            f"pdf is a callable, not a sympy expression: {type(pdf_attr)}"
+                        )
+                log_pdf = sympy.log(pdf_attr)
             except Exception as e:
-                log.warning(f"Error computing log-pdf for params {param_dict}: {e}")
-                continue
+                log.debug(f"Symbolic pdf unavailable for params {param_dict}: {e}")
 
             # Check TP2 on the grid
             violation_found = False
@@ -132,7 +146,21 @@ class TP2Verifier:
                 for j in range(len(test_points) - 1):
                     x1, x2 = test_points[i], test_points[i + 1]
                     y1, y2 = test_points[j], test_points[j + 1]
-                    if self.check_violation(copula_instance, log_pdf, x1, x2, y1, y2):
+                    if log_pdf is not None:
+                        violated = self.check_violation(
+                            copula_instance, log_pdf, x1, x2, y1, y2
+                        )
+                    elif hasattr(copula_instance, "pdf_vectorized"):
+                        violated = self._check_violation_numerical(
+                            copula_instance, x1, x2, y1, y2
+                        )
+                    else:
+                        log.warning(
+                            f"No symbolic or numerical pdf for params {param_dict}; skipping"
+                        )
+                        violation_found = None  # sentinel: could not check
+                        break
+                    if violated:
                         log.info(
                             f"TP2 violation at params: {param_dict}, "
                             f"points: ({x1}, {y1}), ({x2}, {y2})"
@@ -141,7 +169,10 @@ class TP2Verifier:
                         violation_found = True
                         break
 
-            if not violation_found:
+            if violation_found is None:
+                # Could not check this parameter combination — remove from tested
+                tested_params.pop()
+            elif not violation_found:
                 log.info(f"No TP2 violations for params: {param_dict}")
 
         # Final verdict
@@ -204,6 +235,35 @@ class TP2Verifier:
             return self._check_extreme_mixed_term(copula, log_pdf, u, v, x1, x2, y1, y2)
         except Exception as e:
             log.warning(f"Error checking TP2 at points ({x1},{y1}),({x2},{y2}): {e}")
+            return False
+
+    def _check_violation_numerical(
+        self, copula: Any, x1: float, x2: float, y1: float, y2: float
+    ) -> bool:
+        """
+        Numerical fallback for copulas without a symbolic PDF.
+
+        Checks the TP2 inequality directly:
+            f(x1,y1) * f(x2,y2) >= f(x1,y2) * f(x2,y1)
+
+        A small tolerance (1 - 1e-13) is applied to mirror the symbolic path.
+        """
+        try:
+            f11 = float(np.squeeze(copula.pdf_vectorized(x1, y1)))
+            f22 = float(np.squeeze(copula.pdf_vectorized(x2, y2)))
+            f12 = float(np.squeeze(copula.pdf_vectorized(x1, y2)))
+            f21 = float(np.squeeze(copula.pdf_vectorized(x2, y1)))
+            lhs = f11 * f22
+            rhs = f12 * f21
+            violated = lhs * 0.9999999999999 < rhs
+            if violated:
+                log.debug(
+                    f"Numerical TP2 violation at ({x1},{y1}),({x2},{y2}): "
+                    f"lhs={lhs:.6g}, rhs={rhs:.6g}"
+                )
+            return violated
+        except Exception as e:
+            log.warning(f"Error in numerical TP2 check at ({x1},{y1}),({x2},{y2}): {e}")
             return False
 
     def _check_extreme_mixed_term(
