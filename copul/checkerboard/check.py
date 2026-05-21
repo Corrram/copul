@@ -231,6 +231,9 @@ class Check:
 
         return ok, report
 
+    def is_copula(self, tol=1e-10, warn=False, raise_on_fail=False, report_details=False):
+        return self.validate_copula(tol=tol, warn=warn, raise_on_fail=raise_on_fail, report_details=report_details)
+
     def lambda_L(self):
         """Lower tail dependence (usually 0 for a checkerboard copula)."""
         return 0
