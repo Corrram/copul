@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(python -c ':*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(.venv\\\\Scripts\\\\python.exe -c \"import xicorpy; print\\('xicorpy ok'\\)\")",
+      "Bash(.venv\\\\Scripts\\\\python.exe -c \"import copul; c = copul.Clayton\\(2\\); s = c.rvs\\(100, random_state=42\\); print\\(s.shape\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(r'C:\\\\Users\\\\Admin\\\\Documents\\\\repositories\\\\copul\\\\notes\\\\examples\\\\simulation_study_xi_estimator.py', encoding='utf-8'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(mkdir -p C:/Users/Admin/Documents/repositories/approximating_copulas/tables)",
+      "Bash(cp C:/Users/Admin/Documents/repositories/copul/notes/examples/images/simulation_summary.tex C:/Users/Admin/Documents/repositories/approximating_copulas/tables/simulation_summary.tex)",
+      "Bash(cp C:/Users/Admin/Documents/repositories/copul/notes/examples/images/simulation_boxplots.png C:/Users/Admin/Documents/repositories/approximating_copulas/images/simulation_boxplots.png)",
+      "Bash(cp C:/Users/Admin/Documents/repositories/copul/notes/examples/images/simulation_rmse.png C:/Users/Admin/Documents/repositories/approximating_copulas/images/simulation_rmse.png)",
+      "Bash(pdflatex -interaction=nonstopmode -draftmode approximating_copulas.tex)",
+      "Bash(python -c ' *)"
     ]
   }
 }
