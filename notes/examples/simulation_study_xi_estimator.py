@@ -538,22 +538,22 @@ def plot_boxplots(results: pd.DataFrame, save_path: str | None = None):
     sel_ests = ["check_avg", "nn"]
 
     fig, axes = plt.subplots(
-        len(sel_families), len(sel_ns),
-        figsize=(7.5, 8.5),
-        sharey="row",
+        len(sel_ns), len(sel_families),
+        figsize=(10, 6.5),
+        sharey=True,
     )
     fig.suptitle(
         r"Distribution of $\xi$ estimates: $\xi_n^\kappa$ vs. $\xi_n$ (moderate dependence)"
     )
 
-    for row, family in enumerate(sel_families):
+    for col, family in enumerate(sel_families):
         param = next(
             p for (f, p), d in DEP_LEVEL.items() if f == family and d == sel_dep
         )
         sub = results[(results["family"] == family) & (results["param"] == param)]
         true_xi = sub["true_xi"].iloc[0]
 
-        for col, n in enumerate(sel_ns):
+        for row, n in enumerate(sel_ns):
             ax = axes[row, col]
             nsub = sub[sub["n"] == n]
             bp_data = [nsub[nsub["estimator"] == e]["raw_vals"].iloc[0] for e in sel_ests]
@@ -571,10 +571,10 @@ def plot_boxplots(results: pd.DataFrame, save_path: str | None = None):
             ax.set_xticklabels([r"$\xi_n^\kappa$", r"$\xi_n$"])
             ax.grid(True, axis="y", alpha=0.3)
             if col == 0:
-                ax.set_ylabel(FAMILY_DISPLAY[family])
+                ax.set_ylabel(f"$n = {n}$")
             if row == 0:
-                ax.set_title(f"$n = {n}$")
-            if row == 0 and col == len(sel_ns) - 1:
+                ax.set_title(FAMILY_DISPLAY[family])
+            if row == 0 and col == len(sel_families) - 1:
                 ax.legend(loc="upper right")
 
     plt.tight_layout()
