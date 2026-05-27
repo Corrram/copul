@@ -103,11 +103,13 @@ class TestGaussianTailDependence:
 
 
 class TestEVTailDependence:
-    @pytest.fixture(params=[
-        ("GumbelHougaardEV", 3),
-        ("Galambos", 0.5),
-        ("HueslerReiss", 2),
-    ])
+    @pytest.fixture(
+        params=[
+            ("GumbelHougaardEV", 3),
+            ("Galambos", 0.5),
+            ("HueslerReiss", 2),
+        ]
+    )
     def ev_cop(self, request):
         name, param = request.param
         cls = getattr(copul, name)
@@ -131,7 +133,7 @@ class TestEVTailDependence:
     def test_blomqvists_beta(self, ev_cop):
         """β = 4·(1/4)^A(1/2) - 1"""
         A_half = float(ev_cop.pickands(0.5))
-        expected = 4.0 * (0.25 ** A_half) - 1.0
+        expected = 4.0 * (0.25**A_half) - 1.0
         assert np.isclose(ev_cop.blomqvists_beta(), expected, atol=1e-10)
 
     def test_upper_tdf(self, ev_cop):
@@ -172,13 +174,16 @@ class TestGumbelHougaardEVTailSpecific:
 
 
 class TestArchimedeanBlomqvistsBeta:
-    @pytest.mark.parametrize("cls_name,param", [
-        ("Clayton", 2.0),
-        ("Frank", 5.0),
-        ("Joe", 2.0),
-        ("GumbelHougaard", 2.0),
-        ("AliMikhailHaq", 0.5),
-    ])
+    @pytest.mark.parametrize(
+        "cls_name,param",
+        [
+            ("Clayton", 2.0),
+            ("Frank", 5.0),
+            ("Joe", 2.0),
+            ("GumbelHougaard", 2.0),
+            ("AliMikhailHaq", 0.5),
+        ],
+    )
     def test_blomqvists_beta_range(self, cls_name, param):
         # Use 4*C(0.5,0.5)-1 as a safe fallback; the generator-based
         # formula can be affected by class-level state from other tests.
@@ -190,10 +195,13 @@ class TestArchimedeanBlomqvistsBeta:
             beta_f = 4.0 * float(cop.cdf(u=0.5, v=0.5)) - 1.0
         assert -1.0 <= beta_f <= 1.0
 
-    @pytest.mark.parametrize("cls_name,param", [
-        ("Clayton", 2.0),
-        ("GumbelHougaard", 2.0),
-    ])
+    @pytest.mark.parametrize(
+        "cls_name,param",
+        [
+            ("Clayton", 2.0),
+            ("GumbelHougaard", 2.0),
+        ],
+    )
     def test_blomqvists_beta_vs_numerical(self, cls_name, param):
         """Generator-based β should match 4·C(1/2,1/2) - 1."""
         cop = getattr(copul, cls_name)(param)
@@ -203,9 +211,12 @@ class TestArchimedeanBlomqvistsBeta:
         beta_numerical = 4.0 * c_half - 1.0
         assert np.isclose(beta_analytical, beta_numerical, atol=1e-6)
 
-    @pytest.mark.parametrize("cls_name,param", [
-        ("Frank", 5.0),
-    ])
+    @pytest.mark.parametrize(
+        "cls_name,param",
+        [
+            ("Frank", 5.0),
+        ],
+    )
     def test_blomqvists_beta_vs_numerical_relaxed(self, cls_name, param):
         """Generator-based β should roughly match 4·C(1/2,1/2) - 1.
 
@@ -250,10 +261,13 @@ class TestArchimedeanTailOrder:
 
 
 class TestGenericTDF:
-    @pytest.mark.parametrize("cls_name,param", [
-        ("Clayton", 2.0),
-        ("Frank", 5.0),
-    ])
+    @pytest.mark.parametrize(
+        "cls_name,param",
+        [
+            ("Clayton", 2.0),
+            ("Frank", 5.0),
+        ],
+    )
     def test_lower_tdf_at_half_equals_half_lambda(self, cls_name, param):
         """b_L(1/2) ≈ λ_L/2."""
         cop = getattr(copul, cls_name)(param)

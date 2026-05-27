@@ -857,7 +857,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         if args or kwargs:
             self._set_params(args, kwargs)
         A_half = float(self.pickands(0.5))
-        return 4.0 * (0.25 ** A_half) - 1.0
+        return 4.0 * (0.25**A_half) - 1.0
 
     def gini_gamma(self, *args, **kwargs):
         r"""Gini's :math:`\gamma` for extreme value copulas.
@@ -883,16 +883,12 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         def diag(t):
             if t <= 0 or t >= 1:
                 return 0.0
-            return float(self.cdf_vectorized(
-                np.array([t]), np.array([t])
-            )[0])
+            return float(self.cdf_vectorized(np.array([t]), np.array([t]))[0])
 
         def anti(t):
             if t <= 0 or t >= 1:
                 return 0.0
-            return float(self.cdf_vectorized(
-                np.array([t]), np.array([1.0 - t])
-            )[0])
+            return float(self.cdf_vectorized(np.array([t]), np.array([1.0 - t]))[0])
 
         int1, _ = quad(diag, 0, 1, limit=100)
         int2, _ = quad(anti, 0, 1, limit=100)
@@ -928,7 +924,9 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         # Upper TDF: b(t) = 1 - A(t)
         if t.ndim == 0:
             return 1.0 - float(self.pickands(float(t)))
-        return np.array([1.0 - float(self.pickands(float(ti))) for ti in t.ravel()]).reshape(t.shape)
+        return np.array(
+            [1.0 - float(self.pickands(float(ti))) for ti in t.ravel()]
+        ).reshape(t.shape)
 
     def tail_order(self):
         r"""Tail order :math:`\kappa` for extreme value copulas.

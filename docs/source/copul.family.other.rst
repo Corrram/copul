@@ -116,6 +116,14 @@ copul.family.other.xi\_beta\_boundary\_copula module
    :show-inheritance:
    :undoc-members:
 
+copul.family.other.xi\_counterexample\_copula module
+----------------------------------------------------
+
+.. automodule:: copul.family.other.xi_counterexample_copula
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 copul.family.other.xi\_psi\_lower\_jensen\_bound module
 -------------------------------------------------------
 

@@ -442,7 +442,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         import numpy as _np
 
         try:
-            gen_np = sympy.lambdify(self.t, self.generator.func, "numpy")
+            sympy.lambdify(self.t, self.generator.func, "numpy")
             inv_np = sympy.lambdify(self.y, self.inv_generator.func, "numpy")
         except Exception:
             # Fall back to base class numerical approach

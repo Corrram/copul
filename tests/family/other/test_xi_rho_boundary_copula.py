@@ -29,6 +29,44 @@ def xi_from_bnew(b):
         return 1.0 - ab + 0.3 * ab**2
 
 
+def theoretical_cdf(u, v, b):
+    """The C_b^{xi,rho} formula for b > 0."""
+    lower_threshold = min(1.0 / (2.0 * b), b / 2.0)
+    if v <= lower_threshold:
+        s_v = np.sqrt(2.0 * v / b)
+    elif 1.0 / (2.0 * b) < v <= 1.0 - 1.0 / (2.0 * b):
+        s_v = v + 1.0 / (2.0 * b)
+    elif b / 2.0 < v <= 1.0 - b / 2.0:
+        s_v = v / b + 0.5
+    else:
+        s_v = 1.0 + 1.0 / b - np.sqrt(2.0 * (1.0 - v) / b)
+
+    a_pos = max(s_v - 1.0 / b, 0.0)
+    if a_pos < u <= s_v:
+        return a_pos + 0.5 * b * ((s_v - a_pos) ** 2 - (s_v - u) ** 2)
+    return min(u, v)
+
+
+@pytest.mark.parametrize(
+    ("b", "u", "v"),
+    [
+        (0.5, 0.2, 0.5),  # a_v < 0: clipped lower endpoint
+        (0.5, 0.9, 0.5),
+        (1.0, 0.2, 0.2),
+        (1.0, 0.9, 0.6),
+        (2.0, 0.1, 0.5),  # below the quadratic branch
+        (2.0, 0.5, 0.5),
+        (2.0, 0.95, 0.5),  # above s_v, so min(u, v)
+    ],
+)
+def test_cdf_matches_theoretical_formula(b, u, v):
+    C = XiRhoBoundaryCopula(b=b)
+    expected = theoretical_cdf(u, v, b)
+
+    assert np.isclose(float(C.cdf(u, v)), expected, rtol=RTOL, atol=ATOL)
+    assert np.isclose(float(C.cdf_vectorized(u, v)), expected, rtol=RTOL, atol=ATOL)
+
+
 @pytest.mark.parametrize("b", [0.5, 1.0, 2.0, -1.5])
 def test_cdf_boundary_conditions(b):
     C = XiRhoBoundaryCopula(b=b)
