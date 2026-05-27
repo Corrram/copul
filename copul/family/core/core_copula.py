@@ -967,4 +967,4 @@ class CoreCopula:
         return ok, details
 
     def is_copula(self, m: int = 21, tol: float = 1e-8, return_details: bool = False):
-        return self.validate_copula(m=m, tol=tol,return_details=return_details)
+        return self.validate_copula(m=m, tol=tol, return_details=return_details)

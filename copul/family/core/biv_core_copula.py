@@ -1080,11 +1080,11 @@ class BivCoreCopula:
         eps = 1e-7
 
         if hasattr(self, "cdf_vectorized"):
+
             def _cdf_scalar(u, v):
-                return float(self.cdf_vectorized(
-                    np.array([u]), np.array([v])
-                )[0])
+                return float(self.cdf_vectorized(np.array([u]), np.array([v]))[0])
         else:
+
             def _cdf_scalar(u, v):
                 return float(self.cdf(u=u, v=v))
 
@@ -1150,7 +1150,9 @@ class BivCoreCopula:
         c_surv = 1.0 - 2.0 * ts + c_diag  # Ĉ(t,t)
         pos_mask_u = c_surv > 0
         if np.sum(pos_mask_u) >= 2:
-            kappa_U = float(np.polyfit(log_t[pos_mask_u], np.log(c_surv[pos_mask_u]), 1)[0])
+            kappa_U = float(
+                np.polyfit(log_t[pos_mask_u], np.log(c_surv[pos_mask_u]), 1)[0]
+            )
         else:
             kappa_U = float("inf")
 

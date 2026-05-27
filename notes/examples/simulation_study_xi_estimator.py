@@ -28,28 +28,30 @@ mpl.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
 
 # Font sizes are set for a target print width of ~7.5 in, scaled to ~5.9 in (A4 \linewidth
 # with 30 mm margins).  Scale factor ≈ 0.79, so a 14 pt font appears as ~11 pt in print.
-_SUPTITLE  = 18
-_AX_TITLE  = 14
-_AX_LABEL  = 14
-_TICK      = 13
-_LEGEND    = 13
+_SUPTITLE = 18
+_AX_TITLE = 14
+_AX_LABEL = 14
+_TICK = 13
+_LEGEND = 13
 
-mpl.rcParams.update({
-    "font.size":        _AX_LABEL,
-    "axes.titlesize":   _AX_TITLE,
-    "axes.labelsize":   _AX_LABEL,
-    "xtick.labelsize":  _TICK,
-    "ytick.labelsize":  _TICK,
-    "legend.fontsize":  _LEGEND,
-    "figure.titlesize": _SUPTITLE,
-})
+mpl.rcParams.update(
+    {
+        "font.size": _AX_LABEL,
+        "axes.titlesize": _AX_TITLE,
+        "axes.labelsize": _AX_LABEL,
+        "xtick.labelsize": _TICK,
+        "ytick.labelsize": _TICK,
+        "legend.fontsize": _LEGEND,
+        "figure.titlesize": _SUPTITLE,
+    }
+)
 
 # ─── CONFIGURATION ────────────────────────────────────────────────────────────
 
 KAPPA = 1 / 3
 N_REPS = 300
 SEED = 42
-N_TRUE = 300_000       # large-sample size for reference-xi estimation
+N_TRUE = 300_000  # large-sample size for reference-xi estimation
 SAMPLE_SIZES = [100, 200, 500, 1000, 2000, 5000]
 
 # Target dependence levels for the calibrated simulation design.
@@ -81,30 +83,30 @@ ESTIMATOR_KEYS = ["check_avg", "nn", "check_pi", "check_min"]
 
 ESTIMATOR_LABELS = {
     "check_avg": r"CheckAvg ($\xi_n^\kappa$)",
-    "nn":        r"Baseline ($\xi_n$)",
-    "check_pi":  r"CheckPi ($\underline{\xi}_n^\kappa$)",
+    "nn": r"Baseline ($\xi_n$)",
+    "check_pi": r"CheckPi ($\underline{\xi}_n^\kappa$)",
     "check_min": r"CheckMin ($\overline{\xi}_n^\kappa$)",
 }
 
 ESTIMATOR_COLORS = {
-    "check_pi":  "#1f77b4",
+    "check_pi": "#1f77b4",
     "check_min": "#ff7f0e",
     "check_avg": "#2ca02c",
-    "nn":        "#d62728",
+    "nn": "#d62728",
 }
 
 ESTIMATOR_STYLES = {
-    "check_pi":  "--",
+    "check_pi": "--",
     "check_min": "-.",
     "check_avg": "-",
-    "nn":        (0, (3, 1, 1, 1)),   # dash-dot-dot
+    "nn": (0, (3, 1, 1, 1)),  # dash-dot-dot
 }
 
 FAMILY_DISPLAY = {
-    "Gaussian":       "Gaussian",
-    "Clayton":        "Clayton",
+    "Gaussian": "Gaussian",
+    "Clayton": "Clayton",
     "GumbelHougaard": "Gumbel--Hougaard",
-    "Frank":          "Frank",
+    "Frank": "Frank",
 }
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -116,7 +118,7 @@ def gaussian_xi_exact(rho: float) -> float:
     Formula from Ansari & Fuchs (2022), Proposition 2.7:
         xi = 3/pi * arcsin((1 + rho^2) / 2) - 1/2.
     """
-    return 3 / np.pi * np.arcsin((1 + rho ** 2) / 2) - 0.5
+    return 3 / np.pi * np.arcsin((1 + rho**2) / 2) - 0.5
 
 
 def make_copula(family: str, params: dict):
@@ -129,6 +131,7 @@ def make_copula(family: str, params: dict):
     if family == "Frank":
         return copul.Frank(params["theta"])
     raise ValueError(f"Unknown family: {family}")
+
 
 def _param_name(family: str) -> str:
     if family == "Gaussian":
@@ -217,8 +220,7 @@ def _settings_from_design(
     for family in FAMILIES:
         for level, _target in TARGET_LEVELS:
             row = design[
-                (design["family"] == family)
-                & (design["dep_level"] == level)
+                (design["family"] == family) & (design["dep_level"] == level)
             ].iloc[0]
 
             param = float(row["param"])
@@ -277,6 +279,7 @@ def calibrate_design(
 
     return _settings_from_design(design)
 
+
 def reference_xi(family: str, params: dict, seed: int = 0) -> float:
     """Compute reference xi: exact for Gaussian, large-sample NN otherwise."""
     if family == "Gaussian":
@@ -291,16 +294,16 @@ def single_estimate(data: np.ndarray) -> dict[str, float]:
     df = pd.DataFrame(data, columns=["X", "Y"])
     cp_cop = copul.BivCheckPi.from_data(df, kappa=KAPPA)
     cm_cop = copul.BivCheckMin.from_data(df, kappa=KAPPA)
-    xi_pi  = float(cp_cop.chatterjees_xi())
+    xi_pi = float(cp_cop.chatterjees_xi())
     xi_min = float(cm_cop.chatterjees_xi())
     xi_avg = (xi_pi + xi_min) / 2.0
-    xi_nn  = float(xi_ncalculate(data[:, 0], data[:, 1]))
+    xi_nn = float(xi_ncalculate(data[:, 0], data[:, 1]))
     return {"check_pi": xi_pi, "check_min": xi_min, "check_avg": xi_avg, "nn": xi_nn}
 
 
 def rep_seed(base: int, fi: int, pi: int, ni: int, rep: int) -> int:
     """Deterministic seed for a Monte Carlo repetition."""
-    return (base + fi * 1_000_000 + pi * 10_000 + ni * 100 + rep) % (2 ** 31)
+    return (base + fi * 1_000_000 + pi * 10_000 + ni * 100 + rep) % (2**31)
 
 
 # ─── SIMULATION ───────────────────────────────────────────────────────────────
@@ -313,7 +316,9 @@ def run_simulation() -> pd.DataFrame:
         key = (family, list(params.values())[0])
         xi_ref = reference_xi(family, params, seed=SEED)
         true_xis[key] = xi_ref
-        print(f"  {family:15s}  param={list(params.values())[0]:5.2f}  xi = {xi_ref:.4f}")
+        print(
+            f"  {family:15s}  param={list(params.values())[0]:5.2f}  xi = {xi_ref:.4f}"
+        )
 
     print("\nRunning Monte Carlo experiments ...")
     records = []
@@ -335,25 +340,25 @@ def run_simulation() -> pd.DataFrame:
 
             for est_name, vals in raw.items():
                 arr = np.array(vals)
-                bias      = float(np.mean(arr) - true_xi)
-                rmse      = float(np.sqrt(np.mean((arr - true_xi) ** 2)))
-                frac_neg  = float(np.mean(arr < 0))
-                frac_gt1  = float(np.mean(arr > 1))
+                bias = float(np.mean(arr) - true_xi)
+                rmse = float(np.sqrt(np.mean((arr - true_xi) ** 2)))
+                frac_neg = float(np.mean(arr < 0))
+                frac_gt1 = float(np.mean(arr > 1))
                 records.append(
                     {
-                        "family":    family,
-                        "param":     param_val,
+                        "family": family,
+                        "param": param_val,
                         "dep_level": DEP_LEVEL[(family, param_val)],
-                        "true_xi":   true_xi,
-                        "n":         n,
+                        "true_xi": true_xi,
+                        "n": n,
                         "estimator": est_name,
-                        "bias":      bias,
-                        "rmse":      rmse,
-                        "mean_est":  float(np.mean(arr)),
-                        "std_est":   float(np.std(arr)),
-                        "frac_neg":  frac_neg,
-                        "frac_gt1":  frac_gt1,
-                        "raw_vals":  vals,   # kept for box-plots
+                        "bias": bias,
+                        "rmse": rmse,
+                        "mean_est": float(np.mean(arr)),
+                        "std_est": float(np.std(arr)),
+                        "frac_neg": frac_neg,
+                        "frac_gt1": frac_gt1,
+                        "raw_vals": vals,  # kept for box-plots
                     }
                 )
 
@@ -368,17 +373,23 @@ def _add_legend(fig, estimator_keys=None):
         estimator_keys = ESTIMATOR_KEYS
     handles = [
         plt.Line2D(
-            [0], [0],
+            [0],
+            [0],
             color=ESTIMATOR_COLORS[e],
             linestyle=ESTIMATOR_STYLES[e],
             linewidth=2,
-            marker="o", markersize=5,
+            marker="o",
+            markersize=5,
             label=ESTIMATOR_LABELS[e],
         )
         for e in estimator_keys
     ]
-    fig.legend(handles=handles, loc="lower center", ncol=len(estimator_keys),
-               bbox_to_anchor=(0.5, 0.0))
+    fig.legend(
+        handles=handles,
+        loc="lower center",
+        ncol=len(estimator_keys),
+        bbox_to_anchor=(0.5, 0.0),
+    )
 
 
 def plot_rmse(results: pd.DataFrame, save_path: str | None = None):
@@ -386,7 +397,8 @@ def plot_rmse(results: pd.DataFrame, save_path: str | None = None):
     dep_levels = ["low", "moderate", "strong"]
 
     fig, axes = plt.subplots(
-        3, 4,
+        3,
+        4,
         figsize=(7.5, 7.3),
         sharex=True,
         constrained_layout=False,
@@ -409,7 +421,8 @@ def plot_rmse(results: pd.DataFrame, save_path: str | None = None):
             for est in ESTIMATOR_KEYS:
                 esub = sub[sub["estimator"] == est].sort_values("n")
                 ax.plot(
-                    esub["n"], esub["rmse"],
+                    esub["n"],
+                    esub["rmse"],
                     color=ESTIMATOR_COLORS[est],
                     linestyle=ESTIMATOR_STYLES[est],
                     linewidth=1.6,
@@ -456,6 +469,7 @@ def plot_rmse(results: pd.DataFrame, save_path: str | None = None):
         print(f"Saved: {save_path}")
     plt.close()
 
+
 def plot_bias(results: pd.DataFrame, save_path: str | None = None):
     families = ["Gaussian", "Clayton", "GumbelHougaard", "Frank"]
     dep_levels = ["low", "moderate", "strong"]
@@ -473,10 +487,13 @@ def plot_bias(results: pd.DataFrame, save_path: str | None = None):
             for est in ESTIMATOR_KEYS:
                 esub = sub[sub["estimator"] == est].sort_values("n")
                 ax.plot(
-                    esub["n"], esub["bias"],
+                    esub["n"],
+                    esub["bias"],
                     color=ESTIMATOR_COLORS[est],
                     linestyle=ESTIMATOR_STYLES[est],
-                    linewidth=1.8, marker="o", markersize=5,
+                    linewidth=1.8,
+                    marker="o",
+                    markersize=5,
                 )
             ax.axhline(0, color="black", linewidth=0.8, linestyle=":")
             ax.set_xscale("log")
@@ -509,10 +526,16 @@ def plot_negative_fraction(results: pd.DataFrame, save_path: str | None = None):
         [r"CheckPi ($\underline{\xi}_n^\kappa$)", r"CheckAvg ($\xi_n^\kappa$)"],
     ):
         for fi, (family, col) in enumerate(zip(families, fam_colors)):
-            sub = low[(low["family"] == family) & (low["estimator"] == est)].sort_values("n")
+            sub = low[
+                (low["family"] == family) & (low["estimator"] == est)
+            ].sort_values("n")
             ax.plot(
-                sub["n"], sub["frac_neg"] * 100,
-                color=col, linewidth=1.8, marker="o", markersize=6,
+                sub["n"],
+                sub["frac_neg"] * 100,
+                color=col,
+                linewidth=1.8,
+                marker="o",
+                markersize=6,
                 label=FAMILY_DISPLAY[family],
             )
         ax.set_xscale("log")
@@ -538,7 +561,8 @@ def plot_boxplots(results: pd.DataFrame, save_path: str | None = None):
     sel_ests = ["check_avg", "nn"]
 
     fig, axes = plt.subplots(
-        len(sel_ns), len(sel_families),
+        len(sel_ns),
+        len(sel_families),
         figsize=(10, 6.5),
         sharey=True,
     )
@@ -556,7 +580,9 @@ def plot_boxplots(results: pd.DataFrame, save_path: str | None = None):
         for row, n in enumerate(sel_ns):
             ax = axes[row, col]
             nsub = sub[sub["n"] == n]
-            bp_data = [nsub[nsub["estimator"] == e]["raw_vals"].iloc[0] for e in sel_ests]
+            bp_data = [
+                nsub[nsub["estimator"] == e]["raw_vals"].iloc[0] for e in sel_ests
+            ]
             bp = ax.boxplot(
                 bp_data,
                 patch_artist=True,
@@ -566,7 +592,9 @@ def plot_boxplots(results: pd.DataFrame, save_path: str | None = None):
             for patch, est in zip(bp["boxes"], sel_ests):
                 patch.set_facecolor(ESTIMATOR_COLORS[est])
                 patch.set_alpha(0.6)
-            ax.axhline(true_xi, color="red", linewidth=1.5, linestyle="--", label=r"True $\xi$")
+            ax.axhline(
+                true_xi, color="red", linewidth=1.5, linestyle="--", label=r"True $\xi$"
+            )
             ax.set_xticks([1, 2])
             ax.set_xticklabels([r"$\xi_n^\kappa$", r"$\xi_n$"])
             ax.grid(True, axis="y", alpha=0.3)
@@ -595,7 +623,7 @@ def _holm_adjust(pvals: dict[str, float]) -> dict[str, float]:
     prev = 0.0
     for rank, (key, p) in enumerate(items):
         p_adj = min(1.0, p * (m - rank))
-        p_adj = max(p_adj, prev)   # enforce monotonicity
+        p_adj = max(p_adj, prev)  # enforce monotonicity
         adj[key] = p_adj
         prev = p_adj
     return adj
@@ -612,7 +640,7 @@ def _summary_significance(
     families, paired by (family, rep))."""
     mean_bias = {e: 0.0 for e in est_order}
     mean_rmse = {e: 0.0 for e in est_order}
-    se_rmse_sq = {e: 0.0 for e in est_order}        # sum of per-family SE^2
+    se_rmse_sq = {e: 0.0 for e in est_order}  # sum of per-family SE^2
     sq_err_pool: dict[str, list[float]] = {e: [] for e in est_order}
     n_fam = 0
 
@@ -636,7 +664,7 @@ def _summary_significance(
                 se_rmse_f = 0.0
             mean_bias[est] += float(row["bias"])
             mean_rmse[est] += rmse_f
-            se_rmse_sq[est] += se_rmse_f ** 2
+            se_rmse_sq[est] += se_rmse_f**2
             sq_err_pool[est].extend(sq.tolist())
 
     if n_fam == 0:
@@ -720,7 +748,7 @@ def _rmse_summary_for_cell(
                 se_rmse_f = 0.0
 
             mean_rmse[est] += rmse_f
-            se_rmse_sq[est] += se_rmse_f ** 2
+            se_rmse_sq[est] += se_rmse_f**2
             sq_err_pool[est].extend(sq.tolist())
 
     if n_fam == 0:
@@ -730,10 +758,7 @@ def _rmse_summary_for_cell(
     for est in est_order:
         mean_rmse[est] /= n_fam
 
-    se_mean_rmse = {
-        est: float(np.sqrt(se_rmse_sq[est]) / n_fam)
-        for est in est_order
-    }
+    se_mean_rmse = {est: float(np.sqrt(se_rmse_sq[est]) / n_fam) for est in est_order}
 
     pvals = {e: 1.0 for e in est_order}
     if baseline in sq_err_pool and len(sq_err_pool[baseline]) > 0:
@@ -753,6 +778,7 @@ def _rmse_summary_for_cell(
                 pvals[est] = float(res.pvalue)
 
     return mean_rmse, se_mean_rmse, pvals
+
 
 def _rmse_summary_for_cell(
     n_sub: pd.DataFrame,
@@ -784,23 +810,18 @@ def _rmse_summary_for_cell(
             rmse_f = float(np.sqrt(np.mean(sq)))
 
             if rmse_f > 0:
-                se_rmse_f = float(
-                    np.std(sq, ddof=1) / (2 * rmse_f * np.sqrt(len(sq)))
-                )
+                se_rmse_f = float(np.std(sq, ddof=1) / (2 * rmse_f * np.sqrt(len(sq))))
             else:
                 se_rmse_f = 0.0
 
             mean_rmse[est] += rmse_f
-            se_rmse_sq[est] += se_rmse_f ** 2
+            se_rmse_sq[est] += se_rmse_f**2
             sq_err_pool[est].extend(sq.tolist())
 
     for est in est_order:
         mean_rmse[est] /= n_fam
 
-    se_mean_rmse = {
-        e: float(np.sqrt(se_rmse_sq[e]) / n_fam)
-        for e in est_order
-    }
+    se_mean_rmse = {e: float(np.sqrt(se_rmse_sq[e]) / n_fam) for e in est_order}
 
     # Paired one-sided tests against NN:
     # H_A: estimator has smaller squared error than NN.
@@ -835,9 +856,9 @@ def make_summary_table(
     est_order = ["check_avg", "check_pi", "check_min", "nn"]
     est_short = {
         "check_avg": r"\textsc{CheckAvg}",
-        "check_pi":  r"\textsc{CheckPi}",
+        "check_pi": r"\textsc{CheckPi}",
         "check_min": r"\textsc{CheckMin}",
-        "nn":        r"\textsc{NN}",
+        "nn": r"\textsc{NN}",
     }
 
     def compact_cell(value: float, stars: str = "") -> str:
@@ -847,7 +868,9 @@ def make_summary_table(
     lines: list[str] = []
     lines.append(r"\begin{table}[htbp]")
     lines.append(r"  \centering")
-    lines.append(r"  \caption{Family-averaged RMSE of Chatterjee $\xi$ estimators with $\kappa=\tfrac{1}{3}$.}")
+    lines.append(
+        r"  \caption{Family-averaged RMSE of Chatterjee $\xi$ estimators with $\kappa=\tfrac{1}{3}$.}"
+    )
     lines.append(r"  \label{tab:simulation_summary}")
     lines.append(r"  \small")
     lines.append(r"  \begin{tabular}{llcccc}")
@@ -874,11 +897,7 @@ def make_summary_table(
                 stars = "" if est == "nn" else _stars(pvals.get(est, 1.0))
                 row_cells.append(compact_cell(mean_rmse[est], stars))
 
-            lines.append(
-                f"    {dep_label} & {n} & "
-                + " & ".join(row_cells)
-                + r" \\"
-            )
+            lines.append(f"    {dep_label} & {n} & " + " & ".join(row_cells) + r" \\")
 
         if di < len(dep_levels) - 1:
             lines.append(r"    \addlinespace[0.25em]")
@@ -904,14 +923,15 @@ def make_summary_table(
 
     return "\n".join(lines)
 
+
 def make_latex_table(results: pd.DataFrame, n_reps: int = N_REPS) -> str:
     sel_ns = [100, 500, 1000, 5000]
     # display order for estimators
     est_order = ["check_avg", "nn", "check_pi", "check_min"]
     est_short = {
         "check_avg": r"\textsc{CheckAvg}",
-        "nn":        r"\textsc{NN}",
-        "check_pi":  r"\textsc{CheckPi}",
+        "nn": r"\textsc{NN}",
+        "check_pi": r"\textsc{CheckPi}",
         "check_min": r"\textsc{CheckMin}",
     }
 
@@ -941,8 +961,8 @@ def make_latex_table(results: pd.DataFrame, n_reps: int = N_REPS) -> str:
         fam_sub = results[results["family"] == family]
         params_sorted = sorted(fam_sub["param"].unique())
         for pi, param in enumerate(params_sorted):
-            dep = DEP_LEVEL.get((family, param), "")
-            true_xi = fam_sub[fam_sub["param"] == param]["true_xi"].iloc[0]
+            DEP_LEVEL.get((family, param), "")
+            fam_sub[fam_sub["param"] == param]["true_xi"].iloc[0]
             if family == "Gaussian":
                 param_str = rf"$\rho={param}$"
             elif family == "GumbelHougaard":
@@ -988,19 +1008,17 @@ def make_latex_table(results: pd.DataFrame, n_reps: int = N_REPS) -> str:
     lines.append(
         r"  three dependence levels, and four sample sizes ($n \in \{100,500,1000,5000\}$)."
     )
-    lines.append(
-        rf"  Bias and RMSE are based on {n_reps} Monte Carlo replications."
-    )
-    lines.append(
-        r"  \textsc{CheckAvg} is the estimator $\xi_n^\kappa$;"
-    )
+    lines.append(rf"  Bias and RMSE are based on {n_reps} Monte Carlo replications.")
+    lines.append(r"  \textsc{CheckAvg} is the estimator $\xi_n^\kappa$;")
     lines.append(
         r"  \textsc{NN} is the Azadkia--Chatterjee nearest-neighbour estimator;"
     )
     lines.append(
         r"  \textsc{CheckPi} and \textsc{CheckMin} are the lower and upper bounds"
     )
-    lines.append(r"  $\underline{\xi}_n^\kappa$ and $\overline{\xi}_n^\kappa$, respectively.}")
+    lines.append(
+        r"  $\underline{\xi}_n^\kappa$ and $\overline{\xi}_n^\kappa$, respectively.}"
+    )
     lines.append(r"  \label{tab:simulation_study}")
     lines.append(r"\end{table}")
     return "\n".join(lines)
@@ -1019,7 +1037,9 @@ def print_summary(results: pd.DataFrame):
     mod = results[results["dep_level"] == "moderate"]
     n1k = mod[mod["n"] == 1000].copy()
     print("\nRMSE at n=1000, moderate dependence:")
-    pivot = n1k.pivot_table(index=["family", "param"], columns="estimator", values="rmse")
+    pivot = n1k.pivot_table(
+        index=["family", "param"], columns="estimator", values="rmse"
+    )
     print(pivot[ESTIMATOR_KEYS].round(4).to_string())
 
     # Fraction of negative estimates at low dep, n=200
@@ -1048,9 +1068,8 @@ def print_summary(results: pd.DataFrame):
             )
             cells = []
             for e in ESTIMATOR_KEYS:
-                marker = ""
                 if e == best:
-                    body = f"{mean_rmse[e]:.4f}".upper()  # placeholder
+                    f"{mean_rmse[e]:.4f}".upper()  # placeholder
                     cells.append(f"[{mean_rmse[e]:.4f}±{se_rmse[e]:.4f}]")
                 elif adj_p.get(e, 1.0) > 0.05:
                     cells.append(f" {mean_rmse[e]:.4f}±{se_rmse[e]:.4f}*")

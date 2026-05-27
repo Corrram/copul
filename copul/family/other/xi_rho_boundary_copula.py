@@ -11,80 +11,53 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 class XiRhoBoundaryCopula(BivCopula):
     r"""
-    Optimal–:math:`\rho` diagonal–band copula, parameterised by :math:`b_{\mathrm{new}}`
-    so that the original scale parameter :math:`b_{\mathrm{old}} = 1/\lvert b_{\mathrm{new}}\rvert`.
-    For :math:`b_{\mathrm{new}} < 0`, we use the reflection identity
+    Optimal–:math:`\rho` diagonal–band copula with dependence parameter
+    :math:`b\in\mathbb{R}\setminus\{0\}`.
+
+    For :math:`b>0`, the copula is the upper/right boundary copula.  For
+    :math:`b<0`, the lower/left boundary copula is obtained by the reflection
 
     .. math::
 
-       C_{b_{\rm new}}^{\downarrow}(u,v)
-       \;=\; v \;-\; C_{\lvert b_{\rm new}\rvert}^{\uparrow}\!\bigl(1 - u,\,v\bigr).
-
-    **Parameter** — :math:`b_{\mathrm{new}}`
-        :math:`b_{\mathrm{new}}\in\mathbb{R}\setminus\{0\}`.
-        For :math:`b_{\mathrm{new}} > 0`, :math:`b_{\mathrm{old}} = 1/b_{\mathrm{new}} > 0`;
-        for :math:`b_{\mathrm{new}} < 0`, use :math:`\lvert b_{\mathrm{new}}\rvert` as above and apply the
-        “down–reflection.”
+       C_b(u,v) = v - C_{|b|}(1-u,v).
 
     **Formulas**
 
-    1. Maximal Spearman’s :math:`\rho`:
-
-       Let :math:`b := b_{\mathrm{new}}`. Then :math:`b_{\mathrm{old}} = 1/\lvert b\rvert`.
-       We can write :math:`M(b)` piecewise in terms of :math:`\lvert b\rvert`:
+    1. Maximal Spearman’s :math:`\rho` for :math:`b>0`:
 
        .. math::
 
-          M(b) \;=\;
+          M(b) =
           \begin{cases}
-            b - \dfrac{3\,b^{2}}{10}, & \lvert b\rvert \ge 1,\\[1ex]
-            1 - \dfrac{1}{2\,b^{2}} + \dfrac{1}{5\,b^{3}}, & \lvert b\rvert < 1.
+            b - \dfrac{3b^2}{10}, & 0<b\le 1,\\[1ex]
+            1 - \dfrac{1}{2b^2} + \dfrac{1}{5b^3}, & b\ge 1.
           \end{cases}
 
-    2. Shift :math:`s_v(b)`:
-
-       Define :math:`b_{\mathrm{old}} = 1/\lvert b\rvert`. For :math:`\lvert b_{\mathrm{old}}\rvert \le 1`
-       (i.e. :math:`\lvert b\rvert \ge 1`),
+    2. Shift :math:`s_v(b)` for :math:`b>0`:
 
        .. math::
 
-          s_v \;=\;
+          s_v =
           \begin{cases}
-            \sqrt{2\,v\,b_{\text{old}}}, & v \le \tfrac{b_{\text{old}}}{2},\\
-            v + \tfrac{b_{\text{old}}}{2}, & v \in \bigl(\tfrac{b_{\text{old}}}{2},\,1 - \tfrac{b_{\text{old}}}{2}\bigr],\\
-            1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)}, & v > 1 - \tfrac{b_{\text{old}}}{2}.
+            \sqrt{2v/b}, & v \le \frac{1}{2b}\wedge\frac{b}{2},\\[1ex]
+            v + \frac{1}{2b}, & \frac{1}{2b} < v \le 1-\frac{1}{2b},\\[1ex]
+            \frac{v}{b}+\frac12, & \frac{b}{2} < v \le 1-\frac{b}{2},\\[1ex]
+            1 + \frac1b - \sqrt{2(1-v)/b},
+              & v > 1 - \left(\frac{1}{2b}\wedge\frac{b}{2}\right).
           \end{cases}
 
-       For :math:`\lvert b_{\mathrm{old}}\rvert > 1` (i.e. :math:`\lvert b\rvert < 1`),
+    3. Copula CDF for :math:`b>0`:
 
        .. math::
 
-          s_v \;=\;
+          a_v = s_v - 1/b,
+          \qquad
+          C_b(u,v) =
           \begin{cases}
-            \sqrt{2\,v\,b_{\text{old}}}, & v \le \tfrac{1}{2\,b_{\text{old}}},\\
-            v\,b_{\text{old}} + \tfrac12, & v \in \bigl(\tfrac{1}{2\,b_{\text{old}}},\,1 - \tfrac{1}{2\,b_{\text{old}}}\bigr],\\
-            1 + b_{\text{old}} - \sqrt{2\,b_{\text{old}}(1-v)}, & v > 1 - \tfrac{1}{2\,b_{\text{old}}}.
+            u - \dfrac{b}{2}(u-a_v)^2 + \dfrac{b}{2}(a_v\wedge 0)^2,
+              & a_v < u \le s_v,\\[1ex]
+            \min\{u,v\}, & \text{else}.
           \end{cases}
-
-    3. Copula CDF:
-
-       For :math:`b_{\mathrm{new}} > 0`, use the triangle–band formula with :math:`b_{\mathrm{old}} = 1/b_{\mathrm{new}}`:
-
-       .. math::
-
-          a_v = s_v - b_{\text{old}}, \qquad
-          C(u,v) =
-          \begin{cases}
-            u, & u \le a_v,\\[0.6ex]
-            a_v + \dfrac{2\,s_v\,(u - a_v) - u^2 + a_v^2}{2\,b_{\text{old}}}, & a_v < u \le s_v,\\[1ex]
-            v, & u > s_v.
-          \end{cases}
-
-       For :math:`b_{\mathrm{new}} < 0`, set
-
-       .. math::
-
-          C_{b_{\rm new}}(u,v) \;=\; v \;-\; C_{\lvert b_{\rm new}\rvert}\!\bigl(1 - u,\,v\bigr).
     """
 
     # symbolic parameter & admissible interval
@@ -122,40 +95,39 @@ class XiRhoBoundaryCopula(BivCopula):
     # -------- Maximal Spearman’s rho M(b) -------- #
     @staticmethod
     def _M_expr(b):
-        """Piecewise maximal Spearman’s ρ in terms of b_new."""
-        # When |b| ≥ 1, then b_old = 1/|b| ≤ 1 → formula b_old‐small → inverts to:
-        M_when_abs_b_ge_1 = b - sp.Rational(3, 10) * b**2
-        # When |b| < 1, then b_old = 1/|b| > 1 → formula b_old‐large → inverts to:
-        M_when_abs_b_lt_1 = 1 - 1 / (2 * b**2) + 1 / (5 * b**3)
+        """Piecewise maximal Spearman’s ρ in terms of the original parameter b."""
+        b_abs = sp.Abs(b)
+        M_when_abs_b_le_1 = b_abs - sp.Rational(3, 10) * b_abs**2
+        M_when_abs_b_ge_1 = 1 - 1 / (2 * b_abs**2) + 1 / (5 * b_abs**3)
         return sp.Piecewise(
-            (M_when_abs_b_ge_1, sp.Abs(b) >= 1),
-            (M_when_abs_b_lt_1, True),
+            (M_when_abs_b_le_1, b_abs <= 1),
+            (M_when_abs_b_ge_1, True),
         )
 
     # -------- Shift s_v(b) -------- #
     @staticmethod
     def _s_expr(v, b):
         """
-        Compute s_v for given v and new parameter b_new, where b_old = 1/|b|.
+        Compute s_v for the original parameter b, using b_inv = 1/|b|.
         """
-        b_old = 1 / sp.Abs(b)
+        b_inv = 1 / sp.Abs(b)
 
-        # Region “small‐b_old”: |b_old| ≤ 1  ⇔  |b| ≥ 1
-        v1_s_s = b_old / 2
-        s1_s_s = sp.sqrt(2 * v * b_old)
-        s2_s_s = v + b_old / 2
-        s3_s_s = 1 + b_old - sp.sqrt(2 * b_old * (1 - v))
+        # Region |b| >= 1, so min(1/(2|b|), |b|/2) = 1/(2|b|).
+        v1_s_s = b_inv / 2
+        s1_s_s = sp.sqrt(2 * v * b_inv)
+        s2_s_s = v + b_inv / 2
+        s3_s_s = 1 + b_inv - sp.sqrt(2 * b_inv * (1 - v))
         s_small = sp.Piecewise(
             (s1_s_s, v <= v1_s_s),
             (s2_s_s, v <= 1 - v1_s_s),
             (s3_s_s, True),
         )
 
-        # Region “large‐b_old”: |b_old| > 1  ⇔  |b| < 1
-        v1_s_L = 1 / (2 * b_old)
-        s1_s_L = sp.sqrt(2 * v * b_old)
-        s2_s_L = v * b_old + sp.Rational(1, 2)
-        s3_s_L = 1 + b_old - sp.sqrt(2 * b_old * (1 - v))
+        # Region |b| < 1, so min(1/(2|b|), |b|/2) = |b|/2.
+        v1_s_L = 1 / (2 * b_inv)
+        s1_s_L = sp.sqrt(2 * v * b_inv)
+        s2_s_L = v * b_inv + sp.Rational(1, 2)
+        s3_s_L = 1 + b_inv - sp.sqrt(2 * b_inv * (1 - v))
         s_large = sp.Piecewise(
             (s1_s_L, v <= v1_s_L),
             (s2_s_L, v <= 1 - v1_s_L),
@@ -171,37 +143,16 @@ class XiRhoBoundaryCopula(BivCopula):
     @staticmethod
     def _base_cdf_expr(u, v, b):
         r"""
-        Explicit integration of the clamped density:
-        :math:`h_v(t) = \operatorname{clamp}(b(s_v - t), 0, 1)`.
-
-        This robust implementation correctly handles cases where the linear
-        section starts before :math:`t=0` (i.e., when :math:`a_v < 0`).
+        The theoretical CDF for the positive parameter case.
         """
         s = XiRhoBoundaryCopula._s_expr(v, b)
         a = s - 1 / b
+        quadratic_branch = u - b / 2 * (u - a) ** 2 + b / 2 * sp.Min(a, 0) ** 2
 
-        # We integrate density from 0 to u.
-        # The density has two potential active regions on [0, 1]:
-        # 1. Flat region (val=1): t <= a
-        # 2. Linear region (val=b(s-t)): a < t <= s
-
-        # 1. Flat part integration: Intersection of [0, u] and [0, a]
-        # If a < 0, this intersection is empty (Max(0, a) handles this).
-        upper_flat = sp.Min(u, sp.Max(0, a))
-        term_flat = upper_flat  # Integral of 1 * dt is just the length
-
-        # 2. Linear part integration: Intersection of [0, u] and [a, s]
-        L = sp.Max(0, a)
-        R = sp.Min(u, s)
-
-        # Integral of b(s-t) dt from L to R:
-        # Area = (R - L) * average_height
-        # average_height = b*s - (b/2)*(R + L)
-        term_linear = sp.Piecewise(
-            ((R - L) * (b * s - (b / 2) * (R + L)), R > L), (0, True)
+        return sp.Piecewise(
+            (quadratic_branch, (a < u) & (u <= s)),
+            (sp.Min(u, v), True),
         )
-
-        return term_flat + term_linear
 
     # -------- CDF / PDF definitions -------- #
     @property
@@ -331,13 +282,12 @@ class XiRhoBoundaryCopula(BivCopula):
         v = np.asarray(v)
         b = float(b)
         b_abs = abs(b)
-        b_old = 1.0 / b_abs
+        b_inv = 1.0 / b_abs
 
         s = np.empty_like(v, dtype=float)
 
         if b_abs >= 1.0:
-            # |b| >= 1 implies |b_old| <= 1
-            thresh_lower = b_old / 2.0
+            thresh_lower = b_inv / 2.0
             thresh_upper = 1.0 - thresh_lower
 
             mask1 = v <= thresh_lower
@@ -345,15 +295,15 @@ class XiRhoBoundaryCopula(BivCopula):
             mask2 = ~(mask1 | mask3)
 
             if np.any(mask1):
-                s[mask1] = np.sqrt(2.0 * v[mask1] * b_old)
+                s[mask1] = np.sqrt(2.0 * v[mask1] * b_inv)
             if np.any(mask2):
-                s[mask2] = v[mask2] + b_old / 2.0
+                s[mask2] = v[mask2] + b_inv / 2.0
             if np.any(mask3):
-                s[mask3] = 1.0 + b_old - np.sqrt(2.0 * b_old * (1.0 - v[mask3]))
+                s[mask3] = 1.0 + b_inv - np.sqrt(2.0 * b_inv * (1.0 - v[mask3]))
 
         else:
-            # |b| < 1 implies |b_old| > 1
-            thresh_lower = 1.0 / (2.0 * b_old)
+            # |b| < 1 implies |b_inv| > 1
+            thresh_lower = 1.0 / (2.0 * b_inv)
             thresh_upper = 1.0 - thresh_lower
 
             mask1 = v <= thresh_lower
@@ -361,19 +311,18 @@ class XiRhoBoundaryCopula(BivCopula):
             mask2 = ~(mask1 | mask3)
 
             if np.any(mask1):
-                s[mask1] = np.sqrt(2.0 * v[mask1] * b_old)
+                s[mask1] = np.sqrt(2.0 * v[mask1] * b_inv)
             if np.any(mask2):
-                s[mask2] = v[mask2] * b_old + 0.5
+                s[mask2] = v[mask2] * b_inv + 0.5
             if np.any(mask3):
-                s[mask3] = 1.0 + b_old - np.sqrt(2.0 * b_old * (1.0 - v[mask3]))
+                s[mask3] = 1.0 + b_inv - np.sqrt(2.0 * b_inv * (1.0 - v[mask3]))
 
         return s
 
     @staticmethod
     def _base_cdf_numpy(u, v, b):
         """
-        Optimized base CDF calculation for b > 0.
-        Uses masking to calculate linear terms only where active.
+        Optimized base CDF calculation for b > 0 using the theoretical formula.
         Explicitly broadcasts inputs to handle scalar/array mixes.
         """
         # Ensure inputs are arrays
@@ -386,37 +335,20 @@ class XiRhoBoundaryCopula(BivCopula):
         if u.shape != v.shape:
             u, v = np.broadcast_arrays(u, v)
 
-        # At this point, u and v (and thus s, a, L, R) share the same shape
-
         s = XiRhoBoundaryCopula._s_expr_numpy(v, b)
         a = s - 1.0 / b
+        result = np.minimum(u, v).astype(float, copy=False)
+        mask = (a < u) & (u <= s)
 
-        # 1. Flat top part (density = 1) -> valid for t <= a
-        # Intersect [0, u] with [0, max(0, a)]
-        term_flat = np.maximum(0.0, np.minimum(u, np.maximum(0.0, a)))
+        if np.any(mask):
+            result = np.array(result, dtype=float, copy=True)
+            result[mask] = (
+                u[mask]
+                - 0.5 * b * (u[mask] - a[mask]) ** 2
+                + 0.5 * b * np.minimum(a[mask], 0.0) ** 2
+            )
 
-        # 2. Linear slope part (density = b(s-t)) -> valid for a < t <= s
-        L = np.maximum(0.0, a)
-        R = np.minimum(u, s)
-
-        # Only compute linear term where R > L
-        mask_linear = R > L
-
-        # Initialize result with correct broadcasted shape
-        term_linear = np.zeros_like(u, dtype=float)
-
-        if np.any(mask_linear):
-            # Safe to index because term_linear, R, L, s, and mask_linear
-            # all have the same broadcasted shape
-            R_sub = R[mask_linear]
-            L_sub = L[mask_linear]
-            s_sub = s[mask_linear]
-
-            # Integral: (R-L) * (b*s - 0.5*b*(R+L))
-            val = (R_sub - L_sub) * (b * s_sub - 0.5 * b * (R_sub + L_sub))
-            term_linear[mask_linear] = val
-
-        return term_flat + term_linear
+        return result
 
     def pdf_vectorized(self, u, v):
         """
@@ -438,10 +370,10 @@ class XiRhoBoundaryCopula(BivCopula):
         # 2. Calculate Derivative s'_v (ds/dv)
         # We need to replicate the thresholds from _s_expr_numpy to get derivatives
         ds_dv = np.empty_like(v, dtype=float)
-        b_old = 1.0 / b_abs
+        b_inv = 1.0 / b_abs
 
         if b_abs >= 1.0:
-            thresh_lower = b_old / 2.0
+            thresh_lower = b_inv / 2.0
             thresh_upper = 1.0 - thresh_lower
 
             mask1 = v <= thresh_lower
@@ -451,16 +383,16 @@ class XiRhoBoundaryCopula(BivCopula):
             if np.any(mask1):
                 # Avoid div by zero at v=0 (density infinite there anyway)
                 with np.errstate(divide="ignore"):
-                    ds_dv[mask1] = np.sqrt(b_old / (2.0 * v[mask1]))
+                    ds_dv[mask1] = np.sqrt(b_inv / (2.0 * v[mask1]))
 
             if np.any(mask2):
                 ds_dv[mask2] = 1.0
 
             if np.any(mask3):
                 with np.errstate(divide="ignore"):
-                    ds_dv[mask3] = np.sqrt(b_old / (2.0 * (1.0 - v[mask3])))
+                    ds_dv[mask3] = np.sqrt(b_inv / (2.0 * (1.0 - v[mask3])))
         else:
-            thresh_lower = 1.0 / (2.0 * b_old)
+            thresh_lower = 1.0 / (2.0 * b_inv)
             thresh_upper = 1.0 - thresh_lower
 
             mask1 = v <= thresh_lower
@@ -469,14 +401,14 @@ class XiRhoBoundaryCopula(BivCopula):
 
             if np.any(mask1):
                 with np.errstate(divide="ignore"):
-                    ds_dv[mask1] = np.sqrt(b_old / (2.0 * v[mask1]))
+                    ds_dv[mask1] = np.sqrt(b_inv / (2.0 * v[mask1]))
 
             if np.any(mask2):
-                ds_dv[mask2] = b_old
+                ds_dv[mask2] = b_inv
 
             if np.any(mask3):
                 with np.errstate(divide="ignore"):
-                    ds_dv[mask3] = np.sqrt(b_old / (2.0 * (1.0 - v[mask3])))
+                    ds_dv[mask3] = np.sqrt(b_inv / (2.0 * (1.0 - v[mask3])))
 
         # 3. Calculate Density
         # c(u,v) = |b| * s'(v)   if   a < u_eff < s   else 0
@@ -521,73 +453,40 @@ class XiRhoBoundaryCopula(BivCopula):
 
     def chatterjees_xi(self):
         r"""
-        Closed-form :math:`\xi(b_{\mathrm{new}})`. Recall :math:`b_{\mathrm{old}} = 1/\lvert b_{\mathrm{new}}\rvert`,
-        so the “:math:`\le 1` / :math:`\ge 1`” conditions swap in the new scale.
-
-        - If :math:`\lvert b_{\mathrm{new}}\rvert \ge 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \le 1`):
-          :math:`\xi = \dfrac{1}{10\lvert b\rvert^{2}}\,(5 - 2/\lvert b\rvert)`.
-
-        - If :math:`\lvert b_{\mathrm{new}}\rvert < 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \ge 1`):
-          :math:`\xi = 1 - \lvert b\rvert + \dfrac{3}{10}\lvert b\rvert^{2}`.
+        Closed-form :math:`\xi(C_b)` for the original parameter :math:`b`.
         """
-        b = 1 / self.b
-        xi_large = (sp.Rational(1, 10) / sp.Abs(b) ** 2) * (5 - 2 / sp.Abs(b))
-        xi_small = 1 - sp.Abs(b) + sp.Rational(3, 10) * sp.Abs(b) ** 2
+        b_abs = sp.Abs(self.b)
+        xi_abs_b_le_1 = b_abs**2 * (5 - 2 * b_abs) / 10
+        xi_abs_b_ge_1 = 1 - 1 / b_abs + sp.Rational(3, 10) / b_abs**2
         return sp.Piecewise(
-            (xi_large, sp.Abs(b) >= 1),  # |b_new| ≥ 1
-            (xi_small, True),  # |b_new|  < 1
+            (xi_abs_b_le_1, b_abs <= 1),
+            (xi_abs_b_ge_1, True),
         )
 
     def spearmans_rho(self):
         r"""
-        Closed-form Spearman’s :math:`\rho(b_{\mathrm{new}})` (from Prop. 3.4 with
-        :math:`b_{\mathrm{old}} = 1/\lvert b_{\mathrm{new}}\rvert`).
-
-        - If :math:`\lvert b_{\mathrm{new}}\rvert \ge 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \le 1`):
-
-          .. math:: \rho = \operatorname{sgn}(b)\,\!\left(\frac{1}{\lvert b\rvert} - \frac{3}{10\,\lvert b\rvert^{2}}\right).
-
-        - If :math:`\lvert b_{\mathrm{new}}\rvert < 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \ge 1`):
-
-          .. math:: \rho = \operatorname{sgn}(b)\,\!\left(1 - \frac{\lvert b\rvert^{2}}{2}\right) + \frac{\lvert b\rvert^{3}}{5}.
+        Closed-form Spearman’s :math:`\rho(C_b)` for the original parameter :math:`b`.
         """
-        b = 1 / self.b
-        rho_large = sp.sign(b) * (1 / sp.Abs(b) - sp.Rational(3, 10) / sp.Abs(b) ** 2)
-        rho_small = sp.sign(b) * (1 - sp.Abs(b) ** 2 / 2 + sp.Abs(b) ** 3 / 5)
-        return sp.Piecewise(
-            (rho_large, sp.Abs(b) >= 1),  # |b_new| ≥ 1
-            (rho_small, True),  # |b_new|  < 1
+        b = self.b
+        b_abs = sp.Abs(b)
+        rho_abs_b_le_1 = b_abs - sp.Rational(3, 10) * b_abs**2
+        rho_abs_b_ge_1 = 1 - 1 / (2 * b_abs**2) + 1 / (5 * b_abs**3)
+        return sp.sign(b) * sp.Piecewise(
+            (rho_abs_b_le_1, b_abs <= 1),
+            (rho_abs_b_ge_1, True),
         )
 
     def kendalls_tau(self):
         r"""
-        Closed-form Kendall’s :math:`\tau(b_{\mathrm{new}})` (based on Prop. 3.5 with
-        :math:`b_{\mathrm{old}} = 1/\lvert b_{\mathrm{new}}\rvert`).
-
-        - If :math:`\lvert b_{\mathrm{new}}\rvert \ge 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \le 1`):
-
-          .. math:: \tau = \operatorname{sgn}(b)\,\frac{6\lvert b\rvert^{2} - 4\lvert b\rvert + 1}{6\lvert b\rvert^{2}}.
-
-        - If :math:`\lvert b_{\mathrm{new}}\rvert < 1` (i.e. :math:`\lvert b_{\mathrm{old}}\rvert \ge 1`):
-
-          .. math:: \tau = \operatorname{sgn}(b)\,\frac{\lvert b\rvert(4-\lvert b\rvert)}{6}.
+        Closed-form Kendall’s :math:`\tau(C_b)` for the original parameter :math:`b`.
         """
         b = self.b
         b_abs = sp.Abs(b)
-
-        # Case where |b_new| >= 1, which corresponds to b_old <= 1
-        # Original formula: b_old * (4 - b_old) / 6
-        tau_large_b = sp.sign(b) * (6 * b_abs**2 - 4 * b_abs + 1) / (6 * b_abs**2)
-
-        # Case where |b_new| < 1, which corresponds to b_old > 1
-        # Original formula: (6*b_old**2 - 4*b_old + 1) / (6*b_old**2)
-        # = 1 - (4*b_old - 1) / (6*b_old**2)
-        # = 1 - (4/|b| - 1) / (6/|b|**2) = 1 - (|b|*(4-|b|))/6
-        tau_small_b = sp.sign(b) * (b_abs * (4 - b_abs)) / 6
-
-        return sp.Piecewise(
-            (tau_large_b, b_abs >= 1),
-            (tau_small_b, True),
+        tau_abs_b_le_1 = 2 * b_abs / 3 - b_abs**2 / 6
+        tau_abs_b_ge_1 = 1 - 2 / (3 * b_abs) + 1 / (6 * b_abs**2)
+        return sp.sign(b) * sp.Piecewise(
+            (tau_abs_b_le_1, b_abs <= 1),
+            (tau_abs_b_ge_1, True),
         )
 
     def blests_nu(self, *args, **kwargs):
@@ -653,8 +552,8 @@ class XiRhoBoundaryCopula(BivCopula):
     #     # Support boundaries for |b| case
     #     # Lower: max(0, s - 1/|b|)
     #     # Upper: min(1, s)
-    #     b_old = 1 / b_abs
-    #     L = sp.Max(0, s - b_old)
+    #     b_inv = 1 / b_abs
+    #     L = sp.Max(0, s - b_inv)
     #     R = sp.Min(1, s)
     #
     #     # 2. Determine effective u based on symmetry

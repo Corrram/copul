@@ -164,11 +164,19 @@ def solve_h(
         cp.sum(H, axis=0) == np.arange(n) + marginal_offset,
         H[:, :-1] <= H[:, 1:],
     ]
-    extra = extra_constraints(H) if callable(extra_constraints) else list(extra_constraints)
+    extra = (
+        extra_constraints(H) if callable(extra_constraints) else list(extra_constraints)
+    )
     problem = cp.Problem(objective_fn(H), base + extra)
     try:
-        problem.solve(solver=cp.OSQP, verbose=verbose,
-                      max_iter=20000, eps_abs=1e-5, eps_rel=1e-5, warm_start=True)
+        problem.solve(
+            solver=cp.OSQP,
+            verbose=verbose,
+            max_iter=20000,
+            eps_abs=1e-5,
+            eps_rel=1e-5,
+            warm_start=True,
+        )
     except Exception:
         problem.solve(solver="SCS", verbose=verbose, max_iters=50000)
     return H.value
@@ -241,13 +249,21 @@ def plot_h_matrix(H_map: np.ndarray, title: str, ax=None) -> None:
     """Visualise a single n×n copula-derivative matrix h(t, v) via imshow."""
     if ax is None:
         _, ax = plt.subplots(figsize=(7, 6))
-    im = ax.imshow(H_map, origin="lower", extent=[0, 1, 0, 1],
-                   cmap="viridis", vmin=0, vmax=1, aspect="auto")
+    im = ax.imshow(
+        H_map,
+        origin="lower",
+        extent=[0, 1, 0, 1],
+        cmap="viridis",
+        vmin=0,
+        vmax=1,
+        aspect="auto",
+    )
     ax.set_title(title)
     ax.set_xlabel("v")
     ax.set_ylabel("t")
-    plt.colorbar(im, ax=ax, orientation="vertical",
-                 fraction=0.046, pad=0.04, label="h(t,v)")
+    plt.colorbar(
+        im, ax=ax, orientation="vertical", fraction=0.046, pad=0.04, label="h(t,v)"
+    )
 
 
 def plot_h_matrices(

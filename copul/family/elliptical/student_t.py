@@ -340,8 +340,13 @@ class StudentT(EllipticalCopula):
                 if lower:
                     c_val = self._calculate_student_t_cdf(u_s, v_s, rho_val, nu_val)
                 else:
-                    c_val = u_s + v_s - 1 + self._calculate_student_t_cdf(
-                        1 - u_s, 1 - v_s, rho_val, nu_val
+                    c_val = (
+                        u_s
+                        + v_s
+                        - 1
+                        + self._calculate_student_t_cdf(
+                            1 - u_s, 1 - v_s, rho_val, nu_val
+                        )
                     )
                 out[i] = c_val / eps
 

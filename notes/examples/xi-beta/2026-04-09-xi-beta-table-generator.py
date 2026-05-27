@@ -32,7 +32,7 @@ COLUMN_MAP_NDARRAY = {
     "rho": 2,
     "tau": 3,
     "footrule": 4,
-    "blomqvist_beta": 5
+    "blomqvist_beta": 5,
 }
 
 
@@ -148,11 +148,18 @@ def main() -> None:
     # --- analytic Marshall-Olkin (alpha_1=1, alpha_2 free) row --------------
     # beta = 2^a2 - 1,  xi = 2*a2 / (3 - a2),  a2 in [0, 1]
     a2_grid = np.linspace(0, 1, 20_001)
-    mo_beta = 2.0 ** a2_grid - 1.0
+    mo_beta = 2.0**a2_grid - 1.0
     mo_xi = 2.0 * a2_grid / (3.0 - a2_grid)
     mo_best_a2, mo_beta_val, mo_xi_val = maximize_beta_minus_xi(a2_grid, mo_beta, mo_xi)
-    rows.append((r"Marshall-Olkin ($\alpha_1=1$)", mo_best_a2, mo_beta_val, mo_xi_val,
-                 mo_beta_val - mo_xi_val))
+    rows.append(
+        (
+            r"Marshall-Olkin ($\alpha_1=1$)",
+            mo_best_a2,
+            mo_beta_val,
+            mo_xi_val,
+            mo_beta_val - mo_xi_val,
+        )
+    )
 
     # --- sort alphabetically by family name -----------------------------
     rows_sorted = sorted(rows, key=lambda r: r[0].lower())

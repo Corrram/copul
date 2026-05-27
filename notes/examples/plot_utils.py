@@ -25,8 +25,8 @@ from matplotlib.ticker import MultipleLocator
 
 # ── Colour palette ───────────────────────────────────────────────────────────
 
-BLUE = "#00529B"   # boundary / envelope line colour
-FILL = "#D6EAF8"   # attainable-region fill colour
+BLUE = "#00529B"  # boundary / envelope line colour
+FILL = "#D6EAF8"  # attainable-region fill colour
 
 # ── Standard axes styling ────────────────────────────────────────────────────
 
@@ -88,15 +88,18 @@ def scatter_annotate(
 
 def mark_key_copulas(
     ax,
-    M:  Optional[Tuple[float, float]] = (1.0,  1.0),
-    W:  Optional[Tuple[float, float]] = (-1.0, -1.0),
-    Pi: Optional[Tuple[float, float]] = (0.0,  0.0),
-    M_xytext:  Tuple[int, int] = (-10,  0),
-    W_xytext:  Tuple[int, int] = ( 10,  0),
-    Pi_xytext: Tuple[int, int] = (  0, 18),
-    M_ha:  str = "right",  M_va:  str = "top",
-    W_ha:  str = "left",   W_va:  str = "bottom",
-    Pi_ha: str = "center", Pi_va: str = "bottom",
+    M: Optional[Tuple[float, float]] = (1.0, 1.0),
+    W: Optional[Tuple[float, float]] = (-1.0, -1.0),
+    Pi: Optional[Tuple[float, float]] = (0.0, 0.0),
+    M_xytext: Tuple[int, int] = (-10, 0),
+    W_xytext: Tuple[int, int] = (10, 0),
+    Pi_xytext: Tuple[int, int] = (0, 18),
+    M_ha: str = "right",
+    M_va: str = "top",
+    W_ha: str = "left",
+    W_va: str = "bottom",
+    Pi_ha: str = "center",
+    Pi_va: str = "bottom",
     fontsize: int = 18,
 ) -> None:
     """
@@ -107,9 +110,9 @@ def mark_key_copulas(
     be overridden per-point.
     """
     if M is not None:
-        scatter_annotate(ax, M[0],  M[1],  r"$M$",   M_xytext,  M_ha,  M_va,  fontsize)
+        scatter_annotate(ax, M[0], M[1], r"$M$", M_xytext, M_ha, M_va, fontsize)
     if W is not None:
-        scatter_annotate(ax, W[0],  W[1],  r"$W$",   W_xytext,  W_ha,  W_va,  fontsize)
+        scatter_annotate(ax, W[0], W[1], r"$W$", W_xytext, W_ha, W_va, fontsize)
     if Pi is not None:
         scatter_annotate(ax, Pi[0], Pi[1], r"$\Pi$", Pi_xytext, Pi_ha, Pi_va, fontsize)
 
@@ -228,8 +231,7 @@ def load_family_data(
         if arr1 is None or arr2 is None:
             return none_result
         extras = [
-            data.values.get(k, np.full_like(arr1, np.nan))
-            for k in (extra_keys or [])
+            data.values.get(k, np.full_like(arr1, np.nan)) for k in (extra_keys or [])
         ]
     except AttributeError:
         return none_result
@@ -255,7 +257,7 @@ def get_gaussian_xi_rho_tau(n_points: int = 300, r_max: float = 1.0):
     r = np.linspace(0, r_max, n_points)
     rho = (6 / np.pi) * np.arcsin(r / 2)
     tau = (2 / np.pi) * np.arcsin(r)
-    xi  = (3 / np.pi) * np.arcsin((1 + r**2) / 2) - 0.5
+    xi = (3 / np.pi) * np.arcsin((1 + r**2) / 2) - 0.5
     return xi, rho, tau
 
 
@@ -263,14 +265,16 @@ def get_cb_xi_rho_tau(n_points: int = 1000):
     """
     C_b (clamped-bilinear / uniform-strip) family: (ξ, ρ, τ) for b > 0.
     """
-    b = np.concatenate([
-        np.linspace(0, 1, n_points),
-        np.linspace(1, 100, n_points)[1:],
-    ])
+    b = np.concatenate(
+        [
+            np.linspace(0, 1, n_points),
+            np.linspace(1, 100, n_points)[1:],
+        ]
+    )
     with np.errstate(divide="ignore", invalid="ignore"):
-        xi  = np.where(b <= 1, (b**2 / 10) * (5 - 2*b), 1 - 1/b + 3/(10*b**2))
-        rho = np.where(b <= 1, b - 3*b**2/10,            1 - 1/(2*b**2) + 1/(5*b**3))
-        tau = np.where(b <= 1, 2*b/3 - b**2/6,           1 - 2/(3*b) + 1/(6*b**2))
+        xi = np.where(b <= 1, (b**2 / 10) * (5 - 2 * b), 1 - 1 / b + 3 / (10 * b**2))
+        rho = np.where(b <= 1, b - 3 * b**2 / 10, 1 - 1 / (2 * b**2) + 1 / (5 * b**3))
+        tau = np.where(b <= 1, 2 * b / 3 - b**2 / 6, 1 - 2 / (3 * b) + 1 / (6 * b**2))
     mask = np.isfinite(xi) & np.isfinite(rho)
     return xi[mask], rho[mask], tau[mask]
 
@@ -282,8 +286,8 @@ def get_marshall_olkin_a1eq1_xi_rho_tau(n_points: int = 1000):
     Formulas (substituting α₁ = 1, α₂ = a2):
         ρ = 3·a2 / (2 + a2),   τ = a2,   ξ = 2·a2 / (3 − a2).
     """
-    a2  = np.linspace(0, 1, n_points)
+    a2 = np.linspace(0, 1, n_points)
     rho = 3 * a2 / (2 + a2)
     tau = a2
-    xi  = 2 * a2 / (3 - a2)
+    xi = 2 * a2 / (3 - a2)
     return xi, rho, tau

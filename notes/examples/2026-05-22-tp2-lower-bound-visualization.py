@@ -38,6 +38,7 @@ OUT_FILE = "tp2_checkerboard_proof_densities.png"
 
 # ─── TP2 DENSITY ──────────────────────────────────────────────────────────────
 
+
 def fgm_density(u: np.ndarray, v: np.ndarray, theta: float) -> np.ndarray:
     """FGM copula density.
 
@@ -63,7 +64,7 @@ def h_from_density(c: np.ndarray, v_grid: np.ndarray) -> np.ndarray:
 
 def xi_from_h(h: np.ndarray, u_grid: np.ndarray, v_grid: np.ndarray) -> float:
     """Numerical xi from h=partial_1 C."""
-    return 6.0 * np.trapezoid(np.trapezoid(h ** 2, u_grid, axis=1), v_grid) - 2.0
+    return 6.0 * np.trapezoid(np.trapezoid(h**2, u_grid, axis=1), v_grid) - 2.0
 
 
 def make_cell_indices(grid: np.ndarray, num_cells: int) -> list[np.ndarray]:
@@ -119,7 +120,8 @@ def main() -> None:
         for v_idx in vcell_indices:
             cell = c[np.ix_(v_idx, u_idx)]
             cell_mean = (
-                M * N
+                M
+                * N
                 * np.trapezoid(
                     np.trapezoid(cell, u_grid[u_idx], axis=1),
                     v_grid[v_idx],
@@ -155,7 +157,8 @@ def main() -> None:
 
     fig = plt.figure(figsize=(12.6, 4.1), constrained_layout=False)
     gs = fig.add_gridspec(
-        1, 4,
+        1,
+        4,
         width_ratios=[1, 1, 1, 0.04],
         left=0.055,
         right=0.93,
@@ -197,8 +200,8 @@ def main() -> None:
         # Draw m x n grid.
         for k in range(1, M):
             ax.axvline(k / M, color="black", linewidth=0.8, alpha=0.35)
-        for l in range(1, N):
-            ax.axhline(l / N, color="black", linewidth=0.8, alpha=0.35)
+        for ll in range(1, N):
+            ax.axhline(ll / N, color="black", linewidth=0.8, alpha=0.35)
 
         ax.set_title(title + "\n" + subtitle, fontsize=13, pad=8)
         ax.set_xlabel(r"$u$", fontsize=12)
@@ -213,8 +216,8 @@ def main() -> None:
     cbar.ax.tick_params(labelsize=10)
 
     fig.suptitle(
-        rf"TP2 checkerboard lower-bound proof: density smoothing steps "
-        rf"($m=n=3$)",
+        r"TP2 checkerboard lower-bound proof: density smoothing steps "
+        r"($m=n=3$)",
         fontsize=15,
         y=0.97,
     )
