@@ -78,9 +78,8 @@ def test_inverse_generator_function(nelsen21_copula):
         actual = float(nelsen21_copula.inv_generator(y))
         assert np.isclose(actual, expected, rtol=1e-5)
 
-    # Test for y > pi/2, should return 0
-    large_y = np.pi
-    assert float(nelsen21_copula.inv_generator(large_y)) == 0
+    # Test for y > generator(0), should return 0
+    assert float(nelsen21_copula.inv_generator(1.01)) == 0
 
 
 def test_cdf_function(nelsen21_copula):
