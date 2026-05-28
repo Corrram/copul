@@ -25,7 +25,7 @@ class Nelsen21(BivArchimedeanCopula):
 
     @property
     def _raw_inv_generator(self) -> SymPyFuncWrapper:
-        indicator = sympy.Piecewise((1, self.y <= sympy.pi / 2), (0, True))
+        indicator = sympy.Piecewise((1, self.y <= self._generator_at_0), (0, True))
         return (1 - (1 - (1 - self.y) ** self.theta) ** (1 / self.theta)) * indicator
 
     @property
