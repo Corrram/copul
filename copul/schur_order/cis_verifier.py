@@ -40,7 +40,7 @@ class CISVerifier:
         tuple
             (is_ci, is_cd) - whether the copula is CI/CD
         """
-        log.info(f"Checking if {type(self).__name__} copula is CI")
+        log.debug(f"Checking if {type(self).__name__} copula is CI")
         range_min = -10 if range_min is None else range_min
         n_interpolate = 20
         linspace = np.linspace(0.001, 0.999, 20)

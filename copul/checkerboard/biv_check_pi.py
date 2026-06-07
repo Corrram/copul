@@ -10,6 +10,8 @@ from typing import Union, List
 import warnings
 
 import sympy
+
+from copul.checkerboard.check import Check
 from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.checkerboard.check_pi import CheckPi
 from copul.family.core.biv_core_copula import BivCoreCopula
@@ -161,8 +163,23 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         """
         return CISVerifier(i).is_cis(self)
 
+    def is_si(self, i=1) -> bool:
+        """
+        Check if the copula is stochastically increasing.
+        """
+        return self.is_cis(i)
+
     def is_ltd(self):
         return LTDVerifier().is_ltd(self)
+
+    def is_lti(self):
+        return LTDVerifier().is_lti(self)
+
+    def is_rti(self):
+        return LTDVerifier().is_rti(self)
+
+    def is_rtd(self):
+        return LTDVerifier().is_rtd(self)
 
     def transpose(self):
         """
@@ -314,6 +331,15 @@ class BivCheckPi(CheckPi, BivCoreCopula):
 
 
 if __name__ == "__main__":
+    matr = [
+        [3, 0, 0, 0],
+        [0, 1, 2, 0],
+        [0, 2, 1, 0],
+        [0, 0, 0, 3],
+    ]
+    check = BivCheckPi(matr)
+
+    print(f"xi: {check.chatterjees_xi()}, tai: {check.kendalls_tau()}, rho: {check.spearmans_rho()}, SI: {check.is_si()}, LTD: {check.is_ltd()}, RTI: {check.is_rti()}, LTI: {check.is_lti()}, RTD: {check.is_rtd()}")
     for alpha in range(0, 11):
         matr = [
             [3, 0, 0],
