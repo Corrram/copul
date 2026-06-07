@@ -71,7 +71,7 @@ class TP2Verifier:
         Returns:
             VerificationResult object containing verification details
         """
-        log.info(f"Checking if {type(copula).__name__} copula is TP2")
+        log.debug(f"Checking if {type(copula).__name__} copula is TP2")
 
         # If the copula is not absolutely continuous, it cannot be TP2
         if (

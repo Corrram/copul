@@ -5,53 +5,53 @@ log = logging.getLogger(__name__)
 
 
 class LTDVerifier:
-    r"""Verifier for the left-tail-decreasing (LTD) property of copulas.
+    r"""Verifier for left/right tail monotonicity properties of copulas.
 
     A copula :math:`C` is LTD iff, for every :math:`v\in(0,1)`, the mapping
 
     .. math::
 
-       u \;\mapsto\; \frac{C(u,v)}{u}, \quad 0<u<1,
+       u \mapsto \frac{C(u,v)}{u}, \quad 0<u<1,
 
-    is non-increasing in :math:`u`.
+    is non-increasing in :math:`u`. LTI uses the same ratio with the opposite
+    monotonicity. RTI/RTD use the upper-tail conditional probability
+
+    .. math::
+
+       u \mapsto \frac{1-u-v+C(u,v)}{1-u}, \quad 0<u<1.
     """
 
     def __init__(self):
-        # nothing to configure at the moment
+        # Nothing to configure at the moment.
         pass
 
-    # ------------------------------------------------------------------ #
-    #  Public driver
-    # ------------------------------------------------------------------ #
     def is_ltd(self, copul, range_min=None, range_max=None):
-        r"""Check whether a copula (or all members of a one-parameter family) satisfy LTD.
+        r"""Check whether a copula satisfies the left-tail-decreasing property."""
+        return self._check_property(copul, self._copula_is_ltd, range_min, range_max)
 
-        Parameters
-        ----------
-        copul : BivCopula class or instance
-            The copula family (class) or a concrete copula (instance).
-        range_min, range_max : float, optional
-            Parameter range to scan if ``copul`` is a family.
+    def is_lti(self, copul, range_min=None, range_max=None):
+        r"""Check whether a copula satisfies the left-tail-increasing property."""
+        return self._check_property(copul, self._copula_is_lti, range_min, range_max)
 
-        Returns
-        -------
-        bool
-            ``True`` if LTD holds for every parameter tested,
-            ``False`` if at least one parameter violates LTD.
-        """
+    def is_rti(self, copul, range_min=None, range_max=None):
+        r"""Check whether a copula satisfies the right-tail-increasing property."""
+        return self._check_property(copul, self._copula_is_rti, range_min, range_max)
 
+    def is_rtd(self, copul, range_min=None, range_max=None):
+        r"""Check whether a copula satisfies the right-tail-decreasing property."""
+        return self._check_property(copul, self._copula_is_rtd, range_min, range_max)
+
+    def _check_property(self, copul, check_func, range_min=None, range_max=None):
         range_min = -10 if range_min is None else range_min
         range_max = 10 if range_max is None else range_max
         n_interpolate = 20  # grid on parameter axis
         grid = np.linspace(0.001, 0.999, 40)  # grid on (u,v)
 
-        # ---------- 1)  If *no* parameter → check directly ------------- #
         try:
             param_name = str(copul.params[0])
         except (AttributeError, IndexError):
-            return self._copula_is_ltd(copul, grid)
+            return check_func(copul, grid)
 
-        # ---------- 2)  Otherwise scan the parameter range ------------- #
         interval = copul.intervals[param_name]
         p_min = float(max(interval.inf, range_min))
         p_max = float(min(interval.sup, range_max))
@@ -60,57 +60,82 @@ class LTDVerifier:
         if interval.right_open:
             p_max -= 0.01
 
-        params = np.linspace(p_min, p_max, n_interpolate)
-        is_ltd_final = True
-
-        for p in params:
+        for p in np.linspace(p_min, p_max, n_interpolate):
             C = copul(**{param_name: p})
-            is_ltd = self._copula_is_ltd(C, grid)
-            log.debug("param %s = %.4g → LTD %s", param_name, p, is_ltd)
-            is_ltd_final &= is_ltd  # stop *only* if we find a counter-example
-            if not is_ltd_final:
-                break
+            holds = check_func(C, grid)
+            log.debug("param %s = %.4g -> %s", param_name, p, holds)
+            if not holds:
+                return False
 
-        return is_ltd_final
+        return True
 
-    # ------------------------------------------------------------------ #
-    #  Core routine for a *concrete* copula instance
-    # ------------------------------------------------------------------ #
     def _copula_is_ltd(self, C, grid):
-        r"""Check LTD for a *concrete* copula instance on a fixed grid.
+        return self._check_monotone_ratio(
+            C,
+            grid,
+            symbolic_ratio=lambda expr, u, v: expr / u,
+            numeric_ratio=lambda cdf, u, v: cdf(u, v) / u,
+            increasing=False,
+        )
 
-        Parameters
-        ----------
-        C : BivCopula
-            Concrete copula instance.
-        grid : array_like
-            Discretization points in (0,1) for both :math:`u` and :math:`v`.
+    def _copula_is_lti(self, C, grid):
+        return self._check_monotone_ratio(
+            C,
+            grid,
+            symbolic_ratio=lambda expr, u, v: expr / u,
+            numeric_ratio=lambda cdf, u, v: cdf(u, v) / u,
+            increasing=True,
+        )
 
-        Returns
-        -------
-        bool
-            ``True`` iff :math:`C` is LTD on the given grid.
-        """
+    def _copula_is_rti(self, C, grid):
+        return self._check_monotone_ratio(
+            C,
+            grid,
+            symbolic_ratio=lambda expr, u, v: (1 - u - v + expr) / (1 - u),
+            numeric_ratio=lambda cdf, u, v: (1 - u - v + cdf(u, v)) / (1 - u),
+            increasing=True,
+        )
 
+    def _copula_is_rtd(self, C, grid):
+        return self._check_monotone_ratio(
+            C,
+            grid,
+            symbolic_ratio=lambda expr, u, v: (1 - u - v + expr) / (1 - u),
+            numeric_ratio=lambda cdf, u, v: (1 - u - v + cdf(u, v)) / (1 - u),
+            increasing=False,
+        )
+
+    def _check_monotone_ratio(
+        self, C, grid, symbolic_ratio, numeric_ratio, increasing
+    ):
         tol = 1e-10
-        # Try the symbolic route first (much faster if available) --------
+
         try:
-            C_expr = C.cdf.func  # SymPy expression
+            C_expr = C.cdf.func
             u_sym, v_sym = C.u, C.v
-            frac = C_expr / u_sym
+            ratio = symbolic_ratio(C_expr, u_sym, v_sym)
             for v in grid:
-                f_v = frac.subs(v_sym, v)
-                for u1, u2 in zip(grid[:-1], grid[1:]):
-                    if f_v.subs(u_sym, u1) < f_v.subs(u_sym, u2) - tol:
-                        return False
-        # … fall back to numeric evaluation ------------------------------
+                f_v = ratio.subs(v_sym, v)
+                values = (f_v.subs(u_sym, u) for u in grid)
+                if not self._values_are_monotone(values, increasing, tol):
+                    return False
         except Exception:
-            cdf = C.cdf  # SymPyFuncWrapper → callable
+            cdf = C.cdf
             for v in grid:
-                prev = None
-                for u in grid:
-                    val = cdf(u, v) / u
-                    if prev is not None and val > prev + tol:
-                        return False
-                    prev = val
+                values = (numeric_ratio(cdf, u, v) for u in grid)
+                if not self._values_are_monotone(values, increasing, tol):
+                    return False
+
+        return True
+
+    @staticmethod
+    def _values_are_monotone(values, increasing, tol):
+        prev = None
+        for val in values:
+            if prev is not None:
+                if increasing and val < prev - tol:
+                    return False
+                if not increasing and val > prev + tol:
+                    return False
+            prev = val
         return True
