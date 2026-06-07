@@ -188,10 +188,12 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
     def cdf(self):
         """
         C(u1,...,ud) = exp(-((sum_j (-log uj)^theta)^(1/theta)))
+
         With boundary handling:
-          - if any u_j == 0 -> 0
-          - if all u_j == 1 -> 1
-          - else -> interior expression
+
+        - if any u_j == 0 -> 0
+        - if all u_j == 1 -> 1
+        - else -> interior expression
         """
         u_symbols = self.u_symbols
 

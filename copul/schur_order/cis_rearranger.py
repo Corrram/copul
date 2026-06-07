@@ -50,7 +50,7 @@ class CISRearranger:
         Rearrange a copula to be conditionally increasing in sequence.
 
         Args:
-            copula: A copula object or BivCheckPi object to rearrange
+            copula: A copula object or copul.checkerboard.biv_check_pi.BivCheckPi object to rearrange
 
         Returns:
             A sympy Matrix representing the rearranged copula's density
@@ -82,9 +82,9 @@ class CISRearranger:
 
         Parameters
         ----------
-        ccop : Union[BivCheckPi, list, np.ndarray, sympy.Matrix, Any]
+        ccop : Union[copul.checkerboard.biv_check_pi.BivCheckPi, list, np.ndarray, sympy.Matrix, Any]
             The checkerboard copula to rearrange. Can be:
-              - a BivCheckPi instance,
+              - a copul.checkerboard.biv_check_pi.BivCheckPi instance,
               - a 2D list of floats,
               - a 2D numpy.ndarray,
               - a sympy.Matrix,
@@ -219,7 +219,7 @@ def apply_cis_rearrangement(copula: Any, grid_size: Optional[int] = None) -> Biv
         grid_size: Size of the checkerboard grid (optional)
 
     Returns:
-        BivCheckPi: A checkerboard copula with the CIS property
+        copul.checkerboard.biv_check_pi.BivCheckPi: A checkerboard copula with the CIS property
     """
     rearranger = CISRearranger(grid_size)
     rearranged_matrix = rearranger.rearrange_copula(copula)

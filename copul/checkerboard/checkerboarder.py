@@ -486,7 +486,7 @@ class Checkerboarder:
 
         Returns
         -------
-        ShuffleOfMin
+        copul.checkerboard.shuffle_min.ShuffleOfMin
         """
         from copul.checkerboard.shuffle_min import ShuffleOfMin
 

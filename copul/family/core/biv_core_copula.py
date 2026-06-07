@@ -21,6 +21,11 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 log = logging.getLogger(__name__)
 
 
+def _show_if_interactive():
+    if "agg" not in plt.get_backend().lower():
+        plt.show()
+
+
 class BivCoreCopula:
     """
     Base class for bivariate copulas using symbolic expressions.
@@ -290,8 +295,10 @@ class BivCoreCopula:
         """
         Compute Blest's rank correlation ν.
 
-        Uses the copula form
+        Uses the copula form::
+
             ν(C) = 24 ∫_0^1 ∫_0^1 (1 - u) C(u, v) du dv - 2
+
         which is linear in C and generally symbolic-friendly.
 
         Returns
@@ -501,7 +508,7 @@ class BivCoreCopula:
             title = CopulaGraphs(self).get_copula_title()
             plt.title(f"{title} {', '.join(list(kwargs.keys()))}")
             plt.grid(True)
-            plt.show()
+            _show_if_interactive()
             plt.draw()
             plt.close()
 
@@ -533,7 +540,7 @@ class BivCoreCopula:
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("CDF")
-        plt.show()
+        _show_if_interactive()
 
     def plot_rank_correlations(
         self,
@@ -725,7 +732,7 @@ class BivCoreCopula:
         if zlim is not None:
             ax.set_zlim(*zlim)
         plt.title(title)
-        plt.show()
+        _show_if_interactive()
         self.intervals = intervals
         return fig
 
@@ -776,7 +783,7 @@ class BivCoreCopula:
         leg.get_frame().set_alpha(0.8)
 
         fig.tight_layout()  # respect the outside legend
-        plt.show()
+        _show_if_interactive()
         return fig
 
     def _plot_contour(
@@ -841,7 +848,7 @@ class BivCoreCopula:
         ax.set_ylabel("v")
         ax.set_title(title)
         fig.tight_layout()
-        plt.show()
+        _show_if_interactive()
         self.intervals = intervals_backup
         return fig
 
@@ -1222,7 +1229,7 @@ class BivCoreCopula:
         ax.legend()
         ax.grid(True)
         fig.tight_layout()
-        plt.show()
+        _show_if_interactive()
         return fig
 
     # ------------------------------------------------------------------
@@ -1410,12 +1417,12 @@ class BivCoreCopula:
 
         Special cases:
 
-        ============ ======== ======================================
-        :math:`p`    :math:`k(p)` Equivalent measure
-        ============ ======== ======================================
-        1            12       Schweizer–Wolff :math:`\sigma`
-        2            90       Hoeffding :math:`D`
-        ============ ======== ======================================
+        ============= ============= ===============================
+        :math:`p`     :math:`k(p)`  Equivalent measure
+        ============= ============= ===============================
+        1             12            Schweizer–Wolff :math:`\sigma`
+        2             90            Hoeffding :math:`D`
+        ============= ============= ===============================
 
         Parameters
         ----------

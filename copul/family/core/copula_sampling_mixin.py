@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 from copul.family.copula_graphs import CopulaGraphs
 
 
+def _show_if_interactive():
+    if "agg" not in plt.get_backend().lower():
+        plt.show()
+
+
 class CopulaSamplingMixin:
     """
     Mixin class for copula sampling methods.
@@ -67,7 +72,7 @@ class CopulaSamplingMixin:
             plt.grid(True)
             plt.xlim(0, 1)
             plt.ylim(0, 1)
-            plt.show()
+            _show_if_interactive()
             plt.close()
         elif self.dim == 3:
             # Generate samples
@@ -114,7 +119,7 @@ class CopulaSamplingMixin:
             ax.view_init(elev=30, azim=45)
 
             plt.tight_layout()
-            plt.show()
+            _show_if_interactive()
             plt.close()
         else:
             # For higher dimensions, display scatter plot matrix
@@ -160,5 +165,5 @@ class CopulaSamplingMixin:
                     axs[i, j].set_ylim(0, 1)
 
             plt.tight_layout(rect=[0, 0, 1, 0.96])  # Make room for the title
-            plt.show()
+            _show_if_interactive()
             plt.close()

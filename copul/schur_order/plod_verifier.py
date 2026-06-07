@@ -28,7 +28,7 @@ class PLODVerifier:
 
         Parameters
         ----------
-        copul : BivCopula (class or instance)
+        copul : copul.family.core.biv_copula.BivCopula (class or instance)
             The copula family or a concrete copula to test.
         range_min, range_max : float, optional
             Parameter range to scan if ``copul`` is a family.
@@ -83,7 +83,7 @@ class PLODVerifier:
 
         Parameters
         ----------
-        C : BivCopula
+        C : copul.family.core.biv_copula.BivCopula
             Copula instance to test.
         grid : array-like
             Grid of values in (0,1) for both coordinates.

@@ -85,6 +85,13 @@ class StudentT(EllipticalCopula):
 
     def _calculate_student_t_cdf(self, u, v, rho_val, nu_val):
         """Calculate Student's t CDF at point (u, v)."""
+        if u <= 0 or v <= 0:
+            return 0
+        if u >= 1:
+            return v
+        if v >= 1:
+            return u
+
         mvt = multivariate_t(df=nu_val, shape=[[1, rho_val], [rho_val, 1]])
         z_u = student_t.ppf(u, nu_val)
         z_v = student_t.ppf(v, nu_val)

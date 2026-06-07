@@ -3,6 +3,7 @@
 Utilities for converting SymPy expressions to fast NumPy callables.
 
 Key improvements over the naive ``sp.lambdify`` approach:
+
 - ``NUMPY_SAFE_MAP`` maps SymPy names that numpy does not expose under the same
   name (``Max``, ``Min``, ``Heaviside``, …) plus several ``scipy.special``
   functions used in copula densities (``erf``, ``erfc``, ``gamma``, …).

@@ -15,36 +15,39 @@ class MedianSwapCopula(BivCopula):
     :math:`(\beta,\nu)` region (Blomqvist's :math:`\beta` vs Blest's :math:`\nu`).
 
     Construction:
-      - Let :math:`\delta \in [0,1/2]`. Define the measure-preserving "median swap"
-        :math:`T_\delta` that swaps two adjacent blocks of length :math:`\delta`
-        around :math:`t=1/2`.
-      - The extreme-point conditional is
-        :math:`h(u,v)=\mathbb{1}\{T_\delta(u)\le v\}`, and the copula is
-        :math:`C_\delta(u,v) = \int_0^u h(t,v)\,dt`.
 
-    Correct (piecewise) sections in :math:`u` for fixed :math:`v`:
+    - Let :math:`\delta \in [0,1/2]`. Define the measure-preserving "median swap"
+      :math:`T_\delta` that swaps two adjacent blocks of length :math:`\delta`
+      around :math:`t=1/2`.
+    - The extreme-point conditional is
+      :math:`h(u,v)=\mathbb{1}\{T_\delta(u)\le v\}`, and the copula is
+      :math:`C_\delta(u,v) = \int_0^u h(t,v)\,dt`.
 
-      Let :math:`\tfrac12-\delta<\tfrac12<\tfrac12+\delta`. Define
-      :math:`A(v)=\{\,t\in[0,1]:T_\delta(t)\le v\,\}`. Then
+    Correct (piecewise) sections in :math:`u` for fixed :math:`v`.
+    Let :math:`\tfrac12-\delta<\tfrac12<\tfrac12+\delta`. Define
+    :math:`A(v)=\{\,t\in[0,1]:T_\delta(t)\le v\,\}`. Then
 
-      * If :math:`0\le v\le\tfrac12-\delta`:  :math:`A(v)=[0,v]`.
-      * If :math:`\tfrac12-\delta< v\le\tfrac12`:
-        :math:`A(v)=[0,\tfrac12-\delta]\cup(\tfrac12,\,v+\delta]`.
-      * If :math:`\tfrac12< v\le\tfrac12+\delta`:
-        :math:`A(v)=[0,\,v-\delta]\cup(\tfrac12,\,\tfrac12+\delta]`.
-      * If :math:`\tfrac12+\delta< v\le 1`: :math:`A(v)=[0,v]`.
+    * If :math:`0\le v\le\tfrac12-\delta`:  :math:`A(v)=[0,v]`.
+    * If :math:`\tfrac12-\delta< v\le\tfrac12`:
+      :math:`A(v)=[0,\tfrac12-\delta]\cup(\tfrac12,\,v+\delta]`.
+    * If :math:`\tfrac12< v\le\tfrac12+\delta`:
+      :math:`A(v)=[0,\,v-\delta]\cup(\tfrac12,\,\tfrac12+\delta]`.
+    * If :math:`\tfrac12+\delta< v\le 1`: :math:`A(v)=[0,v]`.
 
-      Hence :math:`C_\delta(u,v)=\lambda(A(v)\cap[0,u])`, which yields a valid copula
-      with uniform margins.
+    Hence :math:`C_\delta(u,v)=\lambda(A(v)\cap[0,u])`, which yields a valid copula
+    with uniform margins.
 
     Closed-form boundary (upper curve):
+
     .. math::
+
         \beta(\delta) \;=\; 1-4\delta,\qquad
         \nu(\delta) \;=\; 1-6\delta^2-8\delta^4,\qquad \delta\in[0,1/2].
 
     Special cases:
-      - :math:`\delta=0`: :math:`C_\delta = M` (upper Fréchet), :math:`(\beta,\nu)=(1,1)`.
-      - :math:`\delta=1/2`: :math:`C_\delta = W` (lower Fréchet), :math:`(\beta,\nu)=(-1,-1)`.
+
+    - :math:`\delta=0`: :math:`C_\delta = M` (upper Fréchet), :math:`(\beta,\nu)=(1,1)`.
+    - :math:`\delta=1/2`: :math:`C_\delta = W` (lower Fréchet), :math:`(\beta,\nu)=(-1,-1)`.
     """
 
     # SymPy symbols & meta
@@ -186,18 +189,13 @@ class MedianSwapCopula(BivCopula):
         From the correct piecewise form of C(u,v):
 
         - Case A: v ≤ 1/2 − δ,  C(u,v) = min(u, v)
-            ⇒ ∂₂ C(u,v) = 1{u > v}  (a.e.)
-
+          ⇒ ∂₂ C(u,v) = 1{u > v}  (a.e.)
         - Case B: 1/2 − δ < v ≤ 1/2,  C(u,v) is piecewise and depends on v only
-          when u > v + δ
-            ⇒ ∂₂ C(u,v) = 1{u > v + δ}
-
+          when u > v + δ ⇒ ∂₂ C(u,v) = 1{u > v + δ}
         - Case C: 1/2 < v ≤ 1/2 + δ,  C(u,v) is piecewise and depends on v
-          when u > v − δ
-            ⇒ ∂₂ C(u,v) = 1{u > v − δ}
-
+          when u > v − δ ⇒ ∂₂ C(u,v) = 1{u > v − δ}
         - Case D: v ≥ 1/2 + δ,  C(u,v) = min(u, v)
-            ⇒ ∂₂ C(u,v) = 1{u > v}
+          ⇒ ∂₂ C(u,v) = 1{u > v}
 
         We implement these as Heavisides with H(0)=0 (choice on a null set).
         """

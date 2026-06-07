@@ -2,6 +2,7 @@
 Tests for the SymPyFuncWrapper class.
 """
 
+import warnings
 import time
 import pytest
 import numpy as np
@@ -377,7 +378,9 @@ def test_numpy_func_with_piecewise():
     numpy_func = func.numpy_func()
 
     # Test with scalar input
-    result1 = numpy_func(0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        result1 = numpy_func(0)
     assert result1 == 1
 
     result2 = numpy_func(2)
@@ -386,7 +389,9 @@ def test_numpy_func_with_piecewise():
     # Test with array input
     x_values = np.array([-1, 0, 1, 2])
     expected = np.array([2, 1, 1, 0.5])
-    result = numpy_func(x_values)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        result = numpy_func(x_values)
     np.testing.assert_allclose(result, expected)
 
 

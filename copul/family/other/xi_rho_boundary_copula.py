@@ -353,7 +353,7 @@ class XiRhoBoundaryCopula(BivCopula):
     def pdf_vectorized(self, u, v):
         """
         Fully vectorized PDF implementation.
-        Computes density c(u,v) = |b| * s'_v(v) inside the band, 0 outside.
+        Computes density ``c(u,v) = |b| * s'_v(v)`` inside the band, 0 outside.
         Replaces symbolic logic for high performance.
         """
         u = np.asarray(u)

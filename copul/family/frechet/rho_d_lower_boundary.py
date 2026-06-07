@@ -6,11 +6,14 @@ from copul.family.frechet.frechet import Frechet
 
 class RhoDLowerBoundary(Frechet):
     r"""
-    One-parameter family attaining the *lower* boundary of the (rho, D) region:
+    One-parameter family attaining the *lower* boundary of the (rho, D) region::
+
         C = (1 - |rho|) * Pi + |rho| * B_rho,
+
     where B_rho = M if rho >= 0 and B_rho = W if rho < 0.
 
-    This can be encoded as the Frechet mixture with:
+    This can be encoded as the Frechet mixture with::
+
         alpha(rho) = max(rho, 0),
         beta(rho)  = max(-rho, 0),
         independence weight = 1 - |rho|.
@@ -75,8 +78,10 @@ class RhoDLowerBoundary(Frechet):
     @property
     def cdf(self):
         r"""
-        C(u,v) = alpha * min(u,v) + (1 - alpha - beta) * u v + beta * max(u+v-1, 0),
-        where 1 - alpha - beta = 1 - |rho|.
+        Symbolic CDF of the lower-boundary family::
+
+            C(u,v) = alpha * min(u,v) + (1 - alpha - beta) * u v + beta * max(u+v-1, 0),
+            where 1 - alpha - beta = 1 - |rho|.
         """
         frechet_upper = sympy.Min(self.u, self.v)
         frechet_lower = sympy.Max(self.u + self.v - 1, 0)

@@ -124,14 +124,17 @@ class BivCheckMin(CheckMin, BivCheckPi):
 
         Notes
         -----
-        Decomposes as:
+        Decomposes as::
+
             nu(CheckMin) = nu(CheckPi) + singular_add_on,
+
         where the singular add-on arises from the minimum completion
         placing a singular mass along the main diagonal segments of each
         square cell (i,i). The add-on equals the diagonal mass weighted
         by the average of (1-u) along the corresponding diagonal segment.
 
-        Closed forms:
+        Closed forms::
+
             nu(CheckPi) = (24 / (m^2 n)) * tr(Δ^T K) - 2,
             with K as in BivCheckPi.blests_nu().
 

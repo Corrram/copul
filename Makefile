@@ -1,10 +1,10 @@
 .PHONY: clean test coverage format build publish upgrade docs
 
-# Python interpreter
-PYTHON := python
-
 # Package manager
 UV := uv
+
+# Python interpreter
+PYTHON := $(UV) run python
 
 # Directories
 SRC_DIR := copul
@@ -13,24 +13,27 @@ BUILD_DIR := build
 DIST_DIR := dist
 
 # Commands
-PYTEST := pytest
-PYLINT := pylint
-BLACK := black
-ISORT := isort
-MYPY := mypy
+PYTEST := $(UV) run pytest
+PYLINT := $(UV) run pylint
+BLACK := $(UV) run black
+ISORT := $(UV) run isort
+MYPY := $(UV) run mypy
+SPHINX_APIDOC := $(UV) run sphinx-apidoc
+TWINE := $(UV) run twine
 
-all: clean format upgrade docs build test
+all: upgrade clean format docs build test
 
 # Clean build artifacts and cache files
 clean:
-	python -c "import shutil; [shutil.rmtree(p, ignore_errors=True) for p in ['build', 'dist', '$(PACKAGE).egg-info', '.pytest_cache', 'htmlcov', 'docs/_build', '.coverage']]"
-	python -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('.').rglob('__pycache__')]"
-	python -c "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.pyc')]"
+	$(PYTHON) -c "import shutil; [shutil.rmtree(p, ignore_errors=True) for p in ['build', 'dist', '$(PACKAGE).egg-info', '.pytest_cache', 'htmlcov', 'docs/_build', '.coverage']]"
+	$(PYTHON) -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('.').rglob('__pycache__')]"
+	$(PYTHON) -c "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.pyc')]"
 
 docs:
 	$(PYTHON) -c "import pathlib; [p.unlink() for p in pathlib.Path('docs/source').rglob('*.rst') if p.name == 'modules.rst' or p.name.startswith('copul.') or p.read_text(encoding='utf-8').startswith('.. automodule::')]"
-	cd docs && sphinx-apidoc -o ./source ../copul __init__.py
-	cd docs && $(PYTHON) -m sphinx -b html ./source build/html
+	cd docs && $(SPHINX_APIDOC) --force --automodule-options members,undoc-members -o ./source ../copul __init__.py
+	$(PYTHON) -c "import pathlib; [p.write_text(p.read_text(encoding='utf-8').replace('   :show-inheritance:\n', ''), encoding='utf-8') for p in pathlib.Path('docs/source').glob('copul*.rst')]"
+	cd docs && $(PYTHON) -m sphinx -E -b html ./source build/html
 
 test:
 	$(PYTEST) $(TEST_DIR) -m "not slow and not instable" -v -n 4
@@ -46,11 +49,11 @@ format:
 
 build: clean
 	$(UV) build
-	twine check dist/*
+	$(TWINE) check dist/*
 	uv pip install -e .
 
 publish: clean build
-	twine upload dist/*
+	$(TWINE) upload dist/*
 
 upgrade:
 	@echo "Upgrading dev dependencies in root package..."

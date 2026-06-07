@@ -105,9 +105,7 @@ class LTDVerifier:
             increasing=False,
         )
 
-    def _check_monotone_ratio(
-        self, C, grid, symbolic_ratio, numeric_ratio, increasing
-    ):
+    def _check_monotone_ratio(self, C, grid, symbolic_ratio, numeric_ratio, increasing):
         tol = 1e-10
 
         try:

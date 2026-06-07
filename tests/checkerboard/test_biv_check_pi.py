@@ -482,7 +482,9 @@ def test_footrule_and_gamma_rectangular_matrix_warning():
     """Ensure rectangular matrices return NaN with warning for footrule/gamma."""
     matr = np.ones((2, 3))
     ccop = BivCheckPi(matr)
-    footrule_val = ccop.spearmans_footrule()
-    gamma_val = ccop.ginis_gamma()
+    with pytest.warns(UserWarning, match="Footrule is implemented"):
+        footrule_val = ccop.spearmans_footrule()
+    with pytest.warns(UserWarning, match="Gini's Gamma is implemented"):
+        gamma_val = ccop.ginis_gamma()
     assert np.isnan(footrule_val)
     assert np.isnan(gamma_val)
