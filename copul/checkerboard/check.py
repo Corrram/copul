@@ -132,6 +132,7 @@ class Check:
     ):
         """
         Validate that the checkerboard weights define a proper d-dimensional copula density:
+
         - All cell masses are nonnegative (within tol).
         - Total mass is 1 (within tol).
         - Each marginal along every axis is uniform: for axis a with size m_a,
@@ -149,17 +150,19 @@ class Check:
         Returns
         -------
         dict
-            {
-              'ok': bool,
-              'total_mass': float,
-              'mass_error': float,
-              'min_cell': float,
-              'negativity_violation': float,
-              'marginal_errors': list of dicts per axis with keys:
-                   {'axis': int, 'target': float, 'max_abs_dev': float,
-                    'mean': float, 'min': float, 'max': float},
-              'violations': list of str
-            }
+            A report dictionary with the following structure::
+
+                {
+                  'ok': bool,
+                  'total_mass': float,
+                  'mass_error': float,
+                  'min_cell': float,
+                  'negativity_violation': float,
+                  'marginal_errors': list of dicts per axis with keys:
+                       {'axis': int, 'target': float, 'max_abs_dev': float,
+                        'mean': float, 'min': float, 'max': float},
+                  'violations': list of str
+                }
         """
         violations = []
 

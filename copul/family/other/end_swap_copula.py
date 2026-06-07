@@ -15,45 +15,56 @@ class EndSwapCopula(BivCopula):
     :math:`(\psi,\nu)` region (Spearman's footrule :math:`\psi` vs Blest's :math:`\nu`).
 
     Construction:
-      - Let :math:`d \in [0,1/2]`. Define the measure-preserving "end swap"
-        :math:`S_d` that mirrors the end blocks and keeps the middle fixed:
-        \[
+
+    - Let :math:`d \in [0,1/2]`. Define the measure-preserving "end swap"
+      :math:`S_d` that mirrors the end blocks and keeps the middle fixed:
+
+      .. math::
+
           S_d(t) = \begin{cases}
              1 - t, & t \in [0,d]\ \cup\ [1-d,1],\\
              t, & t \in (d, 1-d).
           \end{cases}
-        \]
-      - The extreme-point conditional is
-        :math:`h(u,v)=\mathbb{1}\{S_d(u)\le v\}`, and the copula is
-        :math:`C_d(u,v) = \int_0^u h(t,v)\,dt`.
+
+    - The extreme-point conditional is
+      :math:`h(u,v)=\mathbb{1}\{S_d(u)\le v\}`, and the copula is
+      :math:`C_d(u,v) = \int_0^u h(t,v)\,dt`.
 
     Correct section sets for fixed :math:`v`:
-      \[
+
+    .. math::
+
         h(u,v)=1 \iff
         \begin{cases}
           u \le v, & u \in (d,\,1-d),\\
           u \ge 1-v, & u \in [0,d]\cup[1-d,1].
         \end{cases}
-      \]
-      Hence
-      \[
-      C_d(u,v) = \lambda\big((d,\min\{u,\,\min(v,1-d)\}] \big)
-      + \lambda\big([ \max(0,1-v), \min(u,d)]\big)
-      + \lambda\big([\max(1-d,1-v), \min(u,1)]\big).
-      \]
+
+    Hence
+
+    .. math::
+
+        C_d(u,v) = \lambda\big((d,\min\{u,\,\min(v,1-d)\}] \big)
+        + \lambda\big([ \max(0,1-v), \min(u,d)]\big)
+        + \lambda\big([\max(1-d,1-v), \min(u,1)]\big).
 
     Closed-form boundary (lower curve):
+
     .. math::
+
         \psi(d) \;=\; 1 - 6(d - d^2),\qquad
         \nu(d) \;=\; 1 - 12d + 24d^2 - 16d^3,\qquad d\in[0,1/2].
 
     Inversion (from a given footrule :math:`\psi\in[-1/2,1]`):
+
     .. math::
+
         d \;=\; \frac{1 - \sqrt{(1+2\psi)/3}}{2} \in [0,1/2].
 
     Special cases:
-      - :math:`d=0`: :math:`C_d = M` (upper Fréchet), :math:`(\psi,\nu)=(1,1)`.
-      - :math:`d=1/2`: :math:`C_d = W` (lower Fréchet), :math:`(\psi,\nu)=(-1/2,-1)`.
+
+    - :math:`d=0`: :math:`C_d = M` (upper Fréchet), :math:`(\psi,\nu)=(1,1)`.
+    - :math:`d=1/2`: :math:`C_d = W` (lower Fréchet), :math:`(\psi,\nu)=(-1/2,-1)`.
     """
 
     # SymPy symbols & meta
@@ -107,11 +118,12 @@ class EndSwapCopula(BivCopula):
     @property
     def cdf(self):
         r"""
-        Symbolic CDF based on exact lengths of the three contributing blocks:
-          C(u,v) = L_left + L_mid + L_right where
-            L_left  = max(0, min(u, d)     - max(0, 1 - v)),
-            L_mid   = max(0, min(u, m)     - d) with m := min(v, 1 - d),
-            L_right = max(0, min(u, 1)     - max(1 - d, 1 - v)).
+        Symbolic CDF based on exact lengths of the three contributing blocks::
+
+            C(u,v) = L_left + L_mid + L_right where
+              L_left  = max(0, min(u, d)     - max(0, 1 - v)),
+              L_mid   = max(0, min(u, m)     - d) with m := min(v, 1 - d),
+              L_right = max(0, min(u, 1)     - max(1 - d, 1 - v)).
         """
         u, v, d = self.u, self.v, self.d
 

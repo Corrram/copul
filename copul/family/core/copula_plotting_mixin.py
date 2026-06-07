@@ -5,6 +5,11 @@ import sympy as sp
 from copul.family.copula_graphs import CopulaGraphs
 
 
+def _show_if_interactive():
+    if "agg" not in plt.get_backend().lower():
+        plt.show()
+
+
 class CopulaPlottingMixin:
     """
     Mixin class for copula sampling methods.
@@ -59,7 +64,7 @@ class CopulaPlottingMixin:
             plt.grid(True)
             plt.xlim(0, 1)
             plt.ylim(0, 1)
-            plt.show()
+            _show_if_interactive()
             plt.close()
         elif self.dim == 3:
             # Generate samples
@@ -111,7 +116,7 @@ class CopulaPlottingMixin:
             # Instead of tight_layout, adjust margins manually for 3D plots
             fig.subplots_adjust(top=0.9, bottom=0.1, left=0.1, right=0.9)
 
-            plt.show()
+            _show_if_interactive()
             plt.close()
 
         else:
@@ -161,7 +166,7 @@ class CopulaPlottingMixin:
                     axs[i, j].set_ylim(0, 1)
 
             plt.tight_layout(rect=[0, 0, 1, 0.96])  # Make room for the title
-            plt.show()
+            _show_if_interactive()
             plt.close()
 
     def save_plot(

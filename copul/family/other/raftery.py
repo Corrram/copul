@@ -176,7 +176,8 @@ class Raftery(BivCopula):
         try:
             # Calculate the full expression for all points
             uv_product = u * v
-            term1 = np.power(uv_product, power1, where=(uv_product > 0))
+            term1 = np.zeros_like(uv_product, dtype=float)
+            np.power(uv_product, power1, out=term1, where=(uv_product > 0))
 
             # Handle potential division by zero or negative inputs in max term
             max_term = np.zeros_like(u_max_v)

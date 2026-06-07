@@ -95,9 +95,9 @@ def m_blomqvists_beta(x, y, rx, ry) -> float:
 @measure("schweizer_wolff_sigma")
 def m_schweizer_wolff(x, y, rx, ry) -> float:
     """
-    Schweizer–Wolff sigma via the empirical copula.
+    Schweizer–Wolff sigma via the empirical copula::
 
-    σ̂ = 12 * mean(|Ĉ_n(u_i, v_i) - u_i * v_i|)
+        σ̂ = 12 * mean(|Ĉ_n(u_i, v_i) - u_i * v_i|)
 
     where u_i = R_i/n, v_i = S_i/n and Ĉ_n is the empirical copula.
     The O(n²) exact sum is replaced by a fast rank-based estimator
@@ -151,12 +151,14 @@ def m_nu(x, y, rx, ry) -> float:
     Blest's rank correlation ν via the empirical copula plug-in.
 
     Using C_n(u,v) = (1/n) Σ 1{R_j/n ≤ u, S_j/n ≤ v} with ranks R,S∈{1,…,n},
-    we get
+    we get::
+
         ∫∫ (1-u) C_n(u,v) du dv
       = (1/n) Σ [ ∫_{u=R_j/n}^1 (1-u) du ] [ ∫_{v=S_j/n}^1 dv ]
       = (1/n) Σ [ (1 - R_j/n)^2 / 2 ] [ 1 - S_j/n ].
 
-    Hence the estimator:
+    Hence the estimator::
+
         ν̂ = 24 * ( (1/n) Σ ((1 - R_j/n)^2 / 2) * (1 - S_j/n) ) - 2.
     """
     n = len(rx)
@@ -377,23 +379,24 @@ class RankCorrelationPlotter:
         If log_cut_off=(a,b) is given, clamp to [10^a, 10^b] exactly.
         Format ticks as 'inf + 10^{k}' when inf != 0.
         """
-        plt.xscale("log")
-
-        # Set limits precisely from log_cut_off if provided
+        xlim = None
         if log_cut_off is not None:
             a, b = (
                 log_cut_off
                 if isinstance(log_cut_off, tuple)
                 else (-log_cut_off, log_cut_off)
             )
-            xmin, xmax = 10.0**a, 10.0**b
-            plt.xlim(xmin, xmax)
+            xlim = (10.0**a, 10.0**b)
         else:
             # fallback to data-driven limits in shifted domain
             x_plot = x_original - inf
             x_plot = x_plot[np.isfinite(x_plot) & (x_plot > 0)]
             if x_plot.size:
-                plt.xlim(x_plot.min(), x_plot.max())
+                xlim = (x_plot.min(), x_plot.max())
+
+        if xlim is not None:
+            plt.xlim(*xlim)
+        plt.xscale("log")
 
     @staticmethod
     def _set_log_ticks(

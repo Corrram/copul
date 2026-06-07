@@ -153,8 +153,10 @@ class XiNuBoundaryCopula(BivCopula):
 
     def cdf_vectorized(self, u, v):
         """
-        If b >= 0: C(u,v) = C_base(u,v; |b|).
-        If b < 0 : C(u,v) = u - C_base(u, 1-v; |b|)   (σ2 reflection).
+        Vectorized CDF with sign handling::
+
+            If b >= 0: C(u,v) = C_base(u,v; |b|).
+            If b < 0 : C(u,v) = u - C_base(u, 1-v; |b|)   (σ2 reflection).
         """
         if float(self.b) >= 0:
             return self._base_cdf_vectorized(u, v)
@@ -164,8 +166,10 @@ class XiNuBoundaryCopula(BivCopula):
 
     def pdf_vectorized(self, u, v):
         """
-        If b >= 0: c(u,v) = c_base(u,v; |b|).
-        If b < 0 : c(u,v) = c_base(u, 1-v; |b|)       (chain rule for σ2).
+        Vectorized PDF with sign handling::
+
+            If b >= 0: c(u,v) = c_base(u,v; |b|).
+            If b < 0 : c(u,v) = c_base(u, 1-v; |b|)       (chain rule for σ2).
         """
         if float(self.b) >= 0:
             return self._base_pdf_vectorized(u, v)
@@ -214,10 +218,11 @@ class XiNuBoundaryCopula(BivCopula):
 
     def cond_distr_1(self):
         """
-        h(u,v) = ∂_u C(u,v).
-        If b >= 0: h = clamp(|b|((1-u)^2 - q(v)),0,1).
-        If b < 0 : h = 1 - clamp(|b|((1-u)^2 - q(1-v)),0,1).   (since C^σ2)
-        NOTE: q(·) will be evaluated with |b| in the lambdify bridge.
+        Conditional distribution h(u,v) = ∂_u C(u,v)::
+
+            If b >= 0: h = clamp(|b|((1-u)^2 - q(v)),0,1).
+            If b < 0 : h = 1 - clamp(|b|((1-u)^2 - q(1-v)),0,1).   (since C^σ2)
+            NOTE: q(·) will be evaluated with |b| in the lambdify bridge.
         """
         b = sp.Abs(self.b)
         q = sp.Function("q")
@@ -300,9 +305,11 @@ class XiNuBoundaryCopula(BivCopula):
 
     def blests_nu(self):
         """
-        Signed Blest's ν(b). Under the σ₂ reflection (b<0) the dependence reverses,
-        so ν must satisfy ν(-b) = -ν(b). We therefore return sign(b) * ν(|b|),
-        where ν(|b|) is the closed form in terms of μ = 1/|b|.
+        Signed Blest's ν(b).
+
+        Under the σ₂ reflection (b<0) the dependence reverses, so ν must
+        satisfy ``ν(-b) = -ν(b)``. We therefore return ``sign(b) * ν(|b|)``,
+        where ``ν(|b|)`` is the closed form in terms of ``μ = 1/|b|``.
         """
         import numpy as _np
 

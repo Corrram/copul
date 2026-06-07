@@ -36,7 +36,8 @@ def main():
         check = copul.BivCheckPi(matr)
 
         print(
-            f"name: {name}, xi: {check.chatterjees_xi()}, xi^T: {check.transpose().chatterjees_xi()}, tau: {check.kendalls_tau()}, rho: {check.spearmans_rho()}, SI: {check.is_si()}, LTD: {check.is_ltd()}, RTI: {check.is_rti()}, LTI: {check.is_lti()}, RTD: {check.is_rtd()}")
+            f"name: {name}, xi: {check.chatterjees_xi()}, xi^T: {check.transpose().chatterjees_xi()}, tau: {check.kendalls_tau()}, rho: {check.spearmans_rho()}, SI: {check.is_si()}, LTD: {check.is_ltd()}, RTI: {check.is_rti()}, LTI: {check.is_lti()}, RTD: {check.is_rtd()}"
+        )
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ class VThresholdCopula(BivCopula):
         t_\star \;=\; 1 - \mu/2,\;\; \mu\in[0,2].
 
     Closed-form rank measures:
+
     - For :math:`0\le \mu\le 1`:
       :math:`\rho(\mu)=1-\mu^3,\;\; \nu(\mu)=1-\tfrac34 \mu^4`.
     - For :math:`1\le \mu\le 2`:
@@ -69,6 +70,7 @@ class VThresholdCopula(BivCopula):
         Construct boundary copula with target Spearman's :math:`\\rho\\in[-1,1]`.
 
         Inversion:
+
         - If :math:`\\rho\\in[0,1]` then :math:`\\mu=(1-\\rho)^{1/3}`.
         - If :math:`\\rho\\in[-1,0]` solve the monotone cubic
           :math:`\\rho(\\mu)=-\\mu^3+6\\mu^2-12\\mu+7` on :math:`[1,2]`.

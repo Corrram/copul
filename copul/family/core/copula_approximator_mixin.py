@@ -25,7 +25,7 @@ class CopulaApproximatorMixin:
 
         Returns
         -------
-        CheckPi
+        copul.checkerboard.check_pi.CheckPi
             A CheckPi object representing the copula approximation.
         """
         # Assuming CheckPi corresponds to BivCheckPi or a generalized version
@@ -52,7 +52,7 @@ class CopulaApproximatorMixin:
 
         Returns
         -------
-        CheckMin
+        copul.checkerboard.check_min.CheckMin
             A CheckMin object representing the copula approximation.
         """
         # Assuming CheckMin corresponds to BivCheckMin or a generalized version
@@ -133,7 +133,7 @@ class CopulaApproximatorMixin:
 
         Returns
         -------
-        BernsteinCopula
+        copul.checkerboard.bernstein.BernsteinCopula
             A BernsteinCopula object representing the copula approximation.
         """
         # Bernstein copula is another type handled by the checkerboard framework
@@ -156,7 +156,7 @@ class CopulaApproximatorMixin:
 
         Returns
         -------
-        ShuffleOfMin
+        copul.checkerboard.shuffle_min.ShuffleOfMin
             A ShuffleOfMin object approximating the original copula.
 
         Raises

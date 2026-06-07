@@ -11,7 +11,6 @@ import warnings
 
 import sympy
 
-from copul.checkerboard.check import Check
 from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.checkerboard.check_pi import CheckPi
 from copul.family.core.biv_core_copula import BivCoreCopula
@@ -239,9 +238,10 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         """
         Blest's measure of rank association (nu) for a checkerboard copula.
 
-        Closed-form matrix formula:
+        Closed-form matrix formula::
+
             nu(C^Δ_Π) = (24 / (m^2 n)) * tr(Δ^T K) - 2,
-        where
+            where
             K = L_m^T U L_n
                 + 1/2 L_m^T U
                 + 1/2 U L_n
@@ -251,7 +251,8 @@ class BivCheckPi(CheckPi, BivCoreCopula):
                 - 1/3 E L_n
                 - 1/6 E.
 
-        Here:
+        Here::
+
             Δ is the m×n checkerboard matrix,
             L_m (resp. L_n) are strictly lower-triangular "ones" matrices,
             E is the m×n all-ones matrix,
@@ -339,7 +340,9 @@ if __name__ == "__main__":
     ]
     check = BivCheckPi(matr)
 
-    print(f"xi: {check.chatterjees_xi()}, tai: {check.kendalls_tau()}, rho: {check.spearmans_rho()}, SI: {check.is_si()}, LTD: {check.is_ltd()}, RTI: {check.is_rti()}, LTI: {check.is_lti()}, RTD: {check.is_rtd()}")
+    print(
+        f"xi: {check.chatterjees_xi()}, tai: {check.kendalls_tau()}, rho: {check.spearmans_rho()}, SI: {check.is_si()}, LTD: {check.is_ltd()}, RTI: {check.is_rti()}, LTI: {check.is_lti()}, RTD: {check.is_rtd()}"
+    )
     for alpha in range(0, 11):
         matr = [
             [3, 0, 0],

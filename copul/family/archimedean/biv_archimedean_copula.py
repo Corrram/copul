@@ -16,6 +16,11 @@ from scipy import optimize
 log = logging.getLogger(__name__)
 
 
+def _show_if_interactive():
+    if "agg" not in plt.get_backend().lower():
+        plt.show()
+
+
 class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
     """
     Bivariate Archimedean Copula implementation.
@@ -502,5 +507,5 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         plt.title(title)
         plt.legend()
         plt.grid()
-        plt.show()
+        _show_if_interactive()
         return

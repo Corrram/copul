@@ -6,7 +6,8 @@ from copul.family.frechet.frechet import Frechet
 
 class RhoDUpperBoundary(Frechet):
     r"""
-    One-parameter family attaining the *upper* boundary of the (rho, D) region:
+    One-parameter family attaining the *upper* boundary of the (rho, D) region::
+
         C = alpha * M + (1 - alpha) * W,   with   alpha = (1 + rho)/2.
 
     Hence the independence weight is zero and beta = 1 - alpha = (1 - rho)/2.
@@ -20,7 +21,8 @@ class RhoDUpperBoundary(Frechet):
     Notes
     -----
     We implement this as a Frechet subclass but expose only the single
-    parameter 'rho'. Internally:
+    parameter 'rho'. Internally::
+
         alpha(rho) = (1 + rho)/2,
         beta(rho)  = (1 - rho)/2.
     """
