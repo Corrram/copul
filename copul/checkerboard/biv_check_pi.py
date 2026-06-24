@@ -322,7 +322,13 @@ class BivCheckPi(CheckPi, BivCoreCopula):
         i = np.arange(n)[:, None]
         j = np.arange(n)[None, :]
         K = np.maximum(0, n - 1 - (i + j))  # Hankel ramp towards the anti-diagonal
-        Wa = (K + (1 / 3) * J) / n
+        # The anti-diagonal cells contribute int_0^1 s(1-s) ds = 1/6 to the
+        # integral of C along the secondary diagonal (NOT 1/3): on that diagonal
+        # the cell-local coordinates satisfy t = 1 - s, so the bilinear term
+        # Delta_{ij} * s * t integrates to Delta_{ij}/6.  Using 1/3 overstates
+        # Gini's gamma -- e.g. the 2x2 countermonotone checkerboard would give
+        # -1/3 instead of the correct -2/3.
+        Wa = (K + (1 / 6) * J) / n
 
         return 4.0 * (np.sum(Wd * P) + np.sum(Wa * P)) - 2.0
 

@@ -190,14 +190,27 @@ class BivCheckMin(CheckMin, BivCheckPi):
         return check_pi_footrule + add_on
 
     def ginis_gamma(self) -> float:
-        """
+        r"""
         Compute Gini's Gamma for a BivCheckMin copula.
 
-        This method corrects the value from the parent BivCheckPi class. The
-        parent method incorrectly uses the overridden `footrule` method from
-        this child class, leading to a "contaminated" result that already
-        includes the add-on for the main diagonal integral. We correct this
-        by adding only the missing component from the anti-diagonal integral.
+        Within every cell BivCheckMin places the comonotone (M) copula instead
+        of the uniform one used by BivCheckPi.  All cell margins stay uniform,
+        so the only contributions that differ from the parent value are the two
+        cells through which the global main- and anti-diagonals pass:
+
+            * main diagonal: the cell-local CDF is ``min(s, s) = s`` with
+              ``\int_0^1 s\,ds = 1/2`` instead of ``\int_0^1 s^2\,ds = 1/3``;
+            * anti-diagonal: it is ``min(s, 1 - s)`` with
+              ``\int_0^1 min(s, 1-s)\,ds = 1/4`` instead of
+              ``\int_0^1 s(1-s)\,ds = 1/6``.
+
+        Hence, with ``gamma = 4 (D + A) - 2`` where ``D = \int C(u,u) du`` and
+        ``A = \int C(u, 1-u) du``::
+
+            D_min = D_pi + (1/2 - 1/3)/n * trace(P)  = D_pi + trace(P)/(6n)
+            A_min = A_pi + (1/4 - 1/6)/n * antidiag  = A_pi + antidiag/(12n)
+
+        so ``gamma_min = gamma_pi + (2/(3n)) trace(P) + (1/(3n)) antidiag``.
         Implemented for square checkerboard matrices.
 
         Returns:
@@ -209,18 +222,14 @@ class BivCheckMin(CheckMin, BivCheckPi):
             )
             return np.nan
 
-        # The super() call returns a value that has incorrectly incorporated the
-        # diagonal add-on but not the anti-diagonal add-on.
-        contaminated_gamma_pi = super().ginis_gamma()
+        n = self.n
+        P = np.asarray(self.matr, dtype=float)
 
-        # We add only the part that was missing: the add-on for the
-        # anti-diagonal integral C(u, 1-u).
-        # Add-on = 4 * (Trace(Anti-Diagonal(P)) / (12n))
-        anti_diag_trace = np.trace(np.fliplr(self.matr))
+        gamma_pi = super().ginis_gamma()
+        main_diag = np.trace(P)
+        anti_diag = np.trace(np.fliplr(P))
 
-        add_on = anti_diag_trace / (3 * self.m)
-
-        return contaminated_gamma_pi + add_on
+        return gamma_pi + (2.0 / (3.0 * n)) * main_diag + (1.0 / (3.0 * n)) * anti_diag
 
 
 if __name__ == "__main__":
