@@ -488,3 +488,70 @@ def test_footrule_and_gamma_rectangular_matrix_warning():
         gamma_val = ccop.ginis_gamma()
     assert np.isnan(footrule_val)
     assert np.isnan(gamma_val)
+
+
+# ---------------------------------------------------------------------------
+# Gini's gamma: closed form must equal the actual Gini's gamma of the
+# checkerboard copula, i.e. 4 * (int_0^1 C(u,1-u) du - int_0^1 (u - C(u,u)) du).
+#
+# Regression guard for the anti-diagonal weighting bug: the bilinear cell term
+# on the secondary diagonal integrates to 1/6 (= int_0^1 s(1-s) ds), not 1/3.
+# With the wrong 1/3 the 2x2 countermonotone checkerboard returns -1/3 instead
+# of -2/3.  The earlier Frechet/FGM tests above use n=100 grids, where the bug
+# is only O(1/n^2) and is masked by the loose tolerances -- so it went unnoticed.
+# ---------------------------------------------------------------------------
+def _brute_force_ginis_gamma(cop, grid=4000):
+    xs = (np.arange(grid) + 0.5) / grid
+    diag = np.array([cop.cdf(u, u) for u in xs])
+    anti = np.array([cop.cdf(u, 1.0 - u) for u in xs])
+    return 4.0 * (np.mean(anti) - np.mean(xs - diag))
+
+
+@pytest.mark.parametrize(
+    "matr, expected",
+    [
+        ([[0, 1], [1, 0]], -2.0 / 3.0),   # 2x2 countermonotone checkerboard
+        ([[1, 0], [0, 1]], 2.0 / 3.0),    # 2x2 comonotone checkerboard
+        ([[1, 1], [1, 1]], 0.0),          # independence
+        ([[1, 1, 1], [1, 1, 1], [1, 1, 1]], 0.0),
+    ],
+)
+def test_ginis_gamma_known_values(matr, expected):
+    ccop = BivCheckPi(matr)
+    assert np.isclose(ccop.ginis_gamma(), expected, atol=1e-9)
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_ginis_gamma_matches_brute_force(seed):
+    rng = np.random.default_rng(seed)
+    n = int(rng.integers(2, 9))
+    ccop = BivCheckPi(rng.random((n, n)))
+    assert np.isclose(
+        ccop.ginis_gamma(), _brute_force_ginis_gamma(ccop), atol=2e-3
+    ), f"n={n}: closed form {ccop.ginis_gamma()} vs brute {_brute_force_ginis_gamma(ccop)}"
+
+
+@pytest.mark.parametrize(
+    "matr, expected",
+    [
+        ([[0, 1], [1, 0]], -0.5),   # within-cell comonotone -> -1/2, not -2/3
+        ([[1, 0], [0, 1]], 1.0),    # fully comonotone -> gamma = 1
+    ],
+)
+def test_biv_check_min_ginis_gamma_known_values(matr, expected):
+    from copul.checkerboard.biv_check_min import BivCheckMin
+
+    cmin = BivCheckMin(matr)
+    assert np.isclose(cmin.ginis_gamma(), expected, atol=1e-9)
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_biv_check_min_ginis_gamma_matches_brute_force(seed):
+    from copul.checkerboard.biv_check_min import BivCheckMin
+
+    rng = np.random.default_rng(1000 + seed)
+    n = int(rng.integers(2, 9))
+    cmin = BivCheckMin(rng.random((n, n)))
+    assert np.isclose(
+        cmin.ginis_gamma(), _brute_force_ginis_gamma(cmin), atol=2e-3
+    ), f"n={n}: closed form {cmin.ginis_gamma()} vs brute {_brute_force_ginis_gamma(cmin)}"
