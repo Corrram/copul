@@ -242,6 +242,21 @@ class StudentT(EllipticalCopula):
         """
         return self.lambda_L()
 
+    def tail_order(self):
+        r"""Tail order for the Student-t copula.
+
+        Since :math:`\lambda_L = \lambda_U > 0` for all
+        :math:`\rho \in (-1, 1]` and :math:`\nu < \infty`, the tail order is
+        :math:`\kappa_L = \kappa_U = 1`, see Hua & Joe (2011), JMVA 102.
+
+        Returns
+        -------
+        dict
+        """
+        if float(self.rho) <= -1.0:
+            return {"lower": float("inf"), "upper": float("inf")}
+        return {"lower": 1.0, "upper": 1.0}
+
     def kendalls_tau(self, *args, **kwargs):
         r"""Kendall's :math:`\tau` for the Student-t copula.
 
@@ -260,13 +275,16 @@ class StudentT(EllipticalCopula):
         return (2.0 / np.pi) * np.arcsin(rho_val)
 
     def spearmans_rho(self, *args, **kwargs):
-        r"""Spearman's :math:`\rho_S` for the Student-t copula.
+        r"""Spearman's :math:`\rho_S` for the Student-t copula (numerical).
 
-        .. math::
-
-           \rho_S = \frac{6}{\pi}\,\arcsin\!\left(\frac{\rho}{2}\right)
-
-        (same formula as the Gaussian copula — independent of :math:`\nu`).
+        In contrast to Kendall's :math:`\tau` and Blomqvist's :math:`\beta`,
+        Spearman's :math:`\rho_S` of the Student-t copula is *not* given by
+        the Gaussian formula :math:`\tfrac6\pi\arcsin(\rho/2)`; it depends on
+        :math:`\nu` (e.g., for :math:`\nu=2`, :math:`\rho=0.5`, the true
+        value is :math:`\approx0.458` versus :math:`0.483` for the Gaussian
+        formula). It is computed here as
+        :math:`\rho_S = 12\,\mathbb{E}[UV]-3` by Gauss--Legendre quadrature
+        of :math:`u\,v\,c(u,v)` over the unit square.
 
         Returns
         -------
@@ -274,7 +292,47 @@ class StudentT(EllipticalCopula):
         """
         self._set_params(args, kwargs)
         rho_val = float(self.rho)
-        return (6.0 / np.pi) * np.arcsin(rho_val / 2.0)
+        nu_val = float(self.nu)
+        if abs(rho_val) >= 1.0:
+            return float(np.sign(rho_val))
+        if rho_val == 0.0:
+            return 0.0
+        from numpy.polynomial.legendre import leggauss
+        from scipy.stats import multivariate_t
+
+        n = 128
+        x, w = leggauss(n)
+        p = 0.5 * (x + 1.0)
+        wp = 0.5 * w
+        q = student_t.ppf(p, df=nu_val)
+        dens = student_t.pdf(q, df=nu_val)
+        xx, yy = np.meshgrid(q, q, indexing="ij")
+        pts = np.column_stack([xx.ravel(), yy.ravel()])
+        joint = multivariate_t.pdf(
+            pts, loc=[0.0, 0.0], shape=[[1.0, rho_val], [rho_val, 1.0]], df=nu_val
+        ).reshape(n, n)
+        c_dens = joint / np.outer(dens, dens)
+        integrand = np.outer(p, p) * c_dens
+        e_uv = float(np.einsum("i,j,ij->", wp, wp, integrand))
+        return 12.0 * e_uv - 3.0
+
+    def blests_nu(self, *args, **kwargs):
+        r"""Blest's rank correlation :math:`\nu` for the Student-t copula.
+
+        The Student-t copula is radially symmetric and
+        :math:`\nu(C)+\nu(\hat C)=2\rho_S(C)` for any copula, so
+        :math:`\nu = \rho_S`.
+        """
+        return self.spearmans_rho(*args, **kwargs)
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""Schweizer--Wolff :math:`\sigma` for the Student-t copula.
+
+        Elliptical families are increasing in :math:`\rho` with respect to
+        the lower orthant order, hence PQD for :math:`\rho\ge0` and NQD for
+        :math:`\rho\le0`, so :math:`\sigma = |\rho_S|`.
+        """
+        return abs(self.spearmans_rho(*args, **kwargs))
 
     def blomqvists_beta(self, *args, **kwargs):
         r"""Blomqvist's :math:`\beta` for the Student-t copula.

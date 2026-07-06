@@ -444,46 +444,11 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         dict
             ``{"lower": kappa_L, "upper": kappa_U}``
         """
-        import numpy as _np
-
-        try:
-            sympy.lambdify(self.t, self.generator.func, "numpy")
-            inv_np = sympy.lambdify(self.y, self.inv_generator.func, "numpy")
-        except Exception:
-            # Fall back to base class numerical approach
-            return super().tail_order()
-
-        # Lower tail order: kappa_L via log(φ^{-1}(2s)) / log(φ^{-1}(s))
-        try:
-            ss = _np.array([10.0, 50.0, 100.0, 500.0, 1000.0])
-            inv_s = _np.array([float(inv_np(si)) for si in ss])
-            inv_2s = _np.array([float(inv_np(2.0 * si)) for si in ss])
-            pos = (inv_s > 0) & (inv_2s > 0)
-            if _np.sum(pos) >= 2:
-                ratios = _np.log(inv_2s[pos]) / _np.log(inv_s[pos])
-                kappa_L = float(_np.median(ratios))
-            else:
-                kappa_L = float("inf")
-        except Exception:
-            kappa_L = float("inf")
-
-        # Upper tail order: kappa_U via log(1 - φ^{-1}(2s)) / log(1 - φ^{-1}(s))
-        try:
-            ss_u = _np.array([0.001, 0.005, 0.01, 0.05, 0.1])
-            inv_s_u = _np.array([float(inv_np(si)) for si in ss_u])
-            inv_2s_u = _np.array([float(inv_np(2.0 * si)) for si in ss_u])
-            surv_s = 1.0 - inv_s_u
-            surv_2s = 1.0 - inv_2s_u
-            pos_u = (surv_s > 0) & (surv_2s > 0)
-            if _np.sum(pos_u) >= 2:
-                ratios_u = _np.log(surv_2s[pos_u]) / _np.log(surv_s[pos_u])
-                kappa_U = float(_np.median(ratios_u))
-            else:
-                kappa_U = float("inf")
-        except Exception:
-            kappa_U = float("inf")
-
-        return {"lower": kappa_L, "upper": kappa_U}
+        # The diagonal C(t,t) = ψ(2φ(t)) is evaluated in high precision by
+        # the base class implementation, which avoids the catastrophic
+        # cancellation that generator-based limits suffer from for
+        # exponentially decaying inverse generators.
+        return super().tail_order()
 
     def plot_generator(self, start=0, stop=1):
         """

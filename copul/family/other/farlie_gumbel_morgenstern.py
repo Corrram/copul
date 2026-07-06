@@ -114,6 +114,16 @@ class FarlieGumbelMorgenstern(BivCopula):
         self._set_params(args, kwargs)
         return 2 * self.theta / 9
 
+    def spearman_footrule(self, *args, **kwargs):
+        r"""Spearman's footrule :math:`\psi = \theta/5`."""
+        self._set_params(args, kwargs)
+        return self.theta / 5
+
+    def gini_gamma(self, *args, **kwargs):
+        r"""Gini's :math:`\gamma = 4\theta/15`."""
+        self._set_params(args, kwargs)
+        return 4 * self.theta / 15
+
     def spearmans_footrule(self):
         return self.theta / 5
 

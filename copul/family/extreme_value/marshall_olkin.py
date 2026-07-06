@@ -173,6 +173,52 @@ class MarshallOlkin(BivExtremeValueCopula):
     # Additional dependence measures — closed forms
     # ------------------------------------------------------------------
 
+    def spearman_footrule(self, *args, **kwargs):
+        r"""Spearman's footrule :math:`\psi = 2m/(3-m)` with
+        :math:`m=\min\{\alpha_1,\alpha_2\}`, since
+        :math:`C(t,t)=t^{2-m}` on the diagonal."""
+        return self.spearmans_footrule(*args, **kwargs)
+
+    def blests_nu(self, *args, **kwargs):
+        r"""
+        Blest's rank correlation :math:`\nu` for the Marshall-Olkin copula.
+
+        With :math:`p = 1-\alpha_1+2\alpha_1/\alpha_2`,
+
+        .. math::
+
+           \nu = \frac{2\alpha_2}{2-\alpha_2}
+               - \frac{12\,\alpha_2}{2-\alpha_2}
+                 \Bigl(\frac{1}{p+1}-\frac{1}{p+2}\Bigr)\,.
+
+        Note that :math:`\nu` weights the ranks of the first coordinate;
+        for the transposed copula, swap :math:`\alpha_1` and
+        :math:`\alpha_2`.
+        """
+        self._set_params(args, kwargs)
+        a1, a2 = float(self.alpha_1), float(self.alpha_2)
+        if a1 == 0 or a2 == 0:
+            return 0
+        p = 1 - a1 + 2 * a1 / a2
+        return 2 * a2 / (2 - a2) - 12 * a2 / (2 - a2) * (1 / (p + 1) - 1 / (p + 2))
+
+    def hoeffdings_d(self, *args, **kwargs):
+        r"""
+        Hoeffding's dependence index :math:`\Phi^2 = 90\iint(C-\Pi)^2`
+        for the Marshall-Olkin copula, in closed form via piecewise power
+        integrals with :math:`q=2-2\alpha_1+3\alpha_1/\alpha_2` and
+        :math:`r=2-\alpha_1+3\alpha_1/\alpha_2`.
+        """
+        self._set_params(args, kwargs)
+        a1, a2 = float(self.alpha_1), float(self.alpha_2)
+        if a1 == 0 or a2 == 0:
+            return 0
+        q = 2 - 2 * a1 + 3 * a1 / a2
+        r = 2 - a1 + 3 * a1 / a2
+        int_c2 = (1 / 3 - 1 / (3 - 2 * a2)) / (q + 1) + 1 / (3 * (3 - 2 * a2))
+        int_cpi = (1 / 3 - 1 / (3 - a2)) / (r + 1) + 1 / (3 * (3 - a2))
+        return 90 * (int_c2 - 2 * int_cpi + 1 / 9)
+
     def schweizer_wolff_sigma(self, *args, **kwargs):
         r"""
         Schweizer–Wolff :math:`\sigma` for the Marshall-Olkin copula.

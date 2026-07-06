@@ -288,6 +288,27 @@ class Raftery(BivCopula):
         self._set_params(args, kwargs)
         return 2 * self.delta / (3 - self.delta)
 
+    def spearman_footrule(self, *args, **kwargs):
+        r"""Spearman's footrule :math:`\psi = 2\delta/(3-\delta)`; the two
+        exponents of the diagonal section collapse to
+        :math:`C(t,t) = t + \tfrac{1-\delta}{1+\delta}(t^{2/(1-\delta)}-t)`."""
+        self._set_params(args, kwargs)
+        return 2 * self.delta / (3 - self.delta)
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""Schweizer-Wolff :math:`\sigma = \rho_S`; the Raftery copula is
+        CI, hence PQD, for all :math:`\delta\in[0,1]`."""
+        return self.spearmans_rho(*args, **kwargs)
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta = 1 + \tfrac{4(1-\delta)}{1+\delta}
+        (2^{-2/(1-\delta)} - \tfrac12)`."""
+        self._set_params(args, kwargs)
+        d = float(self.delta)
+        if d == 1:
+            return 1.0
+        return 1 + 4 * (1 - d) / (1 + d) * (2 ** (-2 / (1 - d)) - 0.5)
+
     @property
     def lambda_L(self):
         """
