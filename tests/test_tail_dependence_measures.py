@@ -92,7 +92,8 @@ class TestGaussianTailDependence:
     def test_tail_order(self):
         cop = copul.Gaussian(rho=0.5)
         order = cop.tail_order()
-        expected_kappa = 1.0 / (1.0 - 0.5)  # = 2.0
+        # kappa = 2 / (1 + rho), see Hua & Joe (2011), JMVA 102, Example 2
+        expected_kappa = 2.0 / (1.0 + 0.5)  # = 4/3
         assert np.isclose(order["lower"], expected_kappa, atol=1e-10)
         assert np.isclose(order["upper"], expected_kappa, atol=1e-10)
 

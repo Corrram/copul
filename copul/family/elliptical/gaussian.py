@@ -403,19 +403,19 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         self._set_params(args, kwargs)
         return 2 / np.pi * np.arcsin(float(self.rho))
 
-    def spearmans_footrule(self, *args, **kwargs) -> float:
+    def spearman_footrule(self, *args, **kwargs) -> float:
         r"""
-        Spearman's footrule :math:`F = \mathbb{E}\,\lvert U - V\rvert` for the Gaussian copula.
+        Spearman's footrule :math:`\psi` for the Gaussian copula.
 
-        Closed form:
+        Closed form, via a trivariate normal orthant probability:
 
         .. math::
-           F(\rho) \;=\; \tfrac{1}{2} \;-\; \frac{3}{\pi}\,\arcsin\!\Bigl(\frac{1+\rho}{2}\Bigr).
+           \psi(\rho) \;=\; \frac{3}{\pi}\,\arcsin\!\Bigl(\frac{1+\rho}{2}\Bigr) \;-\; \tfrac{1}{2}.
 
         Returns
         -------
         float
-            Footrule distance in :math:`[0, \tfrac12]`.
+            Footrule value in :math:`[-\tfrac12, 1]`.
         """
         self._set_params(args, kwargs)
         rho = float(self.rho)
@@ -425,6 +425,10 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
 
         footrule = (3.0 / np.pi) * np.arcsin((1.0 + rho) / 2.0) - 0.5
         return footrule
+
+    def spearmans_footrule(self, *args, **kwargs) -> float:
+        r"""Alias for :meth:`spearman_footrule`."""
+        return self.spearman_footrule(*args, **kwargs)
 
     # ------------------------------------------------------------------
     # Dependence measures with known closed forms
@@ -474,9 +478,11 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         .. math::
 
            \gamma(\rho)
-             = \frac{8}{\pi}\,\arcsin(\rho/2)
+             = \frac{2}{\pi}\Bigl(\arcsin\Bigl(\frac{1+\rho}{2}\Bigr)
+               - \arcsin\Bigl(\frac{1-\rho}{2}\Bigr)\Bigr)
 
-        See Nelsen (2006), Exercise 5.19.
+        obtained by expressing the diagonal and anti-diagonal integrals of
+        the copula as trivariate normal orthant probabilities.
 
         Returns
         -------
@@ -485,7 +491,9 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         self._set_params(args, kwargs)
         rho = float(self.rho)
         rho = max(-1.0, min(1.0, rho))
-        return (8.0 / np.pi) * np.arcsin(rho / 2.0)
+        return (2.0 / np.pi) * (
+            np.arcsin((1.0 + rho) / 2.0) - np.arcsin((1.0 - rho) / 2.0)
+        )
 
     def blomqvists_beta(self, *args, **kwargs):
         r"""
@@ -541,9 +549,11 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
 
         .. math::
 
-           \kappa_L = \kappa_U = \frac{1}{1 - \rho}
+           \kappa_L = \kappa_U = \frac{2}{1 + \rho}
 
-        for :math:`-1 \le \rho < 1`.
+        for :math:`-1 < \rho \le 1`, see Hua & Joe (2011), *Tail order and
+        intermediate tail dependence of multivariate copulas*, JMVA 102,
+        Example 2.
 
         Returns
         -------
@@ -552,6 +562,8 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         rho_val = float(self.rho)
         if rho_val >= 1.0:
             kappa = 1.0
+        elif rho_val <= -1.0:
+            kappa = float("inf")
         else:
-            kappa = 1.0 / (1.0 - rho_val)
+            kappa = 2.0 / (1.0 + rho_val)
         return {"lower": kappa, "upper": kappa}

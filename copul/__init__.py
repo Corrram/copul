@@ -82,6 +82,7 @@ from copul.family.other.clamped_parabola_copula import XiNuBoundaryCopula
 from copul.family_list import Families, families, approximations, copulas
 from copul.schur_order.cis_rearranger import CISRearranger
 from copul.schur_order.cis_verifier import CISVerifier
+from copul.schur_order.corner_set_verifier import CornerSetVerifier
 from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.schur_order.plod_verifier import PLODVerifier
 from copul.schur_order.bounds_from_xi import bounds_from_xi
@@ -174,6 +175,7 @@ __all__ = [
     # Miscellaneous
     "CISRearranger",
     "CISVerifier",
+    "CornerSetVerifier",
     "LTDVerifier",
     "PLODVerifier",
     "ShuffleOfMin",
@@ -195,3 +197,4 @@ for logger in logging.root.manager.loggerDict:
         logging.getLogger(logger).setLevel(logging.WARNING)
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+

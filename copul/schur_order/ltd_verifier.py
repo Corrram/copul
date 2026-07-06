@@ -74,7 +74,7 @@ class LTDVerifier:
             C,
             grid,
             symbolic_ratio=lambda expr, u, v: expr / u,
-            numeric_ratio=lambda cdf, u, v: cdf(u, v) / u,
+            numeric_ratio=lambda cdf, u, v: max(float(cdf(u, v)), 0.0) / u,
             increasing=False,
         )
 
@@ -83,7 +83,7 @@ class LTDVerifier:
             C,
             grid,
             symbolic_ratio=lambda expr, u, v: expr / u,
-            numeric_ratio=lambda cdf, u, v: cdf(u, v) / u,
+            numeric_ratio=lambda cdf, u, v: max(float(cdf(u, v)), 0.0) / u,
             increasing=True,
         )
 
@@ -92,7 +92,8 @@ class LTDVerifier:
             C,
             grid,
             symbolic_ratio=lambda expr, u, v: (1 - u - v + expr) / (1 - u),
-            numeric_ratio=lambda cdf, u, v: (1 - u - v + cdf(u, v)) / (1 - u),
+            numeric_ratio=lambda cdf, u, v: (1 - u - v + max(float(cdf(u, v)), 0.0))
+            / (1 - u),
             increasing=True,
         )
 
@@ -101,28 +102,22 @@ class LTDVerifier:
             C,
             grid,
             symbolic_ratio=lambda expr, u, v: (1 - u - v + expr) / (1 - u),
-            numeric_ratio=lambda cdf, u, v: (1 - u - v + cdf(u, v)) / (1 - u),
+            numeric_ratio=lambda cdf, u, v: (1 - u - v + max(float(cdf(u, v)), 0.0))
+            / (1 - u),
             increasing=False,
         )
 
     def _check_monotone_ratio(self, C, grid, symbolic_ratio, numeric_ratio, increasing):
         tol = 1e-10
 
-        try:
-            C_expr = C.cdf.func
-            u_sym, v_sym = C.u, C.v
-            ratio = symbolic_ratio(C_expr, u_sym, v_sym)
-            for v in grid:
-                f_v = ratio.subs(v_sym, v)
-                values = (f_v.subs(u_sym, u) for u in grid)
-                if not self._values_are_monotone(values, increasing, tol):
-                    return False
-        except Exception:
-            cdf = C.cdf
-            for v in grid:
-                values = (numeric_ratio(cdf, u, v) for u in grid)
-                if not self._values_are_monotone(values, increasing, tol):
-                    return False
+        # Evaluate the (clipped) cdf numerically; copula cdfs of families
+        # defined with a positive part may evaluate to negative values if the
+        # stored expression lacks the clipping, so we clip at 0.
+        cdf = C.cdf
+        for v in grid:
+            values = (numeric_ratio(cdf, u, v) for u in grid)
+            if not self._values_are_monotone(values, increasing, tol):
+                return False
 
         return True
 

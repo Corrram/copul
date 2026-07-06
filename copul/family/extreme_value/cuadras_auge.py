@@ -251,6 +251,24 @@ class CuadrasAuge(BivExtremeValueCopula):
         I_anti = 2 * _betainc_reg(2, 2 - d, 0.5) * _beta_fn(2, 2 - d)
         return float(4 * (I_diag + I_anti) - 2)
 
+    def blests_nu(self, *args, **kwargs):
+        r"""
+        Blest's rank correlation :math:`\nu` for the Cuadras-Aug\'e copula.
+
+        Evaluating :math:`\nu = 24\iint(1-u)\,C(u,v)\,du\,dv - 2` over the
+        regions :math:`\{u\le v\}` and :math:`\{u>v\}` yields
+
+        .. math::
+
+           \nu = \frac{2\delta}{2-\delta}
+                - \frac{12\,\delta}{(2-\delta)(4-\delta)(5-\delta)}\,.
+        """
+        self._set_params(args, kwargs)
+        d = float(self.delta)
+        if d == 0:
+            return 0
+        return 2 * d / (2 - d) - 12 * d / ((2 - d) * (4 - d) * (5 - d))
+
     def spearman_footrule(self, *args, **kwargs):
         r"""
         Spearman's footrule :math:`\psi` for the Cuadras-Augé copula.

@@ -176,6 +176,34 @@ class Mardia(BivCopula):
         self._set_params(args, kwargs)
         return self.theta**3 * (self.theta**2 + 2) / 3
 
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta = \theta^3` for the Mardia copula."""
+        self._set_params(args, kwargs)
+        return self.theta**3
+
+    def blests_nu(self, *args, **kwargs):
+        r"""Blest's :math:`\nu = \theta^3`; the Mardia copula is radially
+        symmetric, so :math:`\nu` coincides with Spearman's :math:`\rho`."""
+        self._set_params(args, kwargs)
+        return self.theta**3
+
+    def spearman_footrule(self, *args, **kwargs):
+        r"""Spearman's footrule :math:`\psi = \theta^2(1+3\theta)/4`."""
+        self._set_params(args, kwargs)
+        return self.theta**2 * (1 + 3 * self.theta) / 4
+
+    def gini_gamma(self, *args, **kwargs):
+        r"""Gini's :math:`\gamma = \theta^3` for the Mardia copula."""
+        self._set_params(args, kwargs)
+        return self.theta**3
+
+    def hoeffdings_d(self, *args, **kwargs):
+        r"""Hoeffding's dependence index
+        :math:`\Phi^2 = \theta^4(1+15\theta^2)/16`, obtained from the
+        Fr\'echet-copula formula by substituting the Mardia weights."""
+        self._set_params(args, kwargs)
+        return self.theta**4 * (1 + 15 * self.theta**2) / 16
+
     @property
     def pdf(self):
         """

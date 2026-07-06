@@ -268,6 +268,31 @@ class Frechet(BivCopula):
         self._set_params(args, kwargs)
         return self.alpha - self.beta / 2
 
+    def spearman_footrule(self, *args, **kwargs):
+        return self.spearmans_footrule(*args, **kwargs)
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta = \alpha - \beta` (affine in the weights)."""
+        self._set_params(args, kwargs)
+        return self.alpha - self.beta
+
+    def hoeffdings_d(self, *args, **kwargs):
+        r"""
+        Hoeffding's dependence index for the Fr\'echet copula:
+
+        .. math::
+
+           \Phi^2 = \alpha^2 + \beta^2 - \tfrac{7}{4}\,\alpha\beta\,,
+
+        using :math:`90\!\iint(M-\Pi)^2 = 90\!\iint(W-\Pi)^2 = 1` and
+        :math:`90\!\iint(M-\Pi)(W-\Pi) = -\tfrac{7}{8}`.
+        """
+        self._set_params(args, kwargs)
+        return self.alpha**2 + self.beta**2 - 7 * self.alpha * self.beta / 4
+
+    def gini_gamma(self, *args, **kwargs):
+        return self.ginis_gamma(*args, **kwargs)
+
     def ginis_gamma(self, *args, **kwargs):
         r"""
         Gini's gamma :math:`\gamma`.

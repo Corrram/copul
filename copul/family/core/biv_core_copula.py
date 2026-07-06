@@ -909,6 +909,106 @@ class BivCoreCopula:
         """
         return CISVerifier(cond_distr).is_cis(self)
 
+    # ------------------------------------------------------------------
+    # Tail monotonicity and corner set monotonicity
+    # ------------------------------------------------------------------
+
+    def is_ltd(self, n_grid: int = 40) -> bool:
+        r"""Check whether the copula is left tail decreasing, LTD(V|U).
+
+        :math:`C` is LTD(V|U) if :math:`u \mapsto C(u,v)/u` is
+        nonincreasing on :math:`(0,1)` for all :math:`v`. For exchangeable
+        copulas this is equivalent to LTD(U|V).
+        """
+        from copul.schur_order.ltd_verifier import LTDVerifier
+
+        grid = np.linspace(0.001, 0.999, n_grid)
+        return LTDVerifier()._copula_is_ltd(self, grid)
+
+    def is_rti(self, n_grid: int = 40) -> bool:
+        r"""Check whether the copula is right tail increasing, RTI(V|U).
+
+        :math:`C` is RTI(V|U) if :math:`u \mapsto (1-u-v+C(u,v))/(1-u)`
+        is nondecreasing on :math:`(0,1)` for all :math:`v`.
+        """
+        from copul.schur_order.ltd_verifier import LTDVerifier
+
+        grid = np.linspace(0.001, 0.999, n_grid)
+        return LTDVerifier()._copula_is_rti(self, grid)
+
+    def is_lcsd(self, n_grid: int = 40) -> bool:
+        r"""Check whether the copula is left corner set decreasing (LCSD).
+
+        Equivalent to the *function* :math:`C` being TP2, see
+        [Nelsen 2006, Cor. 5.2.17].
+        """
+        from copul.schur_order.corner_set_verifier import CornerSetVerifier
+
+        return CornerSetVerifier(n_grid).is_lcsd(self)
+
+    def is_rcsi(self, n_grid: int = 40) -> bool:
+        r"""Check whether the copula is right corner set increasing (RCSI).
+
+        Equivalent to the survival function :math:`\bar C` being TP2, see
+        [Nelsen 2006, Cor. 5.2.17].
+        """
+        from copul.schur_order.corner_set_verifier import CornerSetVerifier
+
+        return CornerSetVerifier(n_grid).is_rcsi(self)
+
+    # ------------------------------------------------------------------
+    # Symmetry properties
+    # ------------------------------------------------------------------
+
+    def is_exchangeable(self, n_grid: int = 40, tol: float = 1e-9) -> bool:
+        r"""Check whether the copula is exchangeable, i.e. :math:`C(u,v)=C(v,u)`."""
+        grid = np.linspace(0.001, 0.999, n_grid)
+        try:
+            expr = self.cdf().func
+            diff = sp.simplify(expr - expr.subs({self.u: self.v, self.v: self.u}, simultaneous=True))
+            if diff == 0:
+                return True
+        except Exception:
+            pass
+        cdf = self.cdf
+        for u in grid:
+            for v in grid:
+                if v <= u:
+                    continue
+                if abs(float(cdf(u=u, v=v)) - float(cdf(u=v, v=u))) > tol:
+                    return False
+        return True
+
+    def is_radially_symmetric(self, n_grid: int = 40, tol: float = 1e-9) -> bool:
+        r"""Check whether the copula is radially symmetric.
+
+        Radial symmetry means :math:`C = \hat C`, i.e.
+
+        .. math::
+
+           C(u,v) = u + v - 1 + C(1-u, 1-v)
+           \qquad \text{for all } (u,v)\in[0,1]^2.
+        """
+        grid = np.linspace(0.001, 0.999, n_grid)
+        try:
+            expr = self.cdf().func
+            survival = self.u + self.v - 1 + expr.subs(
+                {self.u: 1 - self.u, self.v: 1 - self.v}, simultaneous=True
+            )
+            diff = sp.simplify(expr - survival)
+            if diff == 0:
+                return True
+        except Exception:
+            pass
+        cdf = self.cdf
+        for u in grid:
+            for v in grid:
+                c_uv = float(cdf(u=u, v=v))
+                c_hat = u + v - 1 + float(cdf(u=1 - u, v=1 - v))
+                if abs(c_uv - c_hat) > tol:
+                    return False
+        return True
+
     def blomqvists_beta(self) -> float:
         """
         Blomqvist’s β   :=  4·C(½,½) – 1
@@ -943,12 +1043,26 @@ class BivCoreCopula:
 
     def _gini_gamma(self):
         t = sp.Symbol("t", positive=True)
-        cdf_expr = self.cdf().func
-        cdf_diag = cdf_expr.subs([(self.u, t), (self.v, t)])
-        cdf_anti = cdf_expr.subs([(self.u, t), (self.v, 1 - t)])
-        int1 = sp.simplify(sp.integrate(cdf_diag, (t, 0, 1)))
-        int2 = sp.simplify(sp.integrate(cdf_anti, (t, 0, 1)))
-        return sp.simplify(4 * (int1 + int2) - 2)
+        try:
+            cdf_expr = self.cdf().func
+            cdf_diag = cdf_expr.subs([(self.u, t), (self.v, t)])
+            cdf_anti = cdf_expr.subs([(self.u, t), (self.v, 1 - t)])
+            int1 = sp.simplify(sp.integrate(cdf_diag, (t, 0, 1)))
+            int2 = sp.simplify(sp.integrate(cdf_anti, (t, 0, 1)))
+            result = sp.simplify(4 * (int1 + int2) - 2)
+            if not result.has(sp.Integral):
+                return result
+        except Exception:
+            pass
+        return self._gini_gamma_numerical()
+
+    def _gini_gamma_numerical(self) -> float:
+        from scipy.integrate import quad
+
+        cdf = self.cdf
+        int1 = quad(lambda s: float(cdf(u=s, v=s)), 0, 1)[0]
+        int2 = quad(lambda s: float(cdf(u=s, v=1 - s)), 0, 1)[0]
+        return 4 * (int1 + int2) - 2
 
     # ------------------------------------------------------------------
     # Spearman’s footrule  ψ(C) = 6·∫₀¹ C(t,t) dt − 2
@@ -980,10 +1094,23 @@ class BivCoreCopula:
 
     def _spearman_footrule(self):
         t = sp.Symbol("t", positive=True)
-        cdf_expr = self.cdf().func
-        cdf_diag = cdf_expr.subs([(self.u, t), (self.v, t)])
-        integral = sp.simplify(sp.integrate(cdf_diag, (t, 0, 1)))
-        return sp.simplify(6 * integral - 2)
+        try:
+            cdf_expr = self.cdf().func
+            cdf_diag = cdf_expr.subs([(self.u, t), (self.v, t)])
+            integral = sp.simplify(sp.integrate(cdf_diag, (t, 0, 1)))
+            result = sp.simplify(6 * integral - 2)
+            if not result.has(sp.Integral) and not result.has(t):
+                return result
+        except Exception:
+            pass
+        return self._spearman_footrule_numerical()
+
+    def _spearman_footrule_numerical(self) -> float:
+        from scipy.integrate import quad
+
+        cdf = self.cdf
+        integral = quad(lambda s: float(cdf(u=s, v=s)), 0, 1)[0]
+        return 6 * integral - 2
 
     # ------------------------------------------------------------------
     # Tail concentration functions
@@ -1141,27 +1268,62 @@ class BivCoreCopula:
         ts = np.array([1e-5, 5e-5, 1e-4, 5e-4, 1e-3])
         log_t = np.log(ts)
 
-        if hasattr(self, "cdf_vectorized"):
-            c_diag = self.cdf_vectorized(ts, ts)
-        else:
-            c_diag = np.array([float(self.cdf(u=t, v=t)) for t in ts])
+        # High-precision diagonal evaluation via sympy where possible; the
+        # survival diagonal Ĉ(t,t) = 2t - 1 + C(1-t,1-t) suffers catastrophic
+        # cancellation in double precision.
+        expr = None
+        try:
+            expr = self.cdf().func
+        except Exception:
+            pass
+
+        def _diag(t_val, upper=False):
+            if expr is not None:
+                try:
+                    tt = sp.Float(1 - t_val if upper else t_val, 40)
+                    val = expr.subs({self.u: tt, self.v: tt})
+                    val = sp.N(val, 40)
+                    if upper:
+                        val = 2 * sp.Float(t_val, 40) - 1 + val
+                    return float(val)
+                except Exception:
+                    pass
+            c = float(self.cdf(u=1 - t_val if upper else t_val, v=1 - t_val if upper else t_val))
+            return 2.0 * t_val - 1.0 + c if upper else c
+
+        def _has_positive_lambda(vals):
+            # lambda > 0 iff C(t,t)/t converges to a positive constant; for
+            # intermediate tail dependence the ratio still decays in t.
+            r0, r1 = vals[0] / ts[0], vals[-1] / ts[-1]
+            return r0 > 5e-3 and r1 > 0 and r0 / r1 > 0.8
 
         # Lower tail order: C(t,t) ~ t^kappa_L
-        pos_mask = c_diag > 0
-        if np.sum(pos_mask) >= 2:
-            kappa_L = float(np.polyfit(log_t[pos_mask], np.log(c_diag[pos_mask]), 1)[0])
+        c_diag = np.array([_diag(t) for t in ts])
+        if _has_positive_lambda(c_diag):
+            # positive lower tail dependence coefficient
+            kappa_L = 1.0
         else:
-            kappa_L = float("inf")
+            pos_mask = c_diag > 0
+            if np.sum(pos_mask) >= 2:
+                kappa_L = float(
+                    np.polyfit(log_t[pos_mask], np.log(c_diag[pos_mask]), 1)[0]
+                )
+            else:
+                kappa_L = float("inf")
 
-        # Upper tail order: Chat(t,t) ~ t^kappa_U
-        c_surv = 1.0 - 2.0 * ts + c_diag  # Ĉ(t,t)
-        pos_mask_u = c_surv > 0
-        if np.sum(pos_mask_u) >= 2:
-            kappa_U = float(
-                np.polyfit(log_t[pos_mask_u], np.log(c_surv[pos_mask_u]), 1)[0]
-            )
+        # Upper tail order: Ĉ(t,t) ~ t^kappa_U with the survival copula
+        c_surv = np.array([_diag(t, upper=True) for t in ts])
+        if _has_positive_lambda(c_surv):
+            # positive upper tail dependence coefficient
+            kappa_U = 1.0
         else:
-            kappa_U = float("inf")
+            pos_mask_u = c_surv > 0
+            if np.sum(pos_mask_u) >= 2:
+                kappa_U = float(
+                    np.polyfit(log_t[pos_mask_u], np.log(c_surv[pos_mask_u]), 1)[0]
+                )
+            else:
+                kappa_U = float("inf")
 
         return {"lower": kappa_L, "upper": kappa_U}
 
@@ -1368,6 +1530,33 @@ class BivCoreCopula:
         """
         self._set_params(args, kwargs)
         return self._hoeffdings_d()
+
+    def hoeffdings_phi_square(self, *args, **kwargs):
+        r"""
+        Hoeffding's dependence index :math:`\Phi^2`.
+
+        .. math::
+
+           \Phi^2(C) = 90 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,du\,dv
+
+        This is the population version of the Blum--Kiefer--Rosenblatt
+        statistic and coincides with :meth:`hoeffdings_d`.
+
+        References
+        ----------
+        Hoeffding, W. (1940). "Masstabinvariante Korrelationstheorie."
+        Blum, J. R., Kiefer, J. & Rosenblatt, M. (1961). "Distribution free
+        tests of independence based on the sample distribution function."
+        *Ann. Math. Statist.* 32, 485--498.
+        Gai{\ss}er, S., Ruppert, M. & Schmid, F. (2010). "A multivariate
+        version of Hoeffding's Phi-square." *J. Multivariate Anal.* 101(10),
+        2571--2586.
+        """
+        return self.hoeffdings_d(*args, **kwargs)
+
+    def blum_kiefer_rosenblatt(self, *args, **kwargs):
+        r"""Alias for :meth:`hoeffdings_phi_square`."""
+        return self.hoeffdings_d(*args, **kwargs)
 
     def _hoeffdings_d(self):
         cdf_expr = self.cdf().func

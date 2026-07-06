@@ -73,6 +73,18 @@ class Plackett(BivCopula):
         """Nelsen Exercise 5.18"""
         return (sympy.sqrt(self.theta) - 1) / (sympy.sqrt(self.theta) + 1)
 
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta = (\sqrt\theta-1)/(\sqrt\theta+1)`,
+        see Nelsen (2006), Exercise 5.18."""
+        self._set_params(args, kwargs)
+        return (sympy.sqrt(self.theta) - 1) / (sympy.sqrt(self.theta) + 1)
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""Schweizer-Wolff :math:`\sigma = |\rho_S|`; the Plackett family
+        is PQD for :math:`\theta\ge1` and NQD for :math:`\theta\le1`."""
+        self._set_params(args, kwargs)
+        return abs(self.spearmans_rho())
+
     def get_density_of_density(self):
         # D_vu(pdf)
         u = self.u

@@ -931,10 +931,11 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
     def tail_order(self):
         r"""Tail order :math:`\kappa` for extreme value copulas.
 
-        For any bivariate extreme value copula the lower tail order is
-        :math:`\kappa_L = 1 / A(1/2)` and the upper tail order is 1
-        whenever :math:`\lambda_U > 0`, or the rate at which
-        :math:`A(t) \to 1` near the endpoints.
+        On the diagonal, :math:`C_A(t,t) = t^{2A(1/2)}` holds exactly, so
+        the lower tail order is :math:`\kappa_L = 2A(1/2)`. The upper tail
+        order is 1 whenever :math:`\lambda_U = 2 - 2A(1/2) > 0`, and
+        :math:`\kappa_U = 2` in the boundary case :math:`A(1/2) = 1`
+        (independence).
 
         Returns
         -------
@@ -942,9 +943,46 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             ``{"lower": kappa_L, "upper": kappa_U}``
         """
         A_half = float(self.pickands(0.5))
-        kappa_L = 1.0 / A_half if A_half > 0 else float("inf")
-        kappa_U = 1.0 if A_half < 1.0 else float("inf")
+        kappa_L = 2.0 * A_half
+        kappa_U = 1.0 if A_half < 1.0 else 2.0
         return {"lower": kappa_L, "upper": kappa_U}
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta` for extreme value copulas.
+
+        Since :math:`C_A(\tfrac12,\tfrac12) = 2^{-2A(1/2)}`,
+
+        .. math::
+
+           \beta = 2^{\,2-2A(1/2)} - 1 = 2^{\lambda_U} - 1\,,
+
+        where :math:`\lambda_U` is the upper tail dependence coefficient.
+        """
+        self._set_params(args, kwargs)
+        A_half = float(self.pickands(0.5))
+        return 2.0 ** (2.0 - 2.0 * A_half) - 1.0
+
+    def spearman_footrule(self, *args, **kwargs):
+        r"""Spearman's footrule for extreme value copulas.
+
+        Since :math:`C_A(t,t) = t^{2A(1/2)}` exactly on the diagonal,
+
+        .. math::
+
+           \psi = \frac{6}{1 + 2A(1/2)} - 2\,.
+        """
+        self._set_params(args, kwargs)
+        A_half = float(self.pickands(0.5))
+        return 6.0 / (1.0 + 2.0 * A_half) - 2.0
+
+    def schweizer_wolff_sigma(self, *args, **kwargs):
+        r"""Schweizer--Wolff :math:`\sigma` for extreme value copulas.
+
+        Extreme value copulas satisfy :math:`C_A \geq \Pi` (PQD), so the
+        absolute value in the definition of :math:`\sigma` is redundant and
+        :math:`\sigma = \rho_S`.
+        """
+        return self.spearmans_rho(*args, **kwargs)
 
     @property
     def is_ci(self):

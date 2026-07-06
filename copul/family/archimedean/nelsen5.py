@@ -310,7 +310,7 @@ class Frank(BivArchimedeanCopula):
 
         .. math::
 
-           \beta = 1 - \frac{4}{\theta}\,\ln\!\cosh\!\bigl(\tfrac{\theta}{4}\bigr)
+           \beta = \frac{4}{\theta}\,\ln\!\cosh\!\bigl(\tfrac{\theta}{4}\bigr)
 
         (The Frank CDF at :math:`(1/2,1/2)` has a neat log-cosh form.)
         """
@@ -318,7 +318,7 @@ class Frank(BivArchimedeanCopula):
         theta = float(self.theta)
         if theta == 0:
             return 0
-        return 1.0 - 4.0 / theta * np.log(np.cosh(theta / 4.0))
+        return 4.0 / theta * np.log(np.cosh(theta / 4.0))
 
 
 Nelsen5 = Frank

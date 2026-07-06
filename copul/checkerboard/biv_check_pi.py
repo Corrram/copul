@@ -156,6 +156,164 @@ class BivCheckPi(CheckPi, BivCoreCopula):
             return generated_copulas[0]
         return generated_copulas
 
+    # ------------------------------------------------------------------
+    # Diverse random checkerboard generation
+    # ------------------------------------------------------------------
+    #: Strategies used by :meth:`generate_diverse` / :meth:`random_bistochastic_matrix`.
+    DIVERSE_STRATEGIES = (
+        "permutation",
+        "birkhoff_sparse",
+        "birkhoff_dense",
+        "sinkhorn_uniform",
+        "sinkhorn_exponential",
+        "sinkhorn_lognormal",
+        "band",
+        "power",
+    )
+
+    @staticmethod
+    def _sinkhorn(A, iters: int = 2000, tol: float = 1e-13) -> np.ndarray:
+        """Sinkhorn--Knopp normalization to a doubly stochastic matrix.
+
+        Alternately rescales rows and columns of the nonnegative matrix ``A``
+        until all row and column sums equal one (up to ``tol``).
+        """
+        A = np.array(A, dtype=float)
+        A[A < 0] = 0.0
+        # Guarantee a positive diagonal support so the iteration cannot stall
+        # on an all-zero row or column.
+        if not (A.sum(axis=1).all() and A.sum(axis=0).all()):
+            A = A + 1e-12
+        for _ in range(iters):
+            A = A / A.sum(axis=1, keepdims=True)
+            A = A / A.sum(axis=0, keepdims=True)
+            if np.max(np.abs(A.sum(axis=1) - 1.0)) < tol:
+                break
+        return A
+
+    @classmethod
+    def random_bistochastic_matrix(cls, n: int, rng=None, strategy: str | None = None):
+        """Draw a random ``n x n`` doubly stochastic matrix.
+
+        Every returned matrix has all row and column sums equal, so that the
+        induced :class:`BivCheckPi` has uniform margins, i.e. a genuine
+        copula. The ``strategy`` controls the qualitative shape and is chosen
+        uniformly at random from :attr:`DIVERSE_STRATEGIES` when ``None``:
+
+        * ``"permutation"`` -- a single random permutation matrix (deterministic,
+          close to the maximal-functional-dependence regime);
+        * ``"birkhoff_sparse"`` -- a sparse convex combination of a few
+          permutation matrices with heavy-tailed (Dirichlet, small concentration)
+          weights, biased towards near-deterministic copulas;
+        * ``"birkhoff_dense"`` -- a convex combination of many permutation
+          matrices, biased towards near-independence;
+        * ``"sinkhorn_*"`` -- Sinkhorn--Knopp normalization of a nonnegative
+          base matrix with uniform, exponential, log-normal or sparsified
+          entries (broadly spread interiors);
+        * ``"band"`` -- a circulant mixture of cyclic shifts (mass near the
+          diagonal), exactly doubly stochastic;
+        * ``"power"`` -- ``U**p`` for uniform ``U`` and random ``p`` made doubly
+          stochastic, interpolating between near-uniform and very peaked.
+
+        Args:
+            n: grid size (number of rows/columns).
+            rng: ``numpy`` ``Generator``, integer seed, or ``None``.
+            strategy: one of :attr:`DIVERSE_STRATEGIES`, or ``None`` to pick at
+                random.
+
+        Returns:
+            np.ndarray: a doubly stochastic ``n x n`` matrix.
+        """
+        rng = np.random.default_rng(rng)
+        n = int(n)
+        if strategy is None:
+            strategy = rng.choice(cls.DIVERSE_STRATEGIES)
+
+        if strategy == "permutation":
+            return np.eye(n)[rng.permutation(n)]
+
+        if strategy in ("birkhoff_sparse", "birkhoff_dense"):
+            if strategy == "birkhoff_sparse":
+                k = int(rng.integers(1, min(4, n) + 1))
+                w = rng.dirichlet(np.full(k, 0.3))
+            else:
+                k = int(rng.integers(n, 3 * n + 1))
+                w = rng.dirichlet(np.ones(k))
+            M = np.zeros((n, n))
+            for wk in w:
+                M += wk * np.eye(n)[rng.permutation(n)]
+            return M
+
+        if strategy.startswith("sinkhorn"):
+            if strategy == "sinkhorn_uniform":
+                A = rng.random((n, n))
+            elif strategy == "sinkhorn_exponential":
+                A = rng.exponential(1.0, (n, n))
+            elif strategy == "sinkhorn_lognormal":
+                A = np.exp(rng.normal(0.0, rng.uniform(0.5, 2.0), (n, n)))
+            else:
+                raise ValueError(f"Unknown strategy {strategy!r}")
+            A = A + 1e-4 * A.max()  # full support => Sinkhorn converges exactly
+            return cls._sinkhorn(A)
+
+        if strategy == "band":
+            # Circulant mixture of cyclic-shift permutations with offsets in
+            # [-w, w]: exactly doubly stochastic by construction (each shift is
+            # a permutation) and concentrated near the diagonal.
+            w = int(rng.integers(0, n))
+            offsets = np.arange(-w, w + 1)
+            weights = rng.random(offsets.size) + 1e-3
+            weights /= weights.sum()
+            idx = np.arange(n)
+            M = np.zeros((n, n))
+            for off, wt in zip(offsets, weights):
+                M[idx, (idx + off) % n] += wt
+            return M
+
+        if strategy == "power":
+            A = rng.random((n, n)) ** rng.uniform(1.0, 4.0)
+            A = A + 1e-4 * A.max()
+            return cls._sinkhorn(A)
+
+        raise ValueError(f"Unknown strategy {strategy!r}")
+
+    @classmethod
+    def generate_diverse(
+        cls,
+        n_samples: int = 1,
+        grid_size=(2, 60),
+        rng=None,
+        strategy: str | None = None,
+    ):
+        """Generate diverse random checkerboard copulas.
+
+        Each sample draws a (possibly random) grid size and a doubly stochastic
+        matrix via :meth:`random_bistochastic_matrix`, yielding genuine copulas
+        spread across the attainable set of dependence measures -- useful for
+        stress-testing inequalities and attainable regions.
+
+        Args:
+            n_samples: number of copulas to generate.
+            grid_size: fixed ``int`` grid size, or an inclusive ``(low, high)``
+                range from which the grid size is drawn uniformly per sample.
+            rng: ``numpy`` ``Generator``, integer seed, or ``None``.
+            strategy: fixed strategy name, or ``None`` to randomize per sample.
+
+        Returns:
+            A single :class:`BivCheckPi` if ``n_samples == 1``, else a list.
+        """
+        rng = np.random.default_rng(rng)
+        out = []
+        for _ in range(int(n_samples)):
+            if isinstance(grid_size, (tuple, list)):
+                n = int(rng.integers(int(grid_size[0]), int(grid_size[1]) + 1))
+            else:
+                n = int(grid_size)
+            M = cls.random_bistochastic_matrix(n, rng=rng, strategy=strategy)
+            M = M / M.sum()  # pre-normalize to avoid the not-normalized warning
+            out.append(cls(M))
+        return out[0] if int(n_samples) == 1 else out
+
     def is_cis(self, i=1) -> bool:
         """
         Check if the copula is cis.
