@@ -290,6 +290,27 @@ class Frechet(BivCopula):
         self._set_params(args, kwargs)
         return self.alpha**2 + self.beta**2 - 7 * self.alpha * self.beta / 4
 
+    def blum_kiefer_rosenblatt(self, *args, **kwargs):
+        r"""
+        Blum-Kiefer-Rosenblatt coefficient for the Fr\'echet copula:
+
+        .. math::
+
+           B = \tfrac13\bigl(\alpha^2(1+2\alpha)+\beta^2(1+2\beta)\bigr)
+               - \tfrac12\,\alpha\beta(\alpha+\beta) - \tfrac{7}{12}\,\alpha\beta\,,
+
+        with :math:`B(M)=B(W)=1`, obtained by integrating the squared
+        deviation against the mixture measure
+        :math:`\alpha\,\mathrm{d}M+(1-\alpha-\beta)\,\mathrm{d}\Pi+\beta\,\mathrm{d}W`.
+        """
+        self._set_params(args, kwargs)
+        a, b = self.alpha, self.beta
+        return (
+            (a**2 * (1 + 2 * a) + b**2 * (1 + 2 * b)) / 3
+            - a * b * (a + b) / 2
+            - 7 * a * b / 12
+        )
+
     def gini_gamma(self, *args, **kwargs):
         return self.ginis_gamma(*args, **kwargs)
 

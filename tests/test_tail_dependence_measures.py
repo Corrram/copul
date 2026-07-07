@@ -63,10 +63,14 @@ class TestStudentTTailDependence:
         assert np.isclose(tau, expected, atol=1e-10)
 
     def test_spearmans_rho(self):
+        # Spearman's rho of the t copula depends on nu and is NOT given by
+        # the Gaussian formula (6/pi) arcsin(rho/2); for nu=4, rho=0.5 the
+        # quadrature value is ~0.4691 vs. 0.4826 for the Gaussian formula.
         cop = copul.StudentT(rho=0.5, nu=4)
         rho_s = cop.spearmans_rho()
-        expected = (6.0 / np.pi) * np.arcsin(0.25)
-        assert np.isclose(rho_s, expected, atol=1e-10)
+        assert np.isclose(rho_s, 0.4691, atol=2e-3)
+        gaussian_formula = (6.0 / np.pi) * np.arcsin(0.25)
+        assert abs(rho_s - gaussian_formula) > 5e-3
 
     def test_blomqvists_beta(self):
         cop = copul.StudentT(rho=0.5, nu=4)

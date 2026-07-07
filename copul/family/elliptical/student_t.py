@@ -281,7 +281,7 @@ class StudentT(EllipticalCopula):
         Spearman's :math:`\rho_S` of the Student-t copula is *not* given by
         the Gaussian formula :math:`\tfrac6\pi\arcsin(\rho/2)`; it depends on
         :math:`\nu` (e.g., for :math:`\nu=2`, :math:`\rho=0.5`, the true
-        value is :math:`\approx0.458` versus :math:`0.483` for the Gaussian
+        value is :math:`\approx0.455` versus :math:`0.483` for the Gaussian
         formula). It is computed here as
         :math:`\rho_S = 12\,\mathbb{E}[UV]-3` by Gauss--Legendre quadrature
         of :math:`u\,v\,c(u,v)` over the unit square.
