@@ -956,6 +956,64 @@ class BivCoreCopula:
 
         return CornerSetVerifier(n_grid).is_rcsi(self)
 
+    def is_pqd(self, n_grid: int = 40, tol: float = 1e-12) -> bool:
+        r"""Check whether the copula is positively quadrant dependent (PQD),
+        i.e., :math:`C(u,v)\geq uv` for all :math:`(u,v)\in[0,1]^2`.
+        In the bivariate case, PQD coincides with PLOD."""
+        grid = np.linspace(0.001, 0.999, n_grid)
+        cdf = self.cdf
+        for u in grid:
+            for v in grid:
+                if float(cdf(u=u, v=v)) < u * v - tol:
+                    return False
+        return True
+
+    def is_nqd(self, n_grid: int = 40, tol: float = 1e-12) -> bool:
+        r"""Check whether the copula is negatively quadrant dependent (NQD),
+        i.e., :math:`C(u,v)\leq uv` for all :math:`(u,v)\in[0,1]^2`."""
+        grid = np.linspace(0.001, 0.999, n_grid)
+        cdf = self.cdf
+        for u in grid:
+            for v in grid:
+                if float(cdf(u=u, v=v)) > u * v + tol:
+                    return False
+        return True
+
+    def is_mk_tp2(self, n_grid: int = 40, tol: float = 1e-10) -> bool:
+        r"""Check whether the copula is MK-TP2, i.e., whether its Markov
+        kernel :math:`K(u,v)=\partial_1 C(u,v)` is totally positive of
+        order 2 in :math:`(u,v)`.
+
+        MK-TP2 is stronger than both the TP2 property of the copula (LCSD)
+        and stochastic increasingness (CI), and weaker than total positivity
+        of the density, see Fuchs & Tschimpke (2023), J. Math. Anal. Appl.
+        518, Article 126629. The kernel is computed by central finite
+        differences of the distribution function.
+        """
+        grid = np.linspace(0.005, 0.995, n_grid)
+        h = 2e-4
+        cdf = self.cdf
+        K = np.empty((n_grid, n_grid))
+        for i, u in enumerate(grid):
+            for j, v in enumerate(grid):
+                K[i, j] = (
+                    float(cdf(u=u + h, v=v)) - float(cdf(u=u - h, v=v))
+                ) / (2 * h)
+        K = np.clip(K, 0.0, None)
+
+        if np.all(K > 0):
+            a = K[:-1, :-1] * K[1:, 1:]
+            b = K[:-1, 1:] * K[1:, :-1]
+            return bool(np.all(a - b >= -tol * np.maximum(a, 1e-300) - 1e-9))
+
+        n = n_grid
+        a = K[:, None, :, None] * K[None, :, None, :]
+        b = K[:, None, None, :] * K[None, :, :, None]
+        iu = np.triu_indices(n, k=1)
+        diff = (a - b + tol * np.maximum(a, 1e-300) + 1e-9)[iu[0], iu[1], :, :]
+        diff = diff[:, iu[0], iu[1]]
+        return bool(np.all(diff >= 0))
+
     # ------------------------------------------------------------------
     # Symmetry properties
     # ------------------------------------------------------------------
@@ -1533,21 +1591,19 @@ class BivCoreCopula:
 
     def hoeffdings_phi_square(self, *args, **kwargs):
         r"""
-        Hoeffding's dependence index :math:`\Phi^2`.
+        Hoeffding's dependence index, also denoted :math:`\Phi^2`.
 
         .. math::
 
-           \Phi^2(C) = 90 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,du\,dv
+           D(C) = 90 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,du\,dv
 
-        This is the population version of the Blum--Kiefer--Rosenblatt
-        statistic and coincides with :meth:`hoeffdings_d`.
+        Coincides with :meth:`hoeffdings_d`. Note that the integrator is the
+        Lebesgue measure; for the version integrating against the copula
+        measure itself, see :meth:`blum_kiefer_rosenblatt`.
 
         References
         ----------
         Hoeffding, W. (1940). "Masstabinvariante Korrelationstheorie."
-        Blum, J. R., Kiefer, J. & Rosenblatt, M. (1961). "Distribution free
-        tests of independence based on the sample distribution function."
-        *Ann. Math. Statist.* 32, 485--498.
         Gai{\ss}er, S., Ruppert, M. & Schmid, F. (2010). "A multivariate
         version of Hoeffding's Phi-square." *J. Multivariate Anal.* 101(10),
         2571--2586.
@@ -1555,8 +1611,62 @@ class BivCoreCopula:
         return self.hoeffdings_d(*args, **kwargs)
 
     def blum_kiefer_rosenblatt(self, *args, **kwargs):
-        r"""Alias for :meth:`hoeffdings_phi_square`."""
-        return self.hoeffdings_d(*args, **kwargs)
+        r"""
+        Blum--Kiefer--Rosenblatt coefficient :math:`B`.
+
+        .. math::
+
+           B(C) = 30 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,\mathrm{d}C(u,v)
+
+        In contrast to :meth:`hoeffdings_d`, the integrator is the copula
+        measure itself; the normalization is chosen such that
+        :math:`B(M) = B(W) = 1` and :math:`B(\Pi) = 0`.
+
+        Computed by Monte Carlo, :math:`B = 30\,\mathbb{E}[(C(U,V)-UV)^2]`
+        with :math:`(U,V)\sim C`, which is also valid for copulas with
+        singular components.
+
+        Parameters
+        ----------
+        n_samples : int, optional
+            Number of Monte Carlo samples (default 200000).
+        random_state : int, optional
+            Seed for the sampler (default 1).
+
+        References
+        ----------
+        Blum, J. R., Kiefer, J. & Rosenblatt, M. (1961). "Distribution free
+        tests of independence based on the sample distribution function."
+        *Ann. Math. Statist.* 32, 485--498.
+        """
+        n_samples = kwargs.pop("n_samples", 200_000)
+        random_state = kwargs.pop("random_state", 1)
+        self._set_params(args, kwargs)
+        return self._blum_kiefer_rosenblatt_numerical(n_samples, random_state)
+
+    def _blum_kiefer_rosenblatt_numerical(
+        self, n_samples: int = 200_000, random_state: int = 1
+    ) -> float:
+        samples = np.asarray(self.rvs(n_samples, random_state=random_state))
+        U, V = samples[:, 0], samples[:, 1]
+        c_vals = None
+        if hasattr(self, "cdf_vectorized"):
+            try:
+                c_vals = np.asarray(self.cdf_vectorized(U, V), dtype=float)
+                for k in (0, len(U) // 2):
+                    ref = float(self.cdf(u=U[k], v=V[k]))
+                    if abs(c_vals[k] - ref) > 1e-6 * max(1.0, abs(ref)):
+                        raise ValueError("cdf_vectorized inconsistent")
+            except Exception:
+                c_vals = None
+        if c_vals is None:
+            m = min(len(U), 20_000)
+            U, V = U[:m], V[:m]
+            c_vals = np.array(
+                [float(self.cdf(u=a, v=b)) for a, b in zip(U, V)]
+            )
+        c_vals = np.clip(c_vals, 0.0, 1.0)
+        return float(30.0 * np.mean((c_vals - U * V) ** 2))
 
     def _hoeffdings_d(self):
         cdf_expr = self.cdf().func

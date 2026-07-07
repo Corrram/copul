@@ -193,6 +193,19 @@ class FarlieGumbelMorgenstern(BivCopula):
         beta_val = factorial(p) ** 2 / factorial(2 * p + 1)
         return k * abs(self.theta) ** p * beta_val**2
 
+    def blum_kiefer_rosenblatt(self, *args, **kwargs):
+        r"""
+        Blum-Kiefer-Rosenblatt coefficient for the FGM copula:
+
+        .. math::
+
+           B = 30\iint(C-\Pi)^2\,\mathrm{d}C = \frac{\theta^2}{30}\,,
+
+        since the odd term of the density integrates to zero by symmetry.
+        """
+        self._set_params(args, kwargs)
+        return self.theta**2 / 30
+
     def mutual_information(self, *args, **kwargs):
         r"""
         Mutual information for the FGM copula (numerical).

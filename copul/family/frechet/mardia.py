@@ -204,6 +204,15 @@ class Mardia(BivCopula):
         self._set_params(args, kwargs)
         return self.theta**4 * (1 + 15 * self.theta**2) / 16
 
+    def blum_kiefer_rosenblatt(self, *args, **kwargs):
+        r"""Blum-Kiefer-Rosenblatt coefficient
+        :math:`B = \theta^4(2\theta^2+1)(15\theta^2+1)/48` for the Mardia
+        copula, obtained from the Fr\'echet-copula formula by substituting
+        the Mardia weights."""
+        self._set_params(args, kwargs)
+        t = self.theta
+        return t**4 * (2 * t**2 + 1) * (15 * t**2 + 1) / 48
+
     @property
     def pdf(self):
         """
