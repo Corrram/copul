@@ -9,6 +9,11 @@ copul documentation
 **copul** is a package designed for mathematical computation and visualization of bivariate copula families.
 It accompanies the `Dependence properties of bivariate copula families <https://www.degruyter.com/document/doi/10.1515/demo-2024-0002/html>`_ article released in the Dependence Modeling journal and in particular covers implementations of 35+ copula families, see :doc:`overview` for an overview.
 
+Since version 0.4, copul also provides a numerical engine for dependence measures with a uniform
+``method=`` switch (see :doc:`measures`), a registry of exact regions between measures, exact
+optimisation over checkerboard copulas and a counterexample search (see :doc:`research_workflows`).
+Install with ``pip install copul`` (or ``pip install "copul[optim]"`` for :mod:`copul.optim`).
+
 .. - **Archimedean** copula families: Clayton, Ali-Mikhail-Haq, Gumbel-Hougaard, etc.
    - **Extreme-value** copula families: Galambos, Marshall-Olkin, ...
    - **Elliptical** copula families: Gaussian, Student's t, or Laplace.
@@ -269,9 +274,11 @@ Extreme-value copulas are characterized by a pickands dependence function, which
    :caption: Contents:
 
    overview
+   measures
    custom_copulas
-   modules
    approximating_copulas
+   research_workflows
+   modules
 
 Indices and tables
 ==================

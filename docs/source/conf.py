@@ -12,7 +12,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 
-sys.path.insert(0, os.path.abspath("../../copul/"))
+sys.path.insert(0, os.path.abspath("../.."))
 
 project = "copul"
 copyright = "2024, Marcus Rockel"
@@ -43,3 +43,8 @@ html_static_path = ["_static"]
 autodoc_mock_imports = [
     "statsmodels",
 ]
+
+# NumPy-style "name : type" fields create cross-references for free-form types
+# such as "copula" or "value"; ambiguous matches are not errors.
+suppress_warnings = ["ref.python"]
+autodoc_member_order = "bysource"

@@ -1,4 +1,5 @@
 import unittest
+
 from copul.family_list import Families, FamilyCategory
 
 

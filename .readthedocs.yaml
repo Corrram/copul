@@ -12,7 +12,7 @@ build:
 # Path to your Sphinx configuration
 sphinx:
   configuration: docs/source/conf.py
-  # fail_on_warning: true  # uncomment to make warnings fail the build
+  fail_on_warning: true
 
 # Optional: build extra formats
 # formats:

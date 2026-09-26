@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use copul in your research, please cite it as below."
+title: "copul: copulas and dependence measures in Python"
+type: software
+authors:
+  - family-names: Rockel
+    given-names: Marcus
+version: 0.4.0
+license: MIT
+repository-code: "https://github.com/Corrram/copul"
+url: "https://copul.readthedocs.io"
+keywords:
+  - copula
+  - dependence measures
+  - Chatterjee's xi
+  - rank correlation
+  - checkerboard copula

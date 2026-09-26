@@ -1,8 +1,5 @@
-# Pinning to avoid unexpected breakages.
-# Used by RTD to generate docs.
-Sphinx==8.2.3
-sphinx-rtd-theme==3.0.2
-numpy
-scipy
-sympy
-matplotlib
+# Used by Read the Docs (see .readthedocs.yaml) and the CI docs job to build
+# the Sphinx documentation; the package itself (and its runtime
+# dependencies) is installed separately with `pip install .`.
+sphinx>=8.0,<10
+sphinx-rtd-theme>=3.0

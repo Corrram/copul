@@ -9,7 +9,11 @@ Subpackages
 
    copul.checkerboard
    copul.family
+   copul.measures
+   copul.optim
+   copul.regions
    copul.schur_order
+   copul.search
    copul.simulations
    copul.wrapper
 
@@ -83,5 +87,8 @@ Module contents
 ---------------
 
 .. automodule:: copul
-   :members:
-   :undoc-members:
+
+The top-level namespace re-exports the copula classes and the most common
+functions (``copul.compute_measures``, ``copul.get_region``,
+``copul.find_counterexample``, ...); they are documented in their defining
+modules.

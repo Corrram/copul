@@ -21,20 +21,20 @@ Module-level public lists (alphabetical class names)
 Examples
 --------
 >>> import copul as cp
->>> cp.families
+>>> cp.families  # doctest: +SKIP
 ['AliMikhailHaq', 'Clayton', 'Frank', 'Gaussian', 'GenestGhoudi', ...]
->>> cp.approximations
+>>> cp.approximations  # doctest: +SKIP
 ['BivCheckPi', 'BivCheckW', 'CheckMin', 'CheckPi', ...]
->>> cp.copulas
+>>> cp.copulas  # doctest: +SKIP
 ['ClampedParabolaCopula', 'DiagonalBandCopula', 'Frechet', 'IndependenceCopula', ...]
 
 Programmatic APIs
 -----------------
->>> cp.Families.list_all()                       # UPPER_CASE enum names of true families
->>> cp.Families.list_all_classnames()            # class names of true families
->>> cp.Families.list_approx_classnames()         # class names of approximations
->>> cp.Families.list_special_classnames()        # class names of specials
->>> cp.Families.list_by_category('archimedean')  # filter by mathematical category
+- ``cp.Families.list_all()``: UPPER_CASE enum names of true families
+- ``cp.Families.list_all_classnames()``: class names of true families
+- ``cp.Families.list_approx_classnames()``: class names of approximations
+- ``cp.Families.list_special_classnames()``: class names of specials
+- ``cp.Families.list_by_category("archimedean")``: filter by mathematical category
 """
 
 from __future__ import annotations
@@ -42,9 +42,12 @@ from __future__ import annotations
 import enum
 import importlib
 import inspect
-from typing import Dict, List, Union, Optional
-import numpy as np
+import logging
 import re
+
+import numpy as np
+
+log = logging.getLogger(__name__)
 
 
 def _natural_key(s: str):
@@ -169,9 +172,7 @@ class Families(enum.Enum):
     INDEPENDENCE = "copul.family.other.IndependenceCopula"
     LOWER_FRECHET = "copul.family.other.LowerFrechet"
     MARDIA = "copul.family.other.Mardia"
-    PI_OVER_SIGMA_MINUS_PI = (
-        "copul.family.other.pi_over_sigma_minus_pi.PiOverSigmaMinusPi"
-    )
+    PI_OVER_SIGMA_MINUS_PI = "copul.family.other.pi_over_sigma_minus_pi.PiOverSigmaMinusPi"
     PLACKETT = "copul.family.other.Plackett"
     RAFTERY = "copul.family.other.Raftery"
     UPPER_FRECHET = "copul.family.other.UpperFrechet"
@@ -194,15 +195,11 @@ class Families(enum.Enum):
     # Kind & Category helpers
     # -----------------------------------------------------------------------
     @classmethod
-    def get_kind(cls, member: "Families") -> CopulaKind:
+    def get_kind(cls, member: Families) -> CopulaKind:
         name = member.name
         module_path = member.value  # 'package.module.Class'
         # Heuristic: anything in a checkerboard/approx module is an approximation
-        if (
-            "checkerboard" in module_path
-            or "approx" in module_path
-            or "bernstein" in module_path
-        ):
+        if "checkerboard" in module_path or "approx" in module_path or "bernstein" in module_path:
             return CopulaKind.APPROXIMATION
         # Explicit notable/special singletons
         if name in SPECIAL_NAMES:
@@ -210,7 +207,7 @@ class Families(enum.Enum):
         return CopulaKind.FAMILY
 
     @classmethod
-    def get_category(cls, family: Union["Families", str]) -> FamilyCategory:
+    def get_category(cls, family: Families | str) -> FamilyCategory:
         """Mathematical category based on import path."""
         if isinstance(family, str):
             family = cls[family]
@@ -229,9 +226,9 @@ class Families(enum.Enum):
     @classmethod
     def list_names(
         cls,
-        kind: Union[CopulaKind, str, None] = None,
-        category: Union[FamilyCategory, str, None] = None,
-    ) -> List[str]:
+        kind: CopulaKind | str | None = None,
+        category: FamilyCategory | str | None = None,
+    ) -> list[str]:
         """
         Enum names filtered by semantic kind and/or mathematical category.
         kind     : {'family','approximation','special'} or None
@@ -242,7 +239,7 @@ class Families(enum.Enum):
         if isinstance(category, str):
             category = FamilyCategory(category.lower())
 
-        def _ok(m: "Families") -> bool:
+        def _ok(m: Families) -> bool:
             return (kind is None or cls.get_kind(m) == kind) and (
                 category is None or cls.get_category(m) == category
             )
@@ -252,54 +249,52 @@ class Families(enum.Enum):
     @classmethod
     def list_classes(
         cls,
-        kind: Union[CopulaKind, str, None] = None,
-        category: Union[FamilyCategory, str, None] = None,
-    ) -> List[type]:
+        kind: CopulaKind | str | None = None,
+        category: FamilyCategory | str | None = None,
+    ) -> list[type]:
         """Same as list_names but returns the class objects."""
         return [cls[name].cls for name in cls.list_names(kind=kind, category=category)]
 
     # Convenience shorthands (enum names)
     @classmethod
-    def list_all(cls) -> List[str]:
+    def list_all(cls) -> list[str]:
         """UPPER_CASE enum names of true modeling families."""
         return cls.list_names(kind=CopulaKind.FAMILY)
 
     @classmethod
-    def list_by_category(cls, category: Union[FamilyCategory, str]) -> List[str]:
+    def list_by_category(cls, category: FamilyCategory | str) -> list[str]:
         """UPPER_CASE enum names of true families within a given category."""
         return cls.list_names(kind=CopulaKind.FAMILY, category=category)
 
     @classmethod
-    def list_approximations(cls) -> List[str]:
+    def list_approximations(cls) -> list[str]:
         """UPPER_CASE enum names of approximation constructs."""
         return cls.list_names(kind=CopulaKind.APPROXIMATION)
 
     @classmethod
-    def list_specials(cls) -> List[str]:
+    def list_specials(cls) -> list[str]:
         """UPPER_CASE enum names of notable/special copulas."""
         return cls.list_names(kind=CopulaKind.SPECIAL)
 
     # Convenience shorthands (class-name lists)
     @classmethod
-    def _classnames_for(
-        cls, enum_names: List[str], lowercase: bool = False
-    ) -> List[str]:
+    def _classnames_for(cls, enum_names: list[str], lowercase: bool = False) -> list[str]:
         names = [cls[name].cls.__name__ for name in enum_names]
         names.sort()
         return [n.lower() for n in names] if lowercase else names
 
     @classmethod
-    def list_all_classnames(cls, lowercase: bool = False) -> List[str]:
+    def list_all_classnames(cls, lowercase: bool = False) -> list[str]:
         """Class names of true families (sorted)."""
         return cls._classnames_for(cls.list_all(), lowercase=lowercase)
 
     @classmethod
-    def list_approx_classnames(cls, lowercase: bool = False) -> List[str]:
+    def list_approx_classnames(cls, lowercase: bool = False) -> list[str]:
         """Class names of approximation constructs (sorted)."""
         return cls._classnames_for(cls.list_approximations(), lowercase=lowercase)
 
     @classmethod
-    def list_special_classnames(cls, lowercase: bool = False) -> List[str]:
+    def list_special_classnames(cls, lowercase: bool = False) -> list[str]:
         """Class names of notable/special copulas (sorted)."""
         return cls._classnames_for(cls.list_specials(), lowercase=lowercase)
 
@@ -312,19 +307,17 @@ class Families(enum.Enum):
         return cls[family_name].cls(*args, **kwargs)
 
     @classmethod
-    def get_params_info(cls, family_name: str) -> Dict:
+    def get_params_info(cls, family_name: str) -> dict:
         """Inspect __init__ signature and basic param doc of a copula class."""
         family_class = cls[family_name].cls
-        result: Dict[str, Dict[str, Optional[Union[str, bool]]]] = {}
+        result: dict[str, dict[str, str | bool | None]] = {}
         signature = inspect.signature(family_class.__init__)
         for param_name, param in signature.parameters.items():
             if param_name == "self":
                 continue
             param_info = {
                 "default": (
-                    param.default
-                    if param.default is not inspect.Parameter.empty
-                    else None
+                    param.default if param.default is not inspect.Parameter.empty else None
                 ),
                 "doc": "",
                 "required": param.default is inspect.Parameter.empty,
@@ -346,10 +339,10 @@ class Families(enum.Enum):
     def compare_copulas(
         cls,
         u: np.ndarray,
-        families: Optional[List[str]] = None,
+        families: list[str] | None = None,
         fit_method: str = "ml",
         criteria: str = "aic",
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Compare multiple copula families on the same dataset.
 
@@ -372,7 +365,7 @@ class Families(enum.Enum):
         if families is None:
             families = ["CLAYTON", "GAUSSIAN", "FRANK", "GUMBEL_HOUGAARD", "T", "JOE"]
 
-        results: List[Dict] = []
+        results: list[dict] = []
         for family_name in families:
             try:
                 copula = cls.create(family_name)
@@ -401,7 +394,7 @@ class Families(enum.Enum):
                     }
                 )
             except Exception as e:
-                print(f"Failed to fit {family_name}: {str(e)}")
+                log.warning("Failed to fit %s: %s", family_name, e)
                 continue
 
         reverse = criteria.lower() == "likelihood"
@@ -453,20 +446,17 @@ SPECIALS = Families.list_specials()
 # ---------------------------------------------------------------------------
 
 __all__ = [
-    # Enums
-    "FamilyCategory",
-    "CopulaKind",
-    "Families",
-    # Module-level lists (class names)
-    "families",
-    "approximations",
-    "copulas",
-    # Convenience groups (enum-name lists)
-    "COMMON",
+    "APPROXIMATIONS",
     "ARCHIMEDEAN",
+    "COMMON",
     "ELLIPTICAL",
     "EXTREME_VALUE",
     "OTHER",
-    "APPROXIMATIONS",
     "SPECIALS",
+    "CopulaKind",
+    "Families",
+    "FamilyCategory",
+    "approximations",
+    "copulas",
+    "families",
 ]

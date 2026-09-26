@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "ruff>=0.9"
+      - run: ruff check copul tests
+      - run: ruff format --check copul tests
+
+  tests:
+    name: tests (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install (without optional cvxpy)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . pytest pytest-xdist
+      - name: Fast test suite
+        run: pytest -n auto -m "not slow and not instable"
+
+  tests-optim:
+    name: tests with cvxpy
+    runs-on: ubuntu-latest
+    env:
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install with the optim extra
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[optim]" pytest pytest-xdist
+      - name: Optimisation, regions, search and README tests
+        run: >-
+          pytest -n auto -m "not slow and not instable"
+          tests/optim tests/regions tests/search tests/test_readme_examples.py
+      - name: Doctests of the research subpackages
+        run: pytest --doctest-modules copul/measures copul/optim copul/search
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check dist/*
+      - name: Smoke-test the wheel
+        run: |
+          pip install dist/*.whl
+          cd /tmp
+          python -c "import copul, copul.measures, copul.optim, copul.regions, copul.search; print(copul.__version__)"
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e . -r docs/requirements.txt
+      - run: sphinx-build -W --keep-going -b html docs/source docs/build/html

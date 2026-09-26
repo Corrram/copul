@@ -127,5 +127,3 @@ Module contents
 ---------------
 
 .. automodule:: copul.family.other
-   :members:
-   :undoc-members:
