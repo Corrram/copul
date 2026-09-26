@@ -1,6 +1,8 @@
 import unittest
+
 import sympy as sp
-from copul.family.helpers import get_simplified_solution, concrete_expand_log
+
+from copul.family.helpers import concrete_expand_log, get_simplified_solution
 
 
 class TestSympyHelpers(unittest.TestCase):

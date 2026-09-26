@@ -3,8 +3,9 @@ Tests for the PickandsWrapper class in copul.wrapper.pickands_wrapper.
 """
 
 import math
-import sympy as sp
 from unittest.mock import patch
+
+import sympy as sp
 
 from copul.wrapper.pickands_wrapper import PickandsWrapper
 
@@ -29,9 +30,7 @@ class TestPickandsWrapper:
         # Initialize wrappers
         self.linear_wrapper = PickandsWrapper(self.linear_expr, self.t)
         self.quadratic_wrapper = PickandsWrapper(self.quadratic_expr, self.t)
-        self.galambos_wrapper = PickandsWrapper(
-            self.galambos_expr, self.t, delta_val=2.0
-        )
+        self.galambos_wrapper = PickandsWrapper(self.galambos_expr, self.t, delta_val=2.0)
 
     def test_init(self):
         """Test initialization of PickandsWrapper."""
@@ -82,9 +81,7 @@ class TestPickandsWrapper:
         assert not math.isclose(float(result), float(sp.Float("0.6464466094067263")))
 
         # Create a wrapper with a different delta
-        different_delta_wrapper = PickandsWrapper(
-            self.galambos_expr, self.t, delta_val=2.1
-        )
+        different_delta_wrapper = PickandsWrapper(self.galambos_expr, self.t, delta_val=2.1)
         result = different_delta_wrapper(0.5)
         # Should not trigger special case due to different delta
         assert not math.isclose(float(result), float(sp.Float("0.6464466094067263")))

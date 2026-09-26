@@ -171,9 +171,7 @@ def test_pickands_function(copula):
     for t in t_vals:
         pickands_val = float(pickands_expr.subs(copula.t, t))
         expected = max(t, 1 - t)
-        assert abs(pickands_val - expected) < 1e-10, (
-            f"Pickands function incorrect at t={t}"
-        )
+        assert abs(pickands_val - expected) < 1e-10, f"Pickands function incorrect at t={t}"
 
 
 def test_immutable_parameters():

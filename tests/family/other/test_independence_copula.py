@@ -149,9 +149,7 @@ def test_independence_cdf_formula():
 
     # Test 4D
     copula4d = IndependenceCopula(dimension=4)
-    assert (
-        abs(float(copula4d.cdf(0.3, 0.4, 0.5, 0.6)) - (0.3 * 0.4 * 0.5 * 0.6)) < 1e-10
-    )
+    assert abs(float(copula4d.cdf(0.3, 0.4, 0.5, 0.6)) - (0.3 * 0.4 * 0.5 * 0.6)) < 1e-10
 
 
 def test_independence_properties():

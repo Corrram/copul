@@ -27,12 +27,10 @@ class HeavyComputeArch(BivArchimedeanCopula, ABC):
             sympy_func = self.cond_distr_2().subs(self.v, v).func
             function = sympy.lambdify(self.u, sympy_func, ["numpy"])
             sympy_func = self.cond_distr_2().subs(self.v, v).func
-            result = np.array(
-                [self._sample_values(function, v, sympy_func) for _ in range(1)]
-            )
+            result = np.array([self._sample_values(function, v, sympy_func) for _ in range(1)])
             results.append(result)
             # array of lists to array
-        log.info(self.err_counter)
+        log.debug(self.err_counter)
         return np.concatenate(results)
 
     def _sample_values(self, function, v, sympy_func):
@@ -44,18 +42,14 @@ class HeavyComputeArch(BivArchimedeanCopula, ABC):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning)
             try:
-                result = optimize.root_scalar(
-                    func2, x0=0.5, bracket=[0.00000001, 0.99999999]
-                )
+                result = optimize.root_scalar(func2, x0=0.5, bracket=[0.00000001, 0.99999999])
             except (ZeroDivisionError, ValueError, TypeError) as e:
                 log.debug(f"{self.__class__.__name__}; {type(e).__name__}: {e}")
                 self.err_counter += 1
                 return self._get_visual_solution(sympy_func - t), v
             if not result.converged:
                 if not result.iterations:
-                    log.warning(
-                        f"{self.__class__.__name__}: {result.flag} - {result.root}"
-                    )
+                    log.warning(f"{self.__class__.__name__}: {result.flag} - {result.root}")
                 self.err_counter += 1
                 return self._get_visual_solution(sympy_func - t), v
             return result.root, v

@@ -40,9 +40,7 @@ class Mardia(BivCopula):
             # Validate theta parameter
             theta_val = kwargs["theta"]
             if theta_val < -1 or theta_val > 1:
-                raise ValueError(
-                    f"Parameter theta must be between -1 and 1, got {theta_val}"
-                )
+                raise ValueError(f"Parameter theta must be between -1 and 1, got {theta_val}")
 
             self.theta = kwargs["theta"]
             self.params = [param for param in self.params if str(param) != "theta"]
@@ -59,15 +57,11 @@ class Mardia(BivCopula):
             # Validate theta parameter
             theta_val = kwargs["theta"]
             if theta_val < -1 or theta_val > 1:
-                raise ValueError(
-                    f"Parameter theta must be between -1 and 1, got {theta_val}"
-                )
+                raise ValueError(f"Parameter theta must be between -1 and 1, got {theta_val}")
 
             new_copula = copy.deepcopy(self)
             new_copula.theta = kwargs["theta"]
-            new_copula.params = [
-                param for param in new_copula.params if str(param) != "theta"
-            ]
+            new_copula.params = [param for param in new_copula.params if str(param) != "theta"]
             del kwargs["theta"]
             return new_copula.__call__(**kwargs)
 
@@ -187,12 +181,12 @@ class Mardia(BivCopula):
         self._set_params(args, kwargs)
         return self.theta**3
 
-    def spearman_footrule(self, *args, **kwargs):
+    def spearmans_footrule(self, *args, **kwargs):
         r"""Spearman's footrule :math:`\psi = \theta^2(1+3\theta)/4`."""
         self._set_params(args, kwargs)
         return self.theta**2 * (1 + 3 * self.theta) / 4
 
-    def gini_gamma(self, *args, **kwargs):
+    def ginis_gamma(self, *args, **kwargs):
         r"""Gini's :math:`\gamma = \theta^3` for the Mardia copula."""
         self._set_params(args, kwargs)
         return self.theta**3

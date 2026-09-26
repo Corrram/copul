@@ -4,8 +4,9 @@ Tests for the CDFWrapper class.
 
 import sympy
 from sympy import simplify
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+
 from copul.wrapper.cdf_wrapper import CDFWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class TestCDFWrapper:
@@ -22,9 +23,9 @@ class TestCDFWrapper:
         self.product_copula = self.u * self.v
 
         # Clayton copula: C(u,v) = (u^(-theta) + v^(-theta) - 1)^(-1/theta)
-        self.clayton_copula = (
-            self.u ** (-self.theta) + self.v ** (-self.theta) - 1
-        ) ** (-1 / self.theta)
+        self.clayton_copula = (self.u ** (-self.theta) + self.v ** (-self.theta) - 1) ** (
+            -1 / self.theta
+        )
 
         # Frank copula: C(u,v) = -1/theta * log(1 + (exp(-theta*u)-1)*(exp(-theta*v)-1)/(exp(-theta)-1))
         self.frank_copula = (-1 / self.theta) * sympy.log(

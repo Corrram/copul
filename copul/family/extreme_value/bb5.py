@@ -49,8 +49,7 @@ class BB5(BivExtremeValueCopula):
         return (
             t**theta
             + (1 - t) ** theta
-            - ((1 - t) ** (-theta * self.delta) + t ** (-theta * self.delta))
-            ** (-1 / self.delta)
+            - ((1 - t) ** (-theta * self.delta) + t ** (-theta * self.delta)) ** (-1 / self.delta)
         ) ** (1 / theta)
 
     @property
@@ -64,10 +63,7 @@ class BB5(BivExtremeValueCopula):
                 (
                     sympy.log(1 / v) ** theta
                     + sympy.log(1 / u) ** theta
-                    - (
-                        sympy.log(1 / u) ** (-delta * theta)
-                        + sympy.log(1 / v) ** (-delta * theta)
-                    )
+                    - (sympy.log(1 / u) ** (-delta * theta) + sympy.log(1 / v) ** (-delta * theta))
                     ** (-1 / delta)
                 )
                 ** (1 / theta)

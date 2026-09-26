@@ -33,9 +33,7 @@ def test_generator_properties():
         # Expected: 1/(1+y)
         expected_inv_gen = 1 / (1 + y)
         inv_gen_result = float(inv_gen.subs(copula.y, y))
-        assert abs(inv_gen_result - expected_inv_gen) < 1e-10, (
-            f"Inverse generator wrong at y={y}"
-        )
+        assert abs(inv_gen_result - expected_inv_gen) < 1e-10, f"Inverse generator wrong at y={y}"
 
 
 def test_cdf_values():
@@ -84,13 +82,9 @@ def test_pdf_values():
         expected_exact = numer / denom
 
         # Compare with our calculated value
-        assert abs(pdf_val - expected_exact) < 1e-10, (
-            f"PDF value incorrect at u={u}, v={v}"
-        )
+        assert abs(pdf_val - expected_exact) < 1e-10, f"PDF value incorrect at u={u}, v={v}"
         # Also check that our expected test value is approximately correct
-        assert abs(expected_exact - expected) < 0.1, (
-            f"Expected test value is off at u={u}, v={v}"
-        )
+        assert abs(expected_exact - expected) < 0.1, f"Expected test value is off at u={u}, v={v}"
 
 
 def test_conditional_distributions():

@@ -17,7 +17,7 @@ class multivariate_laplace:
         """Generate random samples from multivariate Laplace distribution"""
         # Simple implementation just for the copula's rvs method
         dim = len(mean)
-        final_shape = [size, dim] if isinstance(size, int) else size + [dim]
+        final_shape = [size, dim] if isinstance(size, int) else [*size, dim]
 
         # Generate standard Laplace random variables
         if random_state is not None:

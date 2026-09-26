@@ -68,9 +68,7 @@ class TestInvGenWrapper:
     def nelsen_wrapper(self, y_symbol, nelsen11_copula):
         """Fixture for a Nelsen11-specific wrapper with the special case expression"""
         # For Nelsen11 at y=log(2), expression is 0**(1/theta)
-        return InvGenWrapper(
-            sympy.Pow(0, 1 / nelsen11_copula.theta), y_symbol, nelsen11_copula
-        )
+        return InvGenWrapper(sympy.Pow(0, 1 / nelsen11_copula.theta), y_symbol, nelsen11_copula)
 
     def test_init(self, basic_expr, y_symbol, mock_copula):
         """Test initialization of InvGenWrapper"""
@@ -176,9 +174,7 @@ class TestInvGenWrapper:
         y_vals = np.array([0.0, 0.5, 1.0, np.inf])
 
         # Expected values
-        expected = np.array(
-            [1.0, (1 + 2 * 0.5) ** (-0.5), (1 + 2 * 1.0) ** (-0.5), 0.0]
-        )
+        expected = np.array([1.0, (1 + 2 * 0.5) ** (-0.5), (1 + 2 * 1.0) ** (-0.5), 0.0])
 
         # Actual values
         actual = func(y_vals)

@@ -1,18 +1,18 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import matplotlib
 import numpy as np
 import pytest
 import sympy as sp
-import matplotlib
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
 
 from copul.family.rank_correlation_plotter import (
-    RankCorrelationPlotter,
-    CorrelationData,
     MEASURES,
+    CorrelationData,
+    RankCorrelationPlotter,
     measure,
 )
 
@@ -24,9 +24,7 @@ from copul.family.rank_correlation_plotter import (
 class _BaseDummy:
     params = [sp.symbols("theta")]
 
-    def __init__(
-        self, interval=(0.0, 5.0), left_open=False, right_open=False, theta=None
-    ):
+    def __init__(self, interval=(0.0, 5.0), left_open=False, right_open=False, theta=None):
         self._interval = SimpleNamespace(
             inf=float(interval[0]),
             sup=float(interval[1]),
@@ -47,7 +45,7 @@ class _BaseDummy:
 
     def rvs(self, n_obs, approximate=False):
         t = 0.0 if self.theta is None else float(self.theta)
-        rng = np.random.default_rng(1234 + int(round(t * 10)))
+        rng = np.random.default_rng(1234 + round(t * 10))
         x = rng.normal(loc=t, scale=1.0, size=n_obs)
         y = x * 0.8 + rng.normal(scale=0.2, size=n_obs)
         return np.column_stack([x, y])

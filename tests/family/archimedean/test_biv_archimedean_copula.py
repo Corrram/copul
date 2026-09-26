@@ -253,9 +253,7 @@ def test_invalid_params():
 
     # Define a test copula class with invalid parameter values
     class TestCopula(BivArchimedeanCopula):
-        theta_interval = sympy.Interval(
-            -np.inf, np.inf, left_open=True, right_open=True
-        )
+        theta_interval = sympy.Interval(-np.inf, np.inf, left_open=True, right_open=True)
 
         # Define special cases and invalid parameters
         special_cases = {-1: BivIndependenceCopula}
@@ -301,9 +299,7 @@ def test_both_special_and_invalid_params():
 
     # Define a test copula class with both special cases and invalid parameters
     class ComplexCopula(BivArchimedeanCopula):
-        theta_interval = sympy.Interval(
-            -np.inf, np.inf, left_open=True, right_open=True
-        )
+        theta_interval = sympy.Interval(-np.inf, np.inf, left_open=True, right_open=True)
 
         # Define special cases
         special_cases = {-1: BivIndependenceCopula, 1: LowerFrechet}
@@ -398,9 +394,7 @@ def test_cdf_vectorized_grid():
         @property
         def _raw_generator(self):
             # Using Frank generator with theta=3 for testing
-            return -sympy.log(
-                (sympy.exp(-self.theta * self.t) - 1) / (sympy.exp(-self.theta) - 1)
-            )
+            return -sympy.log((sympy.exp(-self.theta * self.t) - 1) / (sympy.exp(-self.theta) - 1))
 
     # Create test instance
     copula = TestCopula(3)

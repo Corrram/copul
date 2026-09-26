@@ -44,9 +44,7 @@ class B11(BivCopula):
             # Validate delta parameter
             delta_val = kwargs["delta"]
             if delta_val < 0 or delta_val > 1:
-                raise ValueError(
-                    f"Parameter delta must be between 0 and 1, got {delta_val}"
-                )
+                raise ValueError(f"Parameter delta must be between 0 and 1, got {delta_val}")
 
         super().__init__(**kwargs)
 
@@ -56,9 +54,7 @@ class B11(BivCopula):
             # Validate delta parameter
             delta_val = kwargs["delta"]
             if delta_val < 0 or delta_val > 1:
-                raise ValueError(
-                    f"Parameter delta must be between 0 and 1, got {delta_val}"
-                )
+                raise ValueError(f"Parameter delta must be between 0 and 1, got {delta_val}")
 
             # Special cases
             if delta_val == 0:
@@ -77,9 +73,7 @@ class B11(BivCopula):
 
         C(u,v) = delta * min(u,v) + (1-delta) * u*v
         """
-        cdf = (
-            self.delta * sympy.Min(self.u, self.v) + (1 - self.delta) * self.u * self.v
-        )
+        cdf = self.delta * sympy.Min(self.u, self.v) + (1 - self.delta) * self.u * self.v
         return SymPyFuncWrapper(cdf)
 
     def spearmans_rho(self, *args, **kwargs):

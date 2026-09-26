@@ -80,16 +80,18 @@ class Frechet(BivCopula):
             kwargs["beta"] = args[1]
         if "alpha" in kwargs:
             self._alpha = kwargs["alpha"]
-            self.intervals["beta"] = sympy.Interval(
-                0, 1 - self.alpha, left_open=False, right_open=False
-            )
+            self.intervals = {
+                **self.intervals,
+                "beta": sympy.Interval(0, 1 - self.alpha, left_open=False, right_open=False),
+            }
             self.params = [param for param in self.params if str(param) != "alpha"]
             del kwargs["alpha"]
         if "beta" in kwargs:
             self._beta = kwargs["beta"]
-            self.intervals["alpha"] = sympy.Interval(
-                0, 1 - self.beta, left_open=False, right_open=False
-            )
+            self.intervals = {
+                **self.intervals,
+                "alpha": sympy.Interval(0, 1 - self.beta, left_open=False, right_open=False),
+            }
             self.params = [param for param in self.params if str(param) != "beta"]
             del kwargs["beta"]
         super().__init__(**kwargs)
@@ -101,23 +103,21 @@ class Frechet(BivCopula):
         if "alpha" in kwargs:
             new_copula = copy.deepcopy(self)
             new_copula._alpha = kwargs["alpha"]
-            new_copula.intervals["beta"] = sympy.Interval(
-                0, 1 - new_copula.alpha, left_open=False, right_open=False
-            )
-            new_copula.params = [
-                param for param in new_copula.params if param != self._alpha
-            ]
+            new_copula.intervals = {
+                **new_copula.intervals,
+                "beta": sympy.Interval(0, 1 - new_copula.alpha, left_open=False, right_open=False),
+            }
+            new_copula.params = [param for param in new_copula.params if param != self._alpha]
             del kwargs["alpha"]
             return new_copula.__call__(**kwargs)
         if "beta" in kwargs:
             new_copula = copy.deepcopy(self)
             new_copula._beta = kwargs["beta"]
-            new_copula.intervals["alpha"] = sympy.Interval(
-                0, 1 - new_copula.beta, left_open=False, right_open=False
-            )
-            new_copula.params = [
-                param for param in new_copula.params if param != self._beta
-            ]
+            new_copula.intervals = {
+                **new_copula.intervals,
+                "alpha": sympy.Interval(0, 1 - new_copula.beta, left_open=False, right_open=False),
+            }
+            new_copula.params = [param for param in new_copula.params if param != self._beta]
             del kwargs["beta"]
             return new_copula.__call__(**kwargs)
         return super().__call__(**kwargs)
@@ -189,9 +189,7 @@ class Frechet(BivCopula):
 
         # Combine the components with the weights
         cdf_values = (
-            alpha * frechet_upper
-            + (1 - alpha - beta) * independence
-            + beta * frechet_lower
+            alpha * frechet_upper + (1 - alpha - beta) * independence + beta * frechet_lower
         )
 
         return cdf_values
@@ -268,9 +266,6 @@ class Frechet(BivCopula):
         self._set_params(args, kwargs)
         return self.alpha - self.beta / 2
 
-    def spearman_footrule(self, *args, **kwargs):
-        return self.spearmans_footrule(*args, **kwargs)
-
     def blomqvists_beta(self, *args, **kwargs):
         r"""Blomqvist's :math:`\beta = \alpha - \beta` (affine in the weights)."""
         self._set_params(args, kwargs)
@@ -305,14 +300,7 @@ class Frechet(BivCopula):
         """
         self._set_params(args, kwargs)
         a, b = self.alpha, self.beta
-        return (
-            (a**2 * (1 + 2 * a) + b**2 * (1 + 2 * b)) / 3
-            - a * b * (a + b) / 2
-            - 7 * a * b / 12
-        )
-
-    def gini_gamma(self, *args, **kwargs):
-        return self.ginis_gamma(*args, **kwargs)
+        return (a**2 * (1 + 2 * a) + b**2 * (1 + 2 * b)) / 3 - a * b * (a + b) / 2 - 7 * a * b / 12
 
     def ginis_gamma(self, *args, **kwargs):
         r"""
@@ -336,9 +324,7 @@ if __name__ == "__main__":
     ccop = frechet_copula.to_checkerboard()
     xi_ccop = ccop.chatterjees_xi()
     rho_ccop = ccop.spearmans_rho()
-    print(
-        f"Frechet Copula: xi = {xi}, Checkerboard xi = {xi_ccop}, Checkerboard rho = {rho_ccop}"
-    )
+    print(f"Frechet Copula: xi = {xi}, Checkerboard xi = {xi_ccop}, Checkerboard rho = {rho_ccop}")
     gamma = frechet_copula.ginis_gamma()
     ccop_gamma = ccop.ginis_gamma()
     footrule = frechet_copula.spearmans_footrule()

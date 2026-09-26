@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import pathlib
@@ -5,14 +7,22 @@ import types
 
 import numpy as np
 import sympy as sp
-from matplotlib import pyplot as plt
-from matplotlib import colors as mcolors
 
-from copul.numerics import to_numpy_callable
-from copul.schur_order.cis_verifier import CISVerifier
+from copul._lazy import mcolors, plt
 from copul.family.copula_graphs import CopulaGraphs
 from copul.family.rank_correlation_plotter import RankCorrelationPlotter
 from copul.family.tp2_verifier import TP2Verifier
+from copul.measures.engine import (
+    compute as _compute_measures,
+)
+from copul.measures.engine import (
+    deprecated_alias as _deprecated_alias,
+)
+from copul.measures.engine import (
+    install_dispatchers,
+)
+from copul.numerics import to_numpy_callable
+from copul.schur_order.cis_verifier import CISVerifier
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdi_wrapper import CDiWrapper
@@ -24,6 +34,24 @@ log = logging.getLogger(__name__)
 def _show_if_interactive():
     if "agg" not in plt.get_backend().lower():
         plt.show()
+
+
+class _hybridmethod:
+    """Descriptor passing the instance, or the class when accessed on it."""
+
+    def __init__(self, func):
+        self.func = func
+        self.__doc__ = func.__doc__
+
+    def __get__(self, obj, cls):
+        target = obj if obj is not None else cls
+
+        def bound(*args, **kwargs):
+            return self.func(target, *args, **kwargs)
+
+        bound.__doc__ = self.func.__doc__
+        bound.__name__ = self.func.__name__
+        return bound
 
 
 class BivCoreCopula:
@@ -42,6 +70,19 @@ class BivCoreCopula:
     _package_path = pathlib.Path(__file__).parent.parent
     params: list = []
     intervals: dict = {}
+
+    def __init_subclass__(cls, **kwargs):
+        """Wrap measure-method overrides of subclasses with the measure dispatcher.
+
+        Every method listed in :data:`copul.measures.engine.MEASURE_METHODS`
+        that a subclass (or a non-``BivCoreCopula`` base preceding
+        ``BivCoreCopula`` in its MRO) defines is wrapped such that it accepts
+        ``method=`` and, for fully specified copulas, returns a float --
+        falling back to the numerical engine when the override fails.  See
+        :mod:`copul.measures.engine`.
+        """
+        super().__init_subclass__(**kwargs)
+        install_dispatchers(cls, is_base=False)
 
     def __init__(self):
         """
@@ -113,9 +154,7 @@ class BivCoreCopula:
         if func_var_name:
             func_vars = [s for s in all_symbols if str(s) == func_var_name]
             if not func_vars and all_symbols:
-                func_vars = [
-                    s for s in all_symbols if str(s).lower() == func_var_name.lower()
-                ]
+                func_vars = [s for s in all_symbols if str(s).lower() == func_var_name.lower()]
             params = [s for s in all_symbols if s not in func_vars]
             return func_vars, params
 
@@ -145,14 +184,15 @@ class BivCoreCopula:
         if not isinstance(params, list):
             params = [params]
         obj.params = []
+        # per-instance copy: mutating the (shared) class-level dict leaked the
+        # parameter names into every other copula instance
+        obj._free_symbols = dict(getattr(obj, "_free_symbols", None) or {})
         for param in params:
             if isinstance(param, str):
                 param = sp.symbols(param, positive=True)
             obj.params.append(param)
             param_name = str(param)
             setattr(obj, param_name, param)
-            if not hasattr(obj, "_free_symbols"):
-                obj._free_symbols = {}
             obj._free_symbols[param_name] = param
         return obj
 
@@ -213,19 +253,28 @@ class BivCoreCopula:
         result = CD2Wrapper(sp.diff(self.cdf().func, self.v))
         return result(u, v)
 
-    def chatterjees_xi(self, *args, **kwargs):
-        """
-        Compute Chatterjee's xi correlation measure.
+    def chatterjees_xi(self, *args, condition_on_y=False, **kwargs):
+        r"""
+        Chatterjee's rank correlation :math:`\xi`.
 
-        This method sets the parameters, computes intermediate integrals,
-        and returns the simplified expression for xi.
+        .. math::
 
-        Returns
-        -------
-        SymPyFuncWrapper
-            A wrapper around the symbolic expression for Chatterjee's xi.
+           \xi(C) = 6\int_0^1\int_0^1 \bigl(\partial_1 C(u,v)\bigr)^2\,du\,dv - 2
+
+        (conditioning on the first variable, i.e. :math:`Y` regressed on
+        :math:`X`); with ``condition_on_y=True`` the variant with
+        :math:`\partial_2 C` is computed.
+
+        Fully specified copulas return a float (closed form if the family
+        has one, numerical quadrature otherwise); with free parameters the
+        symbolic SymPy route is used (returns a ``SymPyFuncWrapper``).
         """
         self._set_params(args, kwargs)
+        if condition_on_y:
+            cd2 = sp.diff(self.cdf().func, self.v)
+            inner = sp.simplify(sp.integrate(cd2**2, (self.v, 0, 1)))
+            xi2 = sp.simplify(6 * sp.integrate(inner, (self.u, 0, 1)) - 2)
+            return SymPyFuncWrapper(xi2)
         log.debug("xi")
         cond_distri_1 = sp.simplify(self.cond_distr_1())
         log.debug("cond_distr_1 sympy: %s", cond_distri_1)
@@ -481,7 +530,7 @@ class BivCoreCopula:
             if not free_symbol_dict:
                 self._plot3d(function, title=f"{function_name}", zlabel="")
             elif len(free_symbol_dict) == 1:
-                param_str = list(free_symbol_dict.keys())[0]
+                param_str = next(iter(free_symbol_dict.keys()))
                 param_ = free_symbol_dict[param_str]
                 interval = self.intervals[str(param_)]
                 lower_bound = float(max(-10, interval.left))
@@ -498,8 +547,7 @@ class BivCoreCopula:
                     if "complex" not in str(e):
                         raise e
                     y_list = [
-                        function.subs(str(param_), x_i).evalf().as_real_imag()[0]
-                        for x_i in x
+                        function.subs(str(param_), x_i).evalf().as_real_imag()[0] for x_i in x
                     ]
                     y = np.array(y_list)
                     plt.plot(x, y, label=f"{function_name}")
@@ -526,14 +574,10 @@ class BivCoreCopula:
             Data array of shape (n, 2) used to estimate the CDF.
         """
         bins = [50, 50]
-        hist, xedges, yedges = np.histogram2d(
-            data[:, 0], data[:, 1], bins=bins, density=True
-        )
+        hist, xedges, yedges = np.histogram2d(data[:, 0], data[:, 1], bins=bins, density=True)
         cdf = np.cumsum(np.cumsum(hist, axis=0), axis=1)
         cdf /= cdf[-1, -1]
-        x, y = np.meshgrid(
-            (xedges[1:] + xedges[:-1]) / 2, (yedges[1:] + yedges[:-1]) / 2
-        )
+        x, y = np.meshgrid((xedges[1:] + xedges[:-1]) / 2, (yedges[1:] + yedges[:-1]) / 2)
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
         ax.plot_surface(x, y, cdf, cmap="viridis")
@@ -668,9 +712,7 @@ class BivCoreCopula:
             return self._plot_functions(
                 cond_distr_1, title=title, zlabel=zlabel, xlabel=xlabel, **kwargs
             )
-        return self._plot_contour(
-            cond_distr_1, title=title, zlabel=zlabel, log_z=log_z, **kwargs
-        )
+        return self._plot_contour(cond_distr_1, title=title, zlabel=zlabel, log_z=log_z, **kwargs)
 
     def plot_cond_distr_2(self, *, plot_type="3d", log_z=False, **kwargs):
         if plot_type not in {"3d", "contour"}:
@@ -678,9 +720,7 @@ class BivCoreCopula:
         cond_distr_2 = self.cond_distr_2
         title = CopulaGraphs(self).get_copula_title()
         if plot_type == "3d":
-            return self._plot3d(
-                cond_distr_2, title=title, zlabel="Conditional Distribution 2"
-            )
+            return self._plot3d(cond_distr_2, title=title, zlabel="Conditional Distribution 2")
         return self._plot_contour(
             cond_distr_2,
             title=title,
@@ -743,7 +783,7 @@ class BivCoreCopula:
         """
         # -------- resolve `func` exactly as in the original -----------------
         try:
-            inspect.signature(func).parameters
+            inspect.signature(func)  # raises for non-introspectable callables
             if isinstance(func, types.MethodType):
                 func = func()
         except (ValueError, TypeError):
@@ -996,9 +1036,7 @@ class BivCoreCopula:
         K = np.empty((n_grid, n_grid))
         for i, u in enumerate(grid):
             for j, v in enumerate(grid):
-                K[i, j] = (
-                    float(cdf(u=u + h, v=v)) - float(cdf(u=u - h, v=v))
-                ) / (2 * h)
+                K[i, j] = (float(cdf(u=u + h, v=v)) - float(cdf(u=u - h, v=v))) / (2 * h)
         K = np.clip(K, 0.0, None)
 
         if np.all(K > 0):
@@ -1023,7 +1061,9 @@ class BivCoreCopula:
         grid = np.linspace(0.001, 0.999, n_grid)
         try:
             expr = self.cdf().func
-            diff = sp.simplify(expr - expr.subs({self.u: self.v, self.v: self.u}, simultaneous=True))
+            diff = sp.simplify(
+                expr - expr.subs({self.u: self.v, self.v: self.u}, simultaneous=True)
+            )
             if diff == 0:
                 return True
         except Exception:
@@ -1050,8 +1090,11 @@ class BivCoreCopula:
         grid = np.linspace(0.001, 0.999, n_grid)
         try:
             expr = self.cdf().func
-            survival = self.u + self.v - 1 + expr.subs(
-                {self.u: 1 - self.u, self.v: 1 - self.v}, simultaneous=True
+            survival = (
+                self.u
+                + self.v
+                - 1
+                + expr.subs({self.u: 1 - self.u, self.v: 1 - self.v}, simultaneous=True)
             )
             diff = sp.simplify(expr - survival)
             if diff == 0:
@@ -1067,17 +1110,34 @@ class BivCoreCopula:
                     return False
         return True
 
-    def blomqvists_beta(self) -> float:
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""
+        Blomqvist's :math:`\beta = 4\,C(\tfrac12,\tfrac12) - 1`.
+
+        Returns a float for fully specified copulas and a SymPy expression
+        in the free parameters otherwise.
         """
-        Blomqvist’s β   :=  4·C(½,½) – 1
-        """
-        return 4.0 * self.cdf(u=0.5, v=0.5) - 1.0
+        self._set_params(args, kwargs)
+        try:
+            w = self.cdf
+            if callable(w) and not hasattr(w, "func"):
+                w = w()
+            expr = getattr(w, "func", w)
+            if isinstance(expr, sp.Expr):
+                subs = {s: sp.Rational(1, 2) for s in expr.free_symbols if str(s) in ("u", "v")}
+                res = sp.simplify(4 * expr.subs(subs) - 1)
+                if not res.free_symbols:
+                    return float(res)
+                return res
+        except Exception:
+            pass
+        return 4.0 * float(self.cdf(u=0.5, v=0.5)) - 1.0
 
     # ------------------------------------------------------------------
     # Gini’s gamma  γ(C) = 4[∫₀¹ C(t,t) dt + ∫₀¹ C(t,1-t) dt] − 2
     # ------------------------------------------------------------------
 
-    def gini_gamma(self, *args, **kwargs):
+    def ginis_gamma(self, *args, **kwargs):
         r"""
         Compute Gini’s gamma concordance coefficient.
 
@@ -1093,11 +1153,14 @@ class BivCoreCopula:
 
         Returns
         -------
-        sympy.Expr
-            The symbolic expression for Gini’s gamma.
+        float or sympy.Expr
+            A float for fully specified copulas, otherwise the symbolic
+            expression in the free parameters.
         """
         self._set_params(args, kwargs)
         return self._gini_gamma()
+
+    gini_gamma = _deprecated_alias("gini_gamma", "ginis_gamma")
 
     def _gini_gamma(self):
         t = sp.Symbol("t", positive=True)
@@ -1115,18 +1178,13 @@ class BivCoreCopula:
         return self._gini_gamma_numerical()
 
     def _gini_gamma_numerical(self) -> float:
-        from scipy.integrate import quad
-
-        cdf = self.cdf
-        int1 = quad(lambda s: float(cdf(u=s, v=s)), 0, 1)[0]
-        int2 = quad(lambda s: float(cdf(u=s, v=1 - s)), 0, 1)[0]
-        return 4 * (int1 + int2) - 2
+        return float(_compute_measures(self, "gamma", method="numeric"))
 
     # ------------------------------------------------------------------
     # Spearman’s footrule  ψ(C) = 6·∫₀¹ C(t,t) dt − 2
     # ------------------------------------------------------------------
 
-    def spearman_footrule(self, *args, **kwargs):
+    def spearmans_footrule(self, *args, **kwargs):
         r"""
         Compute Spearman’s footrule coefficient :math:`\psi`.
 
@@ -1144,11 +1202,12 @@ class BivCoreCopula:
 
         Returns
         -------
-        sympy.Expr
-            The symbolic expression for Spearman’s footrule coefficient.
+        float or sympy.Expr
         """
         self._set_params(args, kwargs)
         return self._spearman_footrule()
+
+    spearman_footrule = _deprecated_alias("spearman_footrule", "spearmans_footrule")
 
     def _spearman_footrule(self):
         t = sp.Symbol("t", positive=True)
@@ -1164,11 +1223,7 @@ class BivCoreCopula:
         return self._spearman_footrule_numerical()
 
     def _spearman_footrule_numerical(self) -> float:
-        from scipy.integrate import quad
-
-        cdf = self.cdf
-        integral = quad(lambda s: float(cdf(u=s, v=s)), 0, 1)[0]
-        return 6 * integral - 2
+        return float(_compute_measures(self, "footrule", method="numeric"))
 
     # ------------------------------------------------------------------
     # Tail concentration functions
@@ -1363,9 +1418,7 @@ class BivCoreCopula:
         else:
             pos_mask = c_diag > 0
             if np.sum(pos_mask) >= 2:
-                kappa_L = float(
-                    np.polyfit(log_t[pos_mask], np.log(c_diag[pos_mask]), 1)[0]
-                )
+                kappa_L = float(np.polyfit(log_t[pos_mask], np.log(c_diag[pos_mask]), 1)[0])
             else:
                 kappa_L = float("inf")
 
@@ -1377,15 +1430,13 @@ class BivCoreCopula:
         else:
             pos_mask_u = c_surv > 0
             if np.sum(pos_mask_u) >= 2:
-                kappa_U = float(
-                    np.polyfit(log_t[pos_mask_u], np.log(c_surv[pos_mask_u]), 1)[0]
-                )
+                kappa_U = float(np.polyfit(log_t[pos_mask_u], np.log(c_surv[pos_mask_u]), 1)[0])
             else:
                 kappa_U = float("inf")
 
         return {"lower": kappa_L, "upper": kappa_U}
 
-    def plot_tail_concentration(self, n_pts: int = 200) -> "plt.Figure":
+    def plot_tail_concentration(self, n_pts: int = 200) -> plt.Figure:
         r"""
         Plot the lower and upper tail concentration functions on one figure.
 
@@ -1456,9 +1507,7 @@ class BivCoreCopula:
     # Concordance ordering
     # ------------------------------------------------------------------
 
-    def concordance_order(
-        self, other: "BivCoreCopula", n_grid: int = 20, tol: float = 1e-9
-    ) -> bool:
+    def concordance_order(self, other: BivCoreCopula, n_grid: int = 20, tol: float = 1e-9) -> bool:
         r"""
         Numerically check whether *self* is concordance-ordered below *other*.
 
@@ -1512,10 +1561,8 @@ class BivCoreCopula:
         Range: :math:`[0, 1]`.
         :math:`\sigma = 0` iff :math:`C = \Pi` (independence).
 
-        When the integral cannot be evaluated symbolically (because
-        :math:`|C - \Pi|` introduces piecewise terms that SymPy cannot
-        always simplify), the method falls back to numerical quadrature on
-        a 50 × 50 grid.
+        Fully specified copulas are integrated numerically (adaptive
+        quadrature); with free parameters a symbolic integration is attempted.
 
         Returns
         -------
@@ -1525,33 +1572,11 @@ class BivCoreCopula:
         return self._schweizer_wolff_sigma()
 
     def _schweizer_wolff_sigma(self):
-        cdf_expr = self.cdf().func
-        Pi = self.u * self.v  # independence copula
-        integrand = sp.Abs(cdf_expr - Pi)
-
-        # Try symbolic integration first
-        try:
-            inner = sp.integrate(integrand, (self.v, 0, 1))
-            result = sp.simplify(12 * sp.integrate(inner, (self.u, 0, 1)))
-            # If SymPy returns an unevaluated Integral, fall through
-            if not result.has(sp.Integral):
-                return result
-        except Exception:
-            pass
-
-        # Numerical fallback
-        return self._schweizer_wolff_sigma_numerical()
+        return self._lp_distance(1)
 
     def _schweizer_wolff_sigma_numerical(self, n_grid: int = 50) -> float:
-        r"""Evaluate :math:`\sigma` by midpoint-rule quadrature."""
-        cdf_expr = self.cdf().func
-        f_cdf = to_numpy_callable(cdf_expr, [self.u, self.v])
-        h = 1.0 / n_grid
-        mid = np.linspace(h / 2, 1 - h / 2, n_grid)
-        uu, vv = np.meshgrid(mid, mid, indexing="ij")
-        C_vals = np.vectorize(f_cdf)(uu, vv)
-        Pi_vals = uu * vv
-        return float(12 * np.mean(np.abs(C_vals - Pi_vals)))
+        r"""Evaluate :math:`\sigma` numerically (``n_grid`` is ignored)."""
+        return float(_compute_measures(self, "sigma", method="numeric"))
 
     # ==================================================================
     # Hoeffding's D  (dependence index)
@@ -1559,22 +1584,18 @@ class BivCoreCopula:
 
     def hoeffdings_d(self, *args, **kwargs):
         r"""
-        Hoeffding's :math:`D` dependence measure (also called the
-        *dependence index* or :math:`\Phi^2`).
+        Hoeffding's dependence index :math:`\Phi^2` (often denoted :math:`D`).
 
         .. math::
 
-           D(C) = 90 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,du\,dv
+           \Phi^2(C) = 90 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,du\,dv
 
         This is the squared :math:`L_2` analogue of Spearman's :math:`\rho`
         (which uses an :math:`L_1` integral of the signed deviation).
         It measures any departure from independence, monotone or not.
 
         Range: :math:`[0, 1]`.
-        :math:`D = 0` iff :math:`C = \Pi` (independence).
-
-        Falls back to numerical quadrature when SymPy cannot evaluate the
-        double integral in closed form.
+        :math:`\Phi^2 = 0` iff :math:`C = \Pi` (independence).
 
         Returns
         -------
@@ -1595,7 +1616,7 @@ class BivCoreCopula:
 
         .. math::
 
-           D(C) = 90 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,du\,dv
+           \Phi^2(C) = 90 \iint_{[0,1]^2} \bigl[C(u,v) - uv\bigr]^2\,du\,dv
 
         Coincides with :meth:`hoeffdings_d`. Note that the integrator is the
         Lebesgue measure; for the version integrating against the copula
@@ -1622,16 +1643,15 @@ class BivCoreCopula:
         measure itself; the normalization is chosen such that
         :math:`B(M) = B(W) = 1` and :math:`B(\Pi) = 0`.
 
-        Computed by Monte Carlo, :math:`B = 30\,\mathbb{E}[(C(U,V)-UV)^2]`
-        with :math:`(U,V)\sim C`, which is also valid for copulas with
-        singular components.
-
-        Parameters
-        ----------
-        n_samples : int, optional
-            Number of Monte Carlo samples (default 200000).
-        random_state : int, optional
-            Seed for the sampler (default 1).
+        Fully specified copulas are evaluated by quadrature of the
+        equivalent form
+        :math:`-60\iint \partial_1C\,(C-uv)\,(\partial_2C-u)\,du\,dv`
+        (integration by parts in :math:`v`), which is also valid for copulas
+        with singular components.  With free parameters, the absolutely
+        continuous formula :math:`30\iint (C-uv)^2 c\,du\,dv` is integrated
+        symbolically.  The Monte Carlo estimator
+        :math:`30\,\mathbb{E}[(C(U,V)-UV)^2]` is available as
+        :meth:`_blum_kiefer_rosenblatt_numerical`.
 
         References
         ----------
@@ -1639,80 +1659,71 @@ class BivCoreCopula:
         tests of independence based on the sample distribution function."
         *Ann. Math. Statist.* 32, 485--498.
         """
-        n_samples = kwargs.pop("n_samples", 200_000)
-        random_state = kwargs.pop("random_state", 1)
+        kwargs.pop("n_samples", None)
+        kwargs.pop("random_state", None)
         self._set_params(args, kwargs)
-        return self._blum_kiefer_rosenblatt_numerical(n_samples, random_state)
+        cdf_expr = self.cdf().func
+        pdf_expr = sp.diff(cdf_expr, self.u, self.v)
+        integrand = (cdf_expr - self.u * self.v) ** 2 * pdf_expr
+        inner = sp.integrate(integrand, (self.u, 0, 1))
+        return sp.simplify(30 * sp.integrate(inner, (self.v, 0, 1)))
 
     def _blum_kiefer_rosenblatt_numerical(
         self, n_samples: int = 200_000, random_state: int = 1
     ) -> float:
+        """Monte Carlo estimate :math:`30\\,E[(C(U,V)-UV)^2]` from ``rvs``."""
+        from copul.measures.backend import numeric_backend
+
         samples = np.asarray(self.rvs(n_samples, random_state=random_state))
         U, V = samples[:, 0], samples[:, 1]
-        c_vals = None
-        if hasattr(self, "cdf_vectorized"):
-            try:
-                c_vals = np.asarray(self.cdf_vectorized(U, V), dtype=float)
-                for k in (0, len(U) // 2):
-                    ref = float(self.cdf(u=U[k], v=V[k]))
-                    if abs(c_vals[k] - ref) > 1e-6 * max(1.0, abs(ref)):
-                        raise ValueError("cdf_vectorized inconsistent")
-            except Exception:
-                c_vals = None
-        if c_vals is None:
-            m = min(len(U), 20_000)
-            U, V = U[:m], V[:m]
-            c_vals = np.array(
-                [float(self.cdf(u=a, v=b)) for a, b in zip(U, V)]
-            )
-        c_vals = np.clip(c_vals, 0.0, 1.0)
+        eps = 1e-12
+        U = np.clip(U, eps, 1 - eps)
+        V = np.clip(V, eps, 1 - eps)
+        c_vals = numeric_backend(self).cdf(U, V)
         return float(30.0 * np.mean((c_vals - U * V) ** 2))
 
     def _hoeffdings_d(self):
-        cdf_expr = self.cdf().func
-        Pi = self.u * self.v
-        integrand = (cdf_expr - Pi) ** 2
-
-        try:
-            inner = sp.integrate(integrand, (self.v, 0, 1))
-            result = sp.simplify(90 * sp.integrate(inner, (self.u, 0, 1)))
-            if not result.has(sp.Integral):
-                return result
-        except Exception:
-            pass
-
-        return self._hoeffdings_d_numerical()
+        return self._lp_distance(2)
 
     def _hoeffdings_d_numerical(self, n_grid: int = 50) -> float:
-        r"""Evaluate :math:`D` by midpoint-rule quadrature."""
-        cdf_expr = self.cdf().func
-        f_cdf = to_numpy_callable(cdf_expr, [self.u, self.v])
-        h = 1.0 / n_grid
-        mid = np.linspace(h / 2, 1 - h / 2, n_grid)
-        uu, vv = np.meshgrid(mid, mid, indexing="ij")
-        C_vals = np.vectorize(f_cdf)(uu, vv)
-        Pi_vals = uu * vv
-        return float(90 * np.mean((C_vals - Pi_vals) ** 2))
+        r"""Evaluate :math:`\Phi^2` numerically (``n_grid`` is ignored)."""
+        return float(_compute_measures(self, "hoeffdings_d", method="numeric"))
 
     # ==================================================================
-    # Lp concordance distance  (generalisation of rho, sigma, D)
+    # Uniform distance and Lp distances to independence
     # ==================================================================
+
+    def uniform_distance(self, *args, **kwargs):
+        r"""
+        Uniform (:math:`L^\infty`) distance to independence.
+
+        .. math::
+
+           \kappa(C) = 4 \sup_{(u,v)\in[0,1]^2} \lvert C(u,v) - uv \rvert
+
+        normalized such that :math:`\kappa(M)=\kappa(W)=1`.  Evaluated
+        numerically (grid search followed by local zooming); requires a fully
+        specified copula.
+        """
+        self._set_params(args, kwargs)
+        return float(_compute_measures(self, "kappa", method="numeric"))
 
     # Normalisation constants k(p) so that the measure equals 1 at the
-    # Fréchet upper bound M(u,v)=min(u,v).
+    # Fréchet upper bound M(u,v)=min(u,v); k(p) = (p+1) / (2 B(p+1, p+2)).
     _LP_NORM_CONSTANTS = {1: 12, 2: 90, 3: 560, 4: 3150, 5: 16632}
 
-    def lp_concordance(self, p: int = 2, *args, **kwargs):
+    def lp_distance(self, p: float = 2, *args, **kwargs):
         r"""
-        :math:`L_p` concordance distance from independence.
+        :math:`L_p` distance from independence.
 
         .. math::
 
            \delta_p(C) = k(p)\,
-             \iint_{[0,1]^2} \lvert C(u,v) - uv \rvert^{p}\,du\,dv
+             \iint_{[0,1]^2} \lvert C(u,v) - uv \rvert^{p}\,du\,dv,
+           \qquad k(p) = \frac{p+1}{2\,B(p+1,\,p+2)},
 
-        where :math:`k(p)` is chosen so that :math:`\delta_p(M) = 1` for the
-        Fréchet upper bound :math:`M(u,v) = \min(u,v)`.
+        where :math:`k(p)` is chosen so that :math:`\delta_p(M) =
+        \delta_p(W) = 1`.
 
         Special cases:
 
@@ -1720,34 +1731,31 @@ class BivCoreCopula:
         :math:`p`     :math:`k(p)`  Equivalent measure
         ============= ============= ===============================
         1             12            Schweizer–Wolff :math:`\sigma`
-        2             90            Hoeffding :math:`D`
+        2             90            Hoeffding :math:`\Phi^2`
         ============= ============= ===============================
 
         Parameters
         ----------
-        p : int
-            The exponent (default 2).  Pre-tabulated for *p* = 1 … 5.
+        p : float
+            The exponent (default 2), any :math:`p > 0`.
 
         Returns
         -------
         sympy.Expr or float
         """
         self._set_params(args, kwargs)
-        return self._lp_concordance(p)
+        return self._lp_distance(p)
 
-    def _lp_concordance(self, p: int):
-        k = self._LP_NORM_CONSTANTS.get(p)
-        if k is None:
-            raise ValueError(
-                f"Normalisation constant k({p}) not tabulated.  "
-                f"Supported p values: {sorted(self._LP_NORM_CONSTANTS)}"
-            )
+    lp_concordance = _deprecated_alias("lp_concordance", "lp_distance")
 
+    def _lp_distance(self, p):
+        from copul.measures.numeric import lp_constant
+
+        k = lp_constant(p)
+        k = sp.Integer(int(k)) if float(k).is_integer() else sp.Float(k)
         cdf_expr = self.cdf().func
         Pi = self.u * self.v
-        integrand = sp.Abs(cdf_expr - Pi) ** p
-
-        # Symbolic attempt
+        integrand = sp.Abs(cdf_expr - Pi) ** p if p != 2 else (cdf_expr - Pi) ** 2
         try:
             inner = sp.integrate(integrand, (self.v, 0, 1))
             result = sp.simplify(k * sp.integrate(inner, (self.u, 0, 1)))
@@ -1755,75 +1763,139 @@ class BivCoreCopula:
                 return result
         except Exception:
             pass
+        if self._has_free_symbols():
+            return k * sp.Integral(integrand, (self.u, 0, 1), (self.v, 0, 1))
+        return float(_compute_measures(self, "lp", method="numeric", p=p))
 
-        # Numerical fallback
-        return self._lp_concordance_numerical(p, k)
+    def _lp_concordance(self, p):
+        return self._lp_distance(p)
 
-    def _lp_concordance_numerical(self, p: int, k: int, n_grid: int = 50) -> float:
-        cdf_expr = self.cdf().func
-        f_cdf = to_numpy_callable(cdf_expr, [self.u, self.v])
-        h = 1.0 / n_grid
-        mid = np.linspace(h / 2, 1 - h / 2, n_grid)
-        uu, vv = np.meshgrid(mid, mid, indexing="ij")
-        C_vals = np.vectorize(f_cdf)(uu, vv)
-        Pi_vals = uu * vv
-        return float(k * np.mean(np.abs(C_vals - Pi_vals) ** p))
+    def _lp_concordance_numerical(self, p: int, k: int | None = None, n_grid: int = 50) -> float:
+        return float(_compute_measures(self, "lp", method="numeric", p=p))
+
+    def _has_free_symbols(self) -> bool:
+        from copul.measures.backend import free_parameters
+
+        return bool(free_parameters(self))
 
     # ==================================================================
-    # Mutual information  I(C)  (copula entropy)
+    # Mutual information  I(C)
     # ==================================================================
 
     def mutual_information(self, *args, **kwargs):
         r"""
-        Copula-based mutual information (negative copula entropy).
+        Copula-based mutual information.
 
         .. math::
 
-           I(C) = -\iint_{[0,1]^2} c(u,v)\,\ln c(u,v)\,du\,dv
+           I(C) = \iint_{[0,1]^2} c(u,v)\,\ln c(u,v)\,du\,dv \;\ge\; 0
 
         where :math:`c(u,v) = \partial^2 C/\partial u\,\partial v` is the
         copula density.  This equals the mutual information of a pair
-        :math:`(X,Y)` whose copula is :math:`C`, regardless of the marginals.
+        :math:`(X,Y)` whose copula is :math:`C`, regardless of the marginals,
+        and minus the copula entropy.
 
-        Range: :math:`[0, \infty)`.
-        :math:`I = 0` iff :math:`C = \Pi` (independence).
+        Range: :math:`[0, \infty]`.
+        :math:`I = 0` iff :math:`C = \Pi` (independence); :math:`I=\infty` for
+        copulas with a singular component (only the absolutely continuous
+        part is integrated numerically).
 
-        Because the integrand involves :math:`\ln(c)`, symbolic evaluation
-        rarely succeeds; the method defaults to numerical quadrature.
+        Evaluated by adaptive quadrature (natural logarithm); requires a
+        fully specified copula.
+        """
+        kwargs.pop("n_grid", None)
+        self._set_params(args, kwargs)
+        return float(_compute_measures(self, "mutual_information", method="numeric"))
+
+    def _mutual_information_numerical(self, n_grid: int = 80) -> float:
+        return float(_compute_measures(self, "mutual_information", method="numeric"))
+
+    # ==================================================================
+    # Generic measure access
+    # ==================================================================
+
+    def measure(self, key, method="auto", **kwargs):
+        """Evaluate the dependence measure ``key`` (any registered key or alias).
 
         Parameters
         ----------
-        n_grid : int
-            Number of grid points per axis for quadrature (default 80).
+        key : str
+            E.g. ``"rho"``, ``"tau"``, ``"xi"``, ``"xi_2"``, ``"footrule"``,
+            ``"gamma"``, ``"beta"``, ``"nu"``, ``"hoeffdings_d"``,
+            ``"sigma"``, ``"kappa"``, ``"lp"`` (option ``p``), ``"bkr"``,
+            ``"mutual_information"``, ``"lambda_l"``, ``"lambda_u"``.
+        method : {"auto", "closed", "numeric", "symbolic", "mc"}
+        **kwargs
+            ``rtol``, ``atol``, ``full_output``, measure options and Monte
+            Carlo settings, see :func:`copul.measures.compute`.
+        """
+        return _compute_measures(self, key, method=method, **kwargs)
+
+    def measures(self, keys=None, method="auto", **kwargs) -> dict:
+        """Evaluate several dependence measures, returning ``{key: value}``.
+
+        ``keys`` defaults to ``("xi", "rho", "tau", "footrule", "gamma",
+        "beta", "nu")``.
+        """
+        from copul.measures.registry import DEFAULT_MEASURES
+
+        if keys is None:
+            keys = DEFAULT_MEASURES
+        if isinstance(keys, str):
+            keys = [keys]
+        return _compute_measures(self, list(keys), method=method, **kwargs)
+
+    def measure_curve(self, keys=("rho",), param=None, values=None, n=100, method="auto", **kwargs):
+        """Evaluate measures along the free parameter of a family.
+
+        Parameters
+        ----------
+        keys : str or sequence of str
+            Measure keys.
+        param : str, optional
+            Name of the parameter to sweep; required if several parameters
+            are free.
+        values : array_like, optional
+            Parameter values; by default ``n`` points spread over a sensible
+            part of the parameter interval.
+        n : int
+            Number of default parameter values.
+        method : str
+            Evaluation route, see :meth:`measure`.
 
         Returns
         -------
-        float
+        copul.measures.curves.MeasureCurve
+
+        Examples
+        --------
+        >>> import copul as cp
+        >>> curve = cp.Clayton().measure_curve(["xi", "rho"], n=5)
+        >>> curve["rho"].shape
+        (5,)
         """
-        self._set_params(args, kwargs)
-        n_grid = kwargs.pop("n_grid", 80)
-        return self._mutual_information_numerical(n_grid)
+        from copul.measures.curves import measure_curve
 
-    def _mutual_information_numerical(self, n_grid: int = 80) -> float:
-        from copul.exceptions import PropertyUnavailableException
+        return measure_curve(self, keys, param=param, values=values, n=n, method=method, **kwargs)
 
-        pdf_expr = self.pdf
-        if callable(pdf_expr) and not isinstance(pdf_expr, sp.Basic):
-            # pdf might be a wrapper callable
-            pass
-        try:
-            f_pdf = to_numpy_callable(pdf_expr, [self.u, self.v])
-        except (TypeError, AttributeError):
-            raise PropertyUnavailableException(
-                "mutual_information requires a symbolic PDF expression."
-            )
+    @_hybridmethod
+    def from_measure(self_or_cls, key, value, param=None, bracket=None, **kwargs):
+        """Calibrate the free parameter so that measure ``key`` equals ``value``.
 
-        h = 1.0 / n_grid
-        mid = np.linspace(h / 2, 1 - h / 2, n_grid)
-        uu, vv = np.meshgrid(mid, mid, indexing="ij")
-        with np.errstate(divide="ignore", invalid="ignore"):
-            c_vals = np.vectorize(f_pdf)(uu, vv)
-            c_vals = np.maximum(c_vals, 0.0)  # clip negative numerical noise
-            log_c = np.where(c_vals > 1e-300, np.log(c_vals), 0.0)
-            integrand = c_vals * log_c
-        return float(-np.mean(integrand))
+        Can be called on the class (``Clayton.from_measure("tau", 0.5)``)
+        or on a partially specified instance.  Uses Brent's method on the
+        free parameter (bracket from the parameter interval, expanded if
+        necessary).
+
+        Returns
+        -------
+        copula
+            A fully specified instance, e.g. ``Clayton(theta=2)``.
+        """
+        from copul.measures.curves import from_measure
+
+        return from_measure(self_or_cls, key, value, param=param, bracket=bracket, **kwargs)
+
+
+# wrap the base-class measure methods (the generic symbolic implementations)
+install_dispatchers(BivCoreCopula, is_base=True)

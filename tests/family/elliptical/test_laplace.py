@@ -1,7 +1,8 @@
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 import sympy
-from unittest.mock import patch
 
 from copul.family.elliptical.laplace import Laplace, multivariate_laplace
 from copul.family.other import LowerFrechet, UpperFrechet
@@ -70,9 +71,7 @@ def test_laplace_rvs(laplace_copula):
     """Test random sampling from the Laplace copula."""
     # Mock the multivariate_laplace.rvs method
     mock_samples = np.array([[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]])
-    with patch.object(
-        multivariate_laplace, "rvs", return_value=mock_samples
-    ) as mock_rvs:
+    with patch.object(multivariate_laplace, "rvs", return_value=mock_samples) as mock_rvs:
         # Mock the stats.laplace.cdf method to handle vectorized calls
         # We need to use a class with a __call__ method to handle arrays
         class VectorizedMock:

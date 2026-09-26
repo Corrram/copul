@@ -49,9 +49,14 @@ def test_two_increasing(delta):
 def test_closed_forms_beta_nu(delta):
     cop = MedianSwapCopula(delta=delta)
     beta_expected = 1.0 - 4.0 * delta
-    nu_expected = 1.0 - 6.0 * delta * delta - 8.0 * delta**4
     assert np.isclose(cop.blomqvists_beta(), beta_expected, atol=1e-12)
-    assert np.isclose(cop.blests_nu(), nu_expected, atol=1e-12)
+    # Blest's nu = 24 * int int (1-u) C(u,v) du dv - 2, independent midpoint rule
+    n = 400
+    g = (np.arange(n) + 0.5) / n
+    U, V = np.meshgrid(g, g, indexing="ij")
+    C = np.asarray(cop.cdf_vectorized(U.ravel(), V.ravel())).reshape(U.shape)
+    nu_ref = 24.0 * np.mean((1.0 - U) * C) - 2.0
+    assert np.isclose(cop.blests_nu(), nu_ref, atol=1e-4)
 
 
 @pytest.mark.parametrize("beta", [-1.0, -0.4, 0.0, 0.7, 1.0])

@@ -1,6 +1,6 @@
 # frechet_multi.py
-import sympy as sp
 import numpy as np
+import sympy as sp
 
 from copul.family.core.copula import Copula
 from copul.wrapper.cdf_wrapper import CDFWrapper
@@ -51,10 +51,13 @@ class _FrechetMultiMixin:
         self._alpha = value
         # tighten beta interval dynamically
         if self.dim == 2:
-            self.intervals["beta"] = sp.Interval(0, 1 - float(self.alpha), False, False)
+            self.intervals = {
+                **self.intervals,
+                "beta": sp.Interval(0, 1 - float(self.alpha), False, False),
+            }
         else:
             # d≥3: always β=0
-            self.intervals["beta"] = sp.Interval(0, 0, False, False)
+            self.intervals = {**self.intervals, "beta": sp.Interval(0, 0, False, False)}
 
     @property
     def beta(self):
@@ -67,9 +70,12 @@ class _FrechetMultiMixin:
             raise ValueError("In d≥3 the lower Fréchet weight β must be 0.")
         self._beta = value
         if self.dim == 2:
-            self.intervals["alpha"] = sp.Interval(0, 1 - float(self.beta), False, False)
+            self.intervals = {
+                **self.intervals,
+                "alpha": sp.Interval(0, 1 - float(self.beta), False, False),
+            }
         else:
-            self.intervals["alpha"] = sp.Interval(0, 1, False, False)
+            self.intervals = {**self.intervals, "alpha": sp.Interval(0, 1, False, False)}
 
     @property
     def is_symmetric(self) -> bool:
@@ -112,9 +118,7 @@ class _FrechetMultiMixin:
         if self.dim == 2:
             # validate α+β ≤ 1
             if (float(a) + float(b)) > 1 + 1e-12:
-                raise ValueError(
-                    "Parameter constraint violated: alpha + beta ≤ 1 (d=2)."
-                )
+                raise ValueError("Parameter constraint violated: alpha + beta ≤ 1 (d=2).")
             W = self._W_expr()
             expr = a * M + (1 - a - b) * Pi + b * W
         else:
@@ -160,9 +164,7 @@ class _FrechetMultiMixin:
             a = float(self.alpha)
             b = float(self.beta)
             if a + b > 1 + 1e-12:
-                raise ValueError(
-                    "Parameter constraint violated: alpha + beta ≤ 1 (d=2)."
-                )
+                raise ValueError("Parameter constraint violated: alpha + beta ≤ 1 (d=2).")
 
             frechet_upper = np.minimum(U, V)  # M(u,v)
             frechet_lower = np.maximum(U + V - 1.0, 0.0)  # W(u,v)
@@ -172,9 +174,7 @@ class _FrechetMultiMixin:
 
         # --- general signature: cdf_vectorized(P) with P shape (n, d) ---
         if len(args) != 1:
-            raise TypeError(
-                "cdf_vectorized expects either (U, V) in d=2 or a single (n,d) array."
-            )
+            raise TypeError("cdf_vectorized expects either (U, V) in d=2 or a single (n,d) array.")
 
         P = np.asarray(args[0], dtype=float)
         if P.ndim == 1:
@@ -193,9 +193,7 @@ class _FrechetMultiMixin:
         if self.dim == 2:
             W = np.maximum(P.sum(axis=1) - 1.0, 0.0)
             if a + b > 1 + 1e-12:
-                raise ValueError(
-                    "Parameter constraint violated: alpha + beta ≤ 1 (d=2)."
-                )
+                raise ValueError("Parameter constraint violated: alpha + beta ≤ 1 (d=2).")
             return a * M + (1 - a - b) * Pi + b * W
 
         # d >= 3: β must be 0 and W is not a copula
@@ -225,17 +223,19 @@ class MVFrechet(_FrechetMultiMixin, Copula):
         super().__init__(dimension, *args, **kwargs)
         # finalize intervals according to dim/params
         if self.dim == 2:
-            self.intervals["alpha"] = sp.Interval(
-                0, 1 - float(self._beta), False, False
-            )
-            self.intervals["beta"] = sp.Interval(
-                0, 1 - float(self._alpha), False, False
-            )
+            self.intervals = {
+                **self.intervals,
+                "alpha": sp.Interval(0, 1 - float(self._beta), False, False),
+            }
+            self.intervals = {
+                **self.intervals,
+                "beta": sp.Interval(0, 1 - float(self._alpha), False, False),
+            }
         else:
             # β is locked to 0
             self._beta = 0.0
-            self.intervals["alpha"] = sp.Interval(0, 1, False, False)
-            self.intervals["beta"] = sp.Interval(0, 0, False, False)
+            self.intervals = {**self.intervals, "alpha": sp.Interval(0, 1, False, False)}
+            self.intervals = {**self.intervals, "beta": sp.Interval(0, 0, False, False)}
 
 
 if __name__ == "__main__":

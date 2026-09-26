@@ -1,6 +1,7 @@
+from typing import Any, Union
+
 import numpy as np
 import sympy
-from typing import Union, Dict, Any, Optional, Tuple, Set
 from sympy.utilities.lambdify import lambdify
 
 
@@ -28,9 +29,7 @@ class SymPyFuncWrapper:
 
         type_ = type(sympy_func)
         allowed = (sympy.Expr, float, int)
-        assert isinstance(sympy_func, allowed), (
-            f"Function must be from sympy, but is {type_}"
-        )
+        assert isinstance(sympy_func, allowed), f"Function must be from sympy, but is {type_}"
 
         # Convert numeric types to SymPy Number
         if isinstance(sympy_func, (float, int)):
@@ -88,7 +87,7 @@ class SymPyFuncWrapper:
 
     def _prepare_call(
         self, args: tuple, kwargs: dict
-    ) -> Tuple[Dict[sympy.Symbol, Any], Dict[str, Any]]:
+    ) -> tuple[dict[sympy.Symbol, Any], dict[str, Any]]:
         """
         Prepare arguments for substitution in the expression.
 
@@ -145,7 +144,7 @@ class SymPyFuncWrapper:
         return self._func
 
     @property
-    def free_symbols(self) -> Set[sympy.Symbol]:
+    def free_symbols(self) -> set[sympy.Symbol]:
         """Return the set of free symbols in the expression."""
         return self._func.free_symbols
 
@@ -232,9 +231,7 @@ class SymPyFuncWrapper:
         """
         return sympy.latex(self._func)
 
-    def evalf(
-        self, n: Optional[int] = None
-    ) -> Union[float, sympy.Expr, "SymPyFuncWrapper"]:
+    def evalf(self, n: int | None = None) -> Union[float, sympy.Expr, "SymPyFuncWrapper"]:
         """
         Evaluate the expression numerically.
 
@@ -401,7 +398,7 @@ class SymPyFuncWrapper:
             func = lambdify(symbols, self.func, "numpy")
             return func
         except Exception as e:
-            raise ValueError(f"Failed to convert to numpy function: {e}")
+            raise ValueError(f"Failed to convert to numpy function: {e}") from e
 
     def numpy_func(self, *args):
         """
@@ -477,10 +474,7 @@ class SymPyFuncWrapper:
             def efficient_piecewise(*values):
                 # Check if all inputs are numpy arrays
                 if not all(isinstance(v, np.ndarray) for v in values):
-                    values = [
-                        np.asarray(v) if not isinstance(v, np.ndarray) else v
-                        for v in values
-                    ]
+                    values = [np.asarray(v) if not isinstance(v, np.ndarray) else v for v in values]
 
                 # Evaluate all conditions and expressions
                 conds = [c(*values) for c in conditions]
@@ -491,9 +485,7 @@ class SymPyFuncWrapper:
 
             if args:
                 if len(symbols) != len(args):
-                    raise ValueError(
-                        f"Expected {len(symbols)} arguments, got {len(args)}"
-                    )
+                    raise ValueError(f"Expected {len(symbols)} arguments, got {len(args)}")
                 return efficient_piecewise(*args)
             return efficient_piecewise
 

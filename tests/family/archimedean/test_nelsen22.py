@@ -90,9 +90,9 @@ def test_cdf_function(nelsen22_copula):
         condition = np.arcsin(u**theta - 1) + np.arcsin(v**theta - 1) >= -np.pi / 2
 
         if condition:
-            expected = (
-                np.sin(np.arcsin(u**theta - 1) + np.arcsin(v**theta - 1)) + 1
-            ) ** (1 / theta)
+            expected = (np.sin(np.arcsin(u**theta - 1) + np.arcsin(v**theta - 1)) + 1) ** (
+                1 / theta
+            )
         else:
             expected = 0
 

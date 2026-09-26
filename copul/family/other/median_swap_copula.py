@@ -1,10 +1,10 @@
-import sympy as sp
 import numpy as np
+import sympy as sp
 
 from copul.exceptions import PropertyUnavailableException
 from copul.family.core.biv_copula import BivCopula
-from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.family.frechet.lower_frechet import LowerFrechet
+from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
@@ -53,9 +53,7 @@ class MedianSwapCopula(BivCopula):
     # SymPy symbols & meta
     delta = sp.symbols("delta", real=True)
     params = [delta]
-    intervals = {
-        "delta": sp.Interval(0, sp.Rational(1, 2), left_open=False, right_open=False)
-    }
+    intervals = {"delta": sp.Interval(0, sp.Rational(1, 2), left_open=False, right_open=False)}
     special_cases = {
         0: UpperFrechet,
         sp.Rational(1, 2): LowerFrechet,
@@ -76,11 +74,6 @@ class MedianSwapCopula(BivCopula):
         """Blomqvist's beta: β(δ) = 1 - 4 δ."""
         d = float(self.delta)
         return 1.0 - 4.0 * d
-
-    def blests_nu(self):
-        """Blest's ν: ν(δ) = 1 - 6 δ^2 - 8 δ^4."""
-        d = float(self.delta)
-        return 1.0 - 6.0 * d * d - 8.0 * d**4
 
     @classmethod
     def from_beta(cls, beta_target: float):
@@ -307,9 +300,7 @@ if __name__ == "__main__":
     # Quick smoke test
     for delta in [0.1, 0.25, 0.4]:
         cop = MedianSwapCopula(delta=delta)
-        print(
-            f"delta={delta:.3f} -> beta={cop.blomqvists_beta():.6f}, nu={cop.blests_nu():.6f}"
-        )
+        print(f"delta={delta:.3f} -> beta={cop.blomqvists_beta():.6f}, nu={cop.blests_nu():.6f}")
         # parent class plotting calls work with the wrappers:
         # cop.plot_cdf()
         cop.plot_cond_distr_1(plot_type="contour", grid_size=500)

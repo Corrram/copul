@@ -1,7 +1,8 @@
 import itertools
 import logging
-from typing import Any, Dict, List, Optional
+import warnings
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import sympy
@@ -9,7 +10,6 @@ from sympy.core.expr import Expr
 from sympy.core.symbol import Symbol
 from sympy.logic.boolalg import BooleanFalse, BooleanTrue
 from sympy.utilities.exceptions import SymPyDeprecationWarning
-import warnings
 
 # Set up logger
 log = logging.getLogger(__name__)
@@ -22,8 +22,8 @@ class VerificationResult:
     """
 
     is_tp2: bool
-    violations: List[Dict[str, float]]
-    tested_params: List[Dict[str, float]]
+    violations: list[dict[str, float]]
+    tested_params: list[dict[str, float]]
 
 
 class TP2Verifier:
@@ -35,9 +35,7 @@ class TP2Verifier:
     log-supermodularity conditions.
     """
 
-    def __init__(
-        self, range_min: Optional[float] = None, range_max: Optional[float] = None
-    ):
+    def __init__(self, range_min: float | None = None, range_max: float | None = None):
         """
         Initialize a TP2Verifier.
 
@@ -74,29 +72,24 @@ class TP2Verifier:
         log.debug(f"Checking if {type(copula).__name__} copula is TP2")
 
         # If the copula is not absolutely continuous, it cannot be TP2
-        if (
-            hasattr(copula, "is_absolutely_continuous")
-            and not copula.is_absolutely_continuous
-        ):
-            log.info("Copula is not absolutely continuous, therefore not TP2")
+        if hasattr(copula, "is_absolutely_continuous") and not copula.is_absolutely_continuous:
+            log.debug("Copula is not absolutely continuous, therefore not TP2")
             return VerificationResult(False, [], [])
 
         # Determine parameter ranges
         parameter_ranges = self._get_parameter_ranges(copula)
         if not parameter_ranges:
-            log.debug(
-                "No parameter ranges detected—treating as a single 'unique' copula"
-            )
+            log.debug("No parameter ranges detected—treating as a single 'unique' copula")
 
         # Grid of evaluation points
         test_points = np.linspace(0.0001, 0.9999, 20)
-        violations: List[Dict[str, float]] = []
-        tested_params: List[Dict[str, float]] = []
+        violations: list[dict[str, float]] = []
+        tested_params: list[dict[str, float]] = []
 
         # Iterate through all parameter combinations (empty dict → one iteration)
         for param_values in itertools.product(*parameter_ranges.values()):
             # Build a simple dict of { 'theta': 0.5, ... }
-            keys = [str(k) for k in parameter_ranges.keys()]
+            keys = [str(k) for k in parameter_ranges]
             param_dict = dict(zip(keys, param_values))
             tested_params.append(param_dict)
 
@@ -115,7 +108,7 @@ class TP2Verifier:
             except NotImplementedError:
                 _inst_abs_cont = None  # treat as unknown — proceed
             if _inst_abs_cont is not None and not _inst_abs_cont:
-                log.info(f"No density for params: {param_dict}")
+                log.debug(f"No density for params: {param_dict}")
                 continue
 
             # Try symbolic log-pdf first; fall back to numerical if unavailable.
@@ -147,13 +140,9 @@ class TP2Verifier:
                     x1, x2 = test_points[i], test_points[i + 1]
                     y1, y2 = test_points[j], test_points[j + 1]
                     if log_pdf is not None:
-                        violated = self.check_violation(
-                            copula_instance, log_pdf, x1, x2, y1, y2
-                        )
+                        violated = self.check_violation(copula_instance, log_pdf, x1, x2, y1, y2)
                     elif hasattr(copula_instance, "pdf_vectorized"):
-                        violated = self._check_violation_numerical(
-                            copula_instance, x1, x2, y1, y2
-                        )
+                        violated = self._check_violation_numerical(copula_instance, x1, x2, y1, y2)
                     else:
                         log.warning(
                             f"No symbolic or numerical pdf for params {param_dict}; skipping"
@@ -161,7 +150,7 @@ class TP2Verifier:
                         violation_found = None  # sentinel: could not check
                         break
                     if violated:
-                        log.info(
+                        log.debug(
                             f"TP2 violation at params: {param_dict}, "
                             f"points: ({x1}, {y1}), ({x2}, {y2})"
                         )
@@ -173,13 +162,13 @@ class TP2Verifier:
                 # Could not check this parameter combination — remove from tested
                 tested_params.pop()
             elif not violation_found:
-                log.info(f"No TP2 violations for params: {param_dict}")
+                log.debug(f"No TP2 violations for params: {param_dict}")
 
         # Final verdict
         is_tp2 = len(violations) == 0 and len(tested_params) > 0
         return VerificationResult(is_tp2, violations, tested_params)
 
-    def _get_parameter_ranges(self, copula: Any) -> Dict[Symbol, np.ndarray]:
+    def _get_parameter_ranges(self, copula: Any) -> dict[Symbol, np.ndarray]:
         """
         Get parameter ranges for testing.
 
@@ -193,7 +182,7 @@ class TP2Verifier:
         range_min = -10 if self.range_min is None else self.range_min
         range_max = 10 if self.range_max is None else self.range_max
 
-        ranges: Dict[Symbol, np.ndarray] = {}
+        ranges: dict[Symbol, np.ndarray] = {}
         num_params = len(getattr(copula, "params", []))
 
         # Choose how many grid points
@@ -314,14 +303,12 @@ class TP2Verifier:
                 )
 
         if comp:
-            log.debug(
-                f"TP2 violation at ({x1},{y1}),({x2},{y2}): extreme={extreme}, mixed={mixed}"
-            )
+            log.debug(f"TP2 violation at ({x1},{y1}),({x2},{y2}): extreme={extreme}, mixed={mixed}")
         return bool(comp)
 
 
 def verify_copula_tp2(
-    copula: Any, range_min: Optional[float] = None, range_max: Optional[float] = None
+    copula: Any, range_min: float | None = None, range_max: float | None = None
 ) -> VerificationResult:
     """
     Convenience function to verify if a copula satisfies the TP2 property.

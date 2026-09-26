@@ -1,4 +1,5 @@
 import sympy
+
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

@@ -1,7 +1,5 @@
+from copul._lazy import plt
 from copul.copula_sampler import CopulaSampler
-from matplotlib import rcParams
-import matplotlib.pyplot as plt
-
 from copul.family.copula_graphs import CopulaGraphs
 
 
@@ -64,7 +62,7 @@ class CopulaSamplingMixin:
         if self.dim == 2:
             data_ = self.rvs(n, approximate=approximate)
             plt.figure(figsize=figsize)
-            plt.scatter(data_[:, 0], data_[:, 1], s=rcParams["lines.markersize"] ** 2)
+            plt.scatter(data_[:, 0], data_[:, 1], s=plt.rcParams["lines.markersize"] ** 2)
             title = CopulaGraphs(self).get_copula_title()
             plt.title(title)
             plt.xlabel("u")
@@ -92,7 +90,7 @@ class CopulaSamplingMixin:
                 data[:, 2],  # z-coordinates (third margin)
                 c=colors,  # color by third dimension
                 cmap=colormap,
-                s=rcParams["lines.markersize"] ** 2,
+                s=plt.rcParams["lines.markersize"] ** 2,
                 alpha=alpha,
             )
 
@@ -150,7 +148,7 @@ class CopulaSamplingMixin:
                         axs[i, j].scatter(
                             data[:, j],
                             data[:, i],
-                            s=rcParams["lines.markersize"],
+                            s=plt.rcParams["lines.markersize"],
                             alpha=0.5,
                         )
 

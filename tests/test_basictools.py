@@ -1,5 +1,7 @@
 import unittest
+
 import numpy as np
+
 from copul.basictools import monte_carlo_integral
 
 
@@ -41,9 +43,7 @@ class TestMonteCarloIntegral(unittest.TestCase):
         self.assertAlmostEqual(result, 1, places=2)
 
         # Test with vectorized function
-        result_vec = monte_carlo_integral(
-            vectorized_linear_func, n_samples=100000, vectorized=True
-        )
+        result_vec = monte_carlo_integral(vectorized_linear_func, n_samples=100000, vectorized=True)
         self.assertAlmostEqual(result_vec, 1, places=2)
 
         # Test with custom area [0,3]×[0,2]
@@ -66,9 +66,7 @@ class TestMonteCarloIntegral(unittest.TestCase):
         self.assertAlmostEqual(result, expected, places=2)
 
         # Test with vectorized function
-        result_vec = monte_carlo_integral(
-            vectorized_poly_func, n_samples=100000, vectorized=True
-        )
+        result_vec = monte_carlo_integral(vectorized_poly_func, n_samples=100000, vectorized=True)
         self.assertAlmostEqual(result_vec, expected, places=2)
 
         # Test with custom area [0,2]×[0,2]
@@ -120,9 +118,7 @@ class TestMonteCarloIntegral(unittest.TestCase):
         self.assertAlmostEqual(result, expected, places=1)
 
         # Test with vectorized function
-        result_vec = monte_carlo_integral(
-            vectorized_exp_func, n_samples=100000, vectorized=True
-        )
+        result_vec = monte_carlo_integral(vectorized_exp_func, n_samples=100000, vectorized=True)
         self.assertAlmostEqual(result_vec, expected, places=1)
 
     def test_error_conditions(self):
@@ -135,9 +131,7 @@ class TestMonteCarloIntegral(unittest.TestCase):
         # We'll test valid but extreme cases instead
 
         # Test with very small area
-        result_small = monte_carlo_integral(
-            simple_func, x=1e-6, y=1e-6, n_samples=10000
-        )
+        result_small = monte_carlo_integral(simple_func, x=1e-6, y=1e-6, n_samples=10000)
         expected_small = 1e-6 * 1e-6 * 0.25  # Expected value for x*y over small square
         self.assertLessEqual(abs(result_small - expected_small), 1e-10)
 

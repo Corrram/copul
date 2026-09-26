@@ -1,4 +1,5 @@
 import re
+
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 

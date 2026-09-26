@@ -170,9 +170,7 @@ def test_dependence_measures():
         if hasattr(copula, "kendalls_tau"):
             tau = float(copula.kendalls_tau())
             expected_tau = delta / 3 * (3 - 2 * delta)
-            assert abs(tau - expected_tau) < 1e-10, (
-                f"Kendall's tau incorrect for delta={delta}"
-            )
+            assert abs(tau - expected_tau) < 1e-10, f"Kendall's tau incorrect for delta={delta}"
 
         # Upper tail dependence = delta (only at corners)
         if hasattr(copula, "lambda_U"):

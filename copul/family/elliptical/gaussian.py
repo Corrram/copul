@@ -3,8 +3,8 @@ import sympy as sp
 from scipy.stats import norm
 
 from copul.copula_sampler import CopulaSampler
-from copul.family.elliptical.multivar_gaussian import MultivariateGaussian
 from copul.family.elliptical.elliptical_copula import EllipticalCopula
+from copul.family.elliptical.multivar_gaussian import MultivariateGaussian
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.upper_frechet import UpperFrechet
@@ -178,6 +178,45 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
             # Otherwise use the multivariate implementation
             return super().cdf
 
+    def _numeric_callables(self):
+        r"""Vectorized ``cdf``/``h1``/``h2``/``pdf`` for the measures engine.
+
+        The CDF uses Owen's :math:`T` function,
+        :math:`\Phi_2(x,y;r) = \tfrac12\Phi(x)+\tfrac12\Phi(y)
+        - T(x,a_x) - T(y,a_y) - \tfrac12\mathbf 1\{xy<0\}`, which is exact to
+        machine precision and fully vectorized.
+        """
+        from scipy.special import ndtr, ndtri, owens_t
+
+        r = float(self.rho)
+        s = np.sqrt(1.0 - r * r)
+
+        def cdf(u, v):
+            x = ndtri(u)
+            y = ndtri(v)
+            with np.errstate(all="ignore"):
+                ax = np.where(x != 0, (y - r * x) / (x * s), np.copysign(np.inf, y - r * x))
+                ay = np.where(y != 0, (x - r * y) / (y * s), np.copysign(np.inf, x - r * y))
+                val = 0.5 * (ndtr(x) + ndtr(y)) - owens_t(x, ax) - owens_t(y, ay)
+            beta = np.where((x * y < 0) | ((x * y == 0) & (x + y < 0)), 0.5, 0.0)
+            both0 = (x == 0) & (y == 0)
+            val = np.where(both0, 0.25 + np.arcsin(r) / (2 * np.pi), val - beta)
+            return val
+
+        def h1(u, v):
+            return ndtr((ndtri(v) - r * ndtri(u)) / s)
+
+        def h2(u, v):
+            return ndtr((ndtri(u) - r * ndtri(v)) / s)
+
+        def pdf(u, v):
+            x = ndtri(u)
+            y = ndtri(v)
+            q = (r * r * (x * x + y * y) - 2 * r * x * y) / (2 * (1 - r * r))
+            return np.exp(-q) / s
+
+        return {"cdf": cdf, "h1": h1, "h2": h2, "pdf": pdf}
+
     def cdf_vectorized(self, u, v):
         r"""
         Vectorized CDF for the bivariate Gaussian copula.
@@ -286,9 +325,7 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         scale = float(np.sqrt(1 - float(self.rho) ** 2))
 
         def conditional_func(u_, v_):
-            return norm.cdf(
-                norm.ppf(v_), loc=float(self.rho) * norm.ppf(u_), scale=scale
-            )
+            return norm.cdf(norm.ppf(v_), loc=float(self.rho) * norm.ppf(u_), scale=scale)
 
         if u is None and v is None:
             return conditional_func
@@ -403,7 +440,7 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         self._set_params(args, kwargs)
         return 2 / np.pi * np.arcsin(float(self.rho))
 
-    def spearman_footrule(self, *args, **kwargs) -> float:
+    def spearmans_footrule(self, *args, **kwargs) -> float:
         r"""
         Spearman's footrule :math:`\psi` for the Gaussian copula.
 
@@ -425,10 +462,6 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
 
         footrule = (3.0 / np.pi) * np.arcsin((1.0 + rho) / 2.0) - 0.5
         return footrule
-
-    def spearmans_footrule(self, *args, **kwargs) -> float:
-        r"""Alias for :meth:`spearman_footrule`."""
-        return self.spearman_footrule(*args, **kwargs)
 
     # ------------------------------------------------------------------
     # Dependence measures with known closed forms
@@ -457,21 +490,7 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         rho = max(-1.0, min(1.0, rho))
         return (6.0 / np.pi) * abs(np.arcsin(rho / 2.0))
 
-    def hoeffdings_d(self, *args, **kwargs):
-        r"""
-        Hoeffding's :math:`D` for the Gaussian copula (numerical).
-
-        No simple closed form is known.  Falls back to base-class
-        numerical quadrature.
-
-        Returns
-        -------
-        float
-        """
-        self._set_params(args, kwargs)
-        return self._hoeffdings_d_numerical()
-
-    def gini_gamma(self, *args, **kwargs):
+    def ginis_gamma(self, *args, **kwargs):
         r"""
         Gini's :math:`\gamma` for the Gaussian copula.
 
@@ -491,9 +510,7 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         self._set_params(args, kwargs)
         rho = float(self.rho)
         rho = max(-1.0, min(1.0, rho))
-        return (2.0 / np.pi) * (
-            np.arcsin((1.0 + rho) / 2.0) - np.arcsin((1.0 - rho) / 2.0)
-        )
+        return (2.0 / np.pi) * (np.arcsin((1.0 + rho) / 2.0) - np.arcsin((1.0 - rho) / 2.0))
 
     def blomqvists_beta(self, *args, **kwargs):
         r"""

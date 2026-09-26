@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 import sympy
 
 from copul.family.core.copula import Copula
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 from copul.wrapper.inv_gen_wrapper import InvGenWrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 log = logging.getLogger(__name__)
 
@@ -112,23 +112,15 @@ class ArchimedeanCopula(Copula, ABC):
 
             # Check lower bound
             if left_open and theta_val <= lower_bound:
-                raise ValueError(
-                    f"Parameter theta must be > {lower_bound}, got {theta_val}"
-                )
+                raise ValueError(f"Parameter theta must be > {lower_bound}, got {theta_val}")
             elif not left_open and theta_val < lower_bound:
-                raise ValueError(
-                    f"Parameter theta must be >= {lower_bound}, got {theta_val}"
-                )
+                raise ValueError(f"Parameter theta must be >= {lower_bound}, got {theta_val}")
 
             # Check upper bound
             if right_open and theta_val >= upper_bound:
-                raise ValueError(
-                    f"Parameter theta must be < {upper_bound}, got {theta_val}"
-                )
+                raise ValueError(f"Parameter theta must be < {upper_bound}, got {theta_val}")
             elif not right_open and theta_val > upper_bound:
-                raise ValueError(
-                    f"Parameter theta must be <= {upper_bound}, got {theta_val}"
-                )
+                raise ValueError(f"Parameter theta must be <= {upper_bound}, got {theta_val}")
 
         if "dimension" not in kwargs:
             kwargs["dimension"] = self.dim
@@ -208,7 +200,7 @@ class ArchimedeanCopula(Copula, ABC):
         value : dict
             A dictionary mapping parameter names to their intervals
         """
-        self.theta_interval = value["theta"] if "theta" in value else None
+        self.theta_interval = value.get("theta", None)
 
     @property
     def generator(self):

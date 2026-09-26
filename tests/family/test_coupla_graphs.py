@@ -2,8 +2,9 @@
 Tests for the CopulaGraphs class.
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from copul.family.copula_graphs import CopulaGraphs
 
@@ -178,9 +179,7 @@ class TestCopulaGraphs:
         ),
     ],
 )
-def test_copula_title_parametrized(
-    copula_name, intervals, params, add_params, expected
-):
+def test_copula_title_parametrized(copula_name, intervals, params, add_params, expected):
     """Parametrized test for get_copula_title with various inputs."""
     mock_copula = MagicMock()
     type(mock_copula).__name__ = copula_name

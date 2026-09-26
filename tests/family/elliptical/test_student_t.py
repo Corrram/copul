@@ -1,7 +1,8 @@
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 import sympy
-from unittest.mock import patch
 
 from copul.family.elliptical.student_t import StudentT
 from copul.family.other import LowerFrechet, UpperFrechet
@@ -97,9 +98,7 @@ def test_student_t_cdf():
     copula.nu = 4.0
 
     # Mock the _calculate_student_t_cdf method
-    with patch.object(
-        StudentT, "_calculate_student_t_cdf", return_value=0.42
-    ) as mock_cdf:
+    with patch.object(StudentT, "_calculate_student_t_cdf", return_value=0.42) as mock_cdf:
         # Get the callable
         cdf_func = copula.cdf
         # Call it with arguments
@@ -138,9 +137,7 @@ def test_student_t_cond_distr_1(student_t_copula):
     assert student_t_copula.cond_distr_1(None, 1) == CD1Wrapper(sympy.S(1))
 
     # Test regular case with mock
-    with patch.object(
-        StudentT, "_conditional_distribution", return_value=sympy.S(0.75)
-    ) as mock_cd:
+    with patch.object(StudentT, "_conditional_distribution", return_value=sympy.S(0.75)) as mock_cd:
         result = student_t_copula.cond_distr_1(0.3, 0.7)
         mock_cd.assert_called_once_with(0.3, 0.7)
         assert result == CD1Wrapper(sympy.S(0.75))
@@ -153,9 +150,7 @@ def test_student_t_cond_distr_2(student_t_copula):
     assert student_t_copula.cond_distr_2(1, None) == CD2Wrapper(sympy.S(1))
 
     # Test regular case with mock
-    with patch.object(
-        StudentT, "_conditional_distribution", return_value=sympy.S(0.75)
-    ) as mock_cd:
+    with patch.object(StudentT, "_conditional_distribution", return_value=sympy.S(0.75)) as mock_cd:
         result = student_t_copula.cond_distr_2(0.7, 0.3)
         mock_cd.assert_called_once_with(0.3, 0.7)
         assert result == CD2Wrapper(sympy.S(0.75))

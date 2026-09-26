@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 import sympy
 
@@ -29,10 +27,7 @@ class GumbelHougaard(BivArchimedeanCopula):
     def _cdf_expr(self):
         return sympy.exp(
             -(
-                (
-                    (-sympy.log(self.u)) ** self.theta
-                    + (-sympy.log(self.v)) ** self.theta
-                )
+                ((-sympy.log(self.u)) ** self.theta + (-sympy.log(self.v)) ** self.theta)
                 ** (1 / self.theta)
             )
         )
@@ -42,6 +37,11 @@ class GumbelHougaard(BivArchimedeanCopula):
 
     def lambda_U(self):
         return 2 - 2 ** (1 / self.theta)
+
+    def kendalls_tau(self, *args, **kwargs):
+        r"""Kendall's :math:`\tau = 1 - 1/\theta` of the Gumbel-Hougaard copula."""
+        self._set_params(args, kwargs)
+        return 1 - 1 / self.theta
 
     def spearmans_footrule(self, *args, **kwargs):
         """
@@ -94,7 +94,7 @@ class GumbelHougaard(BivArchimedeanCopula):
         return abs(self.spearmans_rho())
 
     def rvs(
-        self, n: int = 1, random_state: Optional[int] = None, approximate: bool = False
+        self, n: int = 1, random_state: int | None = None, approximate: bool = False
     ) -> np.ndarray:
         """
         Fast vectorized Marshall–Olkin sampler for Gumbel–Hougaard.

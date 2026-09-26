@@ -39,20 +39,12 @@ class Nelsen21(BivArchimedeanCopula):
 
     def _cdf(self, u, v, t):
         return 1 - (
-            1
-            - np.max(
-                (1 - (1 - u) ** t) ** (1 / t) + (1 - (1 - v) ** t) ** (1 / t) - 1, 0
-            )
-            ** t
+            1 - np.max((1 - (1 - u) ** t) ** (1 / t) + (1 - (1 - v) ** t) ** (1 / t) - 1, 0) ** t
         ) ** (1 / t)
 
     def cond_distr_2(self, u=None, v=None):
         th = self.theta
-        expr = (
-            (1 - (1 - self.u) ** th) ** (1 / th)
-            + (1 - (1 - self.v) ** th) ** (1 / th)
-            - 1
-        )
+        expr = (1 - (1 - self.u) ** th) ** (1 / th) + (1 - (1 - self.v) ** th) ** (1 / th) - 1
         cond_distr = (
             ((1 - self.v) * sympy.Max(0, expr)) ** (th - 1)
             * (1 - (1 - self.v) ** th) ** ((1 - th) / th)
@@ -75,8 +67,6 @@ class Nelsen21(BivArchimedeanCopula):
         positive_cdf = 1 - (
             1 - ((1 - (1 - u) ** t) ** (1 / t) + (1 - (1 - v) ** t) ** (1 / t) - 1) ** t
         ) ** (1 / t)
-        print(sympy.latex(positive_cdf))
-        print(positive_cdf)
         return sympy.Integral(positive_cdf, (self.u, lower_bound, 1))
 
     def _rho_int_2(self, t):

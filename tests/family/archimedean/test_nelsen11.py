@@ -164,9 +164,7 @@ def test_rho_int_1(nelsen11_copula):
 
     # Patch the necessary properties to use symbolic variables
     with patch.object(nelsen11_copula, "v", v_sym):
-        with patch.object(
-            nelsen11_copula, "u", sympy.Symbol("u", real=True, positive=True)
-        ):
+        with patch.object(nelsen11_copula, "u", sympy.Symbol("u", real=True, positive=True)):
             # Just make sure it returns a symbolic expression without error
             result = nelsen11_copula._rho_int_1()
             assert isinstance(result, sympy.Expr)

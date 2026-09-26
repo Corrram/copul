@@ -157,16 +157,12 @@ def test_special_cases():
     indep = Mardia(theta=0)
     u, v = 0.3, 0.7
     cdf_val = float(indep.cdf(u=u, v=v))
-    assert abs(cdf_val - (u * v)) < 1e-10, (
-        f"C({u},{v}) should be {u * v} for independence"
-    )
+    assert abs(cdf_val - (u * v)) < 1e-10, f"C({u},{v}) should be {u * v} for independence"
 
     # Upper Fréchet bound: theta = 1
     upper = Mardia(theta=1)
     cdf_val = float(upper.cdf(u=u, v=v))
-    assert abs(cdf_val - min(u, v)) < 1e-10, (
-        f"C({u},{v}) should be {min(u, v)} for theta=1"
-    )
+    assert abs(cdf_val - min(u, v)) < 1e-10, f"C({u},{v}) should be {min(u, v)} for theta=1"
 
     # Lower Fréchet bound: not achievable with Mardia in general
     # But for theta = -1, it's a mixture
@@ -190,9 +186,7 @@ def test_rho():
     for theta, expected in test_cases:
         copula = Mardia(theta=theta)
         rho = float(copula.spearmans_rho())
-        assert abs(rho - expected) < 1e-10, (
-            f"Spearman's rho incorrect for theta={theta}"
-        )
+        assert abs(rho - expected) < 1e-10, f"Spearman's rho incorrect for theta={theta}"
 
 
 def test_tau():
@@ -251,6 +245,4 @@ def test_xi():
     for theta, expected in test_cases:
         copula = Mardia(theta=theta)
         xi = float(copula.chatterjees_xi())
-        assert abs(xi - expected) < 1e-10, (
-            f"Chatterjee's xi incorrect for theta={theta}"
-        )
+        assert abs(xi - expected) < 1e-10, f"Chatterjee's xi incorrect for theta={theta}"

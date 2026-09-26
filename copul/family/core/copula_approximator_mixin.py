@@ -1,5 +1,3 @@
-from typing import Union, Tuple
-
 from copul.checkerboard.checkerboarder import Checkerboarder
 
 
@@ -13,7 +11,7 @@ class CopulaApproximatorMixin:
     # representing the dimensionality of the copula.
     dim: int
 
-    def to_check_pi(self, grid_size: Union[Tuple[int, ...], int] = 20):
+    def to_check_pi(self, grid_size: tuple[int, ...] | int = 20):
         """
         Convert the copula to a CheckPi object.
 
@@ -30,16 +28,14 @@ class CopulaApproximatorMixin:
         """
         # Assuming CheckPi corresponds to BivCheckPi or a generalized version
         # handled by Checkerboarder based on self.dim
-        checkerboard_type = (
-            "CheckPi"  # Keep it generic, let Checkerboarder decide Biv/Multi
-        )
+        checkerboard_type = "CheckPi"  # Keep it generic, let Checkerboarder decide Biv/Multi
         if self.dim == 2:
             checkerboard_type = "BivCheckPi"
         # Add logic here if a multivariate CheckPi exists and needs a different type name
 
         return self.to_checkerboard(grid_size, checkerboard_type=checkerboard_type)
 
-    def to_check_min(self, grid_size: Union[Tuple[int, ...], int] = 20):
+    def to_check_min(self, grid_size: tuple[int, ...] | int = 20):
         """
         Convert the copula to a CheckMin object.
 
@@ -63,7 +59,7 @@ class CopulaApproximatorMixin:
 
         return self.to_checkerboard(grid_size, checkerboard_type=checkerboard_type)
 
-    def to_check_w(self, grid_size: Union[Tuple[int, ...], int] = 20):
+    def to_check_w(self, grid_size: tuple[int, ...] | int = 20):
         """
         Convert the copula to a CheckW object.
 
@@ -88,7 +84,7 @@ class CopulaApproximatorMixin:
 
     def to_checkerboard(
         self,
-        grid_size: Union[Tuple[int, ...], int] = 20,
+        grid_size: tuple[int, ...] | int = 20,
         checkerboard_type: str = "BivCheckPi",
     ):
         """
@@ -121,7 +117,7 @@ class CopulaApproximatorMixin:
         # the parameters for the approximating checkerboard copula.
         return checkerboarder.get_checkerboard_copula(self)
 
-    def to_bernstein(self, grid_size: Union[Tuple[int, ...], int] = 10):
+    def to_bernstein(self, grid_size: tuple[int, ...] | int = 10):
         """
         Convert the copula to a Bernstein copula approximation.
 
@@ -167,9 +163,7 @@ class CopulaApproximatorMixin:
         AttributeError
             If the object using the mixin doesn't have a 'dim' attribute.
         """
-        raise NotImplementedError(
-            "ShuffleOfMin approximations not implemented as of now."
-        )
+        raise NotImplementedError("ShuffleOfMin approximations not implemented as of now.")
         # # Ensure self has a 'dim' attribute before checking its value
         # if not hasattr(self, "dim"):
         #     raise AttributeError(

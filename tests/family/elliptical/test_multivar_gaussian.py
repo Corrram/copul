@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 import sympy as sp
 from scipy.stats import norm
 
@@ -178,9 +178,7 @@ def test_rvs_correlation(gaussian_with_corr):
 
     # Check if empirical correlations are close to the theoretical ones
     corr_matrix = np.array(gaussian_with_corr.corr_matrix).astype(float)
-    assert np.allclose(
-        emp_corr, corr_matrix, atol=0.1
-    )  # Allow some deviation due to randomness
+    assert np.allclose(emp_corr, corr_matrix, atol=0.1)  # Allow some deviation due to randomness
 
 
 # def test_rvs_with_seed():

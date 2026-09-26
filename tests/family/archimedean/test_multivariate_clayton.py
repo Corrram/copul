@@ -1,7 +1,8 @@
-import pytest
-import numpy as np
-import sympy
 from unittest.mock import patch
+
+import numpy as np
+import pytest
+import sympy
 
 from copul.family.archimedean.multivariate_clayton import MultivariateClayton
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
@@ -78,9 +79,7 @@ class TestMultivariateClayton:
 
         # Substitute values into the generator expression
         # Use float(clayton_2d.theta) to ensure we get a numeric value
-        test_val = generator.subs(
-            [(clayton_2d.t, t_val), (clayton_2d.theta, theta_val)]
-        )
+        test_val = generator.subs([(clayton_2d.t, t_val), (clayton_2d.theta, theta_val)])
 
         # Convert to float for comparison
         test_val_float = float(test_val)
@@ -106,22 +105,16 @@ class TestMultivariateClayton:
         expected_value = (theta_val * y_val + 1) ** (-1 / theta_val)
 
         # Substitute values into the inverse generator expression
-        test_val = inv_generator.subs(
-            [(clayton_2d.y, y_val), (clayton_2d.theta, theta_val)]
-        )
+        test_val = inv_generator.subs([(clayton_2d.y, y_val), (clayton_2d.theta, theta_val)])
 
         # Convert to float for comparison
         test_val_float = float(test_val)
         assert np.isclose(test_val_float, expected_value)
 
-    def test_is_absolutely_continuous(
-        self, clayton_2d, independence_copula, monkeypatch
-    ):
+    def test_is_absolutely_continuous(self, clayton_2d, independence_copula, monkeypatch):
         """Test the is_absolutely_continuous property."""
         # Mock the is_absolutely_continuous property to return a boolean
-        monkeypatch.setattr(
-            MultivariateClayton, "is_absolutely_continuous", True, raising=False
-        )
+        monkeypatch.setattr(MultivariateClayton, "is_absolutely_continuous", True, raising=False)
 
         # Clayton with theta ≥ 0 should be absolutely continuous
         assert clayton_2d.is_absolutely_continuous is True
@@ -190,9 +183,7 @@ class TestMultivariateClayton:
             # For Clayton with theta=1.5 in 3D:
             # CDF = (u^(-1.5) + v^(-1.5) + w^(-1.5) - 2)^(-1/1.5)
             if len(args) == 3:
-                return (
-                    args[0] ** (-1.5) + args[1] ** (-1.5) + args[2] ** (-1.5) - 2
-                ) ** (-1 / 1.5)
+                return (args[0] ** (-1.5) + args[1] ** (-1.5) + args[2] ** (-1.5) - 2) ** (-1 / 1.5)
             return 0.5  # Default return
 
         monkeypatch.setattr(MultivariateClayton, "cdf", mock_cdf)

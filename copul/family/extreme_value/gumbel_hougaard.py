@@ -32,9 +32,7 @@ class GumbelHougaardEV(MultivariateGumbelHougaard, BivExtremeValueCopula):
     # Define parameters
     theta = sp.symbols("theta", positive=True)
     params = [theta]
-    intervals = {
-        str(theta): sp.Interval(1, float("inf"), left_open=False, right_open=True)
-    }
+    intervals = {str(theta): sp.Interval(1, float("inf"), left_open=False, right_open=True)}
 
     def __new__(cls, *args, **kwargs):
         """

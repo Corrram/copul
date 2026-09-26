@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 )
 @pytest.mark.parametrize(
     "copula_name",
-    [pytest.param(name, id=name) for name in family_representatives.keys()],
+    [pytest.param(name, id=name) for name in family_representatives],
 )
 def test_cdf_edge_cases(point, expected, copula_name):
     """
@@ -56,11 +56,7 @@ def test_cdf_edge_cases(point, expected, copula_name):
 
     # Evaluate the CDF at the given point
     evaluated_cdf = cop.cdf(*point)
-    actual = (
-        evaluated_cdf.evalf()
-        if hasattr(evaluated_cdf, "evalf")
-        else float(evaluated_cdf)
-    )
+    actual = evaluated_cdf.evalf() if hasattr(evaluated_cdf, "evalf") else float(evaluated_cdf)
 
     # Test with expected value
     assert np.isclose(actual, expected, rtol=1e-10, atol=1e-10), (
@@ -84,7 +80,7 @@ def test_cdf_edge_cases(point, expected, copula_name):
 )
 @pytest.mark.parametrize(
     "copula_name",
-    [pytest.param(name, id=name) for name in family_representatives.keys()],
+    [pytest.param(name, id=name) for name in family_representatives],
 )
 def test_cond_distr_edge_cases(method_name, point, expected_value, copula_name):
     """
@@ -138,7 +134,7 @@ def test_cond_distr_edge_cases(method_name, point, expected_value, copula_name):
 
 @pytest.mark.parametrize(
     "copula_name",
-    [pytest.param(name, id=name) for name in archimedean_representatives.keys()],
+    [pytest.param(name, id=name) for name in archimedean_representatives],
 )
 def test_pdf_values(copula_name):
     """
@@ -174,6 +170,4 @@ def test_pdf_values(copula_name):
     log.info(f"{copula_name} pdf at (0.5, 0.5): {evaluated_pdf}")
 
     # Assert that PDF is non-negative
-    assert evaluated_pdf >= 0, (
-        f"{copula_name} PDF at (0.5, 0.5) is negative: {evaluated_pdf}"
-    )
+    assert evaluated_pdf >= 0, f"{copula_name} PDF at (0.5, 0.5) is negative: {evaluated_pdf}"

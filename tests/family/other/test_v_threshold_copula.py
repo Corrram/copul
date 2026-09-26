@@ -4,7 +4,6 @@ import pytest
 
 from copul.family.other.v_threshold_copula import VThresholdCopula
 
-
 # -------------------------------
 # Helpers
 # -------------------------------
@@ -153,9 +152,7 @@ def test_survival_relation_rho_nu(mu):
 
     C = cop.cdf_vectorized(U, V)
     C_rev = cop.cdf_vectorized(1.0 - U, 1.0 - V)
-    C_surv = (
-        U + V - 1.0 + C_rev
-    )  # no clipping; the expression is already in [0,1] for copulas
+    C_surv = U + V - 1.0 + C_rev  # no clipping; the expression is already in [0,1] for copulas
 
     rho, nu = _rho_nu_from_cdf_grid(C, u, v)
     rho_s, nu_s = _rho_nu_from_cdf_grid(C_surv, u, v)

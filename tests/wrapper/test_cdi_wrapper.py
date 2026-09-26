@@ -1,10 +1,12 @@
 import unittest
-from sympy import symbols, diff
+
+from sympy import diff, symbols
+
+from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cd2_wrapper import CD2Wrapper
 
 # Import the wrapper classes being tested
 from copul.wrapper.cdi_wrapper import CDiWrapper
-from copul.wrapper.cd1_wrapper import CD1Wrapper
-from copul.wrapper.cd2_wrapper import CD2Wrapper
 
 
 class TestCDiWrapper(unittest.TestCase):

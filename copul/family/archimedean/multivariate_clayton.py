@@ -180,8 +180,8 @@ class MultivariateClayton(ArchimedeanCopula):
                 # Get broadcast shape
                 broadcast_shape = np.broadcast(*arrays).shape
                 arrays = [np.broadcast_to(arr, broadcast_shape) for arr in arrays]
-            except ValueError:
-                raise ValueError("Input arrays have incompatible shapes")
+            except ValueError as e:
+                raise ValueError("Input arrays have incompatible shapes") from e
 
         # Ensure inputs are within [0, 1]
         for i, arr in enumerate(arrays):

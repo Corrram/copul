@@ -59,20 +59,15 @@ class Nelsen18(BivArchimedeanCopula):
             * sympy.Heaviside(
                 self.theta
                 / sympy.log(
-                    sympy.exp(self.theta / (self.u - 1))
-                    + sympy.exp(self.theta / (self.v - 1))
+                    sympy.exp(self.theta / (self.u - 1)) + sympy.exp(self.theta / (self.v - 1))
                 )
                 + 1
             )
             / (
                 (self.v - 1) ** 2
-                * (
-                    sympy.exp(self.theta / (self.u - 1))
-                    + sympy.exp(self.theta / (self.v - 1))
-                )
+                * (sympy.exp(self.theta / (self.u - 1)) + sympy.exp(self.theta / (self.v - 1)))
                 * sympy.log(
-                    sympy.exp(self.theta / (self.u - 1))
-                    + sympy.exp(self.theta / (self.v - 1))
+                    sympy.exp(self.theta / (self.u - 1)) + sympy.exp(self.theta / (self.v - 1))
                 )
                 ** 2
             )

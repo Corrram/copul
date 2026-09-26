@@ -1,7 +1,8 @@
 import numpy as np
 import sympy
-from sympy import stats
 from scipy.stats import norm
+from sympy import stats
+
 from copul.family.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 
@@ -17,14 +18,14 @@ class HueslerReiss(BivExtremeValueCopula):
     intervals = {"delta": sympy.Interval(0, sympy.oo, left_open=False, right_open=True)}
 
     def __new__(cls, *args, **kwargs):
-        if (len(args) == 1 and args[0] == 0) or kwargs.get("delta", None) == 0:
+        if (len(args) == 1 and args[0] == 0) or kwargs.get("delta") == 0:
             return BivIndependenceCopula()
         return super().__new__(cls)
 
     def __call__(self, *args, **kwargs):
         if args and len(args) == 1:
             kwargs["delta"] = args[0]
-        if kwargs.get("delta", None) == 0:
+        if kwargs.get("delta") == 0:
             kwargs.pop("delta")
             return BivIndependenceCopula()(**kwargs)
         return super().__call__(**kwargs)
@@ -42,9 +43,7 @@ class HueslerReiss(BivExtremeValueCopula):
         std_norm = stats.cdf(stats.Normal("Z", 0, 1))
         return (1 - self.t) * std_norm(
             1 / self.delta + (self.delta / 2) * sympy.log((1 - self.t) / self.t)
-        ) + self.t * std_norm(
-            1 / self.delta + (self.delta / 2) * sympy.log(self.t / (1 - self.t))
-        )
+        ) + self.t * std_norm(1 / self.delta + (self.delta / 2) * sympy.log(self.t / (1 - self.t)))
 
     def _A(self, t):
         std_norm = stats.cdf(stats.Normal("Z", 0, 1))

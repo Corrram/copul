@@ -1,6 +1,7 @@
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pytest
-from unittest.mock import patch, MagicMock
 
 from copul.family.extreme_value.multivariate_gumbel_hougaard import (
     MultivariateGumbelHougaard,

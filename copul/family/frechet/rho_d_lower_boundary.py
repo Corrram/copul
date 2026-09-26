@@ -88,6 +88,4 @@ class RhoDLowerBoundary(Frechet):
         a = self.alpha
         b = self.beta
         independence = self.u * self.v
-        return self.CDFWrapper(
-            a * frechet_upper + (1 - a - b) * independence + b * frechet_lower
-        )
+        return self.CDFWrapper(a * frechet_upper + (1 - a - b) * independence + b * frechet_lower)

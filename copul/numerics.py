@@ -12,7 +12,7 @@ Key improvements over the naive ``sp.lambdify`` approach:
 """
 
 import logging
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 import sympy as sp
@@ -60,9 +60,7 @@ NUMPY_SAFE_MAP: dict = {
     "DiracDelta": (lambda *args, **kw: 0.0),
     # Heaviside with the conventional H(0)=1/2
     "Heaviside": (
-        lambda x, H0=0.5: np.where(
-            np.asarray(x) > 0, 1.0, np.where(np.asarray(x) < 0, 0.0, H0)
-        )
+        lambda x, H0=0.5: np.where(np.asarray(x) > 0, 1.0, np.where(np.asarray(x) < 0, 0.0, H0))
     ),
     # ---- integer / rounding ------------------------------------------------
     "sign": np.sign,

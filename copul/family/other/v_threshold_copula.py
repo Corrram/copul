@@ -1,13 +1,13 @@
-import sympy as sp
 import numpy as np
+import sympy as sp
+from scipy.optimize import brentq
 
 from copul.exceptions import PropertyUnavailableException
 from copul.family.core.biv_copula import BivCopula
-from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.family.frechet.lower_frechet import LowerFrechet
+from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
-from scipy.optimize import brentq
 
 
 class VThresholdCopula(BivCopula):
@@ -86,9 +86,7 @@ class VThresholdCopula(BivCopula):
         def rho_branch(mu):
             return -(mu**3) + 6 * mu**2 - 12 * mu + 7
 
-        mu = brentq(
-            lambda m: rho_branch(m) - rho_target, 1.0, 2.0, xtol=1e-14, rtol=1e-12
-        )
+        mu = brentq(lambda m: rho_branch(m) - rho_target, 1.0, 2.0, xtol=1e-14, rtol=1e-12)
         return cls(mu=float(mu))
 
     # ------------------------------------------------------------------
@@ -116,9 +114,7 @@ class VThresholdCopula(BivCopula):
         expr_interior = sp.Min(u, a_in) + sp.Max(u - s_in, 0)
 
         return CDFWrapper(
-            sp.Piecewise(
-                (expr_left, left_reg), (expr_right, right_reg), (expr_interior, True)
-            )
+            sp.Piecewise((expr_left, left_reg), (expr_right, right_reg), (expr_interior, True))
         )
 
     def cond_distr_1(self, u=None, v=None):
@@ -188,9 +184,7 @@ class VThresholdCopula(BivCopula):
             return min(ui, a) + max(ui - s, 0.0)
 
         # vectorize via np.frompyfunc or loop (simple loop is fine here)
-        out = np.array(
-            [C_scalar(ui, vi) for ui, vi in np.broadcast(u_flat, v_flat)], dtype=float
-        )
+        out = np.array([C_scalar(ui, vi) for ui, vi in np.broadcast(u_flat, v_flat)], dtype=float)
         return out.reshape(np.broadcast(u, v).shape)
 
     def pdf_vectorized(self, u, v):

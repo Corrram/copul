@@ -1,7 +1,6 @@
 import numpy as np
 import sympy
 from scipy import integrate
-from typing import Optional
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
@@ -20,17 +19,13 @@ class Frank(BivArchimedeanCopula):
 
     @property
     def _raw_generator(self):
-        return -sympy.log(
-            (sympy.exp(-self.theta * self.t) - 1) / (sympy.exp(-self.theta) - 1)
-        )
+        return -sympy.log((sympy.exp(-self.theta * self.t) - 1) / (sympy.exp(-self.theta) - 1))
 
     @property
     def _raw_inv_generator(self):
         theta = self.theta
         y = self.y
-        return (
-            theta + y - sympy.log(-sympy.exp(theta) + sympy.exp(theta + y) + 1)
-        ) / theta
+        return (theta + y - sympy.log(-sympy.exp(theta) + sympy.exp(theta + y) + 1)) / theta
 
     @property
     def _cdf_expr(self):
@@ -50,7 +45,7 @@ class Frank(BivArchimedeanCopula):
         )
 
     def rvs(
-        self, n: int = 1, random_state: Optional[int] = None, approximate: bool = False
+        self, n: int = 1, random_state: int | None = None, approximate: bool = False
     ) -> np.ndarray:
         """
         Generate random samples from the Frank copula using a fast, vectorized algorithm.
@@ -150,11 +145,7 @@ class Frank(BivArchimedeanCopula):
         return (
             (-1 + sympy.exp(-theta * v)) ** 2
             * sympy.exp(-2 * theta * u)
-            / (
-                (-1 + sympy.exp(-theta * u)) * (-1 + sympy.exp(-theta * v))
-                - 1
-                + sympy.exp(-theta)
-            )
+            / ((-1 + sympy.exp(-theta * u)) * (-1 + sympy.exp(-theta * v)) - 1 + sympy.exp(-theta))
             ** 2
         )
 

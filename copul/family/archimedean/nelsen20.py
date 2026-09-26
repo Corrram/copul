@@ -32,9 +32,7 @@ class Nelsen20(HeavyComputeArch):
     @property
     def _cdf_expr(self):
         return sympy.log(
-            sympy.exp(self.u ** (-self.theta))
-            + sympy.exp(self.v ** (-self.theta))
-            - np.e
+            sympy.exp(self.u ** (-self.theta)) + sympy.exp(self.v ** (-self.theta)) - np.e
         ) ** (-1 / self.theta)
 
     def cond_distr_2(self, u=None, v=None):
@@ -46,9 +44,7 @@ class Nelsen20(HeavyComputeArch):
                 + 1
                 - np.e * sympy.exp(-(self.v ** (-theta)))
             )
-            * sympy.log(
-                sympy.exp(self.u ** (-theta)) + sympy.exp(self.v ** (-theta)) - np.e
-            )
+            * sympy.log(sympy.exp(self.u ** (-theta)) + sympy.exp(self.v ** (-theta)) - np.e)
             ** ((theta + 1) / theta)
         )
         return CD2Wrapper(cond_distr)(u, v)

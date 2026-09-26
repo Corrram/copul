@@ -220,9 +220,7 @@ def test_rho_method(nelsen7_copula):
     theta = 0.5
     # Manual calculation using the formula for theta=0.5
     log_term = np.log(1 - theta)
-    expected = (
-        -3 + 9 / theta - 6 / theta**2 - 6 * (theta - 1) ** 2 * log_term / theta**3
-    )
+    expected = -3 + 9 / theta - 6 / theta**2 - 6 * (theta - 1) ** 2 * log_term / theta**3
     actual = float(nelsen7_copula._rho())
     assert np.isclose(actual, expected, rtol=1e-5)
 

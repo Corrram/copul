@@ -90,11 +90,7 @@ def test_cdf_function(nelsen21_copula):
     for u, v in points:
         # Manual calculation using the formula
         theta = 2
-        term = (
-            (1 - (1 - u) ** theta) ** (1 / theta)
-            + (1 - (1 - v) ** theta) ** (1 / theta)
-            - 1
-        )
+        term = (1 - (1 - u) ** theta) ** (1 / theta) + (1 - (1 - v) ** theta) ** (1 / theta) - 1
         term = max(term, 0)
         expected = 1 - (1 - term**theta) ** (1 / theta)
         actual = float(nelsen21_copula.cdf(u, v))
@@ -105,11 +101,7 @@ def test_cdf_function(nelsen21_copula):
 
     for u, v in edge_points:
         theta = 2
-        term = (
-            (1 - (1 - u) ** theta) ** (1 / theta)
-            + (1 - (1 - v) ** theta) ** (1 / theta)
-            - 1
-        )
+        term = (1 - (1 - u) ** theta) ** (1 / theta) + (1 - (1 - v) ** theta) ** (1 / theta) - 1
         if term < 0:
             # If term < 0, then after max(term, 0), the result should be 0
             # and cdf should be 1 - (1 - 0^theta)^(1/theta) = 0

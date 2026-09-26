@@ -1,5 +1,3 @@
-from typing import Optional
-
 import numpy as np
 import sympy
 
@@ -28,12 +26,10 @@ class Joe(BivArchimedeanCopula):
     @property
     def _cdf_expr(self):
         theta = self.theta
-        return 1 - (-((1 - self.u) ** theta - 1) * ((1 - self.v) ** theta - 1) + 1) ** (
-            1 / theta
-        )
+        return 1 - (-((1 - self.u) ** theta - 1) * ((1 - self.v) ** theta - 1) + 1) ** (1 / theta)
 
     def rvs(
-        self, n: int = 1, random_state: Optional[int] = None, approximate: bool = False
+        self, n: int = 1, random_state: int | None = None, approximate: bool = False
     ) -> np.ndarray:
         """
         Generate random samples from the Joe copula using a fast, vectorized algorithm.
@@ -130,13 +126,9 @@ class Joe(BivArchimedeanCopula):
         theta = self.theta
         cond_distr_1 = (
             -((1 - self.u) ** theta)
-            * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1)
-            ** (1 / theta)
+            * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1) ** (1 / theta)
             * ((1 - self.v) ** theta - 1)
-            / (
-                (1 - self.u)
-                * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1)
-            )
+            / ((1 - self.u) * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1))
         )
         return SymPyFuncWrapper(cond_distr_1)(u, v)
 
@@ -145,12 +137,8 @@ class Joe(BivArchimedeanCopula):
         cond_distr_2 = (
             (1 - self.v) ** theta
             * (1 - (1 - self.u) ** theta)
-            * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1)
-            ** (1 / theta)
-            / (
-                (1 - self.v)
-                * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1)
-            )
+            * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1) ** (1 / theta)
+            / ((1 - self.v) * ((1 - (1 - self.u) ** theta) * ((1 - self.v) ** theta - 1) + 1))
         )
         return SymPyFuncWrapper(cond_distr_2)(u, v)
 
@@ -169,7 +157,7 @@ Nelsen6 = Joe
 if __name__ == "__main__":
     copula = Nelsen6(theta=2)
     print(copula.rvs(5))
-    for i in range(1000):
+    for _i in range(1000):
         copula.rvs(1, approximate=False)
     print(copula.cdf(0.5, 0.5))
     print(copula.cond_distr_1(0.5, 0.5))

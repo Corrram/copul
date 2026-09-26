@@ -39,9 +39,7 @@ class Raftery(BivCopula):
             # Validate delta parameter
             delta_val = kwargs["delta"]
             if delta_val < 0 or delta_val > 1:
-                raise ValueError(
-                    f"Parameter delta must be between 0 and 1, got {delta_val}"
-                )
+                raise ValueError(f"Parameter delta must be between 0 and 1, got {delta_val}")
 
             # Handle special cases before passing to parent class
             if delta_val == 0:
@@ -63,9 +61,7 @@ class Raftery(BivCopula):
             # Validate delta parameter
             delta_val = kwargs["delta"]
             if delta_val < 0 or delta_val > 1:
-                raise ValueError(
-                    f"Parameter delta must be between 0 and 1, got {delta_val}"
-                )
+                raise ValueError(f"Parameter delta must be between 0 and 1, got {delta_val}")
 
             # Special cases
             if delta_val == 0:
@@ -209,9 +205,7 @@ class Raftery(BivCopula):
             # Fallback to element-by-element calculation
             import warnings
 
-            warnings.warn(
-                f"Error in vectorized CDF calculation: {e}. Using scalar fallback."
-            )
+            warnings.warn(f"Error in vectorized CDF calculation: {e}. Using scalar fallback.")
 
             # Initialize result array
             result = np.zeros_like(u)
@@ -288,7 +282,7 @@ class Raftery(BivCopula):
         self._set_params(args, kwargs)
         return 2 * self.delta / (3 - self.delta)
 
-    def spearman_footrule(self, *args, **kwargs):
+    def spearmans_footrule(self, *args, **kwargs):
         r"""Spearman's footrule :math:`\psi = 2\delta/(3-\delta)`; the two
         exponents of the diagonal section collapse to
         :math:`C(t,t) = t + \tfrac{1-\delta}{1+\delta}(t^{2/(1-\delta)}-t)`."""
@@ -353,10 +347,7 @@ class Raftery(BivCopula):
         )
         term3 = (1 - sympy.Max(u, v) ** ((delta + 1) / (delta - 1))) * sympy.Max(u, v)
         full_expr = (term1 + term2 + term3) ** 2 / (
-            u**2
-            * (u * v) ** (2 / (delta - 1))
-            * (delta + 1) ** 2
-            * sympy.Max(u, v) ** 2
+            u**2 * (u * v) ** (2 / (delta - 1)) * (delta + 1) ** 2 * sympy.Max(u, v) ** 2
         )
         return full_expr
 
@@ -374,14 +365,12 @@ class Raftery(BivCopula):
         term1 = u * (u * v) ** (1 / (delta - 1)) * (delta + 1) * v
         term3 = (1 - v ** ((delta + 1) / (delta - 1))) * v
         func_u_lower_v = sympy.simplify(
-            (term1 + term3) ** 2
-            / (u**2 * (u * v) ** (2 / (delta - 1)) * (delta + 1) ** 2 * v**2)
+            (term1 + term3) ** 2 / (u**2 * (u * v) ** (2 / (delta - 1)) * (delta + 1) ** 2 * v**2)
         )
         term2 = u * (delta + 1) * u ** ((delta + 1) / (delta - 1))
         term3 = (1 - u ** ((delta + 1) / (delta - 1))) * u
         func_u_greater_v = sympy.simplify(
-            (term2 + term3) ** 2
-            / (u**2 * (u * v) ** (2 / (delta - 1)) * (delta + 1) ** 2 * u**2)
+            (term2 + term3) ** 2 / (u**2 * (u * v) ** (2 / (delta - 1)) * (delta + 1) ** 2 * u**2)
         )
 
         try:

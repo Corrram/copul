@@ -151,16 +151,12 @@ def test_special_cases():
     indep = Frechet(alpha=0, beta=0)
     u, v = 0.3, 0.7
     cdf_val = float(indep.cdf(u=u, v=v))
-    assert abs(cdf_val - (u * v)) < 1e-10, (
-        f"C({u},{v}) should be {u * v} for independence"
-    )
+    assert abs(cdf_val - (u * v)) < 1e-10, f"C({u},{v}) should be {u * v} for independence"
 
     # Upper Frechet bound (alpha=1, beta=0)
     upper = Frechet(alpha=1, beta=0)
     cdf_val = float(upper.cdf(u=u, v=v))
-    assert abs(cdf_val - min(u, v)) < 1e-10, (
-        f"C({u},{v}) should be {min(u, v)} for upper bound"
-    )
+    assert abs(cdf_val - min(u, v)) < 1e-10, f"C({u},{v}) should be {min(u, v)} for upper bound"
 
     # Lower Frechet bound (alpha=0, beta=1)
     lower = Frechet(alpha=0, beta=1)
@@ -204,9 +200,7 @@ def test_conditional_distribution():
         )
 
 
-@pytest.mark.parametrize(
-    "point, expected", [((0, 0), 0), ((0.5, 0), 0.65), ((1, 0), 1)]
-)
+@pytest.mark.parametrize("point, expected", [((0, 0), 0), ((0.5, 0), 0.65), ((1, 0), 1)])
 def test_cond_distr_edge_cases(point, expected):
     frechet = Frechet(0.5, 0.2)
     evaluated_func = float(frechet.cond_distr_2(*point))
@@ -428,9 +422,7 @@ def test_cdf_vectorized_formula_correctness(copula):
     frechet_lower = np.maximum(u + v - 1, 0)
     independence = u * v
 
-    expected = (
-        alpha * frechet_upper + (1 - alpha - beta) * independence + beta * frechet_lower
-    )
+    expected = alpha * frechet_upper + (1 - alpha - beta) * independence + beta * frechet_lower
 
     # Calculate using the vectorized method
     actual = copula.cdf_vectorized(u, v)
@@ -442,8 +434,9 @@ def test_cdf_vectorized_formula_correctness(copula):
 @pytest.mark.slow
 def test_cdf_vectorized_performance(copula):
     """Test that cdf_vectorized is faster than scalar evaluation for large inputs."""
-    import numpy as np
     import time
+
+    import numpy as np
 
     # Create large test arrays (1000 points)
     np.random.seed(42)  # For reproducibility
@@ -471,6 +464,25 @@ def test_cdf_vectorized_performance(copula):
     np.testing.assert_allclose(vector_results, scalar_results, rtol=1e-10)
 
     # Check that vectorized is faster (should be at least 10x faster)
-    assert vector_time < scalar_time * 0.1, (
-        f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
-    )
+    assert vector_time < scalar_time * 0.1, f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
+
+
+def test_parameter_intervals_do_not_leak_between_instances():
+    """Fixing alpha/beta must not tighten the class-level intervals."""
+    import sympy
+
+    from copul.family.frechet.frechet import Frechet
+    from copul.family.frechet.frechet_multi import MVFrechet
+
+    full = sympy.Interval(0, 1)
+    Frechet(alpha=0.3)
+    Frechet()(beta=0.4)
+    assert Frechet.intervals["alpha"] == full
+    assert Frechet.intervals["beta"] == full
+    assert Frechet().intervals["beta"] == full
+
+    m = MVFrechet(2, alpha=0.4)
+    m.beta = 0.2
+    assert m.intervals["alpha"] == sympy.Interval(0, 0.8)
+    assert MVFrechet.intervals["alpha"] == full
+    assert MVFrechet.intervals["beta"] == full

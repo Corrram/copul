@@ -93,9 +93,7 @@ def test_nelsen4_cdf(theta):
 
     for u, v in test_points:
         # Calculate expected value: exp(-(((-log(u))^θ + (-log(v))^θ)^(1/θ)))
-        expected = np.exp(
-            -(((-np.log(u)) ** theta + (-np.log(v)) ** theta) ** (1 / theta))
-        )
+        expected = np.exp(-(((-np.log(u)) ** theta + (-np.log(v)) ** theta) ** (1 / theta)))
         actual = float(copula.cdf(u=u, v=v))
         assert np.isclose(actual, expected, rtol=1e-10)
 

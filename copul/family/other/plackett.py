@@ -1,8 +1,8 @@
 import sympy
 
-from copul.family.helpers import get_simplified_solution
 from copul.family.core.biv_copula import BivCopula
 from copul.family.frechet.lower_frechet import LowerFrechet
+from copul.family.helpers import get_simplified_solution
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -33,9 +33,7 @@ class Plackett(BivCopula):
         cdf = (
             1
             + (theta - 1) * (u + v)
-            - sympy.sqrt(
-                (1 + (theta - 1) * (u + v)) ** 2 - 4 * u * v * theta * (theta - 1)
-            )
+            - sympy.sqrt((1 + (theta - 1) * (u + v)) ** 2 - 4 * u * v * theta * (theta - 1))
         ) / (2 * (theta - 1))
         simplified_cdf = get_simplified_solution(cdf)
         return SymPyFuncWrapper(simplified_cdf)
@@ -62,9 +60,7 @@ class Plackett(BivCopula):
             return 0
 
         # Regular formula for theta != 1
-        return (theta + 1) / (theta - 1) - 2 * theta * sympy.log(theta) / (
-            theta - 1
-        ) ** 2
+        return (theta + 1) / (theta - 1) - 2 * theta * sympy.log(theta) / (theta - 1) ** 2
 
     def blests_nu(self):
         return self.spearmans_rho()

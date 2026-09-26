@@ -1,7 +1,8 @@
-import pytest
-import numpy as np
-import sympy as sp
 from unittest.mock import patch
+
+import numpy as np
+import pytest
+import sympy as sp
 
 from copul.family.extreme_value.gumbel_hougaard import (
     GumbelHougaardEV as GumbelHougaard,
@@ -132,7 +133,7 @@ class TestGumbelHougaard:
         with patch.object(GumbelHougaard, "_rho") as mock_rho:
             mock_rho.return_value = 0.7  # Expected value for theta=2
 
-            rho = gumbel_copula.spearmans_rho()
+            rho = gumbel_copula.spearmans_rho(method="symbolic")
             assert rho == 0.7
             mock_rho.assert_called_once()
 
@@ -190,9 +191,7 @@ class TestGumbelHougaard:
             ("cond_distr_2", (0, 0), 0),
         ],
     )
-    def test_cond_distr_edge_cases_gh(
-        self, method_name, point, expected, gumbel_copula
-    ):
+    def test_cond_distr_edge_cases_gh(self, method_name, point, expected, gumbel_copula):
         method = getattr(gumbel_copula, method_name)
         func = method(point)
         evaluated_func = float(func)

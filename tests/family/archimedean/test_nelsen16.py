@@ -114,9 +114,7 @@ def test_derivative_functions(nelsen16_copula):
     # without errors and return symbolic expressions
 
     # Patch the 'y' property
-    with patch.object(
-        nelsen16_copula, "y", sympy.Symbol("y", real=True, positive=True)
-    ):
+    with patch.object(nelsen16_copula, "y", sympy.Symbol("y", real=True, positive=True)):
         # Call the derivative functions
         first_deriv = nelsen16_copula.first_deriv_of_ci_char()
         second_deriv = nelsen16_copula.second_deriv_of_ci_char()

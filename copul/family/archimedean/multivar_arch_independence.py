@@ -116,6 +116,4 @@ def register_independence_special_case(archimedean_class, independence_param_val
     if not hasattr(archimedean_class, "special_cases"):
         archimedean_class.special_cases = {}
 
-    archimedean_class.special_cases[independence_param_value] = (
-        MultivariateArchimedeanIndependence
-    )
+    archimedean_class.special_cases[independence_param_value] = MultivariateArchimedeanIndependence

@@ -36,9 +36,7 @@ class FarlieGumbelMorgenstern(BivCopula):
             # Validate theta parameter
             theta_val = kwargs["theta"]
             if theta_val < -1 or theta_val > 1:
-                raise ValueError(
-                    f"Parameter theta must be between -1 and 1, got {theta_val}"
-                )
+                raise ValueError(f"Parameter theta must be between -1 and 1, got {theta_val}")
 
         super().__init__(**kwargs)
 
@@ -51,9 +49,7 @@ class FarlieGumbelMorgenstern(BivCopula):
             # Validate theta parameter
             theta_val = kwargs["theta"]
             if theta_val < -1 or theta_val > 1:
-                raise ValueError(
-                    f"Parameter theta must be between -1 and 1, got {theta_val}"
-                )
+                raise ValueError(f"Parameter theta must be between -1 and 1, got {theta_val}")
 
         return super().__call__(**kwargs)
 
@@ -105,6 +101,20 @@ class FarlieGumbelMorgenstern(BivCopula):
         self._set_params(args, kwargs)
         return self.theta / 3
 
+    def chatterjees_xi(self, *args, condition_on_y=False, **kwargs):
+        r"""Chatterjee's :math:`\xi = \theta^2/15` (both conditioning directions).
+
+        With :math:`\partial_1 C = v + \theta v(1-v)(1-2u)`,
+        :math:`\int\!\!\int(\partial_1C)^2 = \tfrac13 + \theta^2/90`.
+        """
+        self._set_params(args, kwargs)
+        return self.theta**2 / 15
+
+    def blomqvists_beta(self, *args, **kwargs):
+        r"""Blomqvist's :math:`\beta = \theta/4`."""
+        self._set_params(args, kwargs)
+        return self.theta / 4
+
     def kendalls_tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the FGM copula.
@@ -114,29 +124,18 @@ class FarlieGumbelMorgenstern(BivCopula):
         self._set_params(args, kwargs)
         return 2 * self.theta / 9
 
-    def spearman_footrule(self, *args, **kwargs):
+    def spearmans_footrule(self, *args, **kwargs):
         r"""Spearman's footrule :math:`\psi = \theta/5`."""
         self._set_params(args, kwargs)
         return self.theta / 5
 
-    def gini_gamma(self, *args, **kwargs):
+    def ginis_gamma(self, *args, **kwargs):
         r"""Gini's :math:`\gamma = 4\theta/15`."""
         self._set_params(args, kwargs)
         return 4 * self.theta / 15
 
-    def spearmans_footrule(self):
-        return self.theta / 5
-
     def blests_nu(self):
         return self.spearmans_rho()
-
-    def ginis_gamma(self):
-        """
-        Calculate Gini's gamma for the FGM copula.
-
-        For FGM, Gini's gamma = 4*theta/15
-        """
-        return 4 * self.theta / 15
 
     # ------------------------------------------------------------------
     # Dependence measures with known closed forms
@@ -171,27 +170,33 @@ class FarlieGumbelMorgenstern(BivCopula):
         self._set_params(args, kwargs)
         return self.theta**2 / 10
 
-    def lp_concordance(self, p: int = 2, *args, **kwargs):
+    def lp_distance(self, p: float = 2, *args, **kwargs):
         r"""
-        :math:`L_p` concordance distance for the FGM copula.
+        :math:`L_p` distance to independence for the FGM copula.
 
         .. math::
 
            \delta_p = k(p)\,|\theta|^p
-             \left[\operatorname{B}(p+1,\,p+1)\right]^2
+             \left[\operatorname{B}(p+1,\,p+1)\right]^2,
+           \qquad k(p) = \frac{p+1}{2\,\operatorname{B}(p+1,p+2)},
 
         where :math:`\operatorname{B}` is the beta function.
         """
         self._set_params(args, kwargs)
-        from math import factorial
+        from copul.measures.numeric import lp_constant
 
-        k_table = {1: 12, 2: 90, 3: 560, 4: 3150, 5: 16632}
-        k = k_table.get(p)
-        if k is None:
-            raise ValueError(f"k({p}) not tabulated; supported p: {sorted(k_table)}")
-        # B(p+1, p+1) = (p!)^2 / (2p+1)!
-        beta_val = factorial(p) ** 2 / factorial(2 * p + 1)
-        return k * abs(self.theta) ** p * beta_val**2
+        if float(p).is_integer():
+            from math import factorial
+
+            q = int(p)
+            beta_val = sympy.Rational(factorial(q) ** 2, factorial(2 * q + 1))
+            k = sympy.Integer(int(lp_constant(q)))
+        else:
+            from scipy.special import beta as _beta
+
+            beta_val = float(_beta(p + 1, p + 1))
+            k = lp_constant(p)
+        return k * sympy.Abs(self.theta) ** p * beta_val**2
 
     def blum_kiefer_rosenblatt(self, *args, **kwargs):
         r"""

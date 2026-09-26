@@ -134,8 +134,8 @@ class TestClosedFormMeasures:
         assert float(C.blests_nu()) == pytest.approx(0.8 / 3)
         assert float(C.schweizer_wolff_sigma()) == pytest.approx(0.8 / 3)
         assert float(C.hoeffdings_phi_square()) == pytest.approx(0.8**2 / 10)
-        assert float(C.spearman_footrule()) == pytest.approx(0.8 / 5)
-        assert float(C.gini_gamma()) == pytest.approx(4 * 0.8 / 15)
+        assert float(C.spearmans_footrule()) == pytest.approx(0.8 / 5)
+        assert float(C.ginis_gamma()) == pytest.approx(4 * 0.8 / 15)
 
     def test_cuadras_auge_nu(self):
         d = 0.3
@@ -151,22 +151,20 @@ class TestClosedFormMeasures:
 
     def test_frechet_phi2(self):
         a, b = 0.4, 0.2
-        assert float(cp.Frechet(a, b).hoeffdings_d()) == pytest.approx(
-            a**2 + b**2 - 7 * a * b / 4
-        )
+        assert float(cp.Frechet(a, b).hoeffdings_d()) == pytest.approx(a**2 + b**2 - 7 * a * b / 4)
 
     def test_mardia_closed_forms(self):
         t = -0.6
         C = cp.Mardia(t)
         assert float(C.blests_nu()) == pytest.approx(t**3)
-        assert float(C.gini_gamma()) == pytest.approx(t**3)
-        assert float(C.spearman_footrule()) == pytest.approx(t**2 * (1 + 3 * t) / 4)
+        assert float(C.ginis_gamma()) == pytest.approx(t**3)
+        assert float(C.spearmans_footrule()) == pytest.approx(t**2 * (1 + 3 * t) / 4)
         assert float(C.hoeffdings_d()) == pytest.approx(t**4 * (1 + 15 * t**2) / 16)
 
     def test_gaussian_gini_gamma(self):
         s = 0.5
         expected = 2 / np.pi * (np.arcsin((1 + s) / 2) - np.arcsin((1 - s) / 2))
-        assert float(cp.Gaussian(s).gini_gamma()) == pytest.approx(expected)
+        assert float(cp.Gaussian(s).ginis_gamma()) == pytest.approx(expected)
 
     def test_gaussian_nu_equals_rho(self):
         # radial symmetry implies nu = rho
@@ -183,7 +181,7 @@ class TestClosedFormMeasures:
         C = cp.GumbelHougaardEV(2)
         A_half = 2 ** (1 / 2 - 1)
         assert float(C.blomqvists_beta()) == pytest.approx(2 ** (2 - 2 * A_half) - 1)
-        assert float(C.spearman_footrule()) == pytest.approx(6 / (1 + 2 * A_half) - 2)
+        assert float(C.spearmans_footrule()) == pytest.approx(6 / (1 + 2 * A_half) - 2)
 
     def test_student_t_rho_depends_on_nu(self):
         # quadrature value, cross-checked by Monte Carlo (0.4552 +- 0.0013)
@@ -195,10 +193,8 @@ class TestClosedFormMeasures:
     def test_raftery_closed_forms(self):
         d = 0.3
         C = cp.Raftery(d)
-        assert float(C.spearman_footrule()) == pytest.approx(2 * d / (3 - d))
-        assert float(C.schweizer_wolff_sigma()) == pytest.approx(
-            d * (4 - 3 * d) / (2 - d) ** 2
-        )
+        assert float(C.spearmans_footrule()) == pytest.approx(2 * d / (3 - d))
+        assert float(C.schweizer_wolff_sigma()) == pytest.approx(d * (4 - 3 * d) / (2 - d) ** 2)
         assert float(C.blomqvists_beta()) == pytest.approx(
             1 + 4 * (1 - d) / (1 + d) * (2 ** (-2 / (1 - d)) - 0.5)
         )
@@ -206,16 +202,14 @@ class TestClosedFormMeasures:
     def test_blum_kiefer_rosenblatt_closed_forms(self):
         # B = 30 iint (C - uv)^2 dC, with B(M) = B(W) = 1
         th = 0.8
-        assert float(
-            cp.FarlieGumbelMorgenstern(th).blum_kiefer_rosenblatt()
-        ) == pytest.approx(th**2 / 30)
-        a, b = 0.4, 0.2
-        expected = (a**2 * (1 + 2 * a) + b**2 * (1 + 2 * b)) / 3 - a * b * (
-            a + b
-        ) / 2 - 7 * a * b / 12
-        assert float(cp.Frechet(a, b).blum_kiefer_rosenblatt()) == pytest.approx(
-            expected
+        assert float(cp.FarlieGumbelMorgenstern(th).blum_kiefer_rosenblatt()) == pytest.approx(
+            th**2 / 30
         )
+        a, b = 0.4, 0.2
+        expected = (
+            (a**2 * (1 + 2 * a) + b**2 * (1 + 2 * b)) / 3 - a * b * (a + b) / 2 - 7 * a * b / 12
+        )
+        assert float(cp.Frechet(a, b).blum_kiefer_rosenblatt()) == pytest.approx(expected)
         assert float(cp.Frechet(1.0, 0.0).blum_kiefer_rosenblatt()) == pytest.approx(1)
         assert float(cp.Frechet(0.0, 1.0).blum_kiefer_rosenblatt()) == pytest.approx(1)
         t = -0.6
@@ -231,14 +225,12 @@ class TestClosedFormMeasures:
     def test_plackett_sigma(self):
         th = 0.3  # NQD range: sigma = -rho
         C = cp.Plackett(th)
-        assert float(C.schweizer_wolff_sigma()) == pytest.approx(
-            -float(C.spearmans_rho())
-        )
+        assert float(C.schweizer_wolff_sigma()) == pytest.approx(-float(C.spearmans_rho()))
 
 
 class TestMeasuresNumericFallback:
     def test_footrule_clayton_numeric(self):
-        val = float(cp.Clayton(2).spearman_footrule())
+        val = float(cp.Clayton(2).spearmans_footrule())
         # psi = 6 * int C(t,t) dt - 2 with C(t,t) = t (2 - t^2)^{-1/2}
         from scipy.integrate import quad
 
@@ -246,7 +238,7 @@ class TestMeasuresNumericFallback:
         assert val == pytest.approx(expected, rel=1e-6)
 
     def test_gini_gamma_independence_zero(self):
-        val = float(cp.BivIndependenceCopula().gini_gamma())
+        val = float(cp.BivIndependenceCopula().ginis_gamma())
         assert val == pytest.approx(0.0, abs=1e-8)
 
     def test_blomqvist_beta_frechet_bounds(self):

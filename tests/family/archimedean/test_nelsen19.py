@@ -80,9 +80,7 @@ def test_cdf_function(nelsen19_copula):
     for u, v in points:
         # Manual calculation using the formula
         theta = 1
-        expected = theta / np.log(
-            -np.exp(theta) + np.exp(theta / u) + np.exp(theta / v)
-        )
+        expected = theta / np.log(-np.exp(theta) + np.exp(theta / u) + np.exp(theta / v))
         actual = float(nelsen19_copula.cdf(u, v))
         assert np.isclose(actual, expected, rtol=1e-5)
 

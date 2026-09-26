@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 import pytest
 import sympy as sp
-from unittest.mock import patch
 
 from copul.family.elliptical.elliptical_copula import EllipticalCopula
 from copul.family.frechet.lower_frechet import LowerFrechet

@@ -1,13 +1,14 @@
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 import sympy as sp
-from unittest.mock import patch
 
-from copul.family.extreme_value.marshall_olkin import MarshallOlkin
 from copul.exceptions import PropertyUnavailableException
-from copul.wrapper.cdf_wrapper import CDFWrapper
+from copul.family.extreme_value.marshall_olkin import MarshallOlkin
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 @pytest.fixture

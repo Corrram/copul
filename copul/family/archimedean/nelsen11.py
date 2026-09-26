@@ -47,13 +47,11 @@ class Nelsen11(BivArchimedeanCopula):
             self.v ** (theta - 1)
             * (2 - self.u**theta)
             * sympy.Heaviside(
-                self.u**theta * self.v**theta
-                - 2 * (self.u**theta - 1) * (self.v**theta - 1)
+                self.u**theta * self.v**theta - 2 * (self.u**theta - 1) * (self.v**theta - 1)
             )
             * sympy.Max(
                 0,
-                self.u**theta * self.v**theta
-                - 2 * (self.u**theta - 1) * (self.v**theta - 1),
+                self.u**theta * self.v**theta - 2 * (self.u**theta - 1) * (self.v**theta - 1),
             )
             ** ((1 - theta) / theta)
         )

@@ -1,8 +1,13 @@
-from matplotlib import rcParams
-import matplotlib.pyplot as plt
+import logging
+import warnings
+
 import numpy as np
 import sympy as sp
+
+from copul._lazy import plt
 from copul.family.copula_graphs import CopulaGraphs
+
+log = logging.getLogger(__name__)
 
 
 def _show_if_interactive():
@@ -56,7 +61,7 @@ class CopulaPlottingMixin:
                 # Use provided samples
                 data_ = samples
             plt.figure(figsize=figsize)
-            plt.scatter(data_[:, 0], data_[:, 1], s=rcParams["lines.markersize"] ** 2)
+            plt.scatter(data_[:, 0], data_[:, 1], s=plt.rcParams["lines.markersize"] ** 2)
             title = CopulaGraphs(self).get_copula_title()
             plt.title(title)
             plt.xlabel("u")
@@ -87,7 +92,7 @@ class CopulaPlottingMixin:
                 data[:, 2],  # z-coordinates (third margin)
                 c=colors,  # color by third dimension
                 cmap=colormap,
-                s=rcParams["lines.markersize"] ** 2,
+                s=plt.rcParams["lines.markersize"] ** 2,
                 alpha=alpha,
             )
 
@@ -151,7 +156,7 @@ class CopulaPlottingMixin:
                         axs[i, j].scatter(
                             data[:, j],
                             data[:, i],
-                            s=rcParams["lines.markersize"],
+                            s=plt.rcParams["lines.markersize"],
                             alpha=0.5,
                         )
 
@@ -257,7 +262,7 @@ class CopulaPlottingMixin:
         )
         plt.close(fig)
 
-        print(f"Plot saved to: {filename}")
+        log.debug("Plot saved to: %s", filename)
 
     def plot_density(
         self,
@@ -360,11 +365,13 @@ class CopulaPlottingMixin:
                 return fig
 
             except (AttributeError, NotImplementedError):
-                print("Density function not available for this copula.")
+                warnings.warn("Density function not available for this copula.", stacklevel=2)
                 return None
 
         else:
-            print("Density plots are currently only supported for 2D copulas.")
+            warnings.warn(
+                "Density plots are currently only supported for 2D copulas.", stacklevel=2
+            )
             return None
 
     def create_comparison_plot(
@@ -405,7 +412,7 @@ class CopulaPlottingMixin:
 
         # Check dimensions
         if self.dim != other_copula.dim:
-            print("Copulas must have the same dimension for comparison.")
+            warnings.warn("Copulas must have the same dimension for comparison.", stacklevel=2)
             return None
 
         # Generate samples
@@ -424,7 +431,7 @@ class CopulaPlottingMixin:
             scatter1 = ax1.scatter(
                 data1[:, 0],
                 data1[:, 1],
-                s=rcParams["lines.markersize"] * 1.5,
+                s=plt.rcParams["lines.markersize"] * 1.5,
                 alpha=0.7,
                 c=data1[:, 1],
                 cmap=colormap,
@@ -441,7 +448,7 @@ class CopulaPlottingMixin:
             scatter2 = ax2.scatter(
                 data2[:, 0],
                 data2[:, 1],
-                s=rcParams["lines.markersize"] * 1.5,
+                s=plt.rcParams["lines.markersize"] * 1.5,
                 alpha=0.7,
                 c=data2[:, 1],
                 cmap=colormap,
@@ -465,11 +472,9 @@ class CopulaPlottingMixin:
             return fig
 
         else:
-            print("Comparison plots are currently optimized for 2D copulas.")
+            warnings.warn("Comparison plots are currently optimized for 2D copulas.", stacklevel=2)
             # Simply return the regular scatter plot matrix for higher dimensions
-            return self.scatter_plot(
-                n=n, figsize=figsize, colormap=colormap, style=style, dpi=dpi
-            )
+            return self.scatter_plot(n=n, figsize=figsize, colormap=colormap, style=style, dpi=dpi)
 
     def plot_c_over_u(self, *, plot_type="3d", log_z=False, **kwargs):
         """
@@ -510,13 +515,9 @@ class CopulaPlottingMixin:
         if plot_type == "3d":
             return self._plot3d(ratio_obj, title=title, zlabel=zlabel, **kwargs)
         if plot_type == "contour":
-            return self._plot_contour(
-                ratio_obj, title=title, zlabel=zlabel, log_z=log_z, **kwargs
-            )
+            return self._plot_contour(ratio_obj, title=title, zlabel=zlabel, log_z=log_z, **kwargs)
         if plot_type == "functions":
-            return self._plot_functions(
-                ratio_obj, title=title, zlabel=zlabel, xlabel="u", **kwargs
-            )
+            return self._plot_functions(ratio_obj, title=title, zlabel=zlabel, xlabel="u", **kwargs)
         raise ValueError("plot_type must be '3d', 'contour', or 'functions'.")
 
     def plot_c_over_v(self, *, plot_type="3d", log_z=False, **kwargs):
@@ -547,11 +548,7 @@ class CopulaPlottingMixin:
         if plot_type == "3d":
             return self._plot3d(ratio_obj, title=title, zlabel=zlabel, **kwargs)
         if plot_type == "contour":
-            return self._plot_contour(
-                ratio_obj, title=title, zlabel=zlabel, log_z=log_z, **kwargs
-            )
+            return self._plot_contour(ratio_obj, title=title, zlabel=zlabel, log_z=log_z, **kwargs)
         if plot_type == "functions":
-            return self._plot_functions(
-                ratio_obj, title=title, zlabel=zlabel, xlabel="u", **kwargs
-            )
+            return self._plot_functions(ratio_obj, title=title, zlabel=zlabel, xlabel="u", **kwargs)
         raise ValueError("plot_type must be '3d', 'contour', or 'functions'.")

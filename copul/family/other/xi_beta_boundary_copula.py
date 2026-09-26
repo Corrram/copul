@@ -1,6 +1,6 @@
 # file: copul/families/xi_beta_boundary_copula.py
-import sympy as sp
 import numpy as np
+import sympy as sp
 
 from copul.family.core.biv_copula import BivCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
@@ -9,8 +9,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 class XiBetaBoundaryCopula(BivCopula):
     r"""
-    Lower-boundary family for the exact region between Chatterjee's xi
-    and Blomqvist's beta.
+    Symmetric :math:`2\times2` checkerboard family indexed by Blomqvist's beta.
 
     This is the symmetric 2x2 checkerboard family with parameter
     :math:`b = \beta \in [-1,1]`, determined by the mass matrix
@@ -43,8 +42,12 @@ class XiBetaBoundaryCopula(BivCopula):
        \qquad
        \xi(C_b)=\frac{b^2}{2}.
 
-    Thus this family traces the sharp lower boundary
-    :math:`\xi = \beta^2/2` of the exact region.
+    .. note::
+       Despite its (historical) name, this family does **not** trace the
+       boundary of the exact :math:`(\xi,\beta)` region: the sharp bound is
+       :math:`|\beta|^3\le 2\xi` (Orenday Lares & Rockel, arXiv:2606.30033),
+       see :func:`copul.regions.get` with ``("xi", "beta")``. The relation
+       :math:`\xi=\beta^2/2` only holds along this family.
 
     Special cases:
     - :math:`b=0`: independence copula.
@@ -181,9 +184,9 @@ class XiBetaBoundaryCopula(BivCopula):
 
         .. math::
 
-           \tau(C_b)=\frac{2}{3}b.
+           \tau(C_b)=\frac{b}{2}.
         """
-        return sp.Rational(2, 3) * self.b
+        return self.b / 2
 
     def blests_nu(self, *args, **kwargs):
         return self.spearmans_rho()
@@ -198,7 +201,7 @@ class XiBetaBoundaryCopula(BivCopula):
     @classmethod
     def from_xi(cls, x, positive=True):
         r"""
-        Instantiate from xi along one branch of the lower boundary
+        Instantiate from xi along one branch of the family curve
         :math:`\xi = b^2/2`.
 
         Parameters
@@ -210,7 +213,7 @@ class XiBetaBoundaryCopula(BivCopula):
         """
         x = float(x)
         if x < 0 or x > 0.5:
-            raise ValueError("For this boundary family, xi must lie in [0, 1/2].")
+            raise ValueError("For this family, xi must lie in [0, 1/2].")
 
         b = np.sqrt(2.0 * x)
         if not positive:

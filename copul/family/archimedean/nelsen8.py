@@ -53,10 +53,7 @@ class Nelsen8(BivArchimedeanCopula):
         theta = self.theta
         sub_expr = theta**2 - (theta - 1) ** 2 * (u - 1) * (v - 1)
         return (
-            (theta - 1) ** 2
-            * (v - 1)
-            * (theta**2 * u * v - (u - 1) * (v - 1))
-            / sub_expr**2
+            (theta - 1) ** 2 * (v - 1) * (theta**2 * u * v - (u - 1) * (v - 1)) / sub_expr**2
             + (theta**2 * v - v + 1) / sub_expr
         ) ** 2 * sympy.Heaviside((theta**2 * u * v - (u - 1) * (v - 1)) / sub_expr)
 

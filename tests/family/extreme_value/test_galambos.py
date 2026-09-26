@@ -1,7 +1,8 @@
-import pytest
-import numpy as np
-import sympy as sp
 from unittest.mock import patch
+
+import numpy as np
+import pytest
+import sympy as sp
 
 from copul.family.extreme_value.galambos import Galambos
 
@@ -34,9 +35,7 @@ class TestGalambos:
         assert copula.intervals["delta"].right == float("inf")
         # These assertions are redundant since the object already is a Sympy interval
         # with the correct properties, so we just check the interval is defined correctly
-        assert copula.intervals[
-            "delta"
-        ].left_open  # Already a boolean, no need for 'is True'
+        assert copula.intervals["delta"].left_open  # Already a boolean, no need for 'is True'
         assert copula.intervals["delta"].right_open
 
     def test_is_symmetric(self, galambos_copula):

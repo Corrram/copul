@@ -28,9 +28,7 @@ class Nelsen7(BivArchimedeanCopula):
     def _raw_inv_generator(self):  # ToDo multiply indicator function
         y = self.y
         ind = sympy.Heaviside(-y - sympy.log(1 - self.theta))
-        return ind * (
-            (self.theta * sympy.exp(y) - sympy.exp(y) + 1) * sympy.exp(-y) / self.theta
-        )
+        return ind * ((self.theta * sympy.exp(y) - sympy.exp(y) + 1) * sympy.exp(-y) / self.theta)
 
     @property
     def _cdf_expr(self):
@@ -80,12 +78,7 @@ class Nelsen7(BivArchimedeanCopula):
             return -1
         elif theta == 1:
             return 0
-        rho = (
-            -3
-            + 9 / theta
-            - 6 / theta**2
-            - 6 * (theta - 1) ** 2 * sympy.log(1 - theta) / theta**3
-        )
+        rho = -3 + 9 / theta - 6 / theta**2 - 6 * (theta - 1) ** 2 * sympy.log(1 - theta) / theta**3
         return sympy.Piecewise((rho, theta < 1), (0, True))
 
     def kendalls_tau(self, *args, **kwargs):

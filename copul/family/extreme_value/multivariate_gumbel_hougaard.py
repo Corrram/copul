@@ -1,4 +1,5 @@
 from typing import TypeAlias
+
 import numpy as np
 import sympy as sp
 
@@ -33,9 +34,7 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
     # Define parameters
     theta = sp.symbols("theta", positive=True)
     params = [theta]
-    intervals = {
-        str(theta): sp.Interval(1, float("inf"), left_open=False, right_open=True)
-    }
+    intervals = {str(theta): sp.Interval(1, float("inf"), left_open=False, right_open=True)}
 
     def __new__(cls, dimension=2, *args, **kwargs):
         """
@@ -87,7 +86,7 @@ class MultivariateGumbelHougaard(MultivariateExtremeValueCopula):
         *args, **kwargs
             Additional parameters.
         """
-        super().__init__(dimension=dimension, *args, **kwargs)
+        super().__init__(*args, dimension=dimension, **kwargs)
 
         if theta is not None:
             self.theta = theta

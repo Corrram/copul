@@ -4,8 +4,9 @@ Tests for the CD2Wrapper class (partial derivative with respect to second argume
 
 import sympy
 from sympy import simplify
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+
 from copul.wrapper.cd2_wrapper import CD2Wrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class TestCD2Wrapper:

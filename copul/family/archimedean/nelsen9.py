@@ -24,11 +24,7 @@ class GumbelBarnett(BivArchimedeanCopula):
 
     @property
     def _cdf_expr(self):
-        return (
-            self.u
-            * self.v
-            * sympy.exp(-self.theta * sympy.log(self.u) * sympy.log(self.v))
-        )
+        return self.u * self.v * sympy.exp(-self.theta * sympy.log(self.u) * sympy.log(self.v))
 
     def _xi_int_1(self, v):
         theta = self.theta
@@ -39,11 +35,7 @@ class GumbelBarnett(BivArchimedeanCopula):
         return (
             1
             / 72
-            * (
-                18
-                + 4 * theta
-                - 9 * sympy.exp(3 / (2 * theta)) * sympy.Ei(-3 / (2 * theta)) / theta
-            )
+            * (18 + 4 * theta - 9 * sympy.exp(3 / (2 * theta)) * sympy.Ei(-3 / (2 * theta)) / theta)
         )
 
     def _rho_int_1(self):
@@ -52,9 +44,7 @@ class GumbelBarnett(BivArchimedeanCopula):
     def _rho_int_2(self):
         theta = self.theta
         v = self.v
-        integral = (
-            -sympy.exp(4 / theta) * sympy.Ei(2 * sympy.log(v) - 4 / theta) / theta
-        )
+        integral = -sympy.exp(4 / theta) * sympy.Ei(2 * sympy.log(v) - 4 / theta) / theta
         return integral.subs(v, 1)  # todo check if this line is correct
 
 

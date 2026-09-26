@@ -77,9 +77,7 @@ def test_cdf_function(joe_copula):
     for u, v in points:
         # Manual calculation using the formula
         theta = 2
-        expected = 1 - (-(((1 - u) ** theta - 1) * ((1 - v) ** theta - 1)) + 1) ** (
-            1 / theta
-        )
+        expected = 1 - (-(((1 - u) ** theta - 1) * ((1 - v) ** theta - 1)) + 1) ** (1 / theta)
         actual = float(joe_copula.cdf(u, v))
         assert np.isclose(actual, expected, rtol=1e-5)
 

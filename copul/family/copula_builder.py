@@ -1,8 +1,8 @@
 import numpy as np
 import sympy
 
-from copul.family.core.copula import Copula
 from copul.family.core.biv_copula import BivCopula
+from copul.family.core.copula import Copula
 
 
 class CopulaBuilder:
@@ -103,7 +103,7 @@ class CopulaBuilder:
         # Use dummy symbols for integration bounds, then substitute upper limits.
         cdf_expr = sp_pdf
         for var in vars_on_obj:
-            s = sympy.symbols(f"__int_{str(var)}", real=True, nonnegative=True)
+            s = sympy.symbols(f"__int_{var!s}", real=True, nonnegative=True)
             cdf_expr = sympy.integrate(cdf_expr.subs(var, s), (s, 0, var))
 
         obj._cdf_expr = cdf_expr

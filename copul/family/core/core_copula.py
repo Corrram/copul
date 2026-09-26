@@ -1,4 +1,5 @@
 import copy
+
 import numpy as np
 import sympy
 
@@ -21,9 +22,7 @@ class CoreCopula:
     params = []
     intervals = {}
     log_cut_off = 4
-    _cdf_expr_internal = (
-        None  # Renamed from _cdf to avoid confusion with the new method
-    )
+    _cdf_expr_internal = None  # Renamed from _cdf to avoid confusion with the new method
     _free_symbols = {}
 
     def _unwrap_expr(self, maybe_wrapper):
@@ -133,9 +132,7 @@ class CoreCopula:
                 v = getattr(self.__class__, v)
             setattr(self, k, v)
         self.params = [param for param in self.params if str(param) not in kwargs]
-        self.intervals = {
-            k: v for k, v in self.intervals.items() if str(k) not in kwargs
-        }
+        self.intervals = {k: v for k, v in self.intervals.items() if str(k) not in kwargs}
 
     def __call__(self, *args, **kwargs):
         """
@@ -160,7 +157,7 @@ class CoreCopula:
                 try:
                     idx = int(k[1:])  # 'u3' -> 3
                 except ValueError:
-                    raise ValueError(f"Unrecognized variable keyword {k!r}")
+                    raise ValueError(f"Unrecognized variable keyword {k!r}") from None
                 fix_idxs.add(idx)
             else:
                 param_kwargs[k] = v
@@ -190,14 +187,10 @@ class CoreCopula:
         new_expr = sympy.simplify(self._cdf_expr.subs(subs))
 
         # 2) keep remaining symbols and re-map to u1..u_{d'}
-        keep_pairs = [
-            (j, s) for j, s in enumerate(self.u_symbols, start=1) if j not in fix_idxs
-        ]
+        keep_pairs = [(j, s) for j, s in enumerate(self.u_symbols, start=1) if j not in fix_idxs]
         new_dim = len(keep_pairs)
         if new_dim == 0:
-            raise ValueError(
-                "All margins were fixed to 1; resulting copula has dimension 0."
-            )
+            raise ValueError("All margins were fixed to 1; resulting copula has dimension 0.")
         new_u_symbols = sympy.symbols(f"u1:{new_dim + 1}", positive=True)
         remap = {old: new_u_symbols[i] for i, (_, old) in enumerate(keep_pairs)}
         new_expr = sympy.simplify(new_expr.subs(remap))
@@ -230,9 +223,7 @@ class CoreCopula:
                     v = getattr(biv.__class__, v)
                 setattr(biv, k, v)
             biv.params = [p for p in biv.params if str(p) not in param_kwargs]
-            biv.intervals = {
-                k: v for k, v in biv.intervals.items() if str(k) not in param_kwargs
-            }
+            biv.intervals = {k: v for k, v in biv.intervals.items() if str(k) not in param_kwargs}
 
             return biv
 
@@ -339,9 +330,7 @@ class CoreCopula:
         """
 
         class_vars = set(dir(self))
-        assert set(kwargs).issubset(class_vars), (
-            f"keys: {set(kwargs)}, free symbols: {class_vars}"
-        )
+        assert set(kwargs).issubset(class_vars), f"keys: {set(kwargs)}, free symbols: {class_vars}"
 
     def slice_interval(self, param, interval_start=None, interval_end=None):
         r"""
@@ -374,9 +363,11 @@ class CoreCopula:
             interval_end = self.intervals[param].sup
         else:
             right_open = False
-        self.intervals[param] = sympy.Interval(
-            interval_start, interval_end, left_open, right_open
-        )
+        # copy-on-write: never mutate the class-level ``intervals`` dict
+        self.intervals = {
+            **self.intervals,
+            param: sympy.Interval(interval_start, interval_end, left_open, right_open),
+        }
 
     def _get_cdf_expr(self):
         r"""
@@ -423,16 +414,12 @@ class CoreCopula:
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim == 1 and len(arr) == self.dim:
                     # full point → map all u_symbols
-                    sub_all = {
-                        str(sym): float(val) for sym, val in zip(self.u_symbols, arr)
-                    }
+                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, arr)}
                     return cdf_expr(**sub_all)
             elif hasattr(arg, "__len__"):
                 if len(arg) == self.dim:
                     point = np.array(arg, dtype=float)
-                    sub_all = {
-                        str(sym): float(val) for sym, val in zip(self.u_symbols, point)
-                    }
+                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
                     return cdf_expr(**sub_all)
                 # else: will fall through to partial-remain logic below
 
@@ -453,9 +440,7 @@ class CoreCopula:
             if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim != 1:
-                    raise ValueError(
-                        "Cannot mix variable substitution with multi-point evaluation"
-                    )
+                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
                 if len(arr) != remaining_dim:
                     raise ValueError(
                         f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
@@ -469,15 +454,11 @@ class CoreCopula:
                 point = np.array(arg, dtype=float)
             else:
                 if remaining_dim != 1:
-                    raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got 1"
-                    )
+                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
                 point = np.array([arg], dtype=float)
         else:
             if len(args) != remaining_dim:
-                raise ValueError(
-                    f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
-                )
+                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
             point = np.array(args, dtype=float)
 
         sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}
@@ -540,9 +521,7 @@ class CoreCopula:
             if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim != 1:
-                    raise ValueError(
-                        "Cannot mix variable substitution with multi-point evaluation"
-                    )
+                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
                 if len(arr) != remaining_dim:
                     raise ValueError(
                         f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
@@ -556,15 +535,11 @@ class CoreCopula:
                 point = np.array(arg, dtype=float)
             else:
                 if remaining_dim != 1:
-                    raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got 1"
-                    )
+                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
                 point = np.array([arg], dtype=float)
         else:
             if len(args) != remaining_dim:
-                raise ValueError(
-                    f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
-                )
+                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
             point = np.array(args, dtype=float)
 
         sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}
@@ -617,9 +592,7 @@ class CoreCopula:
         results = np.zeros(n_points)
 
         # Get the conditional distribution function
-        cond_distr_func = SymPyFuncWrapper(
-            sympy.diff(self._get_cdf_expr(), self.u_symbols[i - 1])
-        )
+        cond_distr_func = SymPyFuncWrapper(sympy.diff(self._get_cdf_expr(), self.u_symbols[i - 1]))
 
         # Evaluate for each point
         for j, point in enumerate(points):
@@ -677,16 +650,12 @@ class CoreCopula:
             if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim == 1 and len(arr) == self.dim and not kwargs:
-                    sub_all = {
-                        str(sym): float(val) for sym, val in zip(self.u_symbols, arr)
-                    }
+                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, arr)}
                     return pdf_expr(**sub_all)
             elif hasattr(arg, "__len__"):
                 if len(arg) == self.dim and not kwargs:
                     point = np.array(arg, dtype=float)
-                    sub_all = {
-                        str(sym): float(val) for sym, val in zip(self.u_symbols, point)
-                    }
+                    sub_all = {str(sym): float(val) for sym, val in zip(self.u_symbols, point)}
                     return pdf_expr(**sub_all)
 
         if len(args) == self.dim and not kwargs:
@@ -704,9 +673,7 @@ class CoreCopula:
             if hasattr(arg, "ndim") and hasattr(arg, "shape"):
                 arr = np.asarray(arg, dtype=float)
                 if arr.ndim != 1:
-                    raise ValueError(
-                        "Cannot mix variable substitution with multi-point evaluation"
-                    )
+                    raise ValueError("Cannot mix variable substitution with multi-point evaluation")
                 if len(arr) != remaining_dim:
                     raise ValueError(
                         f"Expected {remaining_dim} remaining coordinates, got {len(arr)}"
@@ -720,15 +687,11 @@ class CoreCopula:
                 point = np.array(arg, dtype=float)
             else:
                 if remaining_dim != 1:
-                    raise ValueError(
-                        f"Expected {remaining_dim} remaining coordinates, got 1"
-                    )
+                    raise ValueError(f"Expected {remaining_dim} remaining coordinates, got 1")
                 point = np.array([arg], dtype=float)
         else:
             if len(args) != remaining_dim:
-                raise ValueError(
-                    f"Expected {remaining_dim} remaining coordinates, got {len(args)}"
-                )
+                raise ValueError(f"Expected {remaining_dim} remaining coordinates, got {len(args)}")
             point = np.array(args, dtype=float)
 
         sub_dict = {var: float(val) for var, val in zip(remaining_vars, point)}
@@ -876,9 +839,7 @@ class CoreCopula:
             raise ValueError("CDF expression is not set for this copula.")
         return to_numpy_callable(self._cdf_expr, self.u_symbols, ae=True)
 
-    def validate_copula(
-        self, m: int = 21, tol: float = 1e-8, return_details: bool = False
-    ):
+    def validate_copula(self, m: int = 21, tol: float = 1e-8, return_details: bool = False):
         """
         Numerically validate copula properties on an (m+1)^d grid.
 
@@ -896,16 +857,12 @@ class CoreCopula:
         ok : bool  (and optionally details : dict)
         """
         if not self.is_fully_specified():
-            raise ValueError(
-                "Copula has free parameters; fix all parameters before validation."
-            )
+            raise ValueError("Copula has free parameters; fix all parameters before validation.")
 
         d = self.dim
         f = self._lambdify_cdf_numpy()
         axes = [np.linspace(0.0, 1.0, m + 1) for _ in range(d)]
-        grids = np.meshgrid(
-            *axes, indexing="ij"
-        )  # list of d arrays shape (m+1,...,m+1)
+        grids = np.meshgrid(*axes, indexing="ij")  # list of d arrays shape (m+1,...,m+1)
 
         # Evaluate C on the grid
         with np.errstate(divide="ignore", invalid="ignore"):

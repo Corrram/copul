@@ -1,10 +1,10 @@
-import sympy as sp
 import numpy as np
+import sympy as sp
 
 from copul.exceptions import PropertyUnavailableException
 from copul.family.core.biv_copula import BivCopula
-from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.family.frechet.lower_frechet import LowerFrechet
+from copul.family.frechet.upper_frechet import UpperFrechet
 from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
@@ -70,9 +70,7 @@ class EndSwapCopula(BivCopula):
     # SymPy symbols & meta
     d = sp.symbols("d", real=True)
     params = [d]
-    intervals = {
-        "d": sp.Interval(0, sp.Rational(1, 2), left_open=False, right_open=False)
-    }
+    intervals = {"d": sp.Interval(0, sp.Rational(1, 2), left_open=False, right_open=False)}
     special_cases = {0: UpperFrechet, sp.Rational(1, 2): LowerFrechet}
 
     u, v = sp.symbols("u v", real=True)
@@ -215,7 +213,5 @@ if __name__ == "__main__":
     # Quick smoke test
     for d in [0.1, 0.25, 0.4]:
         cop = EndSwapCopula(d=d)
-        print(
-            f"d={d:.3f} -> psi={cop.spearmans_footrule():.6f}, nu={cop.blests_nu():.6f}"
-        )
+        print(f"d={d:.3f} -> psi={cop.spearmans_footrule():.6f}, nu={cop.blests_nu():.6f}")
         cop.plot_cond_distr_1(plot_type="contour", grid_size=500)

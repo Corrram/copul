@@ -145,9 +145,7 @@ def test_tau(copula):
     # For LowerFrechet, tau = -1/3
     tau = float(copula.kendalls_tau())
     expected = -1
-    assert abs(tau - expected) < 1e-10, (
-        f"Kendall's tau incorrect: got {tau}, expected {expected}"
-    )
+    assert abs(tau - expected) < 1e-10, f"Kendall's tau incorrect: got {tau}, expected {expected}"
 
 
 def test_tail_dependence(copula):

@@ -1,5 +1,5 @@
-from copul.family.core.copula import Copula
 from copul.family.core.biv_core_copula import BivCoreCopula
+from copul.family.core.copula import Copula
 
 
 class BivCopula(Copula, BivCoreCopula):

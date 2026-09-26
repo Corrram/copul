@@ -29,7 +29,7 @@ Run explicitly with::
 """
 
 import logging
-from functools import lru_cache
+from functools import cache
 
 import numpy as np
 import pytest
@@ -49,7 +49,7 @@ pytestmark = pytest.mark.slow
 
 # Cache copula instances so each (name, params) pair is instantiated once
 # across all axiom tests in the session rather than once per test function.
-@lru_cache(maxsize=None)
+@cache
 def _instantiate(copula_name: str, params):
     """Return a fully-parameterised copula instance (cached)."""
     cop_class = getattr(copul, copula_name)
@@ -124,12 +124,8 @@ def test_grounded(name, params):
     # Batch: C(x_i, 0)
     vals_x0 = _cdf_batch(cop, xs, [0.0] * len(xs))
     for i, x in enumerate(xs):
-        assert vals_0x[i] == pytest.approx(0.0, abs=1e-9), (
-            f"{name}: C(0, {x}) = {vals_0x[i]} != 0"
-        )
-        assert vals_x0[i] == pytest.approx(0.0, abs=1e-9), (
-            f"{name}: C({x}, 0) = {vals_x0[i]} != 0"
-        )
+        assert vals_0x[i] == pytest.approx(0.0, abs=1e-9), f"{name}: C(0, {x}) = {vals_0x[i]} != 0"
+        assert vals_x0[i] == pytest.approx(0.0, abs=1e-9), f"{name}: C({x}, 0) = {vals_x0[i]} != 0"
 
 
 # ---------------------------------------------------------------------------
@@ -147,12 +143,8 @@ def test_uniform_margins(name, params):
     vals_1x = _cdf_batch(cop, [1.0] * len(xs), xs)
     vals_x1 = _cdf_batch(cop, xs, [1.0] * len(xs))
     for i, x in enumerate(xs):
-        assert vals_1x[i] == pytest.approx(x, abs=1e-4), (
-            f"{name}: C(1, {x}) = {vals_1x[i]} != {x}"
-        )
-        assert vals_x1[i] == pytest.approx(x, abs=1e-4), (
-            f"{name}: C({x}, 1) = {vals_x1[i]} != {x}"
-        )
+        assert vals_1x[i] == pytest.approx(x, abs=1e-4), f"{name}: C(1, {x}) = {vals_1x[i]} != {x}"
+        assert vals_x1[i] == pytest.approx(x, abs=1e-4), f"{name}: C({x}, 1) = {vals_x1[i]} != {x}"
 
 
 # ---------------------------------------------------------------------------
@@ -215,12 +207,8 @@ def test_frechet_hoeffding_bounds(name, params):
         u, v, val = us[k], vs[k], vals[k]
         lower = max(u + v - 1.0, 0.0)
         upper = min(u, v)
-        assert val >= lower - 1e-9, (
-            f"{name}: C({u},{v})={val:.6f} < W({u},{v})={lower:.6f}"
-        )
-        assert val <= upper + 1e-9, (
-            f"{name}: C({u},{v})={val:.6f} > M({u},{v})={upper:.6f}"
-        )
+        assert val >= lower - 1e-9, f"{name}: C({u},{v})={val:.6f} < W({u},{v})={lower:.6f}"
+        assert val <= upper + 1e-9, f"{name}: C({u},{v})={val:.6f} > M({u},{v})={upper:.6f}"
 
 
 # ---------------------------------------------------------------------------
@@ -268,15 +256,11 @@ def test_conditional_distribution_range(name, params):
                 continue
             try:
                 result = method(u=u, v=v)
-                val = (
-                    float(result.evalf()) if hasattr(result, "evalf") else float(result)
-                )
+                val = float(result.evalf()) if hasattr(result, "evalf") else float(result)
             except Exception as exc:
                 log.debug("%s.%s(%s,%s) skipped: %s", name, method_name, u, v, exc)
                 continue
-            assert -0.01 <= val <= 1.01, (
-                f"{name}.{method_name}({u},{v}) = {val:.6f} not in [0,1]"
-            )
+            assert -0.01 <= val <= 1.01, f"{name}.{method_name}({u},{v}) = {val:.6f} not in [0,1]"
 
 
 # ---------------------------------------------------------------------------

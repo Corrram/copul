@@ -1,4 +1,5 @@
 import sympy
+
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -28,7 +29,7 @@ class CDFWrapper(SymPyFuncWrapper):
 
         # ---------- Generic boundary checks (dimension-agnostic) ----------
         # ANY zero among provided -> 0
-        for name, val in provided.items():
+        for _name, val in provided.items():
             try:
                 if float(val) == 0.0:
                     return SymPyFuncWrapper(sympy.S.Zero)

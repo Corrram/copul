@@ -141,9 +141,7 @@ def test_pdf_range(copula):
 
     for u, v in test_points:
         pdf_val = float(copula.pdf(u=u, v=v))
-        assert min_val <= pdf_val <= max_val, (
-            f"PDF value outside expected range for u={u}, v={v}"
-        )
+        assert min_val <= pdf_val <= max_val, f"PDF value outside expected range for u={u}, v={v}"
 
 
 def test_boundary_cases(copula):
@@ -186,9 +184,7 @@ def test_special_case_independence():
 
         # For independence, PDF = 1
         pdf_val = float(copula.pdf(u=u, v=v))
-        assert abs(pdf_val - 1) < 1e-10, (
-            f"PDF incorrect for independence case at u={u}, v={v}"
-        )
+        assert abs(pdf_val - 1) < 1e-10, f"PDF incorrect for independence case at u={u}, v={v}"
 
 
 def test_conditional_distribution():
@@ -235,9 +231,7 @@ def test_rho():
     for theta, expected in test_cases:
         copula = FarlieGumbelMorgenstern(theta=theta)
         rho = float(copula.spearmans_rho())
-        assert abs(rho - expected) < 1e-10, (
-            f"Spearman's rho incorrect for theta={theta}"
-        )
+        assert abs(rho - expected) < 1e-10, f"Spearman's rho incorrect for theta={theta}"
 
 
 def test_tau():

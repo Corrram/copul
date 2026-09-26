@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 from scipy.stats import multivariate_t
 from scipy.stats import t as student_t
-from statsmodels.distributions.copula.elliptical import StudentTCopula
+
 from copul.family.elliptical.elliptical_copula import EllipticalCopula
 from copul.family.other import LowerFrechet, UpperFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
@@ -81,6 +81,8 @@ class StudentT(EllipticalCopula):
         Returns:
             numpy.ndarray: Array of shape (n, 2) containing the samples
         """
+        from statsmodels.distributions.copula.elliptical import StudentTCopula
+
         return StudentTCopula(self.rho, df=self.nu).rvs(n)
 
     def _calculate_student_t_cdf(self, u, v, rho_val, nu_val):
@@ -130,16 +132,13 @@ class StudentT(EllipticalCopula):
         """
 
         def conditional_func(primary, secondary):
+            # Y | X=x  ~  rho*x + sqrt((nu+x^2)(1-rho^2)/(nu+1)) * t_{nu+1}
+            x = student_t.ppf(primary, self.nu)
             cdf = student_t.cdf(
                 student_t.ppf(secondary, self.nu),
-                self.nu,
-                loc=self.rho * student_t.ppf(primary, self.nu),
-                scale=(
-                    (1 - self.rho**2)
-                    * (self.nu + 1)
-                    / (self.nu + student_t.ppf(primary, self.nu) ** 2)
-                )
-                ** 0.5,
+                self.nu + 1,
+                loc=self.rho * x,
+                scale=((1 - self.rho**2) * (self.nu + x**2) / (self.nu + 1)) ** 0.5,
             )
             if isinstance(cdf, float):
                 return sympy.S(cdf)
@@ -194,9 +193,79 @@ class StudentT(EllipticalCopula):
         Returns:
             callable: Function that computes the PDF at given points
         """
+        from statsmodels.distributions.copula.elliptical import StudentTCopula
+
         return lambda u, v: SymPyFuncWrapper(
             sympy.S(StudentTCopula(self.rho, df=self.nu).pdf([u, v]))
         )
+
+    def _numeric_callables(self):
+        r"""Vectorized ingredients for the measures engine.
+
+        With :math:`x=t_\nu^{-1}(u)`, :math:`y=t_\nu^{-1}(v)`,
+
+        .. math::
+
+           \partial_1 C(u,v) = t_{\nu+1}\!\Bigl(\frac{y-\rho x}
+               {\sqrt{(\nu+x^2)(1-\rho^2)/(\nu+1)}}\Bigr),
+
+        the density is the ratio of the bivariate and univariate t
+        densities, and :math:`C(u,v)=\int_0^u\partial_1C(s,v)\,ds` is evaluated
+        by 48-point Gauss--Legendre quadrature after the substitution
+        :math:`s=u\,w^4` (which removes the algebraic endpoint behaviour).
+        The engine prefers the h-function formulas for rho and nu.
+        """
+        from scipy.special import gammaln, stdtr, stdtrit
+
+        r = float(self.rho)
+        nu = float(self.nu)
+        s = np.sqrt(1.0 - r * r)
+
+        def h(a, b):
+            x = stdtrit(nu, a)
+            y = stdtrit(nu, b)
+            return stdtr(nu + 1.0, (y - r * x) / (s * np.sqrt((nu + x * x) / (nu + 1.0))))
+
+        def h1(u, v):
+            return h(u, v)
+
+        def h2(u, v):
+            return h(v, u)
+
+        logk = gammaln((nu + 2) / 2) + gammaln(nu / 2) - 2 * gammaln((nu + 1) / 2)
+
+        def pdf(u, v):
+            x = stdtrit(nu, u)
+            y = stdtrit(nu, v)
+            q = (x * x - 2 * r * x * y + y * y) / (nu * (1 - r * r))
+            lg = (
+                logk
+                - np.log(s)
+                - (nu + 2) / 2 * np.log1p(q)
+                + (nu + 1) / 2 * (np.log1p(x * x / nu) + np.log1p(y * y / nu))
+            )
+            return np.exp(lg)
+
+        gx, gw = np.polynomial.legendre.leggauss(48)
+        gx = 0.5 * (gx + 1.0)
+        gw = 0.5 * gw
+        w4 = gx**4
+        jac = 4 * gx**3 * gw
+
+        def cdf(u, v):
+            u, v = np.broadcast_arrays(np.asarray(u, float), np.asarray(v, float))
+            shape = u.shape
+            uf, vf = u.ravel(), v.ravel()
+            out = np.empty(uf.size)
+            step = 20_000
+            for i in range(0, uf.size, step):
+                uu = uf[i : i + step, None]
+                vv = vf[i : i + step, None]
+                vals = h(uu * w4[None, :], np.broadcast_to(vv, (vv.shape[0], w4.size)))
+                out[i : i + step] = uu[:, 0] * (vals @ jac)
+            return out.reshape(shape)
+
+        return {"cdf": cdf, "h1": h1, "h2": h2, "pdf": pdf, "prefer_h": True}
 
     # ------------------------------------------------------------------
     # Analytical dependence measures
@@ -274,48 +343,6 @@ class StudentT(EllipticalCopula):
         rho_val = float(self.rho)
         return (2.0 / np.pi) * np.arcsin(rho_val)
 
-    def spearmans_rho(self, *args, **kwargs):
-        r"""Spearman's :math:`\rho_S` for the Student-t copula (numerical).
-
-        In contrast to Kendall's :math:`\tau` and Blomqvist's :math:`\beta`,
-        Spearman's :math:`\rho_S` of the Student-t copula is *not* given by
-        the Gaussian formula :math:`\tfrac6\pi\arcsin(\rho/2)`; it depends on
-        :math:`\nu` (e.g., for :math:`\nu=2`, :math:`\rho=0.5`, the true
-        value is :math:`\approx0.455` versus :math:`0.483` for the Gaussian
-        formula). It is computed here as
-        :math:`\rho_S = 12\,\mathbb{E}[UV]-3` by Gauss--Legendre quadrature
-        of :math:`u\,v\,c(u,v)` over the unit square.
-
-        Returns
-        -------
-        float
-        """
-        self._set_params(args, kwargs)
-        rho_val = float(self.rho)
-        nu_val = float(self.nu)
-        if abs(rho_val) >= 1.0:
-            return float(np.sign(rho_val))
-        if rho_val == 0.0:
-            return 0.0
-        from numpy.polynomial.legendre import leggauss
-        from scipy.stats import multivariate_t
-
-        n = 128
-        x, w = leggauss(n)
-        p = 0.5 * (x + 1.0)
-        wp = 0.5 * w
-        q = student_t.ppf(p, df=nu_val)
-        dens = student_t.pdf(q, df=nu_val)
-        xx, yy = np.meshgrid(q, q, indexing="ij")
-        pts = np.column_stack([xx.ravel(), yy.ravel()])
-        joint = multivariate_t.pdf(
-            pts, loc=[0.0, 0.0], shape=[[1.0, rho_val], [rho_val, 1.0]], df=nu_val
-        ).reshape(n, n)
-        c_dens = joint / np.outer(dens, dens)
-        integrand = np.outer(p, p) * c_dens
-        e_uv = float(np.einsum("i,j,ij->", wp, wp, integrand))
-        return 12.0 * e_uv - 3.0
-
     def blests_nu(self, *args, **kwargs):
         r"""Blest's rank correlation :math:`\nu` for the Student-t copula.
 
@@ -324,15 +351,6 @@ class StudentT(EllipticalCopula):
         :math:`\nu = \rho_S`.
         """
         return self.spearmans_rho(*args, **kwargs)
-
-    def schweizer_wolff_sigma(self, *args, **kwargs):
-        r"""Schweizer--Wolff :math:`\sigma` for the Student-t copula.
-
-        Elliptical families are increasing in :math:`\rho` with respect to
-        the lower orthant order, hence PQD for :math:`\rho\ge0` and NQD for
-        :math:`\rho\le0`, so :math:`\sigma = |\rho_S|`.
-        """
-        return abs(self.spearmans_rho(*args, **kwargs))
 
     def blomqvists_beta(self, *args, **kwargs):
         r"""Blomqvist's :math:`\beta` for the Student-t copula.
@@ -395,9 +413,7 @@ class StudentT(EllipticalCopula):
 
         for i in np.ndindex(t.shape):
             ti = t[i]
-            if ti <= 0:
-                out[i] = 0.0
-            elif ti >= 1:
+            if ti <= 0 or ti >= 1:
                 out[i] = 0.0
             else:
                 u_s = eps * (1 - ti)
@@ -409,9 +425,7 @@ class StudentT(EllipticalCopula):
                         u_s
                         + v_s
                         - 1
-                        + self._calculate_student_t_cdf(
-                            1 - u_s, 1 - v_s, rho_val, nu_val
-                        )
+                        + self._calculate_student_t_cdf(1 - u_s, 1 - v_s, rho_val, nu_val)
                     )
                 out[i] = c_val / eps
 

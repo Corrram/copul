@@ -27,11 +27,7 @@ class Tawn(BivExtremeValueCopula):
         # Handle keyword arguments
         if len(args) == 0:
             if "alpha_1" in kwargs and "alpha_2" in kwargs:
-                if (
-                    kwargs["alpha_1"] == 1
-                    and kwargs["alpha_2"] == 1
-                    and "theta" in kwargs
-                ):
+                if kwargs["alpha_1"] == 1 and kwargs["alpha_2"] == 1 and "theta" in kwargs:
                     # GumbelHougaard special case
                     theta = kwargs.pop("theta")
                     # Remove alpha params
@@ -89,8 +85,7 @@ class Tawn(BivExtremeValueCopula):
         elif "alpha_1" in kwargs and kwargs["alpha_1"] == 1:
             del kwargs["alpha_1"]
             if self.alpha_2 == 1:
-                if "alpha_2" in kwargs:
-                    del kwargs["alpha_2"]
+                kwargs.pop("alpha_2", None)
                 return GumbelHougaard(**kwargs)
             new_copula = copy.deepcopy(self)
             new_copula.alpha_1 = 1
@@ -98,18 +93,15 @@ class Tawn(BivExtremeValueCopula):
         elif "alpha_2" in kwargs and kwargs["alpha_2"] == 1:
             del kwargs["alpha_2"]
             if self.alpha_1 == 1:
-                if "alpha_1" in kwargs:
-                    del kwargs["alpha_1"]
+                kwargs.pop("alpha_1", None)
                 return GumbelHougaard(**kwargs)
             new_copula = copy.deepcopy(self)
             new_copula.alpha_2 = 1
             return new_copula(**kwargs)
         elif "theta" in kwargs and kwargs["theta"] == 1:
             del kwargs["theta"]
-            if "alpha_1" in kwargs:
-                del kwargs["alpha_1"]
-            if "alpha_2" in kwargs:
-                del kwargs["alpha_2"]
+            kwargs.pop("alpha_1", None)
+            kwargs.pop("alpha_2", None)
             return BivIndependenceCopula()(**kwargs)
         elif "theta" in kwargs and kwargs["theta"] == sympy.oo:
             del kwargs["theta"]
@@ -154,10 +146,7 @@ class Tawn(BivExtremeValueCopula):
             * v ** (1 - alpha_2)
             * sympy.exp(
                 -(
-                    (
-                        (alpha_1 * sympy.log(1 / u)) ** theta
-                        + (alpha_2 * sympy.log(1 / v)) ** theta
-                    )
+                    ((alpha_1 * sympy.log(1 / u)) ** theta + (alpha_2 * sympy.log(1 / v)) ** theta)
                     ** (1 / theta)
                 )
             )

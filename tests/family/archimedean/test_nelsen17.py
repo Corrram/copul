@@ -85,9 +85,7 @@ def test_inverse_generator_function(nelsen17_copula):
     for y in y_values:
         # Manual calculation using the formula
         theta = 1
-        expected = (2**theta * np.exp(y) / (2**theta * np.exp(y) - 2**theta + 1)) ** (
-            1 / theta
-        ) - 1
+        expected = (2**theta * np.exp(y) / (2**theta * np.exp(y) - 2**theta + 1)) ** (1 / theta) - 1
         actual = float(nelsen17_copula.inv_generator(y))
         assert np.isclose(actual, expected, rtol=1e-5)
 
@@ -100,9 +98,7 @@ def test_cdf_function(nelsen17_copula):
     for u, v in points:
         # Manual calculation using the formula
         theta = 1
-        term = (
-            ((1 + u) ** (-theta) - 1) * ((1 + v) ** (-theta) - 1) / (2 ** (-theta) - 1)
-        )
+        term = ((1 + u) ** (-theta) - 1) * ((1 + v) ** (-theta) - 1) / (2 ** (-theta) - 1)
         expected = (1 + term) ** (-1 / theta) - 1
         actual = float(nelsen17_copula.cdf(u, v))
         assert np.isclose(actual, expected, rtol=1e-5)
@@ -141,9 +137,7 @@ def test_derivative_functions(nelsen17_copula):
     # We'll just verify they can be called without errors
 
     # Patch the 'y' property for testing
-    with patch.object(
-        nelsen17_copula, "y", sympy.Symbol("y", real=True, positive=True)
-    ):
+    with patch.object(nelsen17_copula, "y", sympy.Symbol("y", real=True, positive=True)):
         # Test first derivatives
         first_deriv_inv_gen = nelsen17_copula.first_deriv_of_inv_gen
         first_deriv_ci_char = nelsen17_copula.first_deriv_of_ci_char
@@ -167,12 +161,8 @@ def test_density_related_functions(nelsen17_copula):
     # We'll just verify they can be called without errors
 
     # Patch the 'u' and 'v' properties for testing
-    with patch.object(
-        nelsen17_copula, "u", sympy.Symbol("u", real=True, positive=True)
-    ):
-        with patch.object(
-            nelsen17_copula, "v", sympy.Symbol("v", real=True, positive=True)
-        ):
+    with patch.object(nelsen17_copula, "u", sympy.Symbol("u", real=True, positive=True)):
+        with patch.object(nelsen17_copula, "v", sympy.Symbol("v", real=True, positive=True)):
             # Test derivative of log density
             deriv_log_density = nelsen17_copula.deriv_of_log_density()
 

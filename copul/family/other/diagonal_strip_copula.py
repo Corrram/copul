@@ -1,7 +1,8 @@
-from typing import Tuple, TypeAlias
+from typing import TypeAlias
 
 import numpy as np
 import sympy as sp
+
 from copul.family.core.biv_copula import BivCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 
@@ -60,7 +61,7 @@ class XiPsiApproxLowerBoundaryCopula(BivCopula):
                 raise ValueError("Provide at most two positional args: alpha, beta.")
         super().__init__(**kwargs)
 
-    def _get_constants(self) -> Tuple[float, float, float, float, float, float, float]:
+    def _get_constants(self) -> tuple[float, float, float, float, float, float, float]:
         """Computes structural constants A, K, C, u1, k."""
         a = float(self.alpha)
         b = float(self.beta)

@@ -216,7 +216,5 @@ def test_nelsen13_lower_orthant_ordered():
 
     linspace = np.linspace(0.01, 0.99, 10)
     grid2d = np.meshgrid(linspace, linspace)
-    values = np.array(
-        [func(u, v) for u, v in zip(grid2d[0].flatten(), grid2d[1].flatten())]
-    )
+    values = np.array([func(u, v) for u, v in zip(grid2d[0].flatten(), grid2d[1].flatten())])
     assert np.all(values <= 0)

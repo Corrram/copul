@@ -63,10 +63,7 @@ class MarshallOlkin(BivExtremeValueCopula):
         heavy_expr = self.u * self.v ** (1 - alpha2) - self.u ** (1 - alpha_1) * self.v
         cd1 = (
             self.u * self.v ** (1 - alpha2) * sympy.Heaviside(-heavy_expr)
-            - self.u ** (1 - alpha_1)
-            * self.v
-            * (alpha_1 - 1)
-            * sympy.Heaviside(heavy_expr)
+            - self.u ** (1 - alpha_1) * self.v * (alpha_1 - 1) * sympy.Heaviside(heavy_expr)
         ) / self.u
         return CD1Wrapper(cd1)(u, v)
 
@@ -84,9 +81,7 @@ class MarshallOlkin(BivExtremeValueCopula):
         alpha1 = self.alpha_1
         alpha2 = self.alpha_2
         return (
-            u
-            * v ** (1 - alpha2)
-            * sympy.Heaviside(-u * v ** (1 - alpha2) + u ** (1 - alpha1) * v)
+            u * v ** (1 - alpha2) * sympy.Heaviside(-u * v ** (1 - alpha2) + u ** (1 - alpha1) * v)
             - u ** (1 - alpha1)
             * v
             * (alpha1 - 1)
@@ -101,12 +96,8 @@ class MarshallOlkin(BivExtremeValueCopula):
         integrand_2 = (u ** (1 - alpha_1) * v * (alpha_1 - 1)) ** 2 / u**2
         log.debug(sympy.latex(sympy.simplify(integrand_1)))
         log.debug(sympy.latex(sympy.simplify(integrand_2)))
-        int_1 = sympy.simplify(
-            sympy.integrate(integrand_1, (u, 0, v ** (alpha_2 / alpha_1)))
-        )
-        int_2 = sympy.simplify(
-            sympy.integrate(integrand_2, (u, v ** (alpha_2 / alpha_1), 1))
-        )
+        int_1 = sympy.simplify(sympy.integrate(integrand_1, (u, 0, v ** (alpha_2 / alpha_1))))
+        int_2 = sympy.simplify(sympy.integrate(integrand_2, (u, v ** (alpha_2 / alpha_1), 1)))
         int_2 = sympy.simplify(int_2)
         log.debug(sympy.latex(int_1))
         log.debug(sympy.latex(int_2))
@@ -164,20 +155,12 @@ class MarshallOlkin(BivExtremeValueCopula):
 
     def spearmans_footrule(self, *args, **kwargs):
         return (
-            2
-            * sympy.Min(self.alpha_1, self.alpha_2)
-            / (3 - sympy.Min(self.alpha_1, self.alpha_2))
+            2 * sympy.Min(self.alpha_1, self.alpha_2) / (3 - sympy.Min(self.alpha_1, self.alpha_2))
         )
 
     # ------------------------------------------------------------------
     # Additional dependence measures — closed forms
     # ------------------------------------------------------------------
-
-    def spearman_footrule(self, *args, **kwargs):
-        r"""Spearman's footrule :math:`\psi = 2m/(3-m)` with
-        :math:`m=\min\{\alpha_1,\alpha_2\}`, since
-        :math:`C(t,t)=t^{2-m}` on the diagonal."""
-        return self.spearmans_footrule(*args, **kwargs)
 
     def blests_nu(self, *args, **kwargs):
         r"""

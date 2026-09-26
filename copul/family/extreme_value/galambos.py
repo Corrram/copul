@@ -28,9 +28,7 @@ class Galambos(BivExtremeValueCopula):
 
     @property
     def _pickands(self):
-        expr = 1 - (self.t ** (-self.delta) + (1 - self.t) ** (-self.delta)) ** (
-            -1 / self.delta
-        )
+        expr = 1 - (self.t ** (-self.delta) + (1 - self.t) ** (-self.delta)) ** (-1 / self.delta)
         return sympy.Piecewise(
             (1, sympy.Or(sympy.Eq(self.t, 0), sympy.Eq(self.t, 1))),
             (expr, True),
@@ -45,8 +43,7 @@ class Galambos(BivExtremeValueCopula):
             u
             * v
             * sympy.exp(
-                (sympy.log(1 / u) ** (-delta) + sympy.log(1 / v) ** (-delta))
-                ** (-1 / delta)
+                (sympy.log(1 / u) ** (-delta) + sympy.log(1 / v) ** (-delta)) ** (-1 / delta)
             )
         )
 

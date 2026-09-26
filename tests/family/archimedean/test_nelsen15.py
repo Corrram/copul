@@ -95,9 +95,7 @@ def test_cdf_function(genest_ghoudi):
     for u, v in points:
         # Manual calculation using the formula
         theta = 2
-        term = ((1 - u ** (1 / theta)) ** theta + (1 - v ** (1 / theta)) ** theta) ** (
-            1 / theta
-        )
+        term = ((1 - u ** (1 / theta)) ** theta + (1 - v ** (1 / theta)) ** theta) ** (1 / theta)
         expected = max(0, (1 - term) ** theta)
         actual = float(genest_ghoudi.cdf(u, v))
         assert np.isclose(actual, expected, rtol=1e-3)
@@ -107,9 +105,7 @@ def test_cdf_function(genest_ghoudi):
 
     for u, v in edge_points:
         theta = 2
-        term = ((1 - u ** (1 / theta)) ** theta + (1 - v ** (1 / theta)) ** theta) ** (
-            1 / theta
-        )
+        term = ((1 - u ** (1 / theta)) ** theta + (1 - v ** (1 / theta)) ** theta) ** (1 / theta)
         raw_value = (1 - term) ** theta
         actual = float(genest_ghoudi.cdf(u, v))
 
@@ -217,9 +213,7 @@ def test_large_theta_behavior():
 
         # For very large theta, calculate the expected value
         theta = 50
-        term = ((1 - u ** (1 / theta)) ** theta + (1 - v ** (1 / theta)) ** theta) ** (
-            1 / theta
-        )
+        term = ((1 - u ** (1 / theta)) ** theta + (1 - v ** (1 / theta)) ** theta) ** (1 / theta)
         expected = max(0, (1 - term) ** theta)
         assert np.isclose(result, expected, rtol=1e-4)  # Use a bit more tolerance
 

@@ -75,9 +75,15 @@ def test_from_cdf_with_gumbel_barnett_different_var_names():
     sample_data = copula.rvs(3, 42)
     print("Generated sample data:", sample_data)  # Debugging: Print the generated data
 
-    # Update expected values based on the actual output
+    # Values from np.random.default_rng(42) (the sampler no longer seeds
+    # Python's global `random` module); v is the first uniform draw and u
+    # solves C_2(u | v) = t for the second one.
     expected = np.array(
-        [[0.0202756, 0.6394268], [0.30229998, 0.27502932], [0.57743862, 0.73647121]]
+        [
+            [0.3243774879, 0.7739560486],
+            [0.5673800135, 0.8585979199],
+            [0.9854438411, 0.0941773479],
+        ]
     )
     assert np.allclose(sample_data, expected, atol=1e-8)
 

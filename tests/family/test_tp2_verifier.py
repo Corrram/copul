@@ -3,9 +3,9 @@ Tests for the TP2Verifier class.
 """
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 import sympy
-
 
 from copul.family.tp2_verifier import TP2Verifier
 

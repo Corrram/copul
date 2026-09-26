@@ -2,10 +2,11 @@
 Tests for the consolidated Copula class.
 """
 
-import pytest
-import numpy as np
-import sympy as sp
 from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pytest
+import sympy as sp
 
 from copul import from_cdf
 from copul.family.core.copula import Copula
@@ -86,9 +87,7 @@ class TestCopulaBase:
 
     def test_parameters(self, copula):
         """Test parameters property"""
-        assert copula.parameters == {
-            str(sp.symbols("theta")): sp.Interval(0, float("inf"))
-        }
+        assert copula.parameters == {str(sp.symbols("theta")): sp.Interval(0, float("inf"))}
 
     def test_are_class_vars(self, copula):
         """Test _are_class_vars method"""
@@ -164,9 +163,7 @@ class TestCopulaBase:
 
                 # Test specific methods instead of cond_distr
                 # Patch cond_distr_1 directly
-                with patch.object(
-                    SampleCopula, "cond_distr_1", autospec=True
-                ) as mock_cond_distr_1:
+                with patch.object(SampleCopula, "cond_distr_1", autospec=True) as mock_cond_distr_1:
                     mock_cond_distr_1.return_value = expected_value
 
                     # Create a new copula to use the patched method
@@ -178,9 +175,7 @@ class TestCopulaBase:
                     mock_cond_distr_1.assert_called_once()
 
                 # Test cond_distr_2
-                with patch.object(
-                    SampleCopula, "cond_distr_2", autospec=True
-                ) as mock_cond_distr_2:
+                with patch.object(SampleCopula, "cond_distr_2", autospec=True) as mock_cond_distr_2:
                     mock_cond_distr_2.return_value = mock_func_wrapper
 
                     # Create a new copula to use the patched method
@@ -276,9 +271,7 @@ class TestCopulaSampling:
         result = self.copula.rvs(n=n_samples, random_state=random_state)
 
         # Verify the calls
-        mock_sampler_class.assert_called_once_with(
-            self.copula, random_state=random_state
-        )
+        mock_sampler_class.assert_called_once_with(self.copula, random_state=random_state)
         mock_sampler.rvs.assert_called_once_with(n_samples, False)
 
         # Verify the result
@@ -360,9 +353,7 @@ def test_rvs_parameter_combinations(n_samples, random_state, approximate):
     original_rvs = Copula.rvs.__get__(mock_copula)
 
     # Create mock sampler
-    with patch(
-        "copul.family.core.copula_sampling_mixin.CopulaSampler"
-    ) as mock_sampler_class:
+    with patch("copul.family.core.copula_sampling_mixin.CopulaSampler") as mock_sampler_class:
         mock_sampler = MagicMock()
         mock_sampler.rvs.return_value = np.random.random((n_samples, 2))
         mock_sampler_class.return_value = mock_sampler
@@ -371,9 +362,7 @@ def test_rvs_parameter_combinations(n_samples, random_state, approximate):
         original_rvs(n=n_samples, random_state=random_state, approximate=approximate)
 
         # Verify the calls
-        mock_sampler_class.assert_called_once_with(
-            mock_copula, random_state=random_state
-        )
+        mock_sampler_class.assert_called_once_with(mock_copula, random_state=random_state)
         mock_sampler.rvs.assert_called_once_with(n_samples, approximate)
 
 

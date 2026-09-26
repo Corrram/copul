@@ -1,6 +1,6 @@
 # file: copul/families/other/biv_counterexample_band_copula.py
-import sympy as sp
 import numpy as np
+import sympy as sp
 
 from copul.family.core.biv_copula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper

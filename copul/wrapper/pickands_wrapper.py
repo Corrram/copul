@@ -27,14 +27,9 @@ class PickandsWrapper:
                 if t_val == 0 or t_val == 1:
                     return sp.Float(1.0)
 
-                # For HueslerReiss, handle near-boundary cases
-                if (
-                    self.copula_class == "HueslerReiss" or True
-                ):  # Handle all copulas for safety
-                    if t_val < 1e-10:
-                        return sp.Float(1.0)
-                    if t_val > 1 - 1e-10:
-                        return sp.Float(1.0)
+                # Near-boundary cases (A(t) -> 1 as t -> 0 or 1 for every Pickands function)
+                if t_val < 1e-10 or t_val > 1 - 1e-10:
+                    return sp.Float(1.0)
             except (TypeError, ValueError):
                 # If we can't convert to float, proceed with symbolic substitution
                 pass

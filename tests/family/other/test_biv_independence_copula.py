@@ -3,8 +3,8 @@ import pytest
 import sympy
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
-from copul.family.frechet.frechet import Frechet
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
+from copul.family.frechet.frechet import Frechet
 
 
 @pytest.fixture

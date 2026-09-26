@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-import copul
 
+import copul
 
 ROUND_TRIP_T_VALUES = np.array([0.1, 0.25, 0.5, 0.75, 0.9])
 
@@ -43,8 +43,7 @@ def test_generator_and_inverse_generator_round_trip_numerically(family_name):
 
         assert np.isfinite(generated), f"{family_name} generator is not finite at t={t}"
         assert np.isclose(restored_t, t, rtol=1e-10, atol=1e-10), (
-            f"{family_name} inverse generator failed at t={t}: "
-            f"got phi^-1(phi(t))={restored_t}"
+            f"{family_name} inverse generator failed at t={t}: got phi^-1(phi(t))={restored_t}"
         )
         assert np.isclose(regenerated, generated, rtol=1e-9, atol=1e-10), (
             f"{family_name} generator failed after inverse at y={generated}: "
@@ -83,9 +82,7 @@ def test_all_generators():
     for copula in arch_copulas:
         cop = getattr(copul.Families, copula).cls()
         if copula in ["CLAYTON", "NELSEN1", "NELSEN7"]:
-            cop = cop(
-                0.5
-            )  # needed because generator value for clayton at 0 depends on theta
+            cop = cop(0.5)  # needed because generator value for clayton at 0 depends on theta
         elif copula == "NELSEN18":
             cop = cop(2.5)
         try:
@@ -108,9 +105,7 @@ def test_all_inv_generators():
     for copula in arch_copulas:
         cop = getattr(copul.Families, copula).cls()
         if copula in ["CLAYTON", "NELSEN1", "NELSEN7"]:
-            cop = cop(
-                0.5
-            )  # needed because generator value for clayton at 0 depends on theta
+            cop = cop(0.5)  # needed because generator value for clayton at 0 depends on theta
         elif copula == "NELSEN18":
             cop = cop(2.5)
         try:

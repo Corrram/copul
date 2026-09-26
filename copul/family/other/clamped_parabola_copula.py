@@ -1,18 +1,16 @@
+import types
+import warnings
 from typing import TypeAlias
 
-import sympy as sp
 import numpy as np
+import sympy as sp
+from scipy.integrate import IntegrationWarning
 from scipy.optimize import brentq
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import types
 
+from copul._lazy import mcolors, plt
 from copul.family.core.biv_copula import BivCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.family.frechet.upper_frechet import UpperFrechet
-
-import warnings
-from scipy.integrate import IntegrationWarning
 
 warnings.filterwarnings("ignore", category=IntegrationWarning)
 
@@ -82,12 +80,10 @@ class XiNuBoundaryCopula(BivCopula):
 
         lo, hi = -1.0 / b_val, 1.0
         try:
-            q_val = brentq(
-                self._marginal_integral_residual, lo, hi, args=(v_val, b_val)
-            )
+            q_val = brentq(self._marginal_integral_residual, lo, hi, args=(v_val, b_val))
             self._q_cache[cache_key] = q_val
             return q_val
-        except ValueError:
+        except ValueError as e:
             # check boundaries
             rl = self._marginal_integral_residual(lo, v_val, b_val)
             if np.isclose(rl, 0.0):
@@ -98,7 +94,7 @@ class XiNuBoundaryCopula(BivCopula):
             raise RuntimeError(
                 f"Failed to find q for v={v_val}, b={b_val}. "
                 f"Residuals: F(-1/b)={rl:.3g}, F(1)={rh:.3g}"
-            )
+            ) from e
 
     def _get_q_v_vec(self, v_arr, b_val):
         v_arr = np.asarray(v_arr)
@@ -262,9 +258,7 @@ class XiNuBoundaryCopula(BivCopula):
             while xi_of_mu(hi) > x_target:
                 hi *= 2.0
                 if hi > 1e12:
-                    raise RuntimeError(
-                        "from_xi bracketing failed (upper bound exploded)."
-                    )
+                    raise RuntimeError("from_xi bracketing failed (upper bound exploded).")
         else:
             hi, lo = 1.0, 0.5
             while xi_of_mu(lo) < x_target:
@@ -386,9 +380,7 @@ class XiNuBoundaryCopula(BivCopula):
         plt.show()
         return fig, ax
 
-    def _plot_contour(
-        self, func, title, zlabel, *, levels=200, zlim=None, log_z=False, **kwargs
-    ):
+    def _plot_contour(self, func, title, zlabel, *, levels=200, zlim=None, log_z=False, **kwargs):
         """
         Internal contour plot using either a numpy-callable or a SymPy expr.
         If 'func' is a SymPy expression, we lambdify it with q(v) injected.
@@ -490,9 +482,7 @@ class XiNuBoundaryCopula(BivCopula):
         zlabel = kwargs.pop("zlabel", "CDF")
 
         if plot_type == "3d":
-            return self._plot3d(
-                self.cdf_vectorized, title, zlabel, zlim=(0, 1), **kwargs
-            )
+            return self._plot3d(self.cdf_vectorized, title, zlabel, zlim=(0, 1), **kwargs)
         elif plot_type == "contour":
             return self._plot_contour(
                 self.cdf_vectorized, title, zlabel, zlim=(0, 1), log_z=log_z, **kwargs
@@ -508,9 +498,7 @@ class XiNuBoundaryCopula(BivCopula):
         if plot_type == "3d":
             return self._plot3d(self.pdf_vectorized, title, zlabel, **kwargs)
         elif plot_type == "contour":
-            return self._plot_contour(
-                self.pdf_vectorized, title, zlabel, log_z=log_z, **kwargs
-            )
+            return self._plot_contour(self.pdf_vectorized, title, zlabel, log_z=log_z, **kwargs)
         else:
             raise ValueError(f"plot_type must be '3d' or 'contour', not {plot_type}")
 
@@ -526,9 +514,7 @@ class XiNuBoundaryCopula(BivCopula):
         if plot_type == "3d":
             return self._plot3d(expr, title, zlabel, zlim=(0, 1), **kwargs)
         elif plot_type == "contour":
-            return self._plot_contour(
-                expr, title, zlabel, zlim=(0, 1), log_z=log_z, **kwargs
-            )
+            return self._plot_contour(expr, title, zlabel, zlim=(0, 1), log_z=log_z, **kwargs)
         elif plot_type == "slices":
             return self._plot_functions(expr, title, zlabel, **kwargs)
         else:

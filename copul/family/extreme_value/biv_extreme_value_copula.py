@@ -3,15 +3,16 @@ import logging
 import warnings
 from contextlib import contextmanager
 
-import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
 from sympy import Derivative, Subs, log
 
+from copul._lazy import plt
+from copul.family.core.biv_core_copula import BivCoreCopula
 from copul.family.extreme_value.multivariate_extreme_value_copula import (
     MultivariateExtremeValueCopula,
 )
-from copul.family.core.biv_core_copula import BivCoreCopula
+from copul.measures.engine import symbolic_measure
 from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.pickands_wrapper import PickandsWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -45,8 +46,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             Additional parameters for the specific extreme value copula.
         """
 
-        if "dimension" in kwargs:
-            del kwargs["dimension"]
+        kwargs.pop("dimension", None)
         # First initialize as a MultivariateExtremeValueCopula with dimension=2
         MultivariateExtremeValueCopula.__init__(self, 2, *args, **kwargs)
         BivCoreCopula.__init__(self)
@@ -114,13 +114,11 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             if pickands == "1 - (x ** (-delta) + (1 - x) ** (-delta)) ** (-1 / delta)":
                 obj = cls()
                 x, delta = sp.symbols("x delta", positive=True)
-                galambos_expr = 1 - (x ** (-delta) + (1 - x) ** (-delta)) ** (
-                    -1 / delta
-                )
+                galambos_expr = 1 - (x ** (-delta) + (1 - x) ** (-delta)) ** (-1 / delta)
                 obj._pickands = galambos_expr.subs(x, cls.t)
                 obj.params = [delta]
                 obj._free_symbols = {"delta": delta}
-                setattr(obj, "delta", delta)
+                obj.delta = delta
                 return obj
 
         # Parse to sympy expression
@@ -417,9 +415,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
                 # Fallback implementation for any part that fails
                 import warnings
 
-                warnings.warn(
-                    f"Error in vectorized CDF calculation: {e}. Using scalar fallback."
-                )
+                warnings.warn(f"Error in vectorized CDF calculation: {e}. Using scalar fallback.")
 
                 # Get the scalar CDF function
                 cdf_func = self.cdf
@@ -496,9 +492,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             # Fallback implementation
             import warnings
 
-            warnings.warn(
-                f"Error in PDF calculation: {e}. Using numerical approximation."
-            )
+            warnings.warn(f"Error in PDF calculation: {e}. Using numerical approximation.")
 
             # Use numerical differentiation as fallback
             def pdf_func(u=None, v=None):
@@ -523,6 +517,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
             return SymPyFuncWrapper(pdf_func)
 
+    @symbolic_measure
     def spearmans_rho(self, *args, **kwargs):
         r"""Spearman’s :math:`\rho` for the extreme value copula.
 
@@ -568,8 +563,9 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
 
         return sp.simplify(12 * sp.integrate(self._rho_int_1(), (self.t, 0, 1)) - 3)
 
+    @symbolic_measure
     def kendalls_tau(self, *args, **kwargs):
-        r"""Compute Spearman’s :math:`\rho`.
+        r"""Kendall's :math:`\tau` via the Pickands function (symbolic).
 
         Returns
         -------
@@ -605,9 +601,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             subs = kwargs
         if subs is None:
             subs = {}
-        subs = {
-            getattr(self, k) if isinstance(k, str) else k: v for k, v in subs.items()
-        }
+        subs = {getattr(self, k) if isinstance(k, str) else k: v for k, v in subs.items()}
         for key, value in subs.items():
             if not isinstance(value, list):
                 subs[key] = [value]
@@ -626,9 +620,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             warnings.filterwarnings("default")
 
         params = {param: getattr(self, param) for param in [*self.intervals]}
-        defined_params = {
-            k: v for k, v in params.items() if not isinstance(v, sp.Symbol)
-        }
+        defined_params = {k: v for k, v in params.items() if not isinstance(v, sp.Symbol)}
         ", ".join(f"\\{key}={value}" for key, value in defined_params.items())
         x_label = "$t$"
         plt.xlabel(x_label)
@@ -841,59 +833,6 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         A_half = float(self.pickands(0.5))
         return 2.0 * (1.0 - A_half)
 
-    def blomqvists_beta(self, *args, **kwargs):
-        r"""Blomqvist's :math:`\beta` for extreme value copulas.
-
-        Since :math:`C(\tfrac12,\tfrac12) = (\tfrac14)^{A(1/2)}`:
-
-        .. math::
-
-           \beta = 4 \cdot (1/4)^{A(1/2)} - 1
-
-        Returns
-        -------
-        float
-        """
-        if args or kwargs:
-            self._set_params(args, kwargs)
-        A_half = float(self.pickands(0.5))
-        return 4.0 * (0.25**A_half) - 1.0
-
-    def gini_gamma(self, *args, **kwargs):
-        r"""Gini's :math:`\gamma` for extreme value copulas.
-
-        .. math::
-
-           \gamma = 4\!\left[
-               \int_0^1 t^{A(1/2)}\,dt
-             + \int_0^1 \bigl(t(1-t)\bigr)^{A\!\left(\frac{\ln(1-t)}
-                       {\ln(t(1-t))}\right)}\,dt
-           \right] - 2
-
-        Computed numerically via the vectorized CDF.
-
-        Returns
-        -------
-        float
-        """
-        if args or kwargs:
-            self._set_params(args, kwargs)
-        from scipy.integrate import quad
-
-        def diag(t):
-            if t <= 0 or t >= 1:
-                return 0.0
-            return float(self.cdf_vectorized(np.array([t]), np.array([t]))[0])
-
-        def anti(t):
-            if t <= 0 or t >= 1:
-                return 0.0
-            return float(self.cdf_vectorized(np.array([t]), np.array([1.0 - t]))[0])
-
-        int1, _ = quad(diag, 0, 1, limit=100)
-        int2, _ = quad(anti, 0, 1, limit=100)
-        return 4.0 * (int1 + int2) - 2.0
-
     def tail_dependence_function(self, t, lower=True):
         r"""Evaluate the tail dependence function at :math:`t \in [0,1]`.
 
@@ -924,9 +863,9 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         # Upper TDF: b(t) = 1 - A(t)
         if t.ndim == 0:
             return 1.0 - float(self.pickands(float(t)))
-        return np.array(
-            [1.0 - float(self.pickands(float(ti))) for ti in t.ravel()]
-        ).reshape(t.shape)
+        return np.array([1.0 - float(self.pickands(float(ti))) for ti in t.ravel()]).reshape(
+            t.shape
+        )
 
     def tail_order(self):
         r"""Tail order :math:`\kappa` for extreme value copulas.
@@ -962,7 +901,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         A_half = float(self.pickands(0.5))
         return 2.0 ** (2.0 - 2.0 * A_half) - 1.0
 
-    def spearman_footrule(self, *args, **kwargs):
+    def spearmans_footrule(self, *args, **kwargs):
         r"""Spearman's footrule for extreme value copulas.
 
         Since :math:`C_A(t,t) = t^{2A(1/2)}` exactly on the diagonal,

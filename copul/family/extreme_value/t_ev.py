@@ -1,7 +1,8 @@
 import numpy as np
 import sympy
-from sympy import stats, Float, re
 from scipy.stats import t as t_dist
+from sympy import Float, re, stats
+
 from copul.family.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
@@ -67,12 +68,7 @@ class tEV(BivExtremeValueCopula):
                 if t is not None:
                     try:
                         t_float = float(t)
-                        if (
-                            t_float == 0
-                            or t_float == 1
-                            or t_float < 1e-10
-                            or t_float > 1 - 1e-10
-                        ):
+                        if t_float == 0 or t_float == 1 or t_float < 1e-10 or t_float > 1 - 1e-10:
                             return Float(1.0)
                     except (TypeError, ValueError):
                         pass
@@ -145,6 +141,26 @@ class tEV(BivExtremeValueCopula):
         c = self.cdf_vectorized(ua, va)
         return float((c[0] - c[1] - c[2] + c[3]) / (4.0 * h * h))
 
+    def _pickands_numpy(self):
+        r"""Vectorized Pickands function (used by :mod:`copul.measures`).
+
+        :math:`A(t) = t\,T_{\nu+1}(z(t)) + (1-t)\,T_{\nu+1}(z(1-t))` with
+        :math:`z(t) = \sqrt{\nu+1}\,((t/(1-t))^{1/\nu}-\rho)/\sqrt{1-\rho^2}`.
+        """
+        from scipy.special import stdtr
+
+        nu_val = float(self.nu)
+        rho_val = float(self.rho)
+        c = np.sqrt(1.0 + nu_val) / np.sqrt(1.0 - rho_val**2)
+
+        def A(t):
+            t = np.clip(np.asarray(t, float), 1e-300, 1 - 1e-16)
+            z1 = c * ((t / (1 - t)) ** (1.0 / nu_val) - rho_val)
+            z2 = c * (((1 - t) / t) ** (1.0 / nu_val) - rho_val)
+            return t * stdtr(nu_val + 1.0, z1) + (1 - t) * stdtr(nu_val + 1.0, z2)
+
+        return A
+
     def cdf_vectorized(self, u, v):
         """
         Optimized vectorized implementation of the CDF.
@@ -156,9 +172,7 @@ class tEV(BivExtremeValueCopula):
         u_array = np.broadcast_to(u_array, shape)
         v_array = np.broadcast_to(v_array, shape)
 
-        if np.any((u_array < 0) | (u_array > 1)) or np.any(
-            (v_array < 0) | (v_array > 1)
-        ):
+        if np.any((u_array < 0) | (u_array > 1)) or np.any((v_array < 0) | (v_array > 1)):
             raise ValueError("Marginals must be in [0, 1]")
 
         result = np.zeros(shape, dtype=float)

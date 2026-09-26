@@ -3,7 +3,7 @@ Module defining copula family representatives with normalized access.
 This dictionary is both case-insensitive and underscore-insensitive.
 """
 
-from typing import Mapping
+from collections.abc import Mapping
 
 
 class NormalizedDict(dict):

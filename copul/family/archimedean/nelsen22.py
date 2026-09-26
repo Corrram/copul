@@ -33,8 +33,7 @@ class Nelsen22(BivArchimedeanCopula):
         v = self.v
         return sympy.Piecewise(
             (
-                (sympy.sin(sympy.asin(u**theta - 1) + sympy.asin(v**theta - 1)) + 1)
-                ** (1 / theta),
+                (sympy.sin(sympy.asin(u**theta - 1) + sympy.asin(v**theta - 1)) + 1) ** (1 / theta),
                 sympy.asin(u**theta - 1) + sympy.asin(v**theta - 1) >= -sympy.pi / 2,
             ),
             (0, True),

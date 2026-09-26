@@ -1,9 +1,9 @@
 import sympy as sp
 
+from copul.family.core.biv_core_copula import BivCoreCopula
 from copul.family.elliptical.multivar_elliptical_copula import (
     MultivariateEllipticalCopula,
 )
-from copul.family.core.biv_core_copula import BivCoreCopula
 from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.upper_frechet import UpperFrechet
 
@@ -26,9 +26,7 @@ class EllipticalCopula(MultivariateEllipticalCopula, BivCoreCopula):
         if "rho" not in kwargs and len(args) == 0:
             self.rho = self.__class__.rho  # Use the class's symbolic rho
             self.params = list(self.__class__.params)  # Copy the class's params list
-            self.intervals = dict(
-                self.__class__.intervals
-            )  # Copy the class's intervals dict
+            self.intervals = dict(self.__class__.intervals)  # Copy the class's intervals dict
 
         # If rho is provided, construct a 2x2 correlation matrix
         if "rho" in kwargs:

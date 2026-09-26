@@ -4,8 +4,9 @@ Tests for the CD1Wrapper class (partial derivative with respect to first argumen
 
 import sympy
 from sympy import simplify
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
+
 from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class TestCD1Wrapper:

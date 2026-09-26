@@ -8,7 +8,7 @@ How to add a new measure:
 2) Decorate it with @measure("Nice Name")
    (that's all; it will show up automatically in compute/plot/export)
 
-Built-ins: xi, rho, tau, footrule, gini_gamma, blomqvists_beta,
+Built-ins: xi, rho, tau, footrule, ginis_gamma, blomqvists_beta,
            schweizer_wolff_sigma, hoeffdings_d
 """
 
@@ -17,14 +17,16 @@ from __future__ import annotations
 import logging
 import pathlib
 import pickle
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import scipy.stats as st
-from matplotlib import pyplot as plt
-from scipy.interpolate import CubicSpline
 import sympy as sp
+from scipy.interpolate import CubicSpline
+
+from copul._lazy import plt
 
 # If you have it in your project:
 from copul.chatterjee import xi_ncalculate
@@ -34,7 +36,7 @@ log = logging.getLogger(__name__)
 # ------------------------ Measure Registry ------------------------
 
 MeasureFn = Callable[[np.ndarray, np.ndarray, np.ndarray, np.ndarray], float]
-MEASURES: Dict[str, MeasureFn] = {}
+MEASURES: dict[str, MeasureFn] = {}
 
 
 def measure(name: str) -> Callable[[MeasureFn], MeasureFn]:
@@ -75,7 +77,7 @@ def m_footrule(x, y, rx, ry) -> float:
     return 1.0 + 3.0 / n - (3.0 / (n * n)) * d
 
 
-@measure("gini_gamma")
+@measure("ginis_gamma")
 def m_gini_gamma(x, y, rx, ry) -> float:
     n = len(rx)
     u, v = rx / n, ry / n
@@ -174,7 +176,7 @@ def m_nu(x, y, rx, ry) -> float:
 @dataclass
 class CorrelationData:
     params: np.ndarray
-    values: Dict[str, np.ndarray]  # measure_name -> values (aligned with params)
+    values: dict[str, np.ndarray]  # measure_name -> values (aligned with params)
 
 
 # ------------------------ Runner ------------------------
@@ -193,12 +195,17 @@ class RankCorrelationPlotter:
         self,
         copula: Any,
         *,
-        measures: Optional[Iterable[str]] = None,
+        measures: Iterable[str] | None = None,
         images_dir: pathlib.Path | str = "images",
         save_pickles: bool = True,
     ):
         self.copula = copula
-        self.measures = list(measures) if measures else list(MEASURES)
+        # "gini_gamma" is the pre-0.4 name of "ginis_gamma"
+        self.measures = (
+            [{"gini_gamma": "ginis_gamma"}.get(m, m) for m in measures]
+            if measures
+            else list(MEASURES)
+        )
         self.images_dir = pathlib.Path(images_dir)
         self.images_dir.mkdir(parents=True, exist_ok=True)
         self._data_dir = self.images_dir / "data"
@@ -211,8 +218,8 @@ class RankCorrelationPlotter:
         self,
         n_params: int = 20,
         *,
-        log_cut_off: Optional[Tuple[float, float]] = None,
-        xlim: Optional[Tuple[float, float]] = None,
+        log_cut_off: tuple[float, float] | None = None,
+        xlim: tuple[float, float] | None = None,
     ) -> np.ndarray:
         """
         Build a grid over the primary parameter interval in the copula.
@@ -268,7 +275,7 @@ class RankCorrelationPlotter:
           - compute ranks once
           - evaluate each registered measure
         """
-        vals: Dict[str, List[float]] = {m: [] for m in self.measures}
+        vals: dict[str, list[float]] = {m: [] for m in self.measures}
 
         pname = str(self.copula.params[0])
         for theta in params:
@@ -290,19 +297,17 @@ class RankCorrelationPlotter:
                 for m in self.measures:
                     vals[m].append(np.nan)
 
-        return CorrelationData(
-            params=params, values={k: np.array(v) for k, v in vals.items()}
-        )
+        return CorrelationData(params=params, values={k: np.array(v) for k, v in vals.items()})
 
     def plot(
         self,
-        data: "CorrelationData",
+        data: CorrelationData,
         *,
-        title: Optional[str] = None,
-        ylim: Tuple[float, float] = (-1, 1),
+        title: str | None = None,
+        ylim: tuple[float, float] = (-1, 1),
         log_x: bool = False,
-        log_cut_off: Optional[Tuple[float, float]] = None,  # <— NEW
-    ) -> Dict[str, CubicSpline]:
+        log_cut_off: tuple[float, float] | None = None,  # <— NEW
+    ) -> dict[str, CubicSpline]:
         """
         Scatter + CubicSpline for each measure.
         If log_x=True, we plot against x - inf, set log scale, and clamp the axis
@@ -318,7 +323,7 @@ class RankCorrelationPlotter:
         interval = self.copula.intervals[p]
         inf = float(getattr(interval, "inf", 0.0))
 
-        splines: Dict[str, CubicSpline] = {}
+        splines: dict[str, CubicSpline] = {}
         x = data.params
 
         for m, y in data.values.items():
@@ -351,9 +356,7 @@ class RankCorrelationPlotter:
         plt.ylim(*ylim)
 
         if log_x:
-            self._format_log_x_axis(
-                inf, x, log_cut_off
-            )  # <— pass both x and the cutoffs
+            self._format_log_x_axis(inf, x, log_cut_off)  # <— pass both x and the cutoffs
 
         ax = plt.gca()
         # after drawing the curves and before saving/showing:
@@ -372,7 +375,7 @@ class RankCorrelationPlotter:
         self,
         inf: float,
         x_original: np.ndarray,
-        log_cut_off: Optional[Tuple[float, float]] = None,
+        log_cut_off: tuple[float, float] | None = None,
     ) -> None:
         """
         Apply log x-scale to the *shifted* axis (x - inf).
@@ -381,11 +384,7 @@ class RankCorrelationPlotter:
         """
         xlim = None
         if log_cut_off is not None:
-            a, b = (
-                log_cut_off
-                if isinstance(log_cut_off, tuple)
-                else (-log_cut_off, log_cut_off)
-            )
+            a, b = log_cut_off if isinstance(log_cut_off, tuple) else (-log_cut_off, log_cut_off)
             xlim = (10.0**a, 10.0**b)
         else:
             # fallback to data-driven limits in shifted domain
@@ -399,9 +398,7 @@ class RankCorrelationPlotter:
         plt.xscale("log")
 
     @staticmethod
-    def _set_log_ticks(
-        ax, inf: float, log_cut_off: Optional[Tuple[float, float]] = None
-    ):
+    def _set_log_ticks(ax, inf: float, log_cut_off: tuple[float, float] | None = None):
         """
         On a shifted-log x-axis (x' = x - inf), put ticks at 10^k and label them
         as 'inf + 10^{k}'. This never creates ticks outside the visible range.
@@ -410,11 +407,7 @@ class RankCorrelationPlotter:
 
         # 1) Determine visible range on the shifted axis
         if log_cut_off is not None:
-            a, b = (
-                log_cut_off
-                if isinstance(log_cut_off, tuple)
-                else (-log_cut_off, log_cut_off)
-            )
+            a, b = log_cut_off if isinstance(log_cut_off, tuple) else (-log_cut_off, log_cut_off)
             xmin, xmax = 10.0**a, 10.0**b
             ax.set_xlim(xmin, xmax)
         else:
@@ -439,9 +432,7 @@ class RankCorrelationPlotter:
         ax.set_xticklabels(labels)
 
     # ---- save ----
-    def save(
-        self, base_name: str, data: CorrelationData, splines: Dict[str, CubicSpline]
-    ) -> None:
+    def save(self, base_name: str, data: CorrelationData, splines: dict[str, CubicSpline]) -> None:
         if not self.save_pickles:
             return
         try:
@@ -459,12 +450,12 @@ class RankCorrelationPlotter:
 def run_plot(
     copula: Any,
     *,
-    measures: Optional[Iterable[str]] = None,
+    measures: Iterable[str] | None = None,
     n_obs: int = 10_000,
     n_params: int = 20,
-    log_cut_off: Optional[Tuple[float, float]] = None,
-    xlim: Optional[Tuple[float, float]] = None,
-    ylim: Tuple[float, float] = (-1, 1),
+    log_cut_off: tuple[float, float] | None = None,
+    xlim: tuple[float, float] | None = None,
+    ylim: tuple[float, float] = (-1, 1),
     approximate: bool = False,
     images_dir: str | pathlib.Path = "images",
     save_pickles: bool = True,
@@ -495,8 +486,9 @@ def run_plot(
 # ------------------------ Example ------------------------
 
 if __name__ == "__main__":
-    import copul
     from pathlib import Path
+
+    import copul
 
     # Families we want to run
     main_families = ["NELSEN1", "FRANK", "GUMBEL_HOUGAARD", "JOE", "GAUSSIAN"]
@@ -533,7 +525,7 @@ if __name__ == "__main__":
         "spearmans_rho",
         "kendalls_tau",
         "spearmans_footrule",
-        "gini_gamma",
+        "ginis_gamma",
         "blomqvists_beta",
     ]
 

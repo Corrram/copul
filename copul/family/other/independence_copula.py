@@ -231,10 +231,10 @@ class IndependenceCopula(Copula, CopulaPlottingMixin):
     def blomqvists_beta(self, *args, **kwargs):
         return 0
 
-    def gini_gamma(self, *args, **kwargs):
+    def ginis_gamma(self, *args, **kwargs):
         return 0
 
-    def spearman_footrule(self, *args, **kwargs):
+    def spearmans_footrule(self, *args, **kwargs):
         return 0
 
     def blests_nu(self, *args, **kwargs):
@@ -246,8 +246,43 @@ class IndependenceCopula(Copula, CopulaPlottingMixin):
     def hoeffdings_d(self, *args, **kwargs):
         return 0
 
-    def lp_concordance(self, p: int = 2, *args, **kwargs):
+    def lp_distance(self, p: float = 2, *args, **kwargs):
         return 0
+
+    def uniform_distance(self, *args, **kwargs):
+        return 0
+
+    def blum_kiefer_rosenblatt(self, *args, **kwargs):
+        return 0
+
+    def gini_gamma(self, *args, **kwargs):
+        """Deprecated alias of :meth:`ginis_gamma`."""
+        import warnings
+
+        warnings.warn(
+            "gini_gamma() is deprecated; use ginis_gamma()", DeprecationWarning, stacklevel=2
+        )
+        return self.ginis_gamma(*args, **kwargs)
+
+    def spearman_footrule(self, *args, **kwargs):
+        """Deprecated alias of :meth:`spearmans_footrule`."""
+        import warnings
+
+        warnings.warn(
+            "spearman_footrule() is deprecated; use spearmans_footrule()",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.spearmans_footrule(*args, **kwargs)
+
+    def lp_concordance(self, p: float = 2, *args, **kwargs):
+        """Deprecated alias of :meth:`lp_distance`."""
+        import warnings
+
+        warnings.warn(
+            "lp_concordance() is deprecated; use lp_distance()", DeprecationWarning, stacklevel=2
+        )
+        return self.lp_distance(p, *args, **kwargs)
 
     def mutual_information(self, *args, **kwargs):
         return 0.0

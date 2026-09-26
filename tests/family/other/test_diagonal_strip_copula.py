@@ -3,10 +3,9 @@ import pytest
 from scipy.integrate import trapezoid
 
 from copul.family.other.diagonal_strip_copula import (
-    XiPsiApproxLowerBoundaryCopula,
     DiagonalStripCopula,
+    XiPsiApproxLowerBoundaryCopula,
 )
-
 
 RTOL = 1e-6
 ATOL = 1e-6

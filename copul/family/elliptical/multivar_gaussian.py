@@ -1,6 +1,6 @@
-import sympy as sp
 import numpy as np
-from scipy.stats import norm, multivariate_normal
+import sympy as sp
+from scipy.stats import multivariate_normal, norm
 
 from copul.family.elliptical.multivar_elliptical_copula import (
     MultivariateEllipticalCopula,
@@ -77,9 +77,9 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
                                 corr_matrix_np[i, j] = 0.0
 
                 # Compute the multivariate normal CDF
-                result = multivariate_normal(
-                    mean=np.zeros(len(u_values)), cov=corr_matrix_np
-                ).cdf(quantiles)
+                result = multivariate_normal(mean=np.zeros(len(u_values)), cov=corr_matrix_np).cdf(
+                    quantiles
+                )
 
                 return float(result)
             except Exception:
@@ -210,10 +210,7 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
                     # Create submatrix of correlations among conditioning variables
                     cond_indices = [j for j in range(n) if j != i_idx]
                     Sigma_22 = np.array(
-                        [
-                            [corr_matrix_np[i, j] for j in cond_indices]
-                            for i in cond_indices
-                        ]
+                        [[corr_matrix_np[i, j] for j in cond_indices] for i in cond_indices]
                     )
 
                     # Handle special cases
@@ -237,9 +234,7 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
                         cond_std = np.sqrt(max(cond_var, 1e-10))  # Ensure positive
 
                         # Calculate conditional distribution
-                        return norm.cdf(
-                            norm.ppf(u_target), loc=cond_mean, scale=cond_std
-                        )
+                        return norm.cdf(norm.ppf(u_target), loc=cond_mean, scale=cond_std)
                     except np.linalg.LinAlgError:
                         # Fallback to independence for singular matrix
                         return u_target
@@ -318,9 +313,7 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
                 inv_corr = np.linalg.inv(corr_matrix_np)
 
                 # Compute the multivariate normal PDF value
-                exponent = -0.5 * z_vector.dot(inv_corr - np.eye(len(z_values))).dot(
-                    z_vector
-                )
+                exponent = -0.5 * z_vector.dot(inv_corr - np.eye(len(z_values))).dot(z_vector)
                 pdf_value = (1.0 / np.sqrt(det_corr)) * np.exp(exponent)
 
                 # Compute the product of standard normal PDFs

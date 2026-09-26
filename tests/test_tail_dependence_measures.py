@@ -9,7 +9,6 @@ from scipy.stats import t as student_t_dist
 
 import copul
 
-
 # =====================================================================
 # Student-t copula — analytical tail dependence
 # =====================================================================
@@ -35,9 +34,7 @@ class TestStudentTTailDependence:
         """Check against the known formula directly."""
         rho, nu = 0.5, 4
         cop = copul.StudentT(rho=rho, nu=nu)
-        expected = 2.0 * student_t_dist.cdf(
-            -np.sqrt((nu + 1) * (1 - rho) / (1 + rho)), df=nu + 1
-        )
+        expected = 2.0 * student_t_dist.cdf(-np.sqrt((nu + 1) * (1 - rho) / (1 + rho)), df=nu + 1)
         assert np.isclose(cop.lambda_L(), expected, atol=1e-14)
 
     @pytest.mark.parametrize("rho", [-0.5, 0.0, 0.3, 0.7, 0.99])
@@ -160,7 +157,7 @@ class TestEVTailDependence:
         assert order["upper"] == 1.0  # has upper tail dependence ⟹ κ_U = 1
 
     def test_gini_gamma_range(self, ev_cop):
-        gamma = ev_cop.gini_gamma()
+        gamma = ev_cop.ginis_gamma()
         assert -1.0 <= gamma <= 1.0
 
 

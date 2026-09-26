@@ -83,22 +83,14 @@ def test_cdf_values(copula):
         cdf_val = float(copula.cdf(u=u, v=v))
         # For the exact boundary cases
         if u == 0 or v == 0:
-            assert abs(cdf_val) < 1e-10, (
-                f"CDF value at boundary incorrect for u={u}, v={v}"
-            )
+            assert abs(cdf_val) < 1e-10, f"CDF value at boundary incorrect for u={u}, v={v}"
         elif u == 1:
-            assert abs(cdf_val - v) < 1e-10, (
-                f"CDF value at boundary incorrect for u={u}, v={v}"
-            )
+            assert abs(cdf_val - v) < 1e-10, f"CDF value at boundary incorrect for u={u}, v={v}"
         elif v == 1:
-            assert abs(cdf_val - u) < 1e-10, (
-                f"CDF value at boundary incorrect for u={u}, v={v}"
-            )
+            assert abs(cdf_val - u) < 1e-10, f"CDF value at boundary incorrect for u={u}, v={v}"
         else:
             # For non-boundary points, use more precise comparison with calculated values
-            assert abs(cdf_val - expected) < 1e-8, (
-                f"CDF value incorrect for u={u}, v={v}"
-            )
+            assert abs(cdf_val - expected) < 1e-8, f"CDF value incorrect for u={u}, v={v}"
 
 
 def test_pdf_values(copula):
@@ -157,9 +149,7 @@ def test_conditional_distribution():
     numerical_derivative = (C_u_plus_eps - C_u) / epsilon
 
     # Allow for numerical error in the approximation
-    assert abs(numerical_derivative - cond1) < 0.1, (
-        "Numerical derivative != cond_distr_1"
-    )
+    assert abs(numerical_derivative - cond1) < 0.1, "Numerical derivative != cond_distr_1"
 
 
 def test_rho():

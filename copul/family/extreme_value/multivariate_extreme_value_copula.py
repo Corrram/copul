@@ -170,9 +170,7 @@ class MultivariateExtremeValueCopula(Copula):
 
         except Exception as e:
             # Fallback implementation if the approach fails
-            warnings.warn(
-                f"Error in CDF calculation: {e}. Using fallback implementation."
-            )
+            warnings.warn(f"Error in CDF calculation: {e}. Using fallback implementation.")
 
             # Simple fallback that returns min of all arguments (Fréchet-Hoeffding upper bound)
             return CallableCDFWrapper(lambda *args: min(args))
@@ -217,7 +215,6 @@ class MultivariateExtremeValueCopula(Copula):
             indices = np.where(interior_mask.flatten())[0]
 
             # Process each point individually
-            result.flatten().shape
             flat_arrays = [arr.flatten() for arr in arrays]
 
             for idx in indices:

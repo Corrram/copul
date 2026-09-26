@@ -1,4 +1,5 @@
 import time
+
 import numpy as np
 import pytest
 import sympy as sp
@@ -209,13 +210,7 @@ def test_minimize_func():
     # Define a simple function to minimize
     x1, x2, y1, y2 = sp.symbols("x1 x2 y1 y2")
     theta = sp.symbols("theta", positive=True)
-    func = (
-        (x1 - 0.5) ** 2
-        + (x2 - 0.5) ** 2
-        + (y1 - 0.5) ** 2
-        + (y2 - 0.5) ** 2
-        + (theta - 1) ** 2
-    )
+    func = (x1 - 0.5) ** 2 + (x2 - 0.5) ** 2 + (y1 - 0.5) ** 2 + (y2 - 0.5) ** 2 + (theta - 1) ** 2
 
     # Try to minimize the function
     try:
@@ -289,9 +284,7 @@ def test_cdf_vectorized_broadcasting_u(copula):
     v_array = np.array([0.1, 0.3, 0.5, 0.7, 0.9])
 
     # Calculate expected results using scalar CDF
-    expected_results = np.array(
-        [float(copula.cdf(u=u_scalar, v=v).evalf()) for v in v_array]
-    )
+    expected_results = np.array([float(copula.cdf(u=u_scalar, v=v).evalf()) for v in v_array])
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_scalar, v_array)
@@ -307,9 +300,7 @@ def test_cdf_vectorized_broadcasting_v(copula):
     v_scalar = 0.5
 
     # Calculate expected results using scalar CDF
-    expected_results = np.array(
-        [float(copula.cdf(u=u, v=v_scalar).evalf()) for u in u_array]
-    )
+    expected_results = np.array([float(copula.cdf(u=u, v=v_scalar).evalf()) for u in u_array])
 
     # Calculate results using vectorized CDF
     actual_results = copula.cdf_vectorized(u_array, v_scalar)
@@ -383,10 +374,7 @@ def test_cdf_vectorized_with_different_parameters():
 
         # Calculate expected results using scalar CDF
         expected_results = np.array(
-            [
-                float(copula.cdf(u=u_values[i], v=v_values[i]).evalf())
-                for i in range(len(u_values))
-            ]
+            [float(copula.cdf(u=u_values[i], v=v_values[i]).evalf()) for i in range(len(u_values))]
         )
 
         # Calculate results using vectorized CDF
@@ -448,10 +436,7 @@ def test_cdf_vectorized_vs_cdf(copula):
     # Time scalar evaluation
     start_scalar = time.time()
     scalar_results = np.array(
-        [
-            float(copula.cdf(u=u_large[i], v=v_large[i]).evalf())
-            for i in range(len(u_large))
-        ]
+        [float(copula.cdf(u=u_large[i], v=v_large[i]).evalf()) for i in range(len(u_large))]
     )
     scalar_time = time.time() - start_scalar
 
@@ -464,9 +449,7 @@ def test_cdf_vectorized_vs_cdf(copula):
     np.testing.assert_allclose(vector_results, scalar_results, rtol=1e-10)
 
     # Check that vectorized is faster (should be at least 5x faster)
-    assert vector_time < scalar_time * 0.2, (
-        f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
-    )
+    assert vector_time < scalar_time * 0.2, f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
 
 
 def test_from_pickands_auto_symbol_detection():
@@ -522,7 +505,5 @@ def test_from_pickands_with_string_param_and_t_var():
     # Evaluate with a numeric alpha
     evc = evc(alpha=0.3)
     val = float(evc.pickands(t=0.25))
-    expected = 1 - 0.3 * 0.25 * (
-        1 - 0.25
-    )  # 1 - 0.3 * 0.25 * 0.75 = 1 - 0.05625 = 0.94375
+    expected = 1 - 0.3 * 0.25 * (1 - 0.25)  # 1 - 0.3 * 0.25 * 0.75 = 1 - 0.05625 = 0.94375
     assert abs(val - expected) < 1e-12

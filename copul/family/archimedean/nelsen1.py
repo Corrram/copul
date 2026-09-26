@@ -1,6 +1,7 @@
+from typing import TypeAlias
+
 import numpy as np
 import sympy
-from typing import Optional, TypeAlias
 
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
@@ -109,7 +110,7 @@ class BivClayton(BivArchimedeanCopula):
         return cdf
 
     def rvs(
-        self, n: int = 1, random_state: Optional[int] = None, approximate: bool = False
+        self, n: int = 1, random_state: int | None = None, approximate: bool = False
     ) -> np.ndarray:
         """
         Generate random samples from the Clayton copula using a fast, vectorized algorithm.
@@ -309,6 +310,11 @@ class BivClayton(BivArchimedeanCopula):
         # C(1/2,1/2) = (2·2^θ - 1)^{-1/θ}
         c_half = (2.0 * 2.0**theta - 1.0) ** (-1.0 / theta)
         return 4.0 * c_half - 1.0
+
+    def kendalls_tau(self, *args, **kwargs):
+        r"""Kendall's :math:`\tau = \theta/(\theta+2)` of the Clayton copula."""
+        self._set_params(args, kwargs)
+        return self.theta / (self.theta + 2)
 
     def schweizer_wolff_sigma(self, *args, **kwargs):
         r"""

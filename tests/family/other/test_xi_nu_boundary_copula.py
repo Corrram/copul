@@ -5,7 +5,6 @@ from scipy.integrate import dblquad
 
 from copul.family.other.clamped_parabola_copula import XiNuBoundaryCopula
 
-
 RTOL = 1e-9
 ATOL = 1e-9
 

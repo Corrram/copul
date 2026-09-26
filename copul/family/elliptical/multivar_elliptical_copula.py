@@ -1,5 +1,6 @@
-import sympy as sp
 from abc import abstractmethod
+
+import sympy as sp
 
 from copul.family.core.copula import Copula
 

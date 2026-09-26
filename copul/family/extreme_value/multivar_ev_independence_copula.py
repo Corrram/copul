@@ -2,8 +2,8 @@ import numpy as np
 import sympy as sp
 
 from copul.family.extreme_value.multivariate_extreme_value_copula import (
-    MultivariateExtremeValueCopula,
     CallableCDFWrapper,
+    MultivariateExtremeValueCopula,
 )
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 

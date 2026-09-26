@@ -101,12 +101,7 @@ def test_frank_cdf():
         expected = (
             -1
             / theta
-            * np.log(
-                1
-                + (np.exp(-theta * u) - 1)
-                * (np.exp(-theta * v) - 1)
-                / (np.exp(-theta) - 1)
-            )
+            * np.log(1 + (np.exp(-theta * u) - 1) * (np.exp(-theta * v) - 1) / (np.exp(-theta) - 1))
         )
         actual = float(frank_pos.cdf(u, v))
         assert np.isclose(actual, expected, rtol=1e-5)
@@ -119,12 +114,7 @@ def test_frank_cdf():
         expected = (
             -1
             / theta
-            * np.log(
-                1
-                + (np.exp(-theta * u) - 1)
-                * (np.exp(-theta * v) - 1)
-                / (np.exp(-theta) - 1)
-            )
+            * np.log(1 + (np.exp(-theta * u) - 1) * (np.exp(-theta * v) - 1) / (np.exp(-theta) - 1))
         )
         actual = float(frank_neg.cdf(u, v))
         assert np.isclose(actual, expected, rtol=1e-5)

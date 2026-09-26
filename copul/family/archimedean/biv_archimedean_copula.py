@@ -4,14 +4,15 @@ from functools import cached_property
 
 import numpy as np
 import sympy
-import matplotlib.pyplot as plt
+from scipy import optimize
 
+from copul._lazy import plt
 from copul.family.archimedean.archimedean_copula import ArchimedeanCopula
+from copul.family.copula_graphs import CopulaGraphs
 from copul.family.core.biv_core_copula import BivCoreCopula
 from copul.family.helpers import concrete_expand_log, get_simplified_solution
-from copul.family.copula_graphs import CopulaGraphs
+from copul.measures.engine import symbolic_measure
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
-from scipy import optimize
 
 log = logging.getLogger(__name__)
 
@@ -123,7 +124,9 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         # Patch the inverse generator for edge cases (0 and inf)
         # We can do this more cleanly with np.where
         inv_gen_vals = inv_generator_func(gen_sum)
-        final_vals = np.where(np.isclose(gen_sum, 0), 1.0, inv_gen_vals)
+        # exact zero only: np.isclose (atol=1e-8) returned 1.0 for u, v close
+        # to 1 and destroyed the upper tail
+        final_vals = np.where(gen_sum == 0, 1.0, inv_gen_vals)
         final_vals = np.where(np.isinf(gen_sum), 0.0, final_vals)
 
         result[compute_mask] = final_vals
@@ -169,6 +172,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         second_diff = sympy.diff(first_diff, self.y)
         return sympy.simplify(second_diff)
 
+    @symbolic_measure
     def kendalls_tau(self, *args, **kwargs):
         """
         Calculate Kendall's tau for the bivariate Archimedean copula.
@@ -277,7 +281,6 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         """
         second_deriv = self.second_deriv_of_inv_gen.subs([(self.u, u), (self.v, v)])
         beauty_2deriv = concrete_expand_log(sympy.simplify(sympy.log(second_deriv)))
-        print(sympy.latex(second_deriv))
         return SymPyFuncWrapper(beauty_2deriv)
 
     def first_deriv_of_tp2_char(self):
@@ -316,9 +319,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         minus_log_derivative = self.ci_char()
         first_deriv = self.first_deriv_of_ci_char()
         second_deriv = self.second_deriv_of_ci_char()
-        return self._compute_log2_der_of(
-            first_deriv, minus_log_derivative, second_deriv
-        )
+        return self._compute_log2_der_of(first_deriv, minus_log_derivative, second_deriv)
 
     @property
     def log2_der(self):
@@ -333,9 +334,7 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         log_second_derivative = self.tp2_char(self.u, self.v)
         first_deriv = self.first_deriv_of_tp2_char()
         second_deriv = self.second_deriv_of_tp2_char()
-        return self._compute_log2_der_of(
-            first_deriv, log_second_derivative, second_deriv
-        )
+        return self._compute_log2_der_of(first_deriv, log_second_derivative, second_deriv)
 
     def _compute_log2_der_of(self, first_deriv, log_second_derivative, second_deriv):
         """
@@ -372,9 +371,10 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
             round(log_der_lambda(min_val.x), 2),
         )
 
+    @symbolic_measure
     def lambda_L(self):
         """
-        Calculate the lower tail dependence coefficient.
+        Calculate the lower tail dependence coefficient (generator limit).
 
         Returns
         -------
@@ -384,46 +384,18 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         expr = self.inv_generator(y=2 * self.y).func / self.inv_generator(y=self.y).func
         return sympy.limit(expr, self.y, sympy.oo, dir="-")
 
+    @symbolic_measure
     def lambda_U(self):
         """
-        Calculate the upper tail dependence coefficient.
+        Calculate the upper tail dependence coefficient (generator limit).
 
         Returns
         -------
         float or sympy expression
             The upper tail dependence coefficient
         """
-        expr = (1 - self.inv_generator(y=2 * self.y).func) / (
-            1 - self.inv_generator(y=self.y).func
-        )
+        expr = (1 - self.inv_generator(y=2 * self.y).func) / (1 - self.inv_generator(y=self.y).func)
         return sympy.simplify(2 - sympy.limit(expr, self.y, 0, dir="+"))
-
-    def blomqvists_beta(self, *args, **kwargs):
-        r"""Blomqvist's :math:`\beta` for Archimedean copulas.
-
-        Uses the generator-based formula:
-
-        .. math::
-
-           \beta = 4\,\varphi^{[-1]}\!\bigl(2\,\varphi(\tfrac12)\bigr) - 1
-
-        where :math:`\varphi` is the generator and
-        :math:`\varphi^{[-1]}` is the (pseudo-)inverse generator.
-
-        Returns
-        -------
-        float or sympy.Expr
-        """
-        self._set_params(args, kwargs)
-        # φ(1/2)
-        gen_half = self.generator(t=sympy.Rational(1, 2)).func
-        # φ^{-1}(2·φ(1/2))
-        c_half = self.inv_generator(y=2 * gen_half).func
-        result = 4 * c_half - 1
-        try:
-            return float(result)
-        except (TypeError, ValueError):
-            return sympy.simplify(result)
 
     def tail_order(self):
         r"""Tail order for Archimedean copulas.

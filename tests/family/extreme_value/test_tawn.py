@@ -1,8 +1,10 @@
-import pytest
-import sympy as sp
 from unittest.mock import patch
 
-from copul.family.extreme_value import GumbelHougaardEV as GumbelHougaard, Tawn
+import pytest
+import sympy as sp
+
+from copul.family.extreme_value import GumbelHougaardEV as GumbelHougaard
+from copul.family.extreme_value import Tawn
 from copul.family.extreme_value.marshall_olkin import MarshallOlkin
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.wrapper.cdf_wrapper import CDFWrapper

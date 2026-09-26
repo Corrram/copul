@@ -24,30 +24,21 @@ class InvGenWrapper(SymPyFuncWrapper):
                 return InvGenWrapper(sympy.Float(1.0), self.y_symbol, self.copula)
 
             # Case 2: y = infinity
-            elif y_val == sympy.oo:
-                return InvGenWrapper(sympy.Float(0.0), self.y_symbol, self.copula)
-
-            # Specific case for Nelsen11 with log(2)
             elif (
-                str(y_val) == "log(2)" and self.copula.__class__.__name__ == "Nelsen11"
-            ):
-                return InvGenWrapper(sympy.Float(0.0), self.y_symbol, self.copula)
-
-            # Case 3: Nelsen11 special case at y = _generator_at_0
-            elif (
-                hasattr(self.copula, "_generator_at_0")
-                and not isinstance(y_val, sympy.Expr)
-                and self.copula._generator_at_0 != sympy.oo
-                and y_val == self.copula._generator_at_0
-            ):
-                return InvGenWrapper(sympy.Float(0.0), self.y_symbol, self.copula)
-
-            # Case 4: For any y > _generator_at_0 (if defined)
-            elif (
-                hasattr(self.copula, "_generator_at_0")
-                and not isinstance(y_val, sympy.Expr)
-                and self.copula._generator_at_0 != sympy.oo
-                and y_val > self.copula._generator_at_0
+                y_val == sympy.oo
+                or (str(y_val) == "log(2)" and self.copula.__class__.__name__ == "Nelsen11")
+                or (
+                    hasattr(self.copula, "_generator_at_0")
+                    and not isinstance(y_val, sympy.Expr)
+                    and self.copula._generator_at_0 != sympy.oo
+                    and y_val == self.copula._generator_at_0
+                )
+                or (
+                    hasattr(self.copula, "_generator_at_0")
+                    and not isinstance(y_val, sympy.Expr)
+                    and self.copula._generator_at_0 != sympy.oo
+                    and y_val > self.copula._generator_at_0
+                )
             ):
                 return InvGenWrapper(sympy.Float(0.0), self.y_symbol, self.copula)
 
@@ -55,9 +46,7 @@ class InvGenWrapper(SymPyFuncWrapper):
         result = super().__call__(*args, **kwargs)
 
         # Wrap the result in InvGenWrapper to preserve special handling
-        if isinstance(result, SymPyFuncWrapper) and not isinstance(
-            result, InvGenWrapper
-        ):
+        if isinstance(result, SymPyFuncWrapper) and not isinstance(result, InvGenWrapper):
             return InvGenWrapper(result.func, self.y_symbol, self.copula)
 
         return result
@@ -78,22 +67,18 @@ class InvGenWrapper(SymPyFuncWrapper):
                     return sympy.Float(1.0)
 
                 # Case 2: y = infinity
-                elif y_val == sympy.oo:
-                    return sympy.Float(0.0)
-
-                # Case 3: Nelsen11 special case at y = _generator_at_0
                 elif (
-                    hasattr(self.copula, "_generator_at_0")
-                    and self.copula._generator_at_0 != sympy.oo
-                    and y_val == self.copula._generator_at_0
-                ):
-                    return sympy.Float(0.0)
-
-                # Case 4: For any y > _generator_at_0 (if defined)
-                elif (
-                    hasattr(self.copula, "_generator_at_0")
-                    and self.copula._generator_at_0 != sympy.oo
-                    and y_val > self.copula._generator_at_0
+                    y_val == sympy.oo
+                    or (
+                        hasattr(self.copula, "_generator_at_0")
+                        and self.copula._generator_at_0 != sympy.oo
+                        and y_val == self.copula._generator_at_0
+                    )
+                    or (
+                        hasattr(self.copula, "_generator_at_0")
+                        and self.copula._generator_at_0 != sympy.oo
+                        and y_val > self.copula._generator_at_0
+                    )
                 ):
                     return sympy.Float(0.0)
             # For symbolic expressions, we can only safely check equality with 0 and oo
@@ -161,7 +146,7 @@ class InvGenWrapper(SymPyFuncWrapper):
                     result[regular_mask] = base_func(y_arr[regular_mask])
                 except Exception:
                     # Fallback to scalar evaluation if vectorized fails
-                    for i, idx in enumerate(np.where(regular_mask)[0]):
+                    for _i, idx in enumerate(np.where(regular_mask)[0]):
                         try:
                             result[idx] = base_func(y_arr[idx])
                         except Exception:
@@ -197,8 +182,7 @@ class InvGenWrapper(SymPyFuncWrapper):
             if (
                 "0**" in expr_str
                 or "(2 - exp(log(2)))" in expr_str
-                or self.copula.__class__.__name__ == "Nelsen11"
-                and "log(2)" in expr_str
+                or (self.copula.__class__.__name__ == "Nelsen11" and "log(2)" in expr_str)
             ):
                 return 0.0
 

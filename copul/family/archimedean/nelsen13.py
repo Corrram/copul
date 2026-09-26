@@ -28,11 +28,7 @@ class Nelsen13(BivArchimedeanCopula):
     def _cdf_expr(self):
         return sympy.exp(
             1
-            - (
-                (1 - sympy.log(self.u)) ** self.theta
-                + (1 - sympy.log(self.v)) ** self.theta
-                - 1
-            )
+            - ((1 - sympy.log(self.u)) ** self.theta + (1 - sympy.log(self.v)) ** self.theta - 1)
             ** (1 / self.theta)
         )
 

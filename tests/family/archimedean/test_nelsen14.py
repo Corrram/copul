@@ -83,9 +83,7 @@ def test_cdf_function(nelsen14_copula):
     for u, v in points:
         # Manual calculation using the formula
         theta = 2
-        term = (
-            (u ** (-1 / theta) - 1) ** theta + (v ** (-1 / theta) - 1) ** theta
-        ) ** (1 / theta)
+        term = ((u ** (-1 / theta) - 1) ** theta + (v ** (-1 / theta) - 1) ** theta) ** (1 / theta)
         expected = (1 + term) ** (-theta)
         actual = float(nelsen14_copula.cdf(u, v))
         assert np.isclose(actual, expected, rtol=1e-5)
@@ -191,9 +189,7 @@ def test_large_theta_behavior():
         # For very large theta, the copula approaches a specific form
         # Calculate the expected value with large theta
         theta = 50
-        term = (
-            (u ** (-1 / theta) - 1) ** theta + (v ** (-1 / theta) - 1) ** theta
-        ) ** (1 / theta)
+        term = ((u ** (-1 / theta) - 1) ** theta + (v ** (-1 / theta) - 1) ** theta) ** (1 / theta)
         expected = (1 + term) ** (-theta)
         assert np.isclose(result, expected, rtol=1e-5)
 

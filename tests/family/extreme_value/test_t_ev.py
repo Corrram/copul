@@ -1,6 +1,7 @@
-import pytest
-import numpy as np
 import math
+
+import numpy as np
+import pytest
 
 from copul.family.extreme_value.t_ev import tEV
 

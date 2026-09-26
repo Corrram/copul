@@ -1,6 +1,6 @@
 # file: copul/families/xi_psi_lower_boundary.py
-import sympy as sp
 import numpy as np
+import sympy as sp
 
 from copul.family.core.biv_copula import BivCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula

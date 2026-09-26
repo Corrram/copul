@@ -2,11 +2,13 @@
 Tests for the SymPyFuncWrapper class.
 """
 
-import warnings
 import time
-import pytest
+import warnings
+
 import numpy as np
+import pytest
 import sympy
+
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -190,7 +192,7 @@ class TestSymPyFuncWrapper:
         # Same expression should not be unequal
         func1a = SymPyFuncWrapper(self.x**2 + self.y)
         func1b = SymPyFuncWrapper(self.x**2 + self.y)
-        assert not (func1a != func1b)
+        assert not (func1a != func1b)  # noqa: SIM202 - tests __ne__
 
         # Different expressions should be unequal
         assert self.func1 != self.func2
@@ -427,6 +429,4 @@ def test_numpy_func_performance():
     np.testing.assert_allclose(vector_results, loop_results, rtol=1e-10)
 
     # Vectorized operation should be significantly faster
-    assert vector_time < loop_time * 0.5, (
-        f"Vectorized: {vector_time}s, Loop: {loop_time}s"
-    )
+    assert vector_time < loop_time * 0.5, f"Vectorized: {vector_time}s, Loop: {loop_time}s"

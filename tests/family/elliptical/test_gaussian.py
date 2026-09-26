@@ -1,10 +1,11 @@
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 import sympy
-from unittest.mock import patch
 
-from copul.family.other import BivIndependenceCopula, LowerFrechet, UpperFrechet
 from copul.family.elliptical.gaussian import Gaussian
+from copul.family.other import BivIndependenceCopula, LowerFrechet, UpperFrechet
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
@@ -137,9 +138,7 @@ def test_gaussian_pdf():
     cop = Gaussian(0.5)
 
     # Mock the PDF calculation from statsmodels to isolate the test
-    with patch(
-        "statsmodels.distributions.copula.elliptical.GaussianCopula.pdf"
-    ) as mock_pdf:
+    with patch("statsmodels.distributions.copula.elliptical.GaussianCopula.pdf") as mock_pdf:
         mock_pdf.return_value = 1.25  # Arbitrary test value
 
         # Evaluate the PDF at a specific point
@@ -301,9 +300,7 @@ def test_gaussian_cdf_vectorized_grid(gaussian_copula):
     expected_results = np.zeros_like(U)
     for i in range(U.shape[0]):
         for j in range(U.shape[1]):
-            expected_results[i, j] = float(
-                gaussian_copula.cdf(u=U[i, j], v=V[i, j]).evalf()
-            )
+            expected_results[i, j] = float(gaussian_copula.cdf(u=U[i, j], v=V[i, j]).evalf())
 
     # Calculate results using vectorized CDF
     actual_results = gaussian_copula.cdf_vectorized(U, V)
@@ -349,8 +346,9 @@ def test_gaussian_cdf_vectorized_input_validation(gaussian_copula):
 
 def test_gaussian_cdf_vectorized_performance(gaussian_copula):
     """Test that cdf_vectorized is faster than scalar evaluation for large inputs."""
-    import numpy as np
     import time
+
+    import numpy as np
 
     # Create large test arrays (1000 points)
     np.random.seed(42)  # For reproducibility
@@ -376,9 +374,7 @@ def test_gaussian_cdf_vectorized_performance(gaussian_copula):
     np.testing.assert_allclose(vector_results, scalar_results, rtol=1e-3)
 
     # Check that vectorized is faster (should be at least 5x faster)
-    assert vector_time < scalar_time * 0.9, (
-        f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
-    )
+    assert vector_time < scalar_time * 0.9, f"Vectorized: {vector_time}s, Scalar: {scalar_time}s"
 
 
 @pytest.mark.parametrize(

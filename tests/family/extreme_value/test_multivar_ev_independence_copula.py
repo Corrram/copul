@@ -114,9 +114,7 @@ def test_cdf_different_dimensions():
 
     # Test 4D
     copula4d = MultivariateExtremeIndependenceCopula(dimension=4)
-    assert (
-        abs(float(copula4d.cdf(0.3, 0.4, 0.5, 0.6)) - (0.3 * 0.4 * 0.5 * 0.6)) < 1e-10
-    )
+    assert abs(float(copula4d.cdf(0.3, 0.4, 0.5, 0.6)) - (0.3 * 0.4 * 0.5 * 0.6)) < 1e-10
 
 
 # Vectorized CDF tests

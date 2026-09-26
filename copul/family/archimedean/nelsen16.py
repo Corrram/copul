@@ -19,9 +19,7 @@ class Nelsen16(BivArchimedeanCopula):
     @property
     def generator(self):
         expr = self._raw_generator
-        gen = sympy.Piecewise(
-            (expr, self.t > 0), (1, self.theta == 0), (sympy.oo, True)
-        )
+        gen = sympy.Piecewise((expr, self.t > 0), (1, self.theta == 0), (sympy.oo, True))
         return SymPyFuncWrapper(gen)
 
     @property
@@ -47,8 +45,7 @@ class Nelsen16(BivArchimedeanCopula):
             + v * (th + u) * (u - 1)
             + sympy.sqrt(
                 4 * th * u**2 * v**2
-                + (u * v * (1 - th) + u * (th + v) * (v - 1) + v * (th + u) * (u - 1))
-                ** 2
+                + (u * v * (1 - th) + u * (th + v) * (v - 1) + v * (th + u) * (u - 1)) ** 2
             )
         ) / (2 * u * v)
 

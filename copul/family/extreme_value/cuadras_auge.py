@@ -1,5 +1,7 @@
 import logging
+
 import sympy as sp
+
 from copul.exceptions import PropertyUnavailableException
 from copul.family.extreme_value.biv_extreme_value_copula import BivExtremeValueCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
@@ -43,9 +45,7 @@ class CuadrasAuge(BivExtremeValueCopula):
                 return UpperFrechet(**new_kwargs)
             # Parameter validation for kwargs
             elif kwargs["delta"] < 0 or kwargs["delta"] > 1:
-                raise ValueError(
-                    f"delta parameter must be in [0,1], got {kwargs['delta']}"
-                )
+                raise ValueError(f"delta parameter must be in [0,1], got {kwargs['delta']}")
 
         # If we get here, continue with normal initialization
         return super().__new__(cls)
@@ -65,9 +65,7 @@ class CuadrasAuge(BivExtremeValueCopula):
         if "delta" in kwargs:
             # Parameter validation
             if kwargs["delta"] < 0 or kwargs["delta"] > 1:
-                raise ValueError(
-                    f"delta parameter must be in [0,1], got {kwargs['delta']}"
-                )
+                raise ValueError(f"delta parameter must be in [0,1], got {kwargs['delta']}")
 
             if kwargs["delta"] == 0:
                 del kwargs["delta"]
@@ -89,9 +87,7 @@ class CuadrasAuge(BivExtremeValueCopula):
 
     @property
     def _cdf_expr(self):
-        return sp.Min(self.u, self.v) ** self.delta * (self.u * self.v) ** (
-            1 - self.delta
-        )
+        return sp.Min(self.u, self.v) ** self.delta * (self.u * self.v) ** (1 - self.delta)
 
     @property
     def pdf(self):
@@ -217,7 +213,7 @@ class CuadrasAuge(BivExtremeValueCopula):
             return 0
         return 10 * d**2 / (18 - 9 * d + d**2)
 
-    def gini_gamma(self, *args, **kwargs):
+    def ginis_gamma(self, *args, **kwargs):
         r"""
         Gini's :math:`\gamma` for the Cuadras-Augé copula.
 
@@ -245,8 +241,8 @@ class CuadrasAuge(BivExtremeValueCopula):
         # I_anti = 2 * int_0^{1/2} t * (1-t)^{1-d} dt
         # = 2 * [B_{1/2}(2, 2-d)]  (incomplete beta)
         # We can compute via the regularised incomplete beta:
-        from scipy.special import betainc as _betainc_reg
         from scipy.special import beta as _beta_fn
+        from scipy.special import betainc as _betainc_reg
 
         I_anti = 2 * _betainc_reg(2, 2 - d, 0.5) * _beta_fn(2, 2 - d)
         return float(4 * (I_diag + I_anti) - 2)
@@ -269,7 +265,7 @@ class CuadrasAuge(BivExtremeValueCopula):
             return 0
         return 2 * d / (2 - d) - 12 * d / ((2 - d) * (4 - d) * (5 - d))
 
-    def spearman_footrule(self, *args, **kwargs):
+    def spearmans_footrule(self, *args, **kwargs):
         r"""
         Spearman's footrule :math:`\psi` for the Cuadras-Augé copula.
 

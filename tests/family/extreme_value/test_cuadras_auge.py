@@ -1,14 +1,15 @@
+from unittest.mock import patch
+
 import numpy as np
 import pytest
 import sympy as sp
-from unittest.mock import patch
 
+from copul.exceptions import PropertyUnavailableException
 from copul.family.extreme_value import CuadrasAuge
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.family.frechet.upper_frechet import UpperFrechet
-from copul.exceptions import PropertyUnavailableException
-from copul.wrapper.cdf_wrapper import CDFWrapper
 from copul.wrapper.cd1_wrapper import CD1Wrapper
+from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 @pytest.fixture
@@ -79,14 +80,10 @@ def test_ca_is_symmetric(cuadras_auge_copula):
 def test_ca_is_absolutely_continuous():
     """Test absolute continuity property"""
     # When delta=0, it should be absolutely continuous
-    copula1 = CuadrasAuge(
-        0
-    )  # Use near-zero instead of zero to get a CuadrasAuge instance
+    copula1 = CuadrasAuge(0)  # Use near-zero instead of zero to get a CuadrasAuge instance
     assert copula1.is_absolutely_continuous is True
 
-    copula1 = CuadrasAuge(
-        0.01
-    )  # Use near-zero instead of zero to get a CuadrasAuge instance
+    copula1 = CuadrasAuge(0.01)  # Use near-zero instead of zero to get a CuadrasAuge instance
     assert copula1.is_absolutely_continuous is False
 
     # When delta>0, it should not be absolutely continuous

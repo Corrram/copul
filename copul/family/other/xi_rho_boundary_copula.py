@@ -1,6 +1,6 @@
 # file: copul/families/diagonal_band_b_inverse_reflected.py
-import sympy as sp
 import numpy as np
+import sympy as sp
 
 from copul.family.core.biv_copula import BivCopula
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
@@ -261,9 +261,7 @@ class XiRhoBoundaryCopula(BivCopula):
 
         # Fallback to symbolic for general expressions
         x_sym = sp.sympify(x)
-        b_ge_1 = sp.sqrt(6 * x_sym) / (
-            2 * sp.cos(sp.acos(-3 * sp.sqrt(6 * x_sym) / 5) / 3)
-        )
+        b_ge_1 = sp.sqrt(6 * x_sym) / (2 * sp.cos(sp.acos(-3 * sp.sqrt(6 * x_sym) / 5) / 3))
         b_lt_1 = (5 + sp.sqrt(5 * (6 * x_sym - 1))) / (10 * (1 - x_sym))
 
         b_expr = sp.Piecewise(

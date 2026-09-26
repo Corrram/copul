@@ -29,9 +29,7 @@ class Nelsen2(BivArchimedeanCopula):
 
     @property
     def _cdf_expr(self):
-        expr = 1 - ((1 - self.u) ** self.theta + (1 - self.v) ** self.theta) ** (
-            1 / self.theta
-        )
+        expr = 1 - ((1 - self.u) ** self.theta + (1 - self.v) ** self.theta) ** (1 / self.theta)
         return sympy.Max(0, expr)
 
     def cond_distr_1(self, u=None, v=None):
@@ -39,9 +37,7 @@ class Nelsen2(BivArchimedeanCopula):
         cond_distr_1 = (
             (1 - self.u) ** (theta - 1)
             * ((1 - self.u) ** theta + (1 - self.v) ** theta) ** ((1 - theta) / theta)
-            * sympy.Heaviside(
-                1 - ((1 - self.u) ** theta + (1 - self.v) ** theta) ** (1 / theta)
-            )
+            * sympy.Heaviside(1 - ((1 - self.u) ** theta + (1 - self.v) ** theta) ** (1 / theta))
         )
         return CD1Wrapper(cond_distr_1)(u, v)
 
@@ -50,9 +46,7 @@ class Nelsen2(BivArchimedeanCopula):
         cond_distr = (
             (1 - self.v) ** (theta - 1)
             * ((1 - self.u) ** theta + (1 - self.v) ** theta) ** ((1 - theta) / theta)
-            * sympy.Heaviside(
-                1 - ((1 - self.u) ** theta + (1 - self.v) ** theta) ** (1 / theta)
-            )
+            * sympy.Heaviside(1 - ((1 - self.u) ** theta + (1 - self.v) ** theta) ** (1 / theta))
         )
         return CD2Wrapper(cond_distr)(u, v)
 

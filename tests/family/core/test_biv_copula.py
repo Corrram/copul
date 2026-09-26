@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 import pytest
 import sympy as sp
-from unittest.mock import patch
 
 from copul.family.core.biv_copula import BivCopula
 
@@ -79,13 +80,15 @@ def test_rank_correlations(copula_fam):
     # These methods can be complex to test directly, so just mock them
 
     # Mock the _tau method to return a simple value
+    # (fully specified copulas are evaluated numerically by default; the
+    # symbolic route is selected explicitly)
     with patch.object(BivCopula, "_tau", return_value=0.3):
-        tau = copula.kendalls_tau()
+        tau = copula.kendalls_tau(method="symbolic")
         assert tau == 0.3
 
     # Mock the _rho method
     with patch.object(BivCopula, "_rho", return_value=0.5):
-        rho = copula.spearmans_rho()
+        rho = copula.spearmans_rho(method="symbolic")
         assert rho == 0.5
 
 

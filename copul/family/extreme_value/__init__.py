@@ -17,8 +17,8 @@ __all__ = [
     "GumbelHougaardEV",
     "HueslerReiss",
     "JoeEV",
-    "tEV",
-    "Tawn",
     "MarshallOlkin",
     "MarshallOlkinDiag",
+    "Tawn",
+    "tEV",
 ]

@@ -43,8 +43,7 @@ class JoeEV(BivExtremeValueCopula):
         elif "alpha_1" in kwargs and kwargs["alpha_1"] == 1:
             del kwargs["alpha_1"]
             if self.alpha_2 == 1:
-                if "alpha_2" in kwargs:
-                    del kwargs["alpha_2"]
+                kwargs.pop("alpha_2", None)
                 return Galambos()(**kwargs)
             new_copula = copy.deepcopy(self)
             new_copula.alpha_1 = 1
@@ -52,25 +51,20 @@ class JoeEV(BivExtremeValueCopula):
         elif "alpha_2" in kwargs and kwargs["alpha_2"] == 1:
             del kwargs["alpha_2"]
             if self.alpha_1 == 1:
-                if "alpha_1" in kwargs:
-                    del kwargs["alpha_1"]
+                kwargs.pop("alpha_1", None)
                 return Galambos()(**kwargs)
             new_copula = copy.deepcopy(self)
             new_copula.alpha_2 = 1
             return new_copula(**kwargs)
         elif "alpha_1" in kwargs and kwargs["alpha_1"] == 0:
             del kwargs["alpha_1"]
-            if "alpha_2" in kwargs:
-                del kwargs["alpha_2"]
-            if "delta" in kwargs:
-                del kwargs["delta"]
+            kwargs.pop("alpha_2", None)
+            kwargs.pop("delta", None)
             return BivIndependenceCopula()(**kwargs)
         elif "alpha_2" in kwargs and kwargs["alpha_2"] == 0:
             del kwargs["alpha_2"]
-            if "alpha_1" in kwargs:
-                del kwargs["alpha_1"]
-            if "delta" in kwargs:
-                del kwargs["delta"]
+            kwargs.pop("alpha_1", None)
+            kwargs.pop("delta", None)
             return BivIndependenceCopula()(**kwargs)
         elif "delta" in kwargs and kwargs["delta"] == sympy.oo:
             del kwargs["delta"]
@@ -100,9 +94,7 @@ class JoeEV(BivExtremeValueCopula):
         t = self.t
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
-        return 1 - ((alpha_1 * (1 - t)) ** (-delta) + (alpha_2 * t) ** (-delta)) ** (
-            -1 / delta
-        )
+        return 1 - ((alpha_1 * (1 - t)) ** (-delta) + (alpha_2 * t) ** (-delta)) ** (-1 / delta)
 
     @property
     def _cdf_expr(self):
