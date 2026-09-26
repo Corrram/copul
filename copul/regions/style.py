@@ -1,7 +1,7 @@
 r"""
 Matplotlib helpers for publication-style region figures.
 
-The helpers reproduce the look of the region plots in ``notes/`` (blue
+The helpers reproduce the look of the published region plots (blue
 boundary, light-blue fill, dotted grid, equal aspect, labelled key copulas
 :math:`M`, :math:`W`, :math:`\Pi`) without touching global state unless
 :func:`paper_style` is used as a context manager.

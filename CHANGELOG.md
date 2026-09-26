@@ -165,12 +165,6 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
 | relied on `import copul` printing INFO logs | configure logging in your application, e.g. `logging.basicConfig(level=logging.DEBUG)` |
 | `sympy-plot-backends` installed with copul | install it yourself if you use it |
 
-Scripts in `notes/` updated for the new API (`is_cis()` tuple unpacking →
-`cis_direction()`):
-`notes/examples/2025-06-30-si-implies-footrule-lower-equal-ginis-gamma.py`,
-`notes/examples/sinus_copula.py`,
-`notes/examples/xi_tau_analyzer_2.py`,
-`notes/examples/xi-footrule/2025-07-15-ltd-implies-xi-le-psi.py`.
 Other scripts calling the renamed measures keep working through the
 deprecated aliases.
 

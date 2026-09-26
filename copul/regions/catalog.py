@@ -22,7 +22,7 @@ Registered regions
     (:class:`~copul.family.other.v_threshold_copula.VThresholdCopula`),
     :math:`\nu_{\max}(\rho)=1-\tfrac34(1-\rho)^{4/3}` for :math:`\rho\ge0`;
     lower boundary :math:`\nu_{\min}(\rho)=-\nu_{\max}(-\rho)`
-    (``notes/examples/blest-regions/2025-10-14-nu-rho-region.py``).
+    (Rockel, arXiv:2609.27634).
 ``(xi, footrule)`` for SI copulas
     :math:`\xi\le\psi\le\sqrt\xi`
     (:func:`~copul.schur_order.bounds_from_xi.psi_bounds_from_xi` with
@@ -279,9 +279,10 @@ def xi_rho() -> ExactRegion:
             _kp("C_{-1}", 0.3, -0.7, lambda: _xi_rho_family(-1)(0.3)),
         ],
         reference=(
-            "J. Ansari and M. Rockel: exact region of Chatterjee's xi and "
-            "Spearman's rho, |rho| <= M(xi), attained by the diagonal-band "
-            "family C_b."
+            "J. Ansari and M. Rockel: The exact region and an inequality between "
+            "Chatterjee's and Spearman's rank correlations, J. Multivariate Anal. "
+            "(2026), doi:10.1016/j.jmva.2026.105630; |rho| <= M(xi), attained by "
+            "the diagonal-band family C_b."
         ),
         source=(
             "copul/schur_order/bounds_from_xi.py (rho_max_given_xi); "
@@ -308,16 +309,16 @@ def xi_nu() -> ExactRegion:
             _kp(r"C^{\xi,\nu}_{1}", x1, n1, lambda: _xi_nu_family(1)(32 / 105)),
         ],
         reference=(
-            "|nu| <= N(b) with Xi(b) = xi, attained by the clamped-parabola "
-            "family (XiNuBoundaryCopula)."
+            "M. Rockel: The exact region between Chatterjee's and Blest's rank "
+            "correlations, Int. J. Approx. Reasoning (2026); |nu| <= N(b) with "
+            "Xi(b) = xi, attained by the clamped-parabola family (XiNuBoundaryCopula)."
         ),
         source=(
             "copul/schur_order/bounds_from_xi.py (nu_bounds_from_xi); "
-            "copul/family/other/clamped_parabola_copula.py; "
-            "notes/examples/blest-regions/2025-10-18-xi-blest-region.py"
+            "copul/family/other/clamped_parabola_copula.py"
         ),
         boundary_family={"upper": _xi_nu_family(1.0), "lower": _xi_nu_family(-1.0)},
-        status="package",
+        status="published",
     )
 
 
@@ -340,7 +341,6 @@ def rho_nu() -> ExactRegion:
             "lower boundary by central symmetry."
         ),
         source=(
-            "notes/examples/blest-regions/2025-10-14-nu-rho-region.py; "
             "copul/family/other/v_threshold_copula.py"
         ),
         boundary_family={"upper": _rho_nu_upper},
@@ -366,14 +366,17 @@ def xi_footrule_si() -> ExactRegion:
             _kp("M", 1, 1, _M),
             _kp(r"C^{\mathrm{Fr}}_{1/2}", 0.25, 0.5, lambda: _frechet_sqrt(0.25)),
         ],
-        reference="xi <= psi <= sqrt(xi) for SI copulas (package bounds).",
+        reference=(
+            "M. Rockel: On the exact region between Chatterjee's rank correlation "
+            "and Spearman's footrule, J. Comput. Appl. Math. (2026); "
+            "xi <= psi <= sqrt(xi) for SI copulas."
+        ),
         source=(
-            "copul/schur_order/bounds_from_xi.py (psi_bounds_from_xi, cls='SI'); "
-            "notes/examples/xi-footrule/2025-08-17-xi-footrule-si-region.py"
+            "copul/schur_order/bounds_from_xi.py (psi_bounds_from_xi, cls='SI')"
         ),
         boundary_family={"upper": _frechet_sqrt},
         copula_class="si",
-        status="package",
+        status="published",
     )
 
 

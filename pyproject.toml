@@ -76,7 +76,7 @@ Documentation = "https://copul.readthedocs.io"
 Changelog = "https://github.com/Corrram/copul/blob/master/CHANGELOG.md"
 
 [dependency-groups]
-# Extra tools for the research scripts and notebooks in notes/
+# Extra tools for research scripts and notebooks
 # (not needed by the package; installed by `uv sync`).
 dev = [
     "jupyter>=1.0.0",

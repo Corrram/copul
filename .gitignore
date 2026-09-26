@@ -5,15 +5,13 @@
 /copul/expirements*
 /copul/images/
 *__pycache__*
-/notes/examples/experiments*
 /docs/images/schur/
-/notes/examples/*.png
 .venv/
 /.coverage
 /tests/family/images/
 /copul/family/images/
 images/
-notes/examples/images/
 /copul/family/other/images/
-/notes/examples/xi-footrule/images/
-/notes/examples/xi-rho/*.png
+# research scratch lives outside this repository
+/notes/
+.claude/

@@ -18,7 +18,6 @@ Furthermore, the package provides the following copulas:
 
 A list of all implemented copulas can be found in :py:mod:`copul.Families`.
 
-.. The following examples are also available as a Jupyter notebook in the `notes/examples` folder.
 
 **Properties**
 
