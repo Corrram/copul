@@ -1,4 +1,5 @@
 import logging
+
 import numpy as np
 
 log = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ class PLODVerifier:
         # ---------- 1)  No parameter → check directly ------------------ #
         try:
             param_name = str(copul.params[0])
-        except (AttributeError, IndexError):
+        except (AttributeError, IndexError, TypeError):
             return self._copula_is_plod(copul, grid)
 
         # ---------- 2)  Otherwise scan the parameter range ------------- #
@@ -95,6 +96,11 @@ class PLODVerifier:
         """
 
         tol = 1e-10
+        from copul.checkerboard._biv_mixin import BivCheckerboardMixin
+
+        if isinstance(C, BivCheckerboardMixin):
+            # exact check, see copul.checkerboard._biv_engine.quadrant_dependence
+            return C.is_pqd(tol=tol)
         try:
             C_expr = C.cdf.func  # SymPy expression
             u_sym, v_sym = C.u, C.v

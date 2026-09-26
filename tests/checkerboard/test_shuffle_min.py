@@ -1,8 +1,8 @@
+import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import matplotlib.pyplot as plt
-import matplotlib
-from scipy.stats import kstest, pearsonr, kendalltau, spearmanr
+from scipy.stats import kendalltau, kstest, pearsonr, spearmanr
 
 matplotlib.use("Agg")  # Use the 'Agg' backend to suppress plot pop-ups
 
@@ -10,7 +10,6 @@ matplotlib.use("Agg")  # Use the 'Agg' backend to suppress plot pop-ups
 # from copul.checkerboard.shuffle_min import ShuffleOfMin
 # Using the class defined in the context for standalone testing
 from copul.checkerboard.shuffle_min import ShuffleOfMin
-
 
 # --- Start of Pytest Suite ---
 # (The test functions remain exactly the same as in the previous artifact)
@@ -196,9 +195,7 @@ def test_identity_permutation():
     assert cop.is_identity
 
     # CDF should equal min(u,v); try a few points
-    pts = np.array(
-        [[0.2, 0.9], [0.8, 0.1], [0.5, 0.7], [1.0, 1.0], [0.0, 0.0], [0.6, 0.6]]
-    )
+    pts = np.array([[0.2, 0.9], [0.8, 0.1], [0.5, 0.7], [1.0, 1.0], [0.0, 0.0], [0.6, 0.6]])
     expected = np.minimum(pts[:, 0], pts[:, 1])
 
     # Test using 2D array
@@ -381,13 +378,13 @@ def test_rvs_marginals_uniform():
 
 
 def test_tau_reverse():
-    assert ShuffleOfMin([3, 2, 1]).kendall_tau() > -1
-    assert ShuffleOfMin([1, 2, 3]).kendall_tau() == 1
+    assert ShuffleOfMin([3, 2, 1]).kendalls_tau() > -1
+    assert ShuffleOfMin([1, 2, 3]).kendalls_tau() == 1
 
 
 def test_rho_reverse():
-    assert ShuffleOfMin([3, 2, 1]).spearman_rho() > -1
-    assert ShuffleOfMin([1, 2, 3]).spearman_rho() == 1
+    assert ShuffleOfMin([3, 2, 1]).spearmans_rho() > -1
+    assert ShuffleOfMin([1, 2, 3]).spearmans_rho() == 1
 
 
 def test_rvs_expected_correlation_matches_tau():
@@ -401,7 +398,7 @@ def test_rvs_expected_correlation_matches_tau():
     cop = ShuffleOfMin(perm)
 
     # The theoretical tau for reverse permutation is -1.0
-    tau_theory = cop.kendall_tau()
+    tau_theory = cop.kendalls_tau()
     assert np.isclose(tau_theory, -2 / 3)
 
     uv = cop.rvs(size=4000)
@@ -414,7 +411,7 @@ def test_rvs_expected_correlation_matches_tau():
     assert np.isclose(tau_emp, tau_theory, atol=0.035)  # Relaxed from 0.05
 
     # Check Spearman's rho as well (should also be -1 theoretically)
-    rho_theory = cop.spearman_rho()
+    rho_theory = cop.spearmans_rho()
     rho_emp, _ = spearmanr(uv[:, 0], uv[:, 1])
     print(
         f"[INFO] n={n} Reverse Permutation: Theoretical Rho={rho_theory:.4f}, Sample Rho={rho_emp:.4f}"
@@ -449,12 +446,8 @@ def test_rvs_conditional_functional():
             print("[WARN] Skipping segment due to insufficient points.")
             continue
         # Handle case where all points in segment are identical (can happen with low n_samples)
-        if np.allclose(u[seg_mask], u[seg_mask][0]) or np.allclose(
-            v[seg_mask], v[seg_mask][0]
-        ):
-            print(
-                "[WARN] Skipping segment due to constant values (correlation undefined)."
-            )
+        if np.allclose(u[seg_mask], u[seg_mask][0]) or np.allclose(v[seg_mask], v[seg_mask][0]):
+            print("[WARN] Skipping segment due to constant values (correlation undefined).")
             continue
         r, p_val = pearsonr(u[seg_mask], v[seg_mask])
         print(f"  Pearson r = {r:.4f}, p-value = {p_val:.4f}")
@@ -481,9 +474,7 @@ def test_rvs_empirical_cdf():
     # Calculate empirical CDF values
     empirical_cdf = np.zeros(len(grid_points))
     for i, point in enumerate(grid_points):
-        empirical_cdf[i] = np.mean(
-            (samples[:, 0] <= point[0]) & (samples[:, 1] <= point[1])
-        )
+        empirical_cdf[i] = np.mean((samples[:, 0] <= point[0]) & (samples[:, 1] <= point[1]))
 
     # Check that theoretical and empirical CDFs are close
     mae = np.mean(np.abs(theoretical_cdf - empirical_cdf))
@@ -499,7 +490,7 @@ def test_rvs_empirical_cdf():
 @pytest.mark.parametrize(
     "n, expected_tau, expected_rho",
     [
-        (1, np.nan, np.nan),  # n=1 case
+        (1, 1.0, 1.0),  # n=1 case: the comonotone copula M
         (2, 1.0, 1.0),  # identity permutation
         (3, 1.0, 1.0),
         (5, 1.0, 1.0),
@@ -509,23 +500,23 @@ def test_association_identity(n, expected_tau, expected_rho):
     """Test association measures for identity permutation of different sizes."""
     cop = ShuffleOfMin(list(range(1, n + 1)))
     if n == 1:
-        assert np.isnan(cop.kendall_tau())
-        assert np.isnan(cop.spearman_rho())
-        assert np.isclose(cop.chatterjee_xi(), 1.0)  # Functional dependence still holds
-        assert np.isclose(cop.tail_lower(), 1.0)  # Based on pi[0]==1
-        assert np.isclose(cop.tail_upper(), 1.0)  # Based on pi[-1]==n
+        assert np.isclose(cop.kendalls_tau(), 1.0)
+        assert np.isclose(cop.spearmans_rho(), 1.0)
+        assert np.isclose(cop.chatterjees_xi(), 1.0)  # Functional dependence still holds
+        assert np.isclose(cop.lambda_L(), 1.0)  # Based on pi[0]==1
+        assert np.isclose(cop.lambda_U(), 1.0)  # Based on pi[-1]==n
     else:
-        assert np.isclose(cop.kendall_tau(), expected_tau)
-        assert np.isclose(cop.spearman_rho(), expected_rho)
-        assert np.isclose(cop.chatterjee_xi(), 1.0)  # Functional dependence
-        assert np.isclose(cop.tail_lower(), 1.0)
-        assert np.isclose(cop.tail_upper(), 1.0)
+        assert np.isclose(cop.kendalls_tau(), expected_tau)
+        assert np.isclose(cop.spearmans_rho(), expected_rho)
+        assert np.isclose(cop.chatterjees_xi(), 1.0)  # Functional dependence
+        assert np.isclose(cop.lambda_L(), 1.0)
+        assert np.isclose(cop.lambda_U(), 1.0)
 
 
 @pytest.mark.parametrize(
     "n, expected_tau, expected_rho",
     [
-        (1, np.nan, np.nan),  # n=1 case (same as identity for n=1)
+        (1, 1.0, 1.0),  # n=1 case (same as identity for n=1)
         (5, -0.6, -0.9),  # reverse permutation
         (20, -0.9, -0.9),
     ],
@@ -537,18 +528,18 @@ def test_association_reverse(n, expected_tau, expected_rho):
     cop = ShuffleOfMin(pi)
 
     if n == 1:
-        assert np.isnan(cop.kendall_tau())
-        assert np.isnan(cop.spearman_rho())
-        assert np.isclose(cop.chatterjee_xi(), 1.0)
-        assert np.isclose(cop.tail_lower(), 1.0)  # pi[0]=1
-        assert np.isclose(cop.tail_upper(), 1.0)  # pi[-1]=1
+        assert np.isclose(cop.kendalls_tau(), 1.0)
+        assert np.isclose(cop.spearmans_rho(), 1.0)
+        assert np.isclose(cop.chatterjees_xi(), 1.0)
+        assert np.isclose(cop.lambda_L(), 1.0)  # pi[0]=1
+        assert np.isclose(cop.lambda_U(), 1.0)  # pi[-1]=1
     else:
-        assert np.isclose(cop.kendall_tau(), expected_tau, atol=0.1)
-        assert np.isclose(cop.spearman_rho(), expected_rho, atol=0.1)
-        assert np.isclose(cop.chatterjee_xi(), 1.0)  # Still functional dependence
+        assert np.isclose(cop.kendalls_tau(), expected_tau, atol=0.1)
+        assert np.isclose(cop.spearmans_rho(), expected_rho, atol=0.1)
+        assert np.isclose(cop.chatterjees_xi(), 1.0)  # Still functional dependence
         # Tail dependence for reverse: pi[0]=n, pi[-1]=1
-        assert np.isclose(cop.tail_lower(), 0.0)  # pi[0] != 1
-        assert np.isclose(cop.tail_upper(), 0.0)  # pi[-1] != n
+        assert np.isclose(cop.lambda_L(), 0.0)  # pi[0] != 1
+        assert np.isclose(cop.lambda_U(), 0.0)  # pi[-1] != n
 
 
 def test_random_permutation_tau():
@@ -569,7 +560,7 @@ def test_random_permutation_tau():
     tau_expected = 1.0 - 4.0 * inversions / (n**2)
 
     # Get tau from copula method
-    tau_copula = cop.kendall_tau()
+    tau_copula = cop.kendalls_tau()
 
     print(f"\n[INFO] Random Permutation (n={n}): {perm1.tolist()}")
     print(f"  Manual Inversions = {inversions}")
@@ -585,8 +576,8 @@ def test_identity_vs_reverse_tau():
     id_cop = ShuffleOfMin(list(range(1, n + 1)))  # identity
     rev_cop = ShuffleOfMin(list(range(n, 0, -1)))  # reverse
 
-    assert id_cop.kendall_tau() == pytest.approx(1.0)
-    assert rev_cop.kendall_tau() == pytest.approx(-0.6)
+    assert id_cop.kendalls_tau() == pytest.approx(1.0)
+    assert rev_cop.kendalls_tau() == pytest.approx(-0.6)
 
 
 # --------------------------------------------------------------------------- #
@@ -597,33 +588,33 @@ def test_identity_vs_reverse_tau():
 def test_tail_dependence_identity():
     """Test tail dependence for identity permutation."""
     cop = ShuffleOfMin([1, 2, 3, 4])
-    assert cop.tail_lower() == 1.0  # Lower tail dependence (pi[0]=1)
-    assert cop.tail_upper() == 1.0  # Upper tail dependence (pi[-1]=n)
+    assert cop.lambda_L() == 1.0  # Lower tail dependence (pi[0]=1)
+    assert cop.lambda_U() == 1.0  # Upper tail dependence (pi[-1]=n)
 
 
 def test_tail_dependence_reverse():
     """Test tail dependence for reverse permutation."""
     cop = ShuffleOfMin([4, 3, 2, 1])
-    assert cop.tail_lower() == 0.0  # No lower tail dependence (pi[0]=4 != 1)
-    assert cop.tail_upper() == 0.0  # No upper tail dependence (pi[-1]=1 != 4)
+    assert cop.lambda_L() == 0.0  # No lower tail dependence (pi[0]=4 != 1)
+    assert cop.lambda_U() == 0.0  # No upper tail dependence (pi[-1]=1 != 4)
 
 
 def test_tail_dependence_mixed():
     """Test tail dependence for mixed permutation."""
     # Lower tail dependence if pi[0] = 1
     cop1 = ShuffleOfMin([1, 3, 2])  # n=3
-    assert cop1.tail_lower() == 1.0
-    assert cop1.tail_upper() == 0.0  # pi[-1]=2 != 3
+    assert cop1.lambda_L() == 1.0
+    assert cop1.lambda_U() == 0.0  # pi[-1]=2 != 3
 
     # Upper tail dependence if pi[-1] = n
     cop2 = ShuffleOfMin([2, 1, 3])  # n=3
-    assert cop2.tail_lower() == 0.0  # pi[0]=2 != 1
-    assert cop2.tail_upper() == 1.0
+    assert cop2.lambda_L() == 0.0  # pi[0]=2 != 1
+    assert cop2.lambda_U() == 1.0
 
     # Neither
     cop3 = ShuffleOfMin([2, 3, 1])  # n=3
-    assert cop3.tail_lower() == 0.0  # pi[0]=2 != 1
-    assert cop3.tail_upper() == 0.0  # pi[-1]=1 != 3
+    assert cop3.lambda_L() == 0.0  # pi[0]=2 != 1
+    assert cop3.lambda_U() == 0.0  # pi[-1]=1 != 3
 
 
 # --------------------------------------------------------------------------- #
@@ -668,3 +659,48 @@ def test_str_representation():
     rep = str(cop)
     expected = "ShuffleOfMin(order=3, pi=[2, 1, 3])"
     assert rep == expected
+
+
+def test_deprecated_measure_aliases_warn_and_agree():
+    cop = ShuffleOfMin([2, 3, 1])
+    pairs = [
+        ("kendall_tau", "kendalls_tau"),
+        ("spearman_rho", "spearmans_rho"),
+        ("chatterjee_xi", "chatterjees_xi"),
+        ("tail_lower", "lambda_L"),
+        ("tail_upper", "lambda_U"),
+    ]
+    for old, new in pairs:
+        with pytest.warns(DeprecationWarning):
+            val = getattr(cop, old)()
+        assert val == getattr(cop, new)()
+
+
+def test_shuffle_measures_match_min_checkerboard_and_kwargs_cdf():
+    cop = ShuffleOfMin([3, 1, 4, 2])
+    ref = cop.as_checkerboard()
+    for name in [
+        "kendalls_tau",
+        "spearmans_rho",
+        "chatterjees_xi",
+        "blests_nu",
+        "spearmans_footrule",
+        "ginis_gamma",
+        "blomqvists_beta",
+        "lambda_L",
+        "lambda_U",
+    ]:
+        assert np.isclose(getattr(cop, name)(), getattr(ref, name)()), name
+    assert np.isclose(cop.cdf(u=0.3, v=0.6), ref.cdf(0.3, 0.6))
+    uu = np.array([0.1, 0.5, 0.9])
+    assert np.allclose(cop.cdf(uu, uu), ref.cdf(uu, uu))
+
+
+def test_shuffle_constructor_does_not_mutate_and_rvs_accepts_n():
+    perm = np.array([0, 2, 1])
+    ShuffleOfMin(perm)
+    assert perm.tolist() == [0, 2, 1]
+    cop = ShuffleOfMin(perm)
+    a = cop.rvs(50, random_state=1)
+    b = cop.rvs(size=50, random_state=1)
+    assert a.shape == (50, 2) and np.allclose(a, b)

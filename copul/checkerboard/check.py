@@ -1,8 +1,8 @@
+import logging
+
 import numpy as np
 
 from copul.foci import codec
-
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -29,6 +29,35 @@ class Check:
 
     def __str__(self):
         return f"CheckerboardCopula({self.matr.shape})"
+
+    # ------------------------------------------------------------------
+    # separable contraction helpers
+    # ------------------------------------------------------------------
+    def _axis_fractions(self, x, d):
+        """``(N, m_d)`` array: fraction of each cell along axis ``d`` below ``x``."""
+        k = self.matr.shape[d]
+        y = np.clip(np.asarray(x, dtype=float), 0.0, 1.0) * k
+        return np.clip(y[:, None] - np.arange(k)[None, :], 0.0, 1.0)
+
+    def _contract(self, factors, tensor=None, chunk_elems=2_000_000):
+        """Compute ``sum_c T[c] * prod_d factors[d][p, c_d]`` for every point p
+        (``T = tensor``, defaulting to ``self.matr``).
+
+        The contraction is performed axis by axis and in chunks of points so
+        that the memory footprint stays bounded (no cells x points x d array).
+        """
+        P = self.matr if tensor is None else tensor
+        n_pts = factors[0].shape[0]
+        out = np.empty(n_pts)
+        rest = int(np.prod(P.shape[1:])) if P.ndim > 1 else 1
+        step = max(1, chunk_elems // max(rest, 1))
+        for s in range(0, n_pts, step):
+            sl = slice(s, s + step)
+            T = np.tensordot(factors[0][sl], P, axes=(1, 0))
+            for d in range(1, P.ndim):
+                T = np.einsum("nk,nk...->n...", factors[d][sl], T)
+            out[sl] = T
+        return out
 
     @classmethod
     def from_data(cls, data, num_bins=None, kappa=1 / 3, **kwargs):
@@ -78,9 +107,7 @@ class Check:
         else:
             num_bins = np.asarray(num_bins, dtype=int)
             if len(num_bins) != n_features:
-                raise ValueError(
-                    f"num_bins must be scalar or have length {n_features}."
-                )
+                raise ValueError(f"num_bins must be scalar or have length {n_features}.")
 
         # Prepare array to hold bin indices: (n_samples, n_features)
         bin_indices = np.empty_like(data, dtype=np.int64)
@@ -127,9 +154,7 @@ class Check:
         # 3) Create the copula object (normalizes in __init__)
         return cls(hist)
 
-    def validate_copula(
-        self, tol=1e-10, warn=False, raise_on_fail=False, report_details=False
-    ):
+    def validate_copula(self, tol=1e-10, warn=False, raise_on_fail=False, report_details=False):
         """
         Validate that the checkerboard weights define a proper d-dimensional copula density:
 
@@ -174,9 +199,7 @@ class Check:
         min_cell = float(np.min(A)) if A.size else 0.0
         negativity_violation = max(0.0, -min_cell)
         if negativity_violation > tol:
-            violations.append(
-                f"Negative cell mass: min={min_cell:.3e} < 0 (tol={tol:g})."
-            )
+            violations.append(f"Negative cell mass: min={min_cell:.3e} < 0 (tol={tol:g}).")
 
         # 2) Total mass
         total_mass = float(A.sum())
@@ -234,9 +257,7 @@ class Check:
 
         return ok, report
 
-    def is_copula(
-        self, tol=1e-10, warn=False, raise_on_fail=False, report_details=False
-    ):
+    def is_copula(self, tol=1e-10, warn=False, raise_on_fail=False, report_details=False):
         return self.validate_copula(
             tol=tol,
             warn=warn,
@@ -255,7 +276,7 @@ class Check:
     def chatterjees_xi(self, n=100_000, seed=None, i=1, samples=None):
         i0 = i - 1  # Convert to zero-based index
         if samples is None:
-            log.info(f"Estimating xi using {n} samples...")
+            log.debug(f"Estimating xi using {n} samples...")
             samples = self.rvs(n, random_state=seed)
         x = samples[:, i0]
         # exclude i0-th column

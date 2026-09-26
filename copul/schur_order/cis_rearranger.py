@@ -6,7 +6,7 @@ Strothmann, Dette, Siburg (2022) - "Rearranged dependence measures"
 """
 
 import logging
-from typing import Union, Optional, Any, List
+from typing import Any
 
 import numpy as np
 import sympy
@@ -31,7 +31,7 @@ class CISRearranger:
         _checkerboard_size: Size of the checkerboard grid for approximating copulas
     """
 
-    def __init__(self, checkerboard_size: Optional[int] = None):
+    def __init__(self, checkerboard_size: int | None = None):
         """
         Initialize a CISRearranger.
 
@@ -45,7 +45,7 @@ class CISRearranger:
         """Return string representation of the rearranger."""
         return f"CISRearranger(checkerboard_size={self._checkerboard_size})"
 
-    def rearrange_copula(self, copula: Any) -> sympy.Matrix:
+    def rearrange_copula(self, copula: Any) -> np.ndarray:
         """
         Rearrange a copula to be conditionally increasing in sequence.
 
@@ -53,7 +53,7 @@ class CISRearranger:
             copula: A copula object or copul.checkerboard.biv_check_pi.BivCheckPi object to rearrange
 
         Returns:
-            A sympy Matrix representing the rearranged copula's density
+            np.ndarray: the rearranged checkerboard mass matrix (total mass 1)
         """
         # Create checkerboarder with specified grid size
         checkerboarder = Checkerboarder(self._checkerboard_size)
@@ -73,51 +73,37 @@ class CISRearranger:
 
     @staticmethod
     def rearrange_checkerboard(
-        ccop: Union[BivCheckPi, List[List[float]], NDArray, sympy.Matrix, Any],
-    ) -> sympy.Matrix:
+        ccop: BivCheckPi | list[list[float]] | NDArray | sympy.Matrix | Any,
+    ) -> np.ndarray:
         """
-        Rearrange a checkerboard copula to be conditionally increasing in sequence (CIS),
-        using numeric (NumPy) operations for speed. Implements Algorithm 1 from
-        Strothmann, Dette, Siburg (2022).
+        Rearrange a checkerboard copula to be stochastically increasing (SI/CIS),
+        implementing Algorithm 1 of Strothmann, Dette, Siburg (2022).
 
         Parameters
         ----------
-        ccop : Union[copul.checkerboard.biv_check_pi.BivCheckPi, list, np.ndarray, sympy.Matrix, Any]
-            The checkerboard copula to rearrange. Can be:
-              - a copul.checkerboard.biv_check_pi.BivCheckPi instance,
-              - a 2D list of floats,
-              - a 2D numpy.ndarray,
-              - a sympy.Matrix,
-              - or any object with a `.matr` attribute containing one of the above.
+        ccop : BivCheckPi, list, np.ndarray, sympy.Matrix or object with ``.matr``
+            The checkerboard copula (or its mass matrix) to rearrange.
 
         Returns
         -------
-        sympy.Matrix
-            The density matrix of the rearranged copula, with shape (n_rows, n_cols).
-            Each entry is a sympy-compatible expression (usually float).
+        np.ndarray
+            The mass matrix of the rearranged copula, shape ``(n_rows, n_cols)``,
+            normalised to total mass one.  Wrap it in ``BivCheckPi`` (or use
+            :meth:`BivCheckPi.rearrange_cis`) to obtain a copula object.
         """
         log.debug("Rearranging checkerboard...")
 
-        # ------------------------------------------------------
-        # 1. Extract matrix from BivCheckPi or direct input
-        # ------------------------------------------------------
-        if isinstance(ccop, BivCheckPi):
-            matr = ccop.matr
-        else:
-            matr = ccop  # assumed to be array-like or sympy.Matrix
-
-        # Convert Python lists to np array
-        if isinstance(matr, list):
-            matr = np.array(matr, dtype=float)
-        elif isinstance(matr, sympy.Matrix):
-            # Convert sympy Matrix to np array for faster numeric ops
+        # 1. Extract the matrix
+        matr = getattr(ccop, "matr", ccop)
+        if isinstance(matr, sympy.Matrix):
             matr = np.array(matr.tolist(), dtype=float)
-
-        # Ensure matr is now a NumPy 2D array
+        elif isinstance(matr, list):
+            matr = np.array(matr, dtype=float)
         if not isinstance(matr, np.ndarray):
             raise TypeError(
                 f"Expected a BivCheckPi, list, np.ndarray, or sympy.Matrix. Got: {type(matr)}"
             )
+        matr = np.asarray(matr, dtype=float)
         if matr.ndim != 2:
             raise ValueError(f"Expected a 2D matrix, got {matr.ndim}D array.")
 
@@ -126,55 +112,28 @@ class CISRearranger:
         if matr_sum == 0:
             raise ValueError("Input matrix has sum zero; cannot rearrange.")
 
-        # ------------------------------------------------------
-        # 2. Scale the matrix (Condition 3.2 in Strothmann et al.)
-        #    => multiply by n_rows / matr_sum
-        # ------------------------------------------------------
-        matr_scaled = (n_rows / matr_sum) * matr  # shape: (n_rows, n_cols)
+        # 2. Scale so that the total mass is n_rows (Condition 3.2)
+        matr_scaled = (n_rows / matr_sum) * matr
 
-        # ------------------------------------------------------
-        # 3. Step 1 of the algorithm:
-        #    Build partial sums for each row => matrix B
-        #    B[k, i] = sum_{j=0..i} matr_scaled[k, j]
-        #
-        # We'll add a left "zero" column to B => shape is (n_rows, n_cols+1)
-        #   B[:, 1:] = row-wise cumsum of matr_scaled
-        #   B[:, 0]  = 0
-        # ------------------------------------------------------
-        partial_sums = np.cumsum(matr_scaled, axis=1)  # shape (n_rows, n_cols)
+        # 3. Row-wise partial sums with a leading zero column
         B = np.zeros((n_rows, n_cols + 1), dtype=float)
-        B[:, 1:] = partial_sums
+        B[:, 1:] = np.cumsum(matr_scaled, axis=1)
 
-        # ------------------------------------------------------
-        # 4. Step 2: Sort each column of B in descending order => B_tilde
-        # ------------------------------------------------------
-        B_tilde = np.zeros_like(B)
-        for col_idx in range(n_cols + 1):
-            col_vals = B[:, col_idx]
-            sorted_col = np.sort(col_vals)[::-1]  # descending
-            B_tilde[:, col_idx] = sorted_col
+        # 4. Sort every column in descending order
+        B_tilde = -np.sort(-B, axis=0)
 
-        # ------------------------------------------------------
-        # 5. Step 3: Compute differences between adjacent columns
-        #    => a_arrow = B_tilde[:, 1:] - B_tilde[:, :-1]
-        # ------------------------------------------------------
-        a_arrow = B_tilde[:, 1:] - B_tilde[:, :-1]  # shape (n_rows, n_cols)
+        # 5. Differences between adjacent columns
+        a_arrow = np.diff(B_tilde, axis=1)
 
-        # ------------------------------------------------------
-        # 6. Normalize by (n_rows * n_cols)
-        # ------------------------------------------------------
-        rearranged_np = a_arrow / (n_rows * n_cols)
-
-        # ------------------------------------------------------
-        # 7. Convert to a Sympy Matrix for final return
-        # ------------------------------------------------------
-        rearranged_sp = sympy.Matrix(rearranged_np)
+        # 6. Normalise to total mass one (each row of a_arrow sums to its
+        #    original scaled row mass, i.e. the total is n_rows)
+        rearranged = np.clip(a_arrow, 0.0, None) / n_rows
 
         log.debug("Rearrangement complete.")
-        return rearranged_sp
+        return rearranged
 
     @staticmethod
-    def verify_cis_property(matrix: Union[np.ndarray, Any]) -> bool:
+    def verify_cis_property(matrix: np.ndarray | Any) -> bool:
         """
         Verify that a matrix has the conditionally increasing in sequence property.
 
@@ -194,20 +153,13 @@ class CISRearranger:
 
         # Compute cumulative sums for each row
         cum_sums = np.zeros((n_rows, n_cols + 1))
-        for k in range(n_rows):
-            for i in range(n_cols):
-                cum_sums[k, i + 1] = cum_sums[k, i] + matrix_np[k, i]
+        cum_sums[:, 1:] = np.cumsum(np.asarray(matrix_np, dtype=float), axis=1)
 
         # Check if each column is in decreasing order
-        for i in range(cum_sums.shape[1]):
-            col = cum_sums[:, i]
-            if not all(col[j] >= col[j + 1] for j in range(len(col) - 1)):
-                return False
-
-        return True
+        return bool(np.all(np.diff(cum_sums, axis=0) <= 0))
 
 
-def apply_cis_rearrangement(copula: Any, grid_size: Optional[int] = None) -> BivCheckPi:
+def apply_cis_rearrangement(copula: Any, grid_size: int | None = None) -> BivCheckPi:
     """
     Apply CIS rearrangement to a copula and return as a BivCheckPi object.
 
@@ -223,15 +175,4 @@ def apply_cis_rearrangement(copula: Any, grid_size: Optional[int] = None) -> Biv
     """
     rearranger = CISRearranger(grid_size)
     rearranged_matrix = rearranger.rearrange_copula(copula)
-
-    # Convert sympy matrix to numpy array
-    if hasattr(rearranged_matrix, "tolist") and not isinstance(
-        rearranged_matrix, np.ndarray
-    ):
-        rearranged_np = np.array(rearranged_matrix.tolist(), dtype=float)
-    else:
-        rearranged_np = rearranged_matrix
-
-    # Create BivCheckPi from rearranged matrix
-    rearranged_copula = BivCheckPi(rearranged_np)
-    return rearranged_copula
+    return BivCheckPi(np.asarray(rearranged_matrix, dtype=float))

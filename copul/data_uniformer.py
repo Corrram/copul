@@ -44,9 +44,7 @@ class DataUniformer:
 
         # Serial transformation
         for j in range(n_features):
-            transformed_data[:, j] = self._transform_column(
-                data[:, j], touch_boundaries
-            )
+            transformed_data[:, j] = self._transform_column(data[:, j], touch_boundaries)
 
         return transformed_data
 

@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.schur_order.ltd_verifier import LTDVerifier
 
@@ -32,9 +33,7 @@ from copul.schur_order.ltd_verifier import LTDVerifier
 def test_checkerboards(matr, expected):
     cb = BivCheckPi(matr)
     result = cb.is_ltd()
-    assert result == expected, (
-        f"Expected {expected}, but got {result} for matrix:\n{matr}"
-    )
+    assert result == expected, f"Expected {expected}, but got {result} for matrix:\n{matr}"
 
 
 @pytest.mark.parametrize(

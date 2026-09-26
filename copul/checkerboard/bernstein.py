@@ -1,18 +1,60 @@
-import itertools
+r"""
+d-dimensional Bernstein copulas.
+
+For a nonnegative array :math:`\theta` of shape :math:`(m_1,\dots,m_d)`
+(normalised to total mass one) with cumulated array
+:math:`D_{k} = \sum_{i\le k}\theta_i` the Bernstein copula is
+
+.. math::
+
+   C(u) = \sum_{k_1=1}^{m_1}\cdots\sum_{k_d=1}^{m_d} D_{k}
+          \prod_{j=1}^d B_{m_j,k_j}(u_j),\qquad
+   B_{m,k}(u) = \binom{m}{k}u^k(1-u)^{m-k},
+
+i.e. the Bernstein smoothing of the checkerboard copula with masses
+:math:`\theta`.  Equivalently :math:`C` is the mixture, with weights
+:math:`\theta_i`, of independent :math:`\mathrm{Beta}(i_j+1, m_j-i_j)` margins
+(0-based ``i``), which gives an exact sampler.
+"""
+
 import warnings
-import numpy as np
-from scipy.special import comb
 from typing import TypeAlias
 
-# Adjust these imports as needed.
+import numpy as np
+from scipy.special import comb
+
 from copul.checkerboard.check import Check
 from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
+
+
+def bernstein_basis(m, u):
+    """``(N, m)`` array ``[B_{m,k}(u)]_{k=1..m}`` (stable at the boundary)."""
+    u = np.asarray(u, dtype=float).reshape(-1, 1)
+    k = np.arange(1, m + 1)[None, :]
+    return comb(m, k) * u**k * (1.0 - u) ** (m - k)
+
+
+def bernstein_basis_deriv(m, u):
+    """``(N, m)`` array of ``d/du B_{m,k}(u)`` for ``k = 1..m``.
+
+    Uses ``B'_{m,k} = m (B_{m-1,k-1} - B_{m-1,k})`` which has no negative
+    powers (the naive product rule produces ``0 * inf = nan`` at ``u = 1``).
+    """
+    u = np.asarray(u, dtype=float).reshape(-1, 1)
+    k = np.arange(1, m + 1)[None, :]
+    lower = comb(m - 1, k - 1) * u ** (k - 1) * (1.0 - u) ** (m - k)
+    upper = np.where(
+        k <= m - 1,
+        comb(m - 1, k) * u**k * (1.0 - u) ** np.maximum(m - 1 - k, 0),
+        0.0,
+    )
+    return m * (lower - upper)
 
 
 class BernsteinCopula(Check, CopulaPlottingMixin):
     """
     Represents a d-dimensional Bernstein Copula with possibly different degrees m_i per dimension.
-    This version uses cumulative sum logic (skipping k=0) to compute the CDF/PDF.
+    The degree along axis ``j`` equals ``theta.shape[j]``.
     """
 
     def __new__(cls, theta, *args, **kwargs):
@@ -22,7 +64,7 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
                 import importlib
 
                 bbc_module = importlib.import_module("copul.checkerboard.biv_bernstein")
-                BivBernsteinCopula = getattr(bbc_module, "BivBernsteinCopula")
+                BivBernsteinCopula = bbc_module.BivBernsteinCopula
                 return BivBernsteinCopula(theta, *args, **kwargs)
             except (ImportError, ModuleNotFoundError, AttributeError) as e:
                 warnings.warn(
@@ -31,33 +73,32 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
         return super().__new__(cls)
 
     def __init__(self, theta, check_theta=True):
-        theta = np.asarray(theta, dtype=float)
-        matr = theta.copy()
+        # never modify the caller's array
+        theta = np.array(theta, dtype=float)
+        if theta.ndim == 0:
+            raise ValueError("Theta must have at least one dimension.")
+        if check_theta and np.any(theta < 0):
+            raise ValueError("Theta must be nonnegative.")
         total_mass = np.sum(theta)
+        matr = theta.copy()
         if total_mass > 0:
-            theta /= total_mass
+            theta = theta / total_mass
         self.theta = theta
         self.dim = self.theta.ndim
-        if self.dim == 0:
-            raise ValueError("Theta must have at least one dimension.")
 
-        # Each dimension's degree m_i is one less than the size along that axis.
-        self.degrees = [s for s in self.theta.shape]
-        if any(d < 0 for d in self.degrees):
+        # Each dimension's degree equals the size along that axis.
+        self.degrees = [int(s) for s in self.theta.shape]
+        if any(d < 1 for d in self.degrees):
             raise ValueError("Each dimension must have size >= 1.")
 
-        if check_theta:
-            # Optionally add additional checks here (e.g., negativity).
-            pass
-
-        # Precompute binomial coefficients for each dimension.
+        # Binomial coefficients (kept for backwards compatibility).
         self._binom_coeffs_cdf = [
-            np.array([comb(m_i, k, exact=True) for k in range(m_i + 1)])
-            for m_i in self.degrees
+            np.array([comb(m_i, k, exact=True) for k in range(m_i + 1)]) for m_i in self.degrees
         ]
 
         # Let base Check store 'matr'
         super().__init__(matr=matr)
+        self._theta_cs = self._cumsum_theta()
 
     def __str__(self):
         return f"BernsteinCopula(degrees={self.degrees}, dim={self.dim})"
@@ -74,20 +115,8 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
         return binom_coeffs[k_vals] * (u**k_vals) * ((1 - u) ** (m - k_vals))
 
     def _bernstein_poly_vec_cd(self, m, k_vals, u, binom_coeffs):
-        """Compute derivative vector for [B_{m,k}(u)] for k in k_vals."""
-        term1 = (
-            binom_coeffs[k_vals]
-            * k_vals
-            * (u ** (k_vals - 1))
-            * ((1 - u) ** (m - k_vals))
-        )
-        term2 = (
-            binom_coeffs[k_vals]
-            * (m - k_vals)
-            * (u**k_vals)
-            * ((1 - u) ** (m - k_vals - 1))
-        )
-        return term1 - term2
+        """Compute derivative vector for [B_{m,k}(u)] for k in k_vals (nan-free)."""
+        return bernstein_basis_deriv(m, u)[0, np.asarray(k_vals) - 1]
 
     def _cumsum_theta(self, with_zeros=False):
         """Return the cumulative sum of theta along each axis.
@@ -99,128 +128,67 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
             theta_cs = np.cumsum(theta_cs, axis=ax)
 
         if with_zeros:
-            # Add a zero row at the top and a zero column at the left.
-            # This pads the array with one row/column of zeros before the existing data.
-            theta_cs = np.pad(
-                theta_cs, pad_width=((1, 0), (1, 0)), mode="constant", constant_values=0
-            )
+            theta_cs = np.pad(theta_cs, pad_width=[(1, 0)] * self.dim, mode="constant")
 
         return theta_cs
 
-    def _prepare_bern_vals(self, u, use_deriv=False, cond_index=None):
-        """
-        For a given point u (1D array of length dim), return a list of Bernstein polynomial
-        vectors (skipping k=0) for each dimension. If use_deriv is True, use the derivative version.
-        If cond_index is not None, then for dimension cond_index use the derivative function.
-        """
-        bern_vals = []
-        for j in range(self.dim):
-            m_j = self.degrees[j]
-            k_arr = np.arange(1, m_j + 1)
-            bc = self._binom_coeffs_cdf[j]
-            if cond_index is not None:
-                # For the condition index, use derivative; else regular.
-                if j == cond_index:
-                    bern_vals.append(self._bernstein_poly_vec_cd(m_j, k_arr, u[j], bc))
-                else:
-                    bern_vals.append(self._bernstein_poly_vec(m_j, k_arr, u[j], bc))
+    def _evaluate(self, points, deriv_axes=()):
+        """Contract the cumulated coefficients with (derivative) bases."""
+        points = np.asarray(points, dtype=float)
+        if points.ndim == 1:
+            points = points[None, :]
+        if points.shape[1] != self.dim:
+            raise ValueError(f"Expected points with {self.dim} coordinates.")
+        if np.any(points < 0) or np.any(points > 1):
+            raise ValueError("All coordinates must be in [0,1].")
+        factors = []
+        for j, m_j in enumerate(self.degrees):
+            if j in deriv_axes:
+                factors.append(bernstein_basis_deriv(m_j, points[:, j]))
             else:
-                if use_deriv:
-                    bern_vals.append(self._bernstein_poly_vec_cd(m_j, k_arr, u[j], bc))
-                else:
-                    bern_vals.append(self._bernstein_poly_vec(m_j, k_arr, u[j], bc))
-        return bern_vals
+                factors.append(bernstein_basis(m_j, points[:, j]))
+        return self._contract(factors, tensor=self._theta_cs)
 
-    def _accumulate_value(self, bern_vals, theta_cs):
-        """
-        Sum over all multi-indices (skipping k=0) the product of the corresponding
-        cumulative theta and Bernstein polynomial values.
-        """
-        shape = theta_cs.shape
-        theta_flat = theta_cs.ravel(order="C")
-        total = 0.0
-        ranges = [range(m) for m in self.degrees]
-        for k_tuple in itertools.product(*ranges):
-            flat_idx = np.ravel_multi_index(k_tuple, shape, order="C")
-            coef = theta_flat[flat_idx]
-            prod = 1.0
-            for j, kj in enumerate(k_tuple):
-                prod *= bern_vals[j][kj]
-            total += coef * prod
-        return float(total)
-
-    # --- CDF Methods ----------------------------------------------------------
-
-    def cdf(self, *args):
-        # Support cdf(u1,...,ud), cdf([u1,...,ud]), or cdf([[u1,...,ud], ...])
+    def _parse_points(self, args, name):
         if not args:
-            raise ValueError("No arguments provided to cdf().")
+            raise ValueError(f"No arguments provided to {name}().")
         if len(args) == 1:
             arr = np.asarray(args[0], dtype=float)
             if arr.ndim == 1:
-                if arr.size == self.dim:
-                    return self._cdf_single_point(arr)
-                else:
+                if arr.size != self.dim:
                     raise ValueError(f"Input length must equal {self.dim}.")
-            elif arr.ndim == 2:
+                return arr[None, :], True
+            if arr.ndim == 2:
                 if arr.shape[1] != self.dim:
                     raise ValueError(f"Second dimension must be {self.dim}.")
-                # Simplified vectorized version: apply single-point method per row.
-                return np.array([self._cdf_single_point(row) for row in arr])
-            else:
-                raise ValueError("cdf() supports 1D or 2D arrays only.")
-        elif len(args) == self.dim:
-            return self._cdf_single_point(np.array(args, dtype=float))
-        else:
-            raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}.")
+                return arr, False
+            raise ValueError(f"{name}() supports 1D or 2D arrays only.")
+        if len(args) == self.dim:
+            arrs = np.broadcast_arrays(*[np.asarray(a, dtype=float) for a in args])
+            scalar = arrs[0].ndim == 0
+            return np.column_stack([a.ravel() for a in arrs]), scalar
+        raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}.")
+
+    # --- CDF / PDF / conditional distributions --------------------------------
+
+    def cdf(self, *args):
+        """CDF; supports ``cdf(u1,...,ud)``, ``cdf([u1,...,ud])`` and ``cdf(P)``
+        with ``P`` of shape ``(N, d)``."""
+        pts, scalar = self._parse_points(args, "cdf")
+        out = self._evaluate(pts)
+        return float(out[0]) if scalar else out
 
     def _cdf_single_point(self, u):
-        if np.any(u < 0) or np.any(u > 1):
-            raise ValueError("All coordinates must be in [0,1].")
-        if np.any(u == 0):
-            return 0.0
-        if np.all(u == 1):
-            return 1.0
-
-        theta_cs = self._cumsum_theta(with_zeros=False)
-        bern_vals = self._prepare_bern_vals(u, use_deriv=False)
-        return self._accumulate_value(bern_vals, theta_cs)
-
-    # --- PDF Methods ----------------------------------------------------------
+        return float(self._evaluate(np.asarray(u, dtype=float)[None, :])[0])
 
     def pdf(self, *args):
-        # Support pdf(u1,...,ud), pdf([u1,...,ud]), or pdf([[u1,...,ud], ...])
-        if not args:
-            raise ValueError("No arguments provided to pdf().")
-        if len(args) == 1:
-            arr = np.asarray(args[0], dtype=float)
-            if arr.ndim == 1:
-                if arr.size == self.dim:
-                    return self._pdf_single_point(arr)
-                else:
-                    raise ValueError("Wrong shape for 1D input.")
-            elif arr.ndim == 2:
-                if arr.shape[1] != self.dim:
-                    raise ValueError("Second dimension must match copula dim.")
-                return np.array([self._pdf_single_point(row) for row in arr])
-            else:
-                raise ValueError("pdf() supports 1D or 2D arrays only.")
-        elif len(args) == self.dim:
-            return self._pdf_single_point(np.array(args, dtype=float))
-        else:
-            raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}.")
+        """Density; same call conventions as :meth:`cdf`."""
+        pts, scalar = self._parse_points(args, "pdf")
+        out = self._evaluate(pts, deriv_axes=tuple(range(self.dim)))
+        return float(out[0]) if scalar else out
 
     def _pdf_single_point(self, u):
-        if np.any(u < 0) or np.any(u > 1):
-            raise ValueError("All coordinates must be in [0,1].")
-        if np.any(u == 0) or np.all(u == 1):
-            return 0.0  # For boundaries, follow the original logic.
-
-        theta_cs = self._cumsum_theta()
-        bern_vals = self._prepare_bern_vals(u, use_deriv=True)
-        return self._accumulate_value(bern_vals, theta_cs)
-
-    # --- Conditional Distribution Methods -----------------------------------
+        return float(self._evaluate(np.asarray(u, dtype=float)[None, :], tuple(range(self.dim)))[0])
 
     def cond_distr_1(self, *args):
         return self.cond_distr(1, *args)
@@ -229,40 +197,40 @@ class BernsteinCopula(Check, CopulaPlottingMixin):
         return self.cond_distr(2, *args)
 
     def cond_distr(self, i, *args):
-        """
-        Numerically compute C_{i|(-i)}(u_i|u_{-i}) using the ratio:
-            C(u1,...,u_{i-1}, u_i, 1,...,1) / C(u1,...,u_{i-1}, 1,...,1)
+        r"""
+        Conditional distribution :math:`\partial C / \partial u_i`, i.e. the
+        distribution of the other coordinates given :math:`U_i = u_i`.
         """
         if not (1 <= i <= self.dim):
             raise ValueError(f"i must be between 1 and {self.dim}")
-        if not args:
-            raise ValueError("No arguments provided to cond_distr().")
-        if len(args) == 1:
-            arr = np.asarray(args[0], dtype=float)
-            if arr.ndim == 1:
-                if arr.size == self.dim:
-                    return self._cond_distr_single(arr, i)
-                else:
-                    raise ValueError("Expected 1D array of length dim.")
-            elif arr.ndim == 2:
-                return np.array([self._cond_distr_single(row, i) for row in arr])
-            else:
-                raise ValueError("cond_distr() supports 1D or 2D arrays only.")
-        elif len(args) == self.dim:
-            return self._cond_distr_single(np.array(args, dtype=float), i)
-        else:
-            raise ValueError("Wrong number of coordinates.")
+        pts, scalar = self._parse_points(args, "cond_distr")
+        out = self._evaluate(pts, deriv_axes=(i - 1,))
+        return float(out[0]) if scalar else out
 
     def _cond_distr_single(self, u, i):
-        if np.any(u < 0) or np.any(u > 1):
-            raise ValueError("All coordinates must be in [0,1].")
-        if np.any(u == 0) or np.all(u == 1):
-            return 0.0
+        return float(self._evaluate(np.asarray(u, dtype=float)[None, :], (i - 1,))[0])
 
-        theta_cs = self._cumsum_theta()
-        # Use derivative only for the conditional coordinate (i-1)
-        bern_vals = self._prepare_bern_vals(u, use_deriv=False, cond_index=i - 1)
-        return self._accumulate_value(bern_vals, theta_cs)
+    # --- sampling ------------------------------------------------------------
+
+    def rvs(self, n=1, random_state=None, **kwargs):
+        """Exact sampling via the Beta-mixture representation.
+
+        A cell ``i`` is drawn with probability ``theta_i``; then the
+        coordinates are independent ``Beta(i_j + 1, m_j - i_j)`` (0-based
+        ``i_j``).  ``random_state``: int, Generator or ``None`` (NumPy's global
+        generator, never reseeded).  Extra keywords (e.g. ``approximate``) are
+        accepted and ignored.
+        """
+        from copul.checkerboard._biv_engine import resolve_rng
+
+        rng = resolve_rng(random_state)
+        flat = self.theta.ravel()
+        idx = rng.choice(flat.size, size=int(n), p=flat / flat.sum())
+        cells = np.unravel_index(idx, self.theta.shape)
+        out = np.empty((int(n), self.dim))
+        for j, m_j in enumerate(self.degrees):
+            out[:, j] = rng.beta(cells[j] + 1.0, m_j - cells[j])
+        return out
 
 
 Bernstein: TypeAlias = BernsteinCopula

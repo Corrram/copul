@@ -128,9 +128,7 @@ def test_from_data_trivariate_gaussian_with_marginals_and_dependence():
 
     # --- 1D marginals should be ~uniform ---
     # Sum over the other two axes; each should be ~ 1/n_bins
-    tol_1d = (
-        0.03  # loose tolerance; histogramdd + ranks won't be exactly uniform per bin
-    )
+    tol_1d = 0.03  # loose tolerance; histogramdd + ranks won't be exactly uniform per bin
     m1 = ccop.matr.sum(axis=(1, 2))
     m2 = ccop.matr.sum(axis=(0, 2))
     m3 = ccop.matr.sum(axis=(0, 1))

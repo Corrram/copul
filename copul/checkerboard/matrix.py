@@ -1,6 +1,6 @@
-from copul.checkerboard.check_pi import CheckPi
-from copul.checkerboard.check_min import CheckMin
 from copul.checkerboard.biv_check_w import BivCheckW
+from copul.checkerboard.check_min import CheckMin
+from copul.checkerboard.check_pi import CheckPi
 
 
 def from_matrix(matrix, checkerboard_type="CheckPi"):

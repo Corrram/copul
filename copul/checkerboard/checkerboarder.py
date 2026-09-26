@@ -1,24 +1,23 @@
+from __future__ import annotations
+
 import logging
 import warnings
-from typing import Union
 
 import numpy as np
-import pandas as pd
+
+from copul._lazy import pd
 
 log = logging.getLogger(__name__)
 
-# --- keep your scipy import flag as-is ---
 try:
     from scipy.optimize import linear_sum_assignment
 
     _HAS_SCIPY = True
-except Exception:
+except ImportError:  # pragma: no cover - scipy is a hard dependency
     _HAS_SCIPY = False
 
 
-def _row_targets_from_conditionals(
-    cmatr: np.ndarray, method: str = "median"
-) -> np.ndarray:
+def _row_targets_from_conditionals(cmatr: np.ndarray, method: str = "median") -> np.ndarray:
     """
     Compute target column indices y_i (1..n) for each row i using row conditionals.
     method: 'median' (robust) or 'mean' (smoother).
@@ -114,9 +113,7 @@ def _assignment_closest_to_targets(y_iso: np.ndarray, n: int) -> np.ndarray:
     return pi
 
 
-def _blend_cost_matrix(
-    cmatr: np.ndarray, y_iso: np.ndarray, lam: float = 0.15
-) -> np.ndarray:
+def _blend_cost_matrix(cmatr: np.ndarray, y_iso: np.ndarray, lam: float = 0.15) -> np.ndarray:
     """
     Optional: blended cost that still considers large cell mass.
     Minimization cost = lam * (-normalized_mass) + (1-lam) * normalized_sq_distance_to_target
@@ -237,7 +234,7 @@ def _best_permutation_from_mass(cmatr: np.ndarray, lookback: int = 0) -> np.ndar
 
 
 class Checkerboarder:
-    def __init__(self, n: Union[int, list] = None, dim=2, checkerboard_type="CheckPi"):  # noqa: E501
+    def __init__(self, n: int | list | None = None, dim=2, checkerboard_type="CheckPi"):
         """
         Initialize a Checkerboarder instance.
 
@@ -380,16 +377,12 @@ class Checkerboarder:
         inclusion_exclusion_sum = 0.0
         for corner in range(1 << self.d):
             corner_point = [
-                (u_upper[dim] if corner & (1 << dim) else u_lower[dim])
-                for dim in range(self.d)
+                (u_upper[dim] if corner & (1 << dim) else u_lower[dim]) for dim in range(self.d)
             ]
             sign = (-1) ** (bin(corner).count("1") + self.d)
-            try:
-                cdf_val = copula.cdf(*corner_point)
-                cdf_val = float(cdf_val)
-                inclusion_exclusion_sum += sign * cdf_val
-            except Exception as e:
-                log.warning(f"Error computing CDF at {corner_point}: {e}")
+            # A failing cdf evaluation must not be skipped silently: dropping a
+            # corner term would produce a wrong cell mass.
+            inclusion_exclusion_sum += sign * float(copula.cdf(*corner_point))
         return inclusion_exclusion_sum
 
     def _get_checkerboard_copula_for(self, cmatr):
@@ -429,7 +422,7 @@ class Checkerboarder:
         else:
             raise ValueError(f"Unknown checkerboard type: {self._checkerboard_type}")
 
-    def from_data(self, data: Union[pd.DataFrame, np.ndarray, list]):  # noqa: E501
+    def from_data(self, data: pd.DataFrame | np.ndarray | list):
         # Normalize input to DataFrame
         if isinstance(data, (list, np.ndarray)):
             data = pd.DataFrame(data)
@@ -462,9 +455,7 @@ class Checkerboarder:
     def _from_data_bivariate(self, data, n_obs):
         x = data.iloc[:, 0].values
         y = data.iloc[:, 1].values
-        hist, _, _ = np.histogram2d(
-            x, y, bins=[self.n[0], self.n[1]], range=[[0, 1], [0, 1]]
-        )
+        hist, _, _ = np.histogram2d(x, y, bins=[self.n[0], self.n[1]], range=[[0, 1], [0, 1]])
         cmatr = hist / n_obs
         return self._get_checkerboard_copula_for(cmatr)
 
@@ -495,12 +486,11 @@ class Checkerboarder:
                 raise ValueError("Provide either `copula` or `cmatr`.")
             # compute checkerboard mass with your existing path
             cb = self.get_checkerboard_copula(copula)
-            # All your checkerboard-like classes should expose their mass matrix;
-            # if not, add a property/accessor where they were constructed from `cmatr`.
+            # All checkerboard-like classes expose their mass matrix as `matr`.
             try:
-                cmatr = cb.cmatr
-            except AttributeError:
-                raise AttributeError("Checkerboard copula does not expose `cmatr`.")
+                cmatr = cb.matr
+            except AttributeError as e:
+                raise AttributeError("Checkerboard copula does not expose `matr`.") from e
 
         cmatr = np.asarray(cmatr, dtype=float)
         if cmatr.ndim != 2:
@@ -514,7 +504,7 @@ class Checkerboarder:
             order = M
 
         # If sizes mismatch, aggregate or interpolate to square [order x order].
-        if (M != order) or (N != order):
+        if (order != M) or (order != N):
             # Simple block aggregation for downsampling;
             # for upsampling, average-nn interpolation to conserve total mass.
             cmatr = _resize_mass_matrix(cmatr, order, order)
@@ -581,26 +571,24 @@ def _resize_mass_matrix(C: np.ndarray, new_m: int, new_n: int) -> np.ndarray:
 
 
 def _fast_rank(x):
+    """Ordinal ranks scaled to ``(0, 1]``: ``rank / n`` (vectorised)."""
+    x = np.asarray(x)
     n = len(x)
     ranks = np.empty(n, dtype=np.float64)
-    idx = np.argsort(x)
-    for i in range(n):
-        ranks[idx[i]] = (i + 1) / n
+    ranks[np.argsort(x, kind="stable")] = np.arange(1, n + 1) / n
     return ranks
 
 
-def from_data(data, checkerboard_size=None, checkerboard_type="CheckPi"):  # noqa: E501
+def from_data(data, checkerboard_size=None, checkerboard_type="CheckPi"):
     if checkerboard_size is None:
         n_samples = len(data)
         checkerboard_size = min(max(10, int(np.sqrt(n_samples) / 5)), 50)
     if isinstance(data, (list, np.ndarray)):
         data = pd.DataFrame(data)
     dimensions = data.shape[1]
-    cb = Checkerboarder(
-        n=checkerboard_size, dim=dimensions, checkerboard_type=checkerboard_type
-    )
+    cb = Checkerboarder(n=checkerboard_size, dim=dimensions, checkerboard_type=checkerboard_type)
     return cb.from_data(data)
 
 
-def from_samples(samples, checkerboard_size=None, checkerboard_type="CheckPi"):  # noqa: E501
+def from_samples(samples, checkerboard_size=None, checkerboard_type="CheckPi"):
     return from_data(samples, checkerboard_size, checkerboard_type)

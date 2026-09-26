@@ -1,20 +1,20 @@
 # tests/test_bounds_from_xi.py
 import math
+
 import numpy as np
 import pytest
 
 # Module under test
 from copul.schur_order.bounds_from_xi import (
-    bounds_from_xi,
-    rho_bounds_from_xi,
-    tau_bounds_from_xi,
-    psi_bounds_from_xi,
-    nu_bounds_from_xi,
+    _N_of_b,
     # internals (used for ν–ξ parametric consistency checks)
     _Xi_of_b,
-    _N_of_b,
+    bounds_from_xi,
+    nu_bounds_from_xi,
+    psi_bounds_from_xi,
+    rho_bounds_from_xi,
+    tau_bounds_from_xi,
 )
-
 
 # ------------------------- Validation -------------------------
 

@@ -2,10 +2,11 @@
 Tests for the CISRearranger class.
 """
 
-import pytest
+from unittest.mock import MagicMock, patch
+
 import numpy as np
+import pytest
 import sympy
-from unittest.mock import patch, MagicMock
 
 from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.checkerboarder import Checkerboarder
@@ -72,9 +73,7 @@ class TestCISRearranger:
 
             # Verify checkerboarder was created and used
             mock_checkerboarder_class.assert_called_once_with(self.checkerboard_size)
-            mock_checkerboarder.get_checkerboard_copula.assert_called_once_with(
-                mock_copula
-            )
+            mock_checkerboarder.get_checkerboard_copula.assert_called_once_with(mock_copula)
 
             # Verify rearrange_checkerboard was called with the right argument
             mock_rearrange.assert_called_once_with(mock_check_pi)
@@ -92,18 +91,14 @@ class TestCISRearranger:
         mock_copula.cdf.return_value = 0.5
 
         # Mock the Checkerboarder instead of trying to use it directly
-        with patch(
-            "copul.schur_order.cis_rearranger.Checkerboarder"
-        ) as mock_checkerboarder_cls:
+        with patch("copul.schur_order.cis_rearranger.Checkerboarder") as mock_checkerboarder_cls:
             mock_checkerboarder = MagicMock()
             mock_check_pi = MagicMock(spec=BivCheckPi)
             mock_checkerboarder.get_checkerboard_copula.return_value = mock_check_pi
             mock_checkerboarder_cls.return_value = mock_checkerboarder
 
             # Mock the rearrange_checkerboard method
-            with patch.object(
-                CISRearranger, "rearrange_checkerboard"
-            ) as mock_rearrange:
+            with patch.object(CISRearranger, "rearrange_checkerboard") as mock_rearrange:
                 mock_rearrange.return_value = sympy.Matrix([[0.3, 0.2], [0.2, 0.3]]) / 4
 
                 # Instead of passing the matrix directly, create and pass a mock copula
@@ -111,9 +106,7 @@ class TestCISRearranger:
 
                 # Verify the mock was called correctly
                 mock_checkerboarder_cls.assert_called_once_with(self.checkerboard_size)
-                mock_checkerboarder.get_checkerboard_copula.assert_called_once_with(
-                    mock_copula
-                )
+                mock_checkerboarder.get_checkerboard_copula.assert_called_once_with(mock_copula)
                 mock_rearrange.assert_called_once_with(mock_check_pi)
 
                 # Basic assertion on the result

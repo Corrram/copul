@@ -1,6 +1,8 @@
-from typing import Sequence, Union
+from collections.abc import Sequence
+
 import numpy as np
 
+from copul.checkerboard._biv_engine import resolve_rng, warn_deprecated
 from copul.family.core.biv_core_copula import BivCoreCopula
 from copul.family.core.copula_approximator_mixin import CopulaApproximatorMixin
 from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
@@ -41,7 +43,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
     """
 
     def __init__(self, pi: Sequence[int]) -> None:
-        self.pi = np.asarray(pi, dtype=int)
+        self.pi = np.array(pi, dtype=int)  # copy: never modify the caller's data
         if self.pi.ndim != 1:
             raise ValueError("pi must be a 1-D permutation array.")
         self.n = len(self.pi)
@@ -68,9 +70,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
 
     # ---------- helper -------------------------------------------------------
 
-    def _process_args(
-        self, args
-    ) -> tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:
+    def _process_args(self, args, kwargs=None) -> tuple[float | np.ndarray, float | np.ndarray]:
         r"""
         Normalize positional inputs and extract ``u`` and ``v``.
 
@@ -91,6 +91,13 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
             If the input shape is invalid.
         """
 
+        kwargs = dict(kwargs or {})
+        if "u" in kwargs or "v" in kwargs:
+            if args or "u" not in kwargs or "v" not in kwargs:
+                raise ValueError("Provide both u and v as keywords.")
+            args = (kwargs.pop("u"), kwargs.pop("v"))
+        if kwargs:
+            raise TypeError(f"Unexpected keyword arguments: {sorted(kwargs)}")
         if not args:
             raise ValueError("No arguments provided.")
 
@@ -121,7 +128,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
 
     # ---------- CDF ----------------------------------------------------------
 
-    def cdf(self, *args) -> Union[float, np.ndarray]:
+    def cdf(self, *args, **kwargs) -> float | np.ndarray:
         r"""
         Copula :math:`C_\pi(u,v)` (vectorized).
 
@@ -136,16 +143,16 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
             The CDF values at the specified points.
         """
 
-        u, v = self._process_args(args)
+        u, v = self._process_args(args, kwargs)
         # Ensure inputs are arrays and broadcastable
-        u_arr, v_arr = np.broadcast_arrays(u, v)
+        u_arr, v_arr = np.broadcast_arrays(np.asarray(u, dtype=float), np.asarray(v, dtype=float))
 
         # Check bounds
         if np.any((u_arr < 0) | (u_arr > 1) | (v_arr < 0) | (v_arr > 1)):
             raise ValueError("u, v must lie in [0,1].")
 
         # Store if the original input was scalar to return scalar at the end
-        input_is_scalar = np.isscalar(u) and np.isscalar(v)
+        input_is_scalar = np.ndim(u) == 0 and np.ndim(v) == 0
 
         # --- Optimization for identity permutation ---
         if self.is_identity:
@@ -210,7 +217,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
             return out
 
     # ---------- PDF ----------------------------------------------------------
-    def pdf(self, *args) -> Union[float, np.ndarray]:
+    def pdf(self, *args) -> float | np.ndarray:
         r"""
         The straight shuffle-of-Min copula is singular ⇒ the density is 0 a.e.
         """
@@ -220,25 +227,25 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
         )
 
     # ---------- Conditional Distribution -------------------------------------
-    def cond_distr_1(self, *args) -> Union[float, np.ndarray]:
+    def cond_distr_1(self, *args, **kwargs) -> float | np.ndarray:
         r"""
         Conditional distribution of :math:`V` given :math:`U=u`:
         :math:`C_1(v\mid u)=\mathbb{P}(V\le v\mid U=u)`.
         Same calling conventions as :meth:`cdf`.
         """
 
-        return self.cond_distr(1, *args)
+        return self.cond_distr(1, *args, **kwargs)
 
-    def cond_distr_2(self, *args) -> Union[float, np.ndarray]:
+    def cond_distr_2(self, *args, **kwargs) -> float | np.ndarray:
         r"""
         Conditional distribution of :math:`U` given :math:`V=v`:
         :math:`C_2(u\mid v)=\mathbb{P}(U\le u\mid V=v)`.
         Same calling conventions as :meth:`cdf`.
         """
 
-        return self.cond_distr(2, *args)
+        return self.cond_distr(2, *args, **kwargs)
 
-    def cond_distr(self, i: int, *args) -> Union[float, np.ndarray]:
+    def cond_distr(self, i: int, *args, **kwargs) -> float | np.ndarray:
         r"""
         Conditional distribution (vectorized).
 
@@ -273,16 +280,16 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
         if not (1 <= i <= self.dim):
             raise ValueError(f"i must be between 1 and {self.dim}")
 
-        u, v = self._process_args(args)
+        u, v = self._process_args(args, kwargs)
         # Ensure inputs are arrays and broadcastable
-        u_arr, v_arr = np.broadcast_arrays(u, v)
+        u_arr, v_arr = np.broadcast_arrays(np.asarray(u, dtype=float), np.asarray(v, dtype=float))
 
         # Check bounds
         if np.any((u_arr < 0) | (u_arr > 1) | (v_arr < 0) | (v_arr > 1)):
             raise ValueError("u, v must lie in [0,1].")
 
         # Store if the original input was scalar
-        input_is_scalar = np.isscalar(u) and np.isscalar(v)
+        input_is_scalar = np.ndim(u) == 0 and np.ndim(v) == 0
 
         # Initialize output array
         out = np.zeros_like(u_arr, dtype=float)
@@ -321,9 +328,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
                 v0 = (pi_i_0based + t) / self.n
 
                 # Conditional CDF is 1 if v >= v0, else 0
-                out[mask_in] = (v_in >= v0 - tol).astype(
-                    float
-                )  # Add tol for comparison robustness
+                out[mask_in] = (v_in >= v0 - tol).astype(float)  # Add tol for comparison robustness
 
         # --- C_2(u|v): Conditional of U given V=v ---
         elif i == 2:
@@ -358,9 +363,7 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
                 u0 = (k_idx + t) / self.n
 
                 # Conditional CDF is 1 if u >= u0, else 0
-                out[mask_in] = (u_in >= u0 - tol).astype(
-                    float
-                )  # Add tol for comparison robustness
+                out[mask_in] = (u_in >= u0 - tol).astype(float)  # Add tol for comparison robustness
 
         # Return scalar if input was scalar, otherwise return the array
         if input_is_scalar:
@@ -373,9 +376,9 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
         return f"ShuffleOfMin(order={self.n}, pi={self.pi.tolist()})"
 
     # simple generators for simulation / plotting -----------------------------
-    def rvs(self, size: int, **kwargs) -> np.ndarray:
+    def rvs(self, n: int = 1, random_state=None, size: int | None = None, **kwargs) -> np.ndarray:
         r"""
-        Generate :math:`\texttt{size}` i.i.d. samples from :math:`C_{\pi}`.
+        Generate ``n`` i.i.d. samples from :math:`C_{\pi}`.
 
         Sampling picks a segment index uniformly from :math:`\{0,\dots,n-1\}` and a
         parameter :math:`t\sim U(0,1)`, then sets
@@ -383,143 +386,136 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
 
         Parameters
         ----------
-        size : int
-            Number of samples.
+        n : int
+            Number of samples (``size`` is accepted as an alias).
+        random_state : int, numpy Generator or None
+            Source of randomness (``None``: NumPy's global generator, never
+            reseeded).
 
         Returns
         -------
         numpy.ndarray
-            Array of shape ``(size, 2)`` with samples in :math:`[0,1]^2`.
+            Array of shape ``(n, 2)`` with samples in :math:`[0,1]^2`.
         """
-
-        # Choose a random segment index (0 to n-1) for each sample
-        seg_idx = np.random.randint(0, self.n, size=size)
-        # Choose a random parameter t (0 to 1) along the segment diagonal
-        t = np.random.random(size=size)
-
-        # Calculate u and v based on the chosen segment and t
-        # u = (i + t) / n where i = seg_idx
+        if size is not None:
+            n = size
+        n = int(n)
+        rng = resolve_rng(random_state)
+        seg_idx = np.minimum((rng.random(n) * self.n).astype(int), self.n - 1)
+        t = rng.random(n)
         u = (seg_idx + t) / self.n
-        # v = (pi(i+1)-1 + t) / n = (pi0[i] + t) / n
         v = (self.pi0[seg_idx] + t) / self.n
-
         return np.column_stack([u, v])
 
     # --- Association measures ------------------------------------------------
-    def kendall_tau(self) -> float:
+    def as_checkerboard(self):
+        """The same copula as a :class:`BivCheckMin` with a permutation matrix."""
+        from copul.checkerboard.biv_check_min import BivCheckMin
+
+        P = np.zeros((self.n, self.n))
+        P[np.arange(self.n), self.pi0] = 1.0 / self.n
+        return BivCheckMin(P)
+
+    def _n_inversions(self) -> int:
+        p = self.pi0
+        total = 0
+        step = 2048
+        for s in range(0, self.n, step):
+            blk = p[s : s + step]
+            idx = np.arange(s, min(s + step, self.n))
+            later = np.arange(self.n)[None, :] > idx[:, None]
+            total += int(np.sum(later & (p[None, :] < blk[:, None])))
+        return total
+
+    def kendalls_tau(self, *args, **kwargs) -> float:
         r"""
-        Population Kendall’s :math:`\tau` via inversion count.
+        Population Kendall's :math:`\tau` via inversion count.
 
-        Let :math:`N_{\mathrm{inv}}` be the number of inversions of the
-        0-based permutation ``pi0``.  Then
-        :math:`\tau = 1 - \dfrac{4\,N_{\mathrm{inv}}}{n^2}`.
-
-        Returns
-        -------
-        float
-            Kendall’s :math:`\tau` (``nan`` if :math:`n\le 1`).
+        With :math:`N_{\mathrm{inv}}` the number of inversions of ``pi0``,
+        :math:`\tau = 1 - 4\,N_{\mathrm{inv}}/n^2` (``1`` for ``n = 1``, the
+        comonotone copula).
         """
-
-        # Handle n=1 case first
-        if self.n <= 1:
-            return np.nan
-
         if self.is_identity:
             return 1.0
+        return 1.0 - 4.0 * self._n_inversions() / (self.n**2)
 
-        # Correct calculation using 0-based indexing internally for pi0
-        pi0_temp = self.pi0  # Use precomputed 0-based perm
-        N_inv = sum(
-            1
-            for i in range(self.n)
-            for j in range(i + 1, self.n)
-            if pi0_temp[i] > pi0_temp[j]
-        )
-        # Denominator n*(n-1)/2 is the total number of pairs
-        # Tau = 1 - 2 * (N_inv / (n*(n-1)/2)) = 1 - 4*N_inv/(n*(n-1))
-        tau = 1.0 - 4.0 * N_inv / (self.n**2)
-        return tau
-
-    def spearman_rho(self) -> float:
+    def spearmans_rho(self, *args, **kwargs) -> float:
         r"""
-        Population Spearman’s :math:`\rho` via squared rank differences.
-
-        With ranks :math:`1,\dots,n` and :math:`\pi(1),\dots,\pi(n)`,
-        :math:`\rho = 1 - \dfrac{6\sum_{i=1}^n (i-\pi(i))^2}{n^3}`.
-
-        Returns
-        -------
-        float
-            Spearman’s :math:`\rho` (``nan`` if :math:`n\le 1`).
+        Population Spearman's :math:`\rho = 1 - 6\sum_i (i-\pi(i))^2 / n^3`
+        (``1`` for ``n = 1``).
         """
-
-        # Handle n=1 case first
-        if self.n <= 1:
-            return np.nan
-
         if self.is_identity:
             return 1.0
-
-        # Ranks for u are essentially 1, 2, ..., n based on segment index
-        # Ranks for v are pi(1), pi(2), ..., pi(n)
         i_ranks = np.arange(1, self.n + 1)
-        pi_ranks = self.pi  # Use 1-based perm for rank difference calculation
-        d_sq = np.sum((i_ranks - pi_ranks) ** 2)
-        # Rho = 1 - 6 * sum(d^2) / (n * (n^2 - 1))
-        return 1.0 - 6.0 * d_sq / self.n**3
+        d_sq = np.sum((i_ranks - self.pi) ** 2)
+        return float(1.0 - 6.0 * d_sq / self.n**3)
 
-    def chatterjee_xi(self) -> float:
-        r"""
-        Chatterjee’s :math:`\xi`.
-
-        For any straight shuffle-of-Min (functional dependence along segments),
-        :math:`\xi=1`.
-
-        Returns
-        -------
-        float
-            Always ``1.0`` (``nan`` only if :math:`n=0`).
-        """
-
-        # V is a piecewise linear function of U, so xi should be 1.
-        # For n=1, dependence is perfect, so 1 seems reasonable, though ranks are trivial.
-        if self.n == 0:
-            return np.nan  # Or raise error?
+    def chatterjees_xi(self, *, condition_on_y: bool = False) -> float:
+        r"""Chatterjee's :math:`\xi = 1` (both directions: V is a bijective,
+        piecewise linear function of U)."""
         return 1.0
 
-    def tail_lower(self) -> float:
+    def blests_nu(self, *args, **kwargs) -> float:
+        """Blest's nu (exact, via the equivalent Min-checkerboard)."""
+        return self.as_checkerboard().blests_nu()
+
+    def spearmans_footrule(self, *args, **kwargs) -> float:
+        """Spearman's footrule (exact)."""
+        return self.as_checkerboard().spearmans_footrule()
+
+    def ginis_gamma(self, *args, **kwargs) -> float:
+        """Gini's gamma (exact)."""
+        return self.as_checkerboard().ginis_gamma()
+
+    def spearman_footrule(self, *args, **kwargs) -> float:
+        return self.spearmans_footrule()
+
+    def gini_gamma(self, *args, **kwargs) -> float:
+        return self.ginis_gamma()
+
+    def blomqvists_beta(self, *args, **kwargs) -> float:
+        """Blomqvist's beta ``4 C(1/2, 1/2) - 1``."""
+        return float(4.0 * self.cdf(0.5, 0.5) - 1.0)
+
+    def lambda_L(self) -> float:
         r"""
-        Lower tail dependence coefficient :math:`\lambda_L`.
-
-        It is positive (equal to 1) iff the first segment lies on the main diagonal,
-        i.e. :math:`\pi(1)=1`; otherwise it is 0.
-
-        Returns
-        -------
-        float
-            :math:`\lambda_L \in \{0,1\}` (``nan`` if :math:`n=0`).
+        Lower tail dependence coefficient :math:`\lambda_L`: equal to 1 iff
+        the first segment lies on the main diagonal (:math:`\pi(1)=1`), else 0.
         """
-
-        if self.n == 0:
-            return np.nan
         return 1.0 if self.pi[0] == 1 else 0.0
 
-    def tail_upper(self) -> float:
+    def lambda_U(self) -> float:
         r"""
-        Upper tail dependence coefficient :math:`\lambda_U`.
-
-        It is positive (equal to 1) iff the last segment lies on the main diagonal,
-        i.e. :math:`\pi(n)=n`; otherwise it is 0.
-
-        Returns
-        -------
-        float
-            :math:`\lambda_U \in \{0,1\}` (``nan`` if :math:`n=0`).
+        Upper tail dependence coefficient :math:`\lambda_U`: equal to 1 iff
+        the last segment lies on the main diagonal (:math:`\pi(n)=n`), else 0.
         """
-
-        if self.n == 0:
-            return np.nan
         return 1.0 if self.pi[-1] == self.n else 0.0
+
+    # --- deprecated names ------------------------------------------------------
+    def kendall_tau(self) -> float:
+        """Deprecated alias of :meth:`kendalls_tau`."""
+        warn_deprecated("ShuffleOfMin.kendall_tau", "kendalls_tau")
+        return self.kendalls_tau()
+
+    def spearman_rho(self) -> float:
+        """Deprecated alias of :meth:`spearmans_rho`."""
+        warn_deprecated("ShuffleOfMin.spearman_rho", "spearmans_rho")
+        return self.spearmans_rho()
+
+    def chatterjee_xi(self) -> float:
+        """Deprecated alias of :meth:`chatterjees_xi`."""
+        warn_deprecated("ShuffleOfMin.chatterjee_xi", "chatterjees_xi")
+        return self.chatterjees_xi()
+
+    def tail_lower(self) -> float:
+        """Deprecated alias of :meth:`lambda_L`."""
+        warn_deprecated("ShuffleOfMin.tail_lower", "lambda_L")
+        return self.lambda_L()
+
+    def tail_upper(self) -> float:
+        """Deprecated alias of :meth:`lambda_U`."""
+        warn_deprecated("ShuffleOfMin.tail_upper", "lambda_U")
+        return self.lambda_U()
 
 
 if __name__ == "__main__":

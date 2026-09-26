@@ -1,10 +1,8 @@
-import itertools
-
 import numpy as np
 
 from copul.checkerboard.check import Check
-from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
 from copul.family.core.copula_approximator_mixin import CopulaApproximatorMixin
+from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
 
 
 class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
@@ -36,10 +34,8 @@ class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
                     # Use importlib approach for better testability
                     import importlib
 
-                    bcp_module = importlib.import_module(
-                        "copul.checkerboard.biv_check_pi"
-                    )
-                    BivCheckPi = getattr(bcp_module, "BivCheckPi")
+                    bcp_module = importlib.import_module("copul.checkerboard.biv_check_pi")
+                    BivCheckPi = bcp_module.BivCheckPi
                     # Return a new BivCheckPi instance with the same arguments
                     return BivCheckPi(matr, *args, **kwargs)
                 except (ImportError, ModuleNotFoundError, AttributeError):
@@ -130,18 +126,14 @@ class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
                     # Single point as a sequence
                     return self._cdf_single_point(np.array(arg, dtype=float))
                 else:
-                    raise ValueError(
-                        f"Expected point with {self.dim} dimensions, got {len(arg)}"
-                    )
+                    raise ValueError(f"Expected point with {self.dim} dimensions, got {len(arg)}")
 
             else:
                 # Single scalar value - only valid for 1D case
                 if self.dim == 1:
                     return self._cdf_single_point(np.array([arg], dtype=float))
                 else:
-                    raise ValueError(
-                        f"Single scalar provided but copula has {self.dim} dimensions"
-                    )
+                    raise ValueError(f"Single scalar provided but copula has {self.dim} dimensions")
 
         else:
             # Multiple arguments provided
@@ -152,138 +144,26 @@ class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
                 raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}")
 
     def _cdf_single_point(self, u):
-        """
-        Helper method to compute CDF for a single point using vectorized operations.
-
-        Parameters
-        ----------
-        u : numpy.ndarray
-            1D array of length dim representing a single point.
-
-        Returns
-        -------
-        float
-            CDF value at the point.
-        """
-        # Short-circuit checks
-        if np.any(u <= 0):
-            return 0.0
-        if np.all(u >= 1):
-            return 1.0
-
-        # Create a numpy meshgrid of indices for vectorized computation
-        indices = np.meshgrid(*[np.arange(s) for s in self.matr.shape], indexing="ij")
-
-        # Calculate the fraction matrix - vectorized approach
-        fraction_matrix = np.ones_like(self.matr, dtype=float)
-
-        for d in range(self.dim):
-            # Get indices array for this dimension
-            idx_d = indices[d]
-
-            # Calculate lower and upper bounds
-            lower_d = idx_d / self.matr.shape[d]
-            upper_d = (idx_d + 1) / self.matr.shape[d]
-
-            # Calculate overlap with [0, u[d]]
-            overlap_d = np.maximum(0.0, np.minimum(u[d], upper_d) - lower_d)
-
-            # Convert to fraction of cell width
-            cell_width_d = 1.0 / self.matr.shape[d]
-            frac_d = overlap_d / cell_width_d
-            # Clip to ensure fractions are in [0, 1]
-            frac_d = np.clip(frac_d, 0.0, 1.0)
-
-            # Multiply into the fraction matrix
-            fraction_matrix *= frac_d
-
-        # Multiply by cell masses and sum
-        result = np.sum(self.matr * fraction_matrix)
-
-        return float(result)
+        """CDF at a single point (1D array of length ``dim``)."""
+        return float(self._cdf_vectorized_impl(np.asarray(u, dtype=float)[None, :])[0])
 
     def _cdf_vectorized_impl(self, points):
         """
-        Implementation of vectorized CDF for multiple points.
+        Vectorised CDF for an ``(n_points, dim)`` array.
 
-        Parameters
-        ----------
-        points : numpy.ndarray
-            Array of shape (n_points, dim) where each row is a point.
-
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape (n_points,) with CDF values.
+        Uses the separable structure ``C(u) = sum_c matr[c] prod_d F_d(u_d, c_d)``
+        with the per-axis cell fractions ``F_d``; cost ``O(N * #cells)`` with
+        bounded memory.
         """
-        # Convert to numpy array
         points = np.asarray(points, dtype=float)
+        if points.ndim == 1:
+            points = points[None, :]
+        if self.dim == 2:
+            from copul.checkerboard import _biv_engine as eng
 
-        n_points = points.shape[0]
-        results = np.zeros(n_points)
-
-        # Create mask arrays for special cases
-        all_zeros_mask = np.any(points <= 0, axis=1)
-        all_ones_mask = np.all(points >= 1, axis=1)
-
-        # Set results for special cases
-        results[all_zeros_mask] = 0.0
-        results[all_ones_mask] = 1.0
-
-        # Filter out points that need actual computation
-        compute_mask = ~(all_zeros_mask | all_ones_mask)
-        compute_points = points[compute_mask]
-
-        if len(compute_points) == 0:
-            return results
-
-        # Precompute cell information
-        matr_shape = np.array(self.matr.shape)
-
-        # Create a numpy meshgrid of indices for the cells
-        indices = np.meshgrid(*[np.arange(s) for s in self.matr.shape], indexing="ij")
-        indices = np.array([idx.ravel() for idx in indices]).T  # Shape: (n_cells, dim)
-
-        # Reshape for broadcasting against points
-        indices = indices[:, np.newaxis, :]  # Shape: (n_cells, 1, dim)
-        compute_points = compute_points[
-            np.newaxis, :, :
-        ]  # Shape: (1, n_points_to_compute, dim)
-
-        # Calculate cell bounds
-        lower_bounds = indices / matr_shape[np.newaxis, np.newaxis, :]
-        upper_bounds = (indices + 1) / matr_shape[np.newaxis, np.newaxis, :]
-
-        # Calculate overlap with [0, u] for each dimension and each point
-        overlaps = np.maximum(
-            0.0, np.minimum(compute_points, upper_bounds) - lower_bounds
-        )
-
-        # Convert to fraction of cell width
-        cell_widths = 1.0 / matr_shape[np.newaxis, np.newaxis, :]
-        fractions = overlaps / cell_widths
-        fractions = np.clip(fractions, 0.0, 1.0)
-
-        # Calculate the total fraction for each cell and point
-        cell_fractions = np.prod(
-            fractions, axis=2
-        )  # Shape: (n_cells, n_points_to_compute)
-
-        # Get cell masses
-        cell_masses = self.matr.ravel()[:, np.newaxis]  # Shape: (n_cells, 1)
-
-        # Calculate weighted sum for each point
-        weighted_fractions = (
-            cell_masses * cell_fractions
-        )  # Shape: (n_cells, n_points_to_compute)
-        point_results = np.sum(
-            weighted_fractions, axis=0
-        )  # Shape: (n_points_to_compute,)
-
-        # Put results back in the output array
-        results[compute_mask] = point_results
-
-        return results
+            return eng.cdf(self.matr, None, points[:, 0], points[:, 1])
+        factors = [self._axis_fractions(points[:, d], d) for d in range(self.dim)]
+        return self._contract(factors)
 
     def cond_distr(self, i, *args):
         """
@@ -356,18 +236,14 @@ class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
                     # Single point as a sequence
                     return self._cond_distr_single(i, np.array(arg, dtype=float))
                 else:
-                    raise ValueError(
-                        f"Expected point with {self.dim} dimensions, got {len(arg)}"
-                    )
+                    raise ValueError(f"Expected point with {self.dim} dimensions, got {len(arg)}")
 
             else:
                 # Single scalar value - only valid for 1D case
                 if self.dim == 1:
                     return self._cond_distr_single(i, np.array([arg], dtype=float))
                 else:
-                    raise ValueError(
-                        f"Single scalar provided but copula has {self.dim} dimensions"
-                    )
+                    raise ValueError(f"Single scalar provided but copula has {self.dim} dimensions")
 
         else:
             # Multiple arguments provided
@@ -386,237 +262,33 @@ class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
         return self.cond_distr(2, u)
 
     def _cond_distr_single(self, i, u):
-        """
-        Helper method for conditional distribution of a single point.
-        This preserves the original implementation for a single point.
-
-        Parameters
-        ----------
-        i : int
-            Dimension index (1-based) to condition on.
-        u : numpy.ndarray
-            Single point as a 1D array of length dim.
-
-        Returns
-        -------
-        float
-            Conditional distribution value.
-        """
-        i0 = i - 1  # Convert to 0-based index
-
-        # Find which cell index along dim i0 the coordinate u[i0] falls into
-        x_i = u[i0]
-        if x_i < 0:
-            return 0.0  # If 'conditioning coordinate' <0, prob is 0
-        elif x_i >= 1:
-            # If 'conditioning coordinate' >=1, then we pick the last cell index
-            i_idx = self.matr.shape[i0] - 1
-        else:
-            i_idx = int(np.floor(x_i * self.matr.shape[i0]))
-            # clamp (just in case)
-            if i_idx < 0:
-                i_idx = 0
-            elif i_idx >= self.matr.shape[i0]:
-                i_idx = self.matr.shape[i0] - 1
-
-        # Clear cached results from previous calls to avoid test interference
-        self.intervals = {}
-
-        # Cache key for the slice indices only
-        slice_key = (i, i_idx)
-
-        # Check if we've cached the slice indices for this dimension and index
-        if slice_key in self.intervals:
-            slice_indices = self.intervals[slice_key]
-            # Recalculate denominator (the sum of all cells in the slice)
-            denom = sum(self.matr[c] for c in slice_indices)
-        else:
-            # 1) DENOMINATOR: sum of all cells in "slice" c[i0] = i_idx
-            denom = 0.0
-            slice_indices = []
-
-            # This is more efficient than using itertools.product for the whole space
-            # when we're only interested in a specific slice
-            indices = [range(s) for s in self.matr.shape]
-            indices[i0] = [i_idx]  # Fix the i0 dimension
-
-            for c in itertools.product(*indices):
-                cell_mass = self.matr[c]
-                denom += cell_mass
-                if cell_mass > 0:  # Only track positive mass cells for numerator
-                    slice_indices.append(c)
-
-            # Cache the slice indices for future use
-            self.intervals[slice_key] = slice_indices
-
-        if denom <= 0:
-            return 0.0
-
-        # 2) NUMERATOR: Among that same slice, we see how much is below u[j] in each j != i0
-        num = 0.0
-        for c in slice_indices:
-            cell_mass = self.matr[c]
-            fraction = 1.0
-            for j in range(self.dim):
-                if j == i0:
-                    # No partial coverage in the conditioning dimension
-                    continue
-
-                # Use exactly the same calculation method as the original
-                lower_j = c[j] / self.matr.shape[j]
-                upper_j = (c[j] + 1) / self.matr.shape[j]
-                val_j = u[j]
-
-                # Overlap with [0, val_j] in this dimension
-                if val_j <= 0:
-                    fraction = 0.0
-                    break
-                if val_j >= 1:
-                    # entire cell dimension is included
-                    continue
-
-                # Calculate exactly as in the original implementation
-                overlap_len = max(0.0, min(val_j, upper_j) - lower_j)
-                cell_width = 1.0 / self.matr.shape[j]
-                frac_j = overlap_len / cell_width  # fraction in [0,1]
-
-                if frac_j <= 0:
-                    fraction = 0.0
-                    break
-                if frac_j > 1.0:
-                    frac_j = 1.0
-
-                fraction *= frac_j
-                if fraction == 0.0:
-                    break
-
-            if fraction > 0.0:
-                num += cell_mass * fraction
-
-        return num / denom
+        """Conditional distribution at a single point."""
+        pts = np.asarray(u, dtype=float)[None, :]
+        return float(self._cond_distr_vectorized(i, pts)[0])
 
     def _cond_distr_vectorized(self, i, points):
         """
-        Vectorized implementation of conditional distribution for multiple points.
+        Vectorised conditional distribution for an ``(n_points, dim)`` array.
 
-        Parameters
-        ----------
-        i : int
-            Dimension index (1-based) to condition on.
-        points : numpy.ndarray
-            Multiple points as a 2D array of shape (n_points, dim).
-
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape (n_points,) with conditional distribution values.
+        For conditioning axis ``i0 = i - 1`` the slice ``c[i0] = floor(u_i0 * m_i0)``
+        is selected; the result is the slice mass below ``u`` in the other
+        coordinates (partial cell fractions) divided by the slice mass.
         """
-        # Convert to numpy array
         points = np.asarray(points, dtype=float)
-
-        n_points = points.shape[0]
-        results = np.zeros(n_points)
-
-        # Convert to 0-based index
         i0 = i - 1
-
-        # Process each point separately (vectorizing all calculations for a single point)
-        # This is more efficient than trying to vectorize across all points at once for cond_distr
-        for p_idx, u in enumerate(points):
-            x_i = u[i0]
-
-            # Special case: conditioning coordinate < 0
-            if x_i < 0:
-                results[p_idx] = 0.0
-                continue
-
-            # Determine the cell index along the conditioning dimension
-            if x_i >= 1:
-                i_idx = self.matr.shape[i0] - 1
-            else:
-                i_idx = int(np.floor(x_i * self.matr.shape[i0]))
-                # clamp (just in case)
-                i_idx = max(0, min(i_idx, self.matr.shape[i0] - 1))
-
-            # Create a slice for efficient indexing
-            slice_spec = [slice(None)] * self.dim
-            slice_spec[i0] = i_idx
-
-            # Get the slice of the matrix - all cells with index i_idx in dimension i0
-            slice_matr = self.matr[tuple(slice_spec)]
-
-            # Calculate denominator - sum of all cells in the slice
-            denom = np.sum(slice_matr)
-
-            if denom <= 0:
-                results[p_idx] = 0.0
-                continue
-
-            # For numerator, we need to compute fractions for each cell in the slice
-            # First, create indices for all cells in the slice
-            remaining_dims = [d for d in range(self.dim) if d != i0]
-            mesh_dims = [range(self.matr.shape[d]) for d in remaining_dims]
-
-            if mesh_dims:  # Only create meshgrid if we have remaining dimensions
-                # Create meshgrid for remaining dimensions
-                mesh = np.meshgrid(*mesh_dims, indexing="ij")
-                indices = np.array(
-                    [idx.ravel() for idx in mesh]
-                ).T  # Shape: (n_cells_in_slice, len(remaining_dims))
-
-                # Expand indices to include the fixed i0 dimension
-                full_indices = []
-                for idx in indices:
-                    full_idx = []
-                    rem_dim_idx = 0
-                    for d in range(self.dim):
-                        if d == i0:
-                            full_idx.append(i_idx)
-                        else:
-                            full_idx.append(idx[rem_dim_idx])
-                            rem_dim_idx += 1
-                    full_indices.append(tuple(full_idx))
-
-                # Calculate fractions for each cell in the slice
-                numerator = 0.0
-                for c in full_indices:
-                    cell_mass = self.matr[c]
-                    if cell_mass <= 0:
-                        continue
-
-                    fraction = 1.0
-                    for j in range(self.dim):
-                        if j == i0:
-                            continue  # Skip conditioning dimension
-
-                        lower_j = c[j] / self.matr.shape[j]
-                        upper_j = (c[j] + 1) / self.matr.shape[j]
-                        val_j = u[j]
-
-                        if val_j <= 0:
-                            fraction = 0.0
-                            break
-                        if val_j >= 1:
-                            continue
-
-                        overlap_len = max(0.0, min(val_j, upper_j) - lower_j)
-                        cell_width = 1.0 / self.matr.shape[j]
-                        frac_j = overlap_len / cell_width
-                        frac_j = min(1.0, max(0.0, frac_j))
-
-                        fraction *= frac_j
-                        if fraction <= 0:
-                            break
-
-                    if fraction > 0:
-                        numerator += cell_mass * fraction
-
-                results[p_idx] = numerator / denom
-            else:
-                # Special case: only one dimension
-                results[p_idx] = 1.0 if denom > 0 else 0.0
-
-        return results
+        k = self.matr.shape[i0]
+        x = points[:, i0]
+        idx = np.minimum(np.floor(np.clip(x, 0.0, 1.0) * k).astype(np.intp), k - 1)
+        onehot = np.zeros((points.shape[0], k))
+        onehot[np.arange(points.shape[0]), idx] = 1.0
+        factors = [
+            onehot if d == i0 else self._axis_fractions(points[:, d], d) for d in range(self.dim)
+        ]
+        num = self._contract(factors)
+        axes = tuple(d for d in range(self.dim) if d != i0)
+        denom = self.matr.sum(axis=axes)[idx] if axes else self.matr[idx]
+        out = np.divide(num, denom, out=np.zeros_like(num), where=denom > 0)
+        return np.where(x < 0, 0.0, out)
 
     def pdf(self, *args):
         """
@@ -684,18 +356,14 @@ class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
                     # Single point as a sequence
                     return self._pdf_single_point(np.array(arg, dtype=float))
                 else:
-                    raise ValueError(
-                        f"Expected point with {self.dim} dimensions, got {len(arg)}"
-                    )
+                    raise ValueError(f"Expected point with {self.dim} dimensions, got {len(arg)}")
 
             else:
                 # Single scalar value - only valid for 1D case
                 if self.dim == 1:
                     return self._pdf_single_point(np.array([arg], dtype=float))
                 else:
-                    raise ValueError(
-                        f"Single scalar provided but copula has {self.dim} dimensions"
-                    )
+                    raise ValueError(f"Single scalar provided but copula has {self.dim} dimensions")
 
         else:
             # Multiple arguments provided
@@ -746,92 +414,58 @@ class CheckPi(Check, CopulaPlottingMixin, CopulaApproximatorMixin):
         numpy.ndarray
             Array of shape (n_points,) with PDF values.
         """
-        prod = np.prod(self.matr.shape)
-        # Convert to numpy array
         points = np.asarray(points, dtype=float)
-
-        n_points = points.shape[0]
-        results = np.zeros(n_points)
-
-        # Filter out points outside [0,1]^d
-        valid_mask = np.all((points >= 0) & (points <= 1), axis=1)
-
-        if not np.any(valid_mask):
-            return results * prod
-
-        # Process only valid points
-        valid_points = points[valid_mask]
-
-        # Calculate cell indices for each point - this is the key vectorized operation
-        indices = np.floor(valid_points * np.array(self.matr.shape)).astype(int)
-
-        # Clip indices to valid ranges
-        for d in range(self.dim):
-            indices[:, d] = np.clip(indices[:, d], 0, self.matr.shape[d] - 1)
-
-        # Get PDF values using advanced indexing
-        for i, idx in enumerate(indices):
-            results[valid_mask][i] = self.matr[tuple(idx)]
-
-        return results * prod
+        shape = np.array(self.matr.shape)
+        valid = np.all((points >= 0) & (points <= 1), axis=1)
+        idx = np.floor(points * shape).astype(np.intp)
+        idx = np.clip(idx, 0, shape - 1)
+        vals = self.matr[tuple(idx.T)]
+        return np.where(valid, vals, 0.0) * np.prod(shape)
 
     def rvs(self, n=1, random_state=None, **kwargs):
         """
-        Draw random variates from the d-dimensional checkerboard copula efficiently.
+        Draw random variates from the d-dimensional checkerboard copula.
 
         Parameters
         ----------
         n : int
             Number of samples to generate.
-        random_state : int, optional
-            Seed for random number generator.
+        random_state : int, numpy Generator or None, optional
+            Source of randomness.  ``None`` uses NumPy's global generator
+            (never reseeded).
 
         Returns
         -------
         np.ndarray
             Array of shape (n, d) containing n samples in d dimensions.
         """
-        if random_state is not None:
-            np.random.seed(random_state)
+        from copul.checkerboard._biv_engine import resolve_rng
 
-        # Flatten the matrix and create probability distribution
+        rng = resolve_rng(random_state)
         flat_matrix = np.asarray(self.matr, dtype=float).ravel()
         total = flat_matrix.sum()
-
         if total <= 0:
             raise ValueError("Matrix contains no positive values, cannot sample")
-
-        probs = flat_matrix / total
-
-        # Sample flat indices according to cell probabilities
-        flat_indices = np.random.choice(np.arange(len(probs)), size=n, p=probs)
-
-        # Convert flat indices to multi-indices as a (d, n) array
-        indices_arrays = np.unravel_index(flat_indices, self.matr.shape)
-
-        # Transform indices to a (n, d) array
-        indices = np.column_stack(indices_arrays)
-
-        # Generate uniform jitter for each dimension
-        jitter = np.random.rand(n, self.dim)
-
-        # Combine indices and jitter to get final coordinates
+        flat_indices = rng.choice(flat_matrix.size, size=int(n), p=flat_matrix / total)
+        indices = np.column_stack(np.unravel_index(flat_indices, self.matr.shape))
+        jitter = rng.random((int(n), self.dim))
         return (indices + jitter) / np.array(self.matr.shape)
 
     @staticmethod
-    def _weighted_random_selection(matrix, num_samples):
+    def _weighted_random_selection(matrix, num_samples, random_state=None):
         """
         Select elements from 'matrix' with probability proportional to matrix entries.
         Return (selected_values, selected_multi_indices).
         """
-        arr = np.asarray(matrix, dtype=float).ravel()
-        p = arr / arr.sum()
+        from copul.checkerboard._biv_engine import resolve_rng
 
-        flat_indices = np.random.choice(np.arange(arr.size), size=num_samples, p=p)
-        shape = matrix.shape
-        multi_idx = [np.unravel_index(ix, shape) for ix in flat_indices]
-        selected_elements = matrix[tuple(np.array(multi_idx).T)]
-        return selected_elements, multi_idx
+        rng = resolve_rng(random_state)
+        matrix = np.asarray(matrix)
+        arr = np.asarray(matrix, dtype=float).ravel()
+        flat_indices = rng.choice(arr.size, size=int(num_samples), p=arr / arr.sum())
+        idx_arrays = np.unravel_index(flat_indices, matrix.shape)
+        multi_idx = list(zip(*idx_arrays))
+        return matrix[idx_arrays], multi_idx
 
     def lambda_L(self):
         return 0

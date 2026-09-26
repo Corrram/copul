@@ -10,9 +10,10 @@
 #
 # ---------------------------------------------------------
 
-from math import sqrt, acos, cos, isfinite, log
+from math import acos, cos, isfinite, log, sqrt
+from typing import Literal
+
 import numpy as np
-from typing import Tuple, Literal, Optional
 
 
 def _validate_xi(x: float) -> None:
@@ -54,7 +55,7 @@ def rho_max_given_xi(x: float) -> float:
         return 1.0 - 1.0 / (2.0 * b * b) + 1.0 / (5.0 * b**3)
 
 
-def rho_bounds_from_xi(x: float) -> Tuple[float, float]:
+def rho_bounds_from_xi(x: float) -> tuple[float, float]:
     """
     Returns (rho_min, rho_max). Exact symmetry: rho_min = -rho_max.
     """
@@ -84,7 +85,7 @@ def tau_max_given_xi(x: float) -> float:
         return (7.0 + 15.0 * x) / 27.0 + (5.0 / 27.0) * sqrt((6.0 * x - 1.0) / 5.0)
 
 
-def tau_bounds_from_xi(x: float) -> Tuple[float, float]:
+def tau_bounds_from_xi(x: float) -> tuple[float, float]:
     """
     Returns (tau_min, tau_max). Exact symmetry: tau_min = -tau_max.
     """
@@ -160,7 +161,7 @@ def psi_bounds_from_xi(
     x: float,
     cls: Literal["all", "SI"] = "all",
     return_lower_bound: bool = True,
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Returns (psi_min, psi_max) for a given xi.
     """
@@ -177,98 +178,99 @@ def psi_bounds_from_xi(
 
 
 # ---------------------- NU (Blest's measure) ----------------------
-def _Xi_of_b(b: float) -> float:
+def _stable_parts(b: float):
+    """Return ``(s2, t, w, r, A)`` for ``b > 1`` without cancellation.
+
+    ``s2 = 1/b``, ``t = sqrt(1 - s2)``, ``w = 1 - t = s2 / (1 + t)``,
+    ``r = w / s2 = 1 / (1 + t)`` and ``A = acosh(sqrt(b))``.
     """
-    ξ = Xi(b) from Theorem (piecewise in b).
-    s = 1/sqrt(b), t = sqrt((b-1)/b), A = asinh(t/s) = acosh(sqrt(b)).
+    s2 = 1.0 / b
+    t = sqrt(1.0 - s2)
+    r = 1.0 / (1.0 + t)
+    w = s2 * r
+    # acosh(sqrt(b)) = log(sqrt(b) + sqrt(b - 1)), written overflow-free
+    A = 0.5 * log(b) + log(1.0 + t)
+    return s2, t, w, r, A
+
+
+def _Xi_of_b(b: float) -> float:
+    r"""
+    :math:`\xi = \Xi(b)` from the Theorem (piecewise in ``b``).
+
+    With ``s = 1/sqrt(b)``, ``t = sqrt(1 - s^2)`` and ``A = acosh(sqrt(b))``
+    the published form for ``b > 1`` is
+
+    ``(-105 s^8 A + 183 s^6 t - 38 s^4 t - 88 s^2 t + 112 s^2 + 48 t - 48) / (210 s^6)``,
+
+    whose numerator cancels to order ``s^6`` (catastrophic cancellation for
+    ``b >~ 1e4``).  Substituting ``t = 1 - w`` with ``s^2 = w (2 - w)`` the
+    terms of order ``s^2`` and ``s^4`` cancel *exactly*, giving the
+    algebraically identical, numerically stable form
+
+    ``Xi(b) = [183 t + r^3 (216 - 190 w + 38 w^2) - 105 s^2 A] / 210``,
+
+    where ``w = 1 - t = s^2/(1 + t)`` and ``r = w/s^2 = 1/(1 + t)``.
     """
     if b <= 0.0 or not isfinite(b):
         raise ValueError("b must be a positive finite number.")
-    s = 1.0 / sqrt(b)
     if b <= 1.0:
-        # Xi(b) = 8(7 s^2 - 3) / (105 s^6)
-        return 8.0 * (7.0 * s * s - 3.0) / (105.0 * s**6)
-    else:
-        t = sqrt((b - 1.0) / b)
-        # asinh(t/s) = asinh(sqrt(b-1))  (since t/s = sqrt(b-1))
-        # numerically stable form via log for large b
-        A = np.arcsinh(sqrt(max(b - 1.0, 0.0)))
-        num = (
-            -105.0 * s**8 * A
-            + 183.0 * s**6 * t
-            - 38.0 * s**4 * t
-            - 88.0 * s**2 * t
-            + 112.0 * s**2
-            + 48.0 * t
-            - 48.0
-        )
-        den = 210.0 * s**6
-        return num / den
+        # Xi(b) = 8(7 s^2 - 3) / (105 s^6) = 8 (7 b^2 - 3 b^3) / 105
+        return 8.0 * (7.0 * b * b - 3.0 * b**3) / 105.0
+    s2, t, w, r, A = _stable_parts(b)
+    val = (183.0 * t + r**3 * (216.0 - 190.0 * w + 38.0 * w * w) - 105.0 * s2 * A) / 210.0
+    return min(val, 1.0)
 
 
 def _N_of_b(b: float) -> float:
-    """
-    ν = N(b) from Theorem (piecewise in b).
+    r"""
+    :math:`\nu = N(b)` from the Theorem (piecewise in ``b``).
+
+    Published form for ``b > 1``:
+    ``(-105 s^8 A + 87 s^6 t + 250 s^4 t - 376 s^2 t + 448 s^2 + 144 t - 144) / (420 s^4)``.
+    The same substitution as in :func:`_Xi_of_b` removes the cancellation:
+
+    ``N(b) = [87 s^2 t + r^2 (1680 - 2376 w + 1250 w^2 - 250 w^3) - 105 s^4 A] / 420``.
     """
     if b <= 0.0 or not isfinite(b):
         raise ValueError("b must be a positive finite number.")
-    s = 1.0 / sqrt(b)
     if b <= 1.0:
-        # N(b) = 4(28 s^2 - 9) / (105 s^4)
-        return 4.0 * (28.0 * s * s - 9.0) / (105.0 * s**4)
-    else:
-        t = sqrt((b - 1.0) / b)
-        A = np.arcsinh(sqrt(max(b - 1.0, 0.0)))
-        num = (
-            -105.0 * s**8 * A
-            + 87.0 * s**6 * t
-            + 250.0 * s**4 * t
-            - 376.0 * s**2 * t
-            + 448.0 * s**2
-            + 144.0 * t
-            - 144.0
-        )
-        den = 420.0 * s**4
-        return num / den
+        # N(b) = 4(28 s^2 - 9) / (105 s^4) = 4 (28 b - 9 b^2) / 105
+        return 4.0 * (28.0 * b - 9.0 * b * b) / 105.0
+    s2, t, w, r, A = _stable_parts(b)
+    poly = 1680.0 - 2376.0 * w + 1250.0 * w * w - 250.0 * w**3
+    val = (87.0 * s2 * t + r * r * poly - 105.0 * s2 * s2 * A) / 420.0
+    return min(val, 1.0)
 
 
-def _b_from_xi(x: float, *, tol: float = 1e-12, max_iter: int = 200) -> float:
+def _b_from_xi(x: float, *, tol: float = 1e-15, max_iter: int = 400) -> float:
     """
-    Invert Xi(b)=x for b>0 by monotone bisection.
-    Xi(b) is strictly increasing from 0 (as b->0+) to 1 (as b->∞).
+    Invert Xi(b)=x for b>0 by monotone bisection on ``log(b)``.
+    Xi(b) is strictly increasing from 0 (as b->0+) to 1 (as b->inf).
     """
     _validate_xi(x)
     if x == 0.0:
-        return 0.0 + 1e-12  # “near-zero” b
+        return 1e-12  # "near-zero" b
     if x == 1.0:
-        return 1e12  # “very large” b
+        return 1e300  # "very large" b
 
-    # Bracket: start near b=0 and expand hi until Xi(hi) >= x
-    lo, hi = 1e-12, 1.0
-    Xi_hi = _Xi_of_b(hi)
-    while Xi_hi < x and hi < 1e16:
-        hi *= 2.0
-        Xi_hi = _Xi_of_b(hi)
-    Xi_lo = _Xi_of_b(lo)
-
-    # Safety: if numerical pathologies, fall back to a big hi
-    if Xi_lo > x:
-        return lo
-
-    # Bisection
+    lo, hi = -30.0, 0.0  # log(b)
+    while _Xi_of_b(np.exp(hi)) < x and hi < 690.0:
+        lo = hi
+        hi = min(2.0 * hi + 1.0, 690.0)
+    if _Xi_of_b(np.exp(lo)) > x:
+        return float(np.exp(lo))
     for _ in range(max_iter):
         mid = 0.5 * (lo + hi)
-        Xi_mid = _Xi_of_b(mid)
-        if abs(Xi_mid - x) <= tol:
-            return mid
-        if Xi_mid < x:
+        if _Xi_of_b(np.exp(mid)) < x:
             lo = mid
         else:
             hi = mid
-    return 0.5 * (lo + hi)
+        if hi - lo <= tol:
+            break
+    return float(np.exp(0.5 * (lo + hi)))
 
 
-def nu_bounds_from_xi(x: float) -> Tuple[float, float]:
+def nu_bounds_from_xi(x: float) -> tuple[float, float]:
     """
     Exact bounds (nu_min, nu_max) given xi=x,
     via the parametric boundary y = ±N(b) with Xi(b)=x.
@@ -280,7 +282,7 @@ def nu_bounds_from_xi(x: float) -> Tuple[float, float]:
         return (-1.0, 1.0)  # limiting behavior as b→∞
 
     b = _b_from_xi(x)
-    N = _N_of_b(b)
+    N = float(min(max(_N_of_b(b), 0.0), 1.0))
     # Region is symmetric in ν
     return (-N, N)
 
@@ -291,7 +293,7 @@ def bounds_from_xi(
     measure: Literal["rho", "tau", "psi", "nu"],
     return_lower_bound: bool = False,
     cls: Literal["all", "SI"] = "all",
-) -> Tuple[Optional[float], float]:
+) -> tuple[float | None, float]:
     """
     Unified entry point.
     Returns (min_value, max_value) for the chosen measure given xi=x.

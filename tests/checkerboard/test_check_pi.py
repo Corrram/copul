@@ -399,10 +399,7 @@ def test_cdf_consistency():
     a1, a2 = 0.2, 0.3
     b1, b2 = 0.7, 0.8
     rectangle_sum = (
-        copula.cdf(b1, b2)
-        - copula.cdf(a1, b2)
-        - copula.cdf(b1, a2)
-        + copula.cdf(a1, a2)
+        copula.cdf(b1, b2) - copula.cdf(a1, b2) - copula.cdf(b1, a2) + copula.cdf(a1, a2)
     )
     assert rectangle_sum >= 0
 

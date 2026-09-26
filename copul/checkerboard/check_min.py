@@ -1,6 +1,5 @@
-import itertools
-import logging
 import importlib  # Import at module level
+import logging
 
 import numpy as np
 
@@ -66,10 +65,8 @@ class CheckMin(Check):
             if matr_arr.ndim == 2:
                 # Import the BivCheckMin class here to avoid circular imports
                 try:
-                    bcp_module = importlib.import_module(
-                        "copul.checkerboard.biv_check_min"
-                    )
-                    BivCheckMin = getattr(bcp_module, "BivCheckMin")
+                    bcp_module = importlib.import_module("copul.checkerboard.biv_check_min")
+                    BivCheckMin = bcp_module.BivCheckMin
                     # Return a new BivCheckMin instance with the same arguments
                     return BivCheckMin(matr, *args, **kwargs)
                 except (ImportError, ModuleNotFoundError, AttributeError):
@@ -164,18 +161,14 @@ class CheckMin(Check):
                     # Single point as a sequence
                     return self._cdf_single_point(np.array(arg, dtype=float))
                 else:
-                    raise ValueError(
-                        f"Expected point with {self.dim} dimensions, got {len(arg)}"
-                    )
+                    raise ValueError(f"Expected point with {self.dim} dimensions, got {len(arg)}")
 
             else:
                 # Single scalar value - only valid for 1D case
                 if self.dim == 1:
                     return self._cdf_single_point(np.array([arg], dtype=float))
                 else:
-                    raise ValueError(
-                        f"Single scalar provided but copula has {self.dim} dimensions"
-                    )
+                    raise ValueError(f"Single scalar provided but copula has {self.dim} dimensions")
 
         else:
             # Multiple arguments provided
@@ -186,146 +179,33 @@ class CheckMin(Check):
                 raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}")
 
     def _cdf_single_point(self, u):
+        """CDF at a single point using the min-fraction approach."""
+        return float(self._cdf_vectorized_impl(np.asarray(u, dtype=float)[None, :])[0])
+
+    def _cdf_vectorized_impl(self, points, chunk_elems=4_000_000):
         """
-        Helper method to compute CDF for a single point using the min-fraction approach.
+        Vectorised min-fraction CDF for an ``(n_points, dim)`` array:
+        ``C(u) = sum_c matr[c] * min_d F_d(u_d, c_d)``.
 
-        Parameters
-        ----------
-        u : numpy.ndarray
-            1D array of length dim representing a single point.
-
-        Returns
-        -------
-        float
-            CDF value at the point.
+        Only cells with positive mass are used and points are processed in
+        chunks, so memory stays bounded.
         """
-        # Quick boundaries
-        if np.any(u <= 0):
-            return 0.0
-        if np.all(u >= 1):
-            return 1.0
-
-        total = 0.0
-        for c in itertools.product(*(range(s) for s in self.matr.shape)):
-            cell_mass = self.matr[c]
-            if cell_mass <= 0:
-                continue
-
-            # min-fraction across dims
-            frac_cell = 1.0
-            for k in range(self.dim):
-                lower_k = c[k] / self.matr.shape[k]
-                upper_k = (c[k] + 1) / self.matr.shape[k]
-                overlap_k = max(0.0, min(u[k], upper_k) - lower_k)
-                if overlap_k <= 0:
-                    frac_cell = 0.0
-                    break
-                width_k = 1.0 / self.matr.shape[k]
-                frac_k = overlap_k / width_k
-                if frac_k > 1.0:
-                    frac_k = 1.0
-                if frac_k < frac_cell:
-                    frac_cell = frac_k
-
-            if frac_cell > 0:
-                total += cell_mass * frac_cell
-
-        return float(total)
-
-    def _cdf_vectorized_impl(self, points):
-        """
-        Implementation of vectorized CDF for multiple points using the min-fraction approach.
-
-        Parameters
-        ----------
-        points : numpy.ndarray
-            Array of shape (n_points, dim) where each row is a point.
-
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape (n_points,) with CDF values.
-        """
-        # Convert to numpy array
         points = np.asarray(points, dtype=float)
-
+        if points.ndim == 1:
+            points = points[None, :]
         n_points = points.shape[0]
-        results = np.zeros(n_points)
-
-        # Create mask arrays for special cases
-        all_zeros_mask = np.any(points <= 0, axis=1)
-        all_ones_mask = np.all(points >= 1, axis=1)
-
-        # Set results for special cases
-        results[all_zeros_mask] = 0.0
-        results[all_ones_mask] = 1.0
-
-        # Filter out points that need actual computation
-        compute_mask = ~(all_zeros_mask | all_ones_mask)
-        compute_points = points[compute_mask]
-
-        if len(compute_points) == 0:
-            return results
-
-        # Precompute cell information for more efficient processing
-        matr_shape = np.array(self.matr.shape)
-
-        # Create a numpy meshgrid of indices for the cells
-        indices = np.meshgrid(*[np.arange(s) for s in self.matr.shape], indexing="ij")
-        indices = np.array([idx.ravel() for idx in indices]).T  # Shape: (n_cells, dim)
-
-        # Only process cells with positive mass
-        cell_masses = self.matr.ravel()
-        positive_mass_mask = cell_masses > 0
-        if not np.any(positive_mass_mask):
-            return results  # All cells have zero mass
-
-        indices = indices[positive_mass_mask]
-        cell_masses = cell_masses[positive_mass_mask]
-
-        # Reshape for broadcasting
-        indices = indices[:, np.newaxis, :]  # Shape: (n_cells, 1, dim)
-        compute_points = compute_points[
-            np.newaxis, :, :
-        ]  # Shape: (1, n_points_to_compute, dim)
-        cell_masses = cell_masses[:, np.newaxis]  # Shape: (n_cells, 1)
-
-        # Calculate cell bounds
-        lower_bounds = indices / matr_shape[np.newaxis, np.newaxis, :]
-        upper_bounds = (indices + 1) / matr_shape[np.newaxis, np.newaxis, :]
-
-        # Calculate overlap with [0, u] for each dimension and each point
-        overlaps = np.maximum(
-            0.0, np.minimum(compute_points, upper_bounds) - lower_bounds
-        )
-
-        # Convert to fraction of cell width
-        cell_widths = 1.0 / matr_shape[np.newaxis, np.newaxis, :]
-        fractions = overlaps / cell_widths
-        fractions = np.clip(fractions, 0.0, 1.0)
-
-        # Calculate the min fraction across dimensions for each cell and point
-        # This is the key difference from CheckPi which uses a product of fractions
-        min_fractions = np.min(
-            fractions, axis=2
-        )  # Shape: (n_cells, n_points_to_compute)
-
-        # Early termination for cells with zero overlap in any dimension
-        zero_overlap_mask = np.any(overlaps <= 0, axis=2)
-        min_fractions[zero_overlap_mask] = 0.0
-
-        # Calculate weighted sum for each point
-        weighted_fractions = (
-            cell_masses * min_fractions
-        )  # Shape: (n_cells, n_points_to_compute)
-        point_results = np.sum(
-            weighted_fractions, axis=0
-        )  # Shape: (n_points_to_compute,)
-
-        # Put results back in the output array
-        results[compute_mask] = point_results
-
-        return results
+        shape = np.array(self.matr.shape)
+        cells = np.argwhere(self.matr > 0)  # (K, dim)
+        masses = self.matr[tuple(cells.T)]
+        out = np.zeros(n_points)
+        if cells.size == 0:
+            return out
+        step = max(1, chunk_elems // (cells.shape[0] * self.dim))
+        for s in range(0, n_points, step):
+            pts = np.clip(points[s : s + step], 0.0, 1.0) * shape  # (n, dim)
+            frac = np.clip(pts[None, :, :] - cells[:, None, :], 0.0, 1.0)
+            out[s : s + step] = masses @ frac.min(axis=2)
+        return out
 
     def cond_distr(self, i, *args):
         """
@@ -398,18 +278,14 @@ class CheckMin(Check):
                     # Single point as a sequence
                     return self._cond_distr_single(i, np.array(arg, dtype=float))
                 else:
-                    raise ValueError(
-                        f"Expected point with {self.dim} dimensions, got {len(arg)}"
-                    )
+                    raise ValueError(f"Expected point with {self.dim} dimensions, got {len(arg)}")
 
             else:
                 # Single scalar value - only valid for 1D case
                 if self.dim == 1:
                     return self._cond_distr_single(i, np.array([arg], dtype=float))
                 else:
-                    raise ValueError(
-                        f"Single scalar provided but copula has {self.dim} dimensions"
-                    )
+                    raise ValueError(f"Single scalar provided but copula has {self.dim} dimensions")
 
         else:
             # Multiple arguments provided
@@ -420,269 +296,48 @@ class CheckMin(Check):
                 raise ValueError(f"Expected {self.dim} coordinates, got {len(args)}")
 
     def _cond_distr_single(self, i, u):
-        """
-        Helper method for conditional distribution of a single point.
-        This preserves the original implementation for CheckMin for a single point.
-
-        Parameters
-        ----------
-        i : int
-            Dimension index (1-based) to condition on.
-        u : numpy.ndarray
-            Single point as a 1D array of length dim.
-
-        Returns
-        -------
-        float
-            Conditional distribution value.
-        """
-        i0 = i - 1  # Convert to 0-based index
-
-        # Find which cell index along dim i0 the coordinate u[i0] falls into
-        x_i = u[i0]
-        if x_i < 0:
-            return 0.0  # If 'conditioning coordinate' <0, prob is 0
-        elif x_i >= 1:
-            # If 'conditioning coordinate' >=1, then we pick the last cell index
-            i_idx = self.matr.shape[i0] - 1
-        else:
-            i_idx = int(np.floor(x_i * self.matr.shape[i0]))
-            # clamp (just in case)
-            if i_idx < 0:
-                i_idx = 0
-            elif i_idx >= self.matr.shape[i0]:
-                i_idx = self.matr.shape[i0] - 1
-
-        # For safety, reset the intervals cache between calls
-        self.intervals = {}
-
-        # Cache key for the slice indices
-        slice_key = (i, i_idx)
-
-        # Check if we have cached slice indices for this dimension and index
-        if slice_key in self.intervals:
-            slice_indices = self.intervals[slice_key]
-
-            # Calculate denominator - sum of all cells in the slice
-            denom = 0.0
-            for c in slice_indices:
-                denom += self.matr[c]
-        else:
-            # Create more efficient slice iteration by only iterating through relevant dimensions
-            indices = [range(s) for s in self.matr.shape]
-            indices[i0] = [i_idx]  # Fix the i0 dimension
-
-            # Collect all cells in the slice
-            denom = 0.0
-            slice_indices = []
-            for c in itertools.product(*indices):
-                cell_mass = self.matr[c]
-                denom += cell_mass
-                # Store all cells for CheckMin (even zero mass cells might be needed for boundary checks)
-                slice_indices.append(c)
-
-            # Store in cache for future use
-            self.intervals[slice_key] = slice_indices
-
-        if denom <= 0:
-            return 0.0
-
-        # Precompute 1/dim values for faster calculations
-        inv_dims = np.array([1.0 / dim for dim in self.matr.shape])
-        u_array = np.array(u)
-
-        # Calculate the conditioning dimension's fraction once
-        val_i0 = u_array[i0]
-        lower_i0 = i_idx * inv_dims[i0]
-        upper_i0 = (i_idx + 1) * inv_dims[i0]
-        overlap_len_i0 = max(0.0, min(val_i0, upper_i0) - lower_i0)
-        frac_i = (
-            overlap_len_i0 * self.matr.shape[i0]
-        )  # Multiply by dim instead of dividing
-
-        # Calculate numerator
-        num = 0.0
-        for c in slice_indices:
-            cell_mass = self.matr[c]
-            if cell_mass <= 0:
-                continue
-
-            qualifies = True
-
-            for j in range(self.dim):
-                if j == i0:
-                    continue  # Skip conditioning dimension
-
-                val_j = u_array[j]
-                lower_j = c[j] * inv_dims[j]
-
-                # Early termination check - more efficient boundary comparison
-                if val_j <= lower_j:
-                    qualifies = False
-                    break
-
-                upper_j = (c[j] + 1) * inv_dims[j]
-
-                # If val_j >= upper_j, entire cell dimension is included, so continue
-                if val_j >= upper_j:
-                    continue
-
-                # Partial overlap - calculate fraction
-                overlap_len = (
-                    val_j - lower_j
-                )  # No need for max() since we know val_j > lower_j
-                frac_j = (
-                    overlap_len * self.matr.shape[j]
-                )  # Multiply by dim instead of dividing
-
-                # More efficient fraction comparison with numerical stability
-                if frac_j < frac_i and abs(frac_j - frac_i) > 1e-10:
-                    qualifies = False
-                    break
-
-            if qualifies:
-                num += cell_mass
-
-        return num / denom
+        """Conditional distribution at a single point."""
+        pts = np.asarray(u, dtype=float)[None, :]
+        return float(self._cond_distr_vectorized(i, pts)[0])
 
     def _cond_distr_vectorized(self, i, points):
         """
-        Vectorized implementation of conditional distribution for multiple points.
-        Adapted for the CheckMin-specific logic.
+        Vectorised conditional distribution for an ``(n_points, dim)`` array.
 
-        Parameters
-        ----------
-        i : int
-            Dimension index (1-based) to condition on.
-        points : numpy.ndarray
-            Multiple points as a 2D array of shape (n_points, dim).
-
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape (n_points,) with conditional distribution values.
+        In the slice ``c[i0] = floor(u_i0 * m_i0)`` a cell counts if, in every
+        other dimension ``j``, ``u_j`` lies above the cell's lower edge and the
+        cell-local fraction ``frac_j`` is at least the conditioning fraction
+        ``frac_i`` (the cell mass sits on the cell diagonal).  The criterion
+        factorises over the dimensions, so a separable contraction is used.
         """
-        # Convert to numpy array
         points = np.asarray(points, dtype=float)
-
-        n_points = points.shape[0]
-        results = np.zeros(n_points)
-
-        # Convert to 0-based index
+        n_pts = points.shape[0]
+        shape = self.matr.shape
         i0 = i - 1
-
-        # Process each point separately - the CheckMin cond_distr algorithm isn't easily vectorizable
-        # across multiple points at once due to its conditional logic
-        for p_idx, u in enumerate(points):
-            x_i = u[i0]
-
-            # Special case: conditioning coordinate < 0
-            if x_i < 0:
-                results[p_idx] = 0.0
+        k = shape[i0]
+        x = points[:, i0]
+        xs = np.clip(x, 0.0, 1.0) * k
+        idx = np.minimum(np.floor(xs).astype(np.intp), k - 1)
+        frac_i = np.clip(xs - idx, 0.0, 1.0)
+        onehot = np.zeros((n_pts, k))
+        onehot[np.arange(n_pts), idx] = 1.0
+        factors = []
+        for d in range(self.dim):
+            if d == i0:
+                factors.append(onehot)
                 continue
-
-            # Determine the cell index along the conditioning dimension
-            if x_i >= 1:
-                i_idx = self.matr.shape[i0] - 1
-            else:
-                i_idx = int(np.floor(x_i * self.matr.shape[i0]))
-                # clamp (just in case)
-                i_idx = max(0, min(i_idx, self.matr.shape[i0] - 1))
-
-            # Create a slice for efficient indexing
-            slice_spec = [slice(None)] * self.dim
-            slice_spec[i0] = i_idx
-
-            # Get the slice of the matrix - all cells with index i_idx in dimension i0
-            slice_matr = self.matr[tuple(slice_spec)]
-
-            # Calculate denominator - sum of all cells in the slice
-            denom = np.sum(slice_matr)
-
-            if denom <= 0:
-                results[p_idx] = 0.0
-                continue
-
-            # For numerator, we need to check each cell in the slice against CheckMin's criteria
-            # Create indices for all cells in the slice
-            remaining_dims = [d for d in range(self.dim) if d != i0]
-            mesh_dims = [range(self.matr.shape[d]) for d in remaining_dims]
-
-            if mesh_dims:  # Only create meshgrid if we have remaining dimensions
-                # Create meshgrid for remaining dimensions
-                mesh = np.meshgrid(*mesh_dims, indexing="ij")
-                indices = np.array(
-                    [idx.ravel() for idx in mesh]
-                ).T  # Shape: (n_cells_in_slice, len(remaining_dims))
-
-                # Expand indices to include the fixed i0 dimension
-                full_indices = []
-                for idx in indices:
-                    full_idx = []
-                    rem_dim_idx = 0
-                    for d in range(self.dim):
-                        if d == i0:
-                            full_idx.append(i_idx)
-                        else:
-                            full_idx.append(idx[rem_dim_idx])
-                            rem_dim_idx += 1
-                    full_indices.append(tuple(full_idx))
-
-                # Precompute 1/dim values for faster calculations
-                inv_dims = np.array([1.0 / dim for dim in self.matr.shape])
-
-                # Calculate the conditioning dimension's fraction once
-                val_i0 = u[i0]
-                lower_i0 = i_idx * inv_dims[i0]
-                upper_i0 = (i_idx + 1) * inv_dims[i0]
-                overlap_len_i0 = max(0.0, min(val_i0, upper_i0) - lower_i0)
-                frac_i = overlap_len_i0 * self.matr.shape[i0]
-
-                # Calculate numerator using CheckMin's specific logic
-                numerator = 0.0
-                for c in full_indices:
-                    cell_mass = self.matr[c]
-                    if cell_mass <= 0:
-                        continue
-
-                    qualifies = True
-
-                    for j in range(self.dim):
-                        if j == i0:
-                            continue  # Skip conditioning dimension
-
-                        val_j = u[j]
-                        lower_j = c[j] * inv_dims[j]
-
-                        # Early termination check
-                        if val_j <= lower_j:
-                            qualifies = False
-                            break
-
-                        upper_j = (c[j] + 1) * inv_dims[j]
-
-                        # If val_j >= upper_j, entire cell is included
-                        if val_j >= upper_j:
-                            continue
-
-                        # Partial overlap - calculate fraction
-                        overlap_len = val_j - lower_j
-                        frac_j = overlap_len * self.matr.shape[j]
-
-                        # CheckMin-specific criterion
-                        if frac_j < frac_i and abs(frac_j - frac_i) > 1e-10:
-                            qualifies = False
-                            break
-
-                    if qualifies:
-                        numerator += cell_mass
-
-                results[p_idx] = numerator / denom
-            else:
-                # Special case: only one dimension
-                results[p_idx] = 1.0 if denom > 0 else 0.0
-
-        return results
+            kd = shape[d]
+            y = np.asarray(points[:, d], dtype=float) * kd
+            frac = y[:, None] - np.arange(kd)[None, :]
+            q = (frac > 0) & ((frac >= 1) | (frac >= frac_i[:, None] - 1e-10))
+            factors.append(q.astype(float))
+        num = self._contract(factors)
+        axes = tuple(d for d in range(self.dim) if d != i0)
+        denom = self.matr.sum(axis=axes)[idx] if axes else self.matr[idx]
+        out = np.divide(num, denom, out=np.zeros_like(num), where=denom > 0)
+        if not axes:
+            out = np.where(denom > 0, 1.0, 0.0)
+        return np.where(x < 0, 0.0, out)
 
     @property
     def pdf(self):
@@ -690,48 +345,26 @@ class CheckMin(Check):
 
     def rvs(self, n=1, random_state=None, **kwargs):
         """
-        More efficient implementation of random variate sampling.
+        Draw ``n`` samples: pick a cell by mass, then a point on its diagonal.
+
+        ``random_state`` may be an int, a numpy Generator or ``None`` (NumPy's
+        global generator, never reseeded).
         """
-        if random_state is not None:
-            np.random.seed(random_state)
-        log.info(f"Generating {n} random variates for {self}...")
-        # Get cell indices according to their probability weights
-        _, idxs = self._weighted_random_selection(self.matr, n)
+        from copul.checkerboard._biv_engine import resolve_rng
 
-        # Generate n random numbers uniformly in [0, 1]
-        randoms = np.random.uniform(size=n)
-
-        # Pre-allocate the output array for better performance
-        out = np.zeros((n, self.dim))
-
-        # Pre-compute inverse dimensions (1/dim) for faster division
-        inv_dims = np.array([1.0 / dim for dim in self.matr.shape])
-
-        # Process each selected cell more efficiently
-        for i, (c, u) in enumerate(zip(idxs, randoms)):
-            # Vectorized computation of lower bounds
-            lower_bounds = np.array([c[d] * inv_dims[d] for d in range(self.dim)])
-
-            # Vectorized computation of ranges (upper - lower)
-            ranges = np.array(
-                [(c[d] + 1) * inv_dims[d] - lower_bounds[d] for d in range(self.dim)]
-            )
-
-            # Directly compute the interpolated point and store in output array
-            out[i] = lower_bounds + u * ranges
-
-        return out
+        rng = resolve_rng(random_state)
+        log.debug(f"Generating {n} random variates for {self}...")
+        flat = np.asarray(self.matr, dtype=float).ravel()
+        flat_idx = rng.choice(flat.size, size=int(n), p=flat / flat.sum())
+        cells = np.column_stack(np.unravel_index(flat_idx, self.matr.shape))
+        t = rng.random(int(n))
+        return (cells + t[:, None]) / np.array(self.matr.shape)
 
     @staticmethod
-    def _weighted_random_selection(matrix, num_samples):
-        arr = np.asarray(matrix, dtype=float).ravel()
-        p = arr / arr.sum()
+    def _weighted_random_selection(matrix, num_samples, random_state=None):
+        from copul.checkerboard.check_pi import CheckPi
 
-        flat_indices = np.random.choice(np.arange(arr.size), size=num_samples, p=p)
-        shape = matrix.shape
-        multi_idx = [np.unravel_index(ix, shape) for ix in flat_indices]
-        selected_elements = matrix[tuple(np.array(multi_idx).T)]
-        return selected_elements, multi_idx
+        return CheckPi._weighted_random_selection(matrix, num_samples, random_state)
 
 
 if __name__ == "__main__":

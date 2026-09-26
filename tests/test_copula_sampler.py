@@ -2,13 +2,14 @@
 Tests for the CopulaSampler class.
 """
 
-import pytest
-import numpy as np
-import sympy
 from unittest.mock import MagicMock, patch
 
-from copul.copula_sampler import CopulaSampler
+import numpy as np
+import pytest
+import sympy
+
 from copul.checkerboard.check_pi import CheckPi
+from copul.copula_sampler import CopulaSampler
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.upper_frechet import UpperFrechet
@@ -33,9 +34,7 @@ class TestCopulaSampler:
         self.sampler = CopulaSampler(self.mock_copula)
 
         # Sampler with specified precision and random_state
-        self.sampler_with_params = CopulaSampler(
-            self.mock_copula, precision=4, random_state=42
-        )
+        self.sampler_with_params = CopulaSampler(self.mock_copula, precision=4, random_state=42)
 
     def test_initialization(self):
         """Test initialization of CopulaSampler."""
@@ -49,9 +48,9 @@ class TestCopulaSampler:
         assert self.sampler_with_params._precision == 4
         assert self.sampler_with_params._random_state == 42
 
-    @patch("random.seed")
+    @patch("copul.copula_sampler.resolve_rng")
     def test_rvs_with_random_state(self, mock_seed):
-        """Test that rvs uses the random_state when provided."""
+        """Test that rvs builds its generator from random_state (no global seeding)."""
 
         # Setup mock for conditional distribution with parameters
         def mock_cond_distr(u, v, theta=1.0):
@@ -66,7 +65,7 @@ class TestCopulaSampler:
         ):
             self.sampler_with_params.rvs(1, False)
 
-        # Verify random.seed was called with the correct random_state
+        # Verify the generator was created from the correct random_state
         mock_seed.assert_called_once_with(42)
 
     def test_rvs_with_direct_function(self):
@@ -87,9 +86,7 @@ class TestCopulaSampler:
         param_sampler = CopulaSampler(mock_param_copula)
 
         # Test sampling
-        with patch.object(
-            param_sampler, "_sample_val", return_value=np.array([[0.5, 0.5]])
-        ):
+        with patch.object(param_sampler, "_sample_val", return_value=np.array([[0.5, 0.5]])):
             result = param_sampler.rvs(1)
 
         # rvs returns an array of shape n where each element is a (u, v) pair
@@ -112,9 +109,7 @@ class TestCopulaSampler:
         self.mock_copula.intervals = {}
 
         # Test sampling with mocked _sample_val
-        with patch.object(
-            self.sampler, "_sample_val", return_value=np.array([[0.5, 0.5]])
-        ):
+        with patch.object(self.sampler, "_sample_val", return_value=np.array([[0.5, 0.5]])):
             result = self.sampler.rvs(1)
 
         # Verify result shape
@@ -133,13 +128,13 @@ class TestCopulaSampler:
         assert isinstance(result, np.ndarray)
         assert result.shape == (3, 2)  # 3 samples of (u, v) pairs
 
-    @patch("random.uniform")
     @patch("scipy.optimize.root_scalar")
-    def test_sample_val_successful(self, mock_root_scalar, mock_uniform):
+    def test_sample_val_successful(self, mock_root_scalar):
         """Test successful sampling of a single value."""
         # Setup mocks
         mock_function = MagicMock()
-        mock_uniform.side_effect = [0.3, 0.7]  # v and t values
+        self.sampler._rng = MagicMock()
+        self.sampler._rng.uniform.side_effect = [0.3, 0.7]  # v and t values
 
         # Mock the root_scalar result
         mock_result = MagicMock()
@@ -154,13 +149,13 @@ class TestCopulaSampler:
         assert result == (0.6, 0.3)  # (root, v)
         mock_root_scalar.assert_called_once()
 
-    @patch("random.uniform")
     @patch("scipy.optimize.root_scalar")
-    def test_sample_val_not_converged(self, mock_root_scalar, mock_uniform):
+    def test_sample_val_not_converged(self, mock_root_scalar):
         """Test when root_scalar doesn't converge."""
         # Setup mocks
         mock_function = MagicMock()
-        mock_uniform.side_effect = [0.3, 0.7]  # v and t values
+        self.sampler._rng = MagicMock()
+        self.sampler._rng.uniform.side_effect = [0.3, 0.7]  # v and t values
 
         # Mock the root_scalar result with non-convergence
         mock_result = MagicMock()
@@ -176,12 +171,12 @@ class TestCopulaSampler:
         assert result == (0.55, 0.3)  # (visual solution, v)
         assert self.sampler.err_counter > 0  # Error counter should increment
 
-    @patch("random.uniform")
-    def test_sample_val_exception(self, mock_uniform):
+    def test_sample_val_exception(self):
         """Test when root_scalar raises an exception."""
         # Setup mocks
         mock_function = MagicMock()
-        mock_uniform.side_effect = [0.3, 0.7]  # v and t values
+        self.sampler._rng = MagicMock()
+        self.sampler._rng.uniform.side_effect = [0.3, 0.7]  # v and t values
 
         # Track initial error counter
         initial_counter = CopulaSampler.err_counter
@@ -194,9 +189,7 @@ class TestCopulaSampler:
 
         # Verify results
         assert result == (0.45, 0.3)  # (visual solution, v)
-        assert (
-            self.sampler.err_counter > initial_counter
-        )  # Error counter should increment
+        assert self.sampler.err_counter > initial_counter  # Error counter should increment
 
     def test_get_visual_solution(self):
         """Test the visual solution fallback method."""
@@ -376,3 +369,15 @@ def test_rvs_from_independence_copula():
     results = sampler.rvs(300, False)
     corr = np.corrcoef(results[:, 0], results[:, 1])[0, 1]
     assert np.abs(corr) < 0.1
+
+
+def test_random_state_reproducible_without_global_seeding():
+    copula = BivIndependenceCopula()
+    state = np.random.get_state()[1].copy()
+    a = CopulaSampler(copula, random_state=7).rvs(20, False)
+    b = CopulaSampler(copula, random_state=7).rvs(20, False)
+    assert np.allclose(a, b)
+    c = CopulaSampler(copula, random_state=7).rvs(500, approximate=True)
+    d = CopulaSampler(copula, random_state=7).rvs(500, approximate=True)
+    assert np.allclose(c, d)
+    assert np.array_equal(np.random.get_state()[1], state)

@@ -2,9 +2,10 @@
 Tests for the SchurOrderVerifier class.
 """
 
+from unittest.mock import patch
+
 import pytest
 from sympy import Matrix
-from unittest.mock import patch
 
 from copul.family import archimedean
 from copul.schur_order.schur_order_verifier import SchurOrderVerifier
@@ -54,9 +55,7 @@ class TestSchurOrderVerifier:
 
         # Test with tolerance
         matrix_with_small_diff = Matrix([[0.1000000001, 0.2], [0.3, 0.4]])
-        assert SchurOrderVerifier._is_pointwise_lower_equal(
-            matrix1, matrix_with_small_diff
-        )
+        assert SchurOrderVerifier._is_pointwise_lower_equal(matrix1, matrix_with_small_diff)
 
 
 # Tests that patch the verify method directly
@@ -154,6 +153,7 @@ def test_not_schur_ordered():
 def test_tolerance_handling():
     """Test that the tolerance for numeric comparisons works properly."""
     from sympy import Matrix
+
     from copul.schur_order.schur_order_verifier import SchurOrderVerifier
 
     # Base matrix
@@ -192,12 +192,8 @@ def test_tolerance_handling():
 
     # Test 7: Let's use a bigger difference to ensure the test fails
     matrix7 = Matrix([[0.1001, 0.2], [0.3, 0.4]])  # Difference of 0.0001
-    assert SchurOrderVerifier._is_pointwise_lower_equal(
-        matrix1, matrix7
-    )  # matrix1 < matrix7
-    assert not SchurOrderVerifier._is_pointwise_lower_equal(
-        matrix7, matrix1
-    )  # matrix7 > matrix1
+    assert SchurOrderVerifier._is_pointwise_lower_equal(matrix1, matrix7)  # matrix1 < matrix7
+    assert not SchurOrderVerifier._is_pointwise_lower_equal(matrix7, matrix1)  # matrix7 > matrix1
 
 
 # Testing mock implementation of the verify method

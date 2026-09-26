@@ -19,8 +19,8 @@ import numpy as np
 import pytest
 
 from copul.checkerboard.biv_block_diag_mixed import BivBlockDiagMixed
-from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.biv_check_min import BivCheckMin
+from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.biv_check_w import BivCheckW
 
 matplotlib.use("Agg")  # suppress GUI back-ends

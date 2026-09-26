@@ -1,19 +1,16 @@
 from __future__ import annotations
 
-from typing import List, Union
-
 import numpy as np
 
-from copul.checkerboard.biv_check_pi import BivCheckPi
-from copul.checkerboard.biv_check_min import BivCheckMin
-from copul.checkerboard.biv_check_w import BivCheckW
+from copul.checkerboard._biv_mixin import BivCheckerboardMixin
 from copul.family.core.biv_core_copula import BivCoreCopula
 from copul.family.core.copula_approximator_mixin import CopulaApproximatorMixin
 from copul.family.core.copula_plotting_mixin import CopulaPlottingMixin
-from copul.schur_order.cis_verifier import CISVerifier
 
 
-class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
+class BivCheckMixed(
+    BivCheckerboardMixin, BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin
+):
     r"""
     Mixed checkerboard copula (per–cell choice of :math:`\Pi` / ↗ / ↘).
 
@@ -25,32 +22,42 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin)
       * :math:`-1` → perfect negative dependence (check-w, ↘)
 
     The probability matrix :math:`\Delta` (argument ``matr``) is shared across
-    all three modes.
+    all three modes.  All numerics are exact and vectorised (see
+    :mod:`copul.checkerboard._biv_engine`), e.g.
+
+    .. math::
+
+       \tau = 1 - \operatorname{tr}(\Xi_m\Delta\Xi_n\Delta^\top)
+              + \sum_{ij} S_{ij}\Delta_{ij}^2,\qquad
+       \xi = \xi_\Pi + \tfrac{m}{n}\sum_{ij}|S_{ij}|\Delta_{ij}^2,\qquad
+       \rho = \rho_\Pi + \tfrac{1}{mn}\sum_{ij} S_{ij}\Delta_{ij}.
     """
 
-    params: List = []
+    params: list = []
     intervals: dict = {}
 
     def __init__(
         self,
-        matr: Union[np.ndarray, List[List[float]]],
-        sign: Union[np.ndarray, List[List[int]], None] = None,
+        matr: np.ndarray | list[list[float]],
+        sign: np.ndarray | list[list[int]] | None = None,
         **kwargs,
     ):
-        matr = np.asarray(matr, dtype=float)
+        matr = np.array(matr, dtype=float)
         if matr.ndim != 2:
             raise ValueError("`matr` must be a 2-D array")
         if np.any(matr < 0):
             raise ValueError("`matr` must be non-negative")
-        if not np.isclose(matr.sum(), 1.0):
-            matr = matr / matr.sum()
+        total = matr.sum()
+        if total <= 0:
+            raise ValueError("`matr` must have positive total mass")
+        matr = matr / total
 
         self.m, self.n = matr.shape
 
         # --- S --------------------------------------------------------- #
         if sign is None:
             sign = np.zeros_like(matr, dtype=int)
-        sign = np.asarray(sign, dtype=int)
+        sign = np.array(sign, dtype=int)
         if sign.shape != matr.shape:
             raise ValueError("`sign` must have the same shape as `matr`")
         if not np.isin(sign, (-1, 0, 1)).all():
@@ -59,12 +66,10 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin)
         self.matr = matr  # probability matrix  Δ
         self.sign = sign  # sign selector      S
 
-        # instantiate base copulas once
-        self._pi = BivCheckPi(matr, **kwargs)
-        self._min = BivCheckMin(matr, **kwargs)
-        self._w = BivCheckW(matr, **kwargs)
-
         super().__init__()
+
+    def _kernel_signs(self):
+        return self.sign
 
     # ------------------------------------------------------------------ #
     #                       basic properties                             #
@@ -76,7 +81,7 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin)
 
     @property
     def is_absolutely_continuous(self) -> bool:
-        return np.all(self.sign == 0)
+        return bool(np.all(self.sign[self.matr > 0] == 0))
 
     @property
     def is_symmetric(self) -> bool:
@@ -86,314 +91,35 @@ class BivCheckMixed(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin)
             and np.array_equal(self.sign, self.sign.T)
         )
 
-    # ------------------------------------------------------------------ #
-    #                       helper (cell localisation)                   #
-    # ------------------------------------------------------------------ #
+    def transpose(self):
+        """Swap the roles of U and V."""
+        return BivCheckMixed(self.matr.T, sign=self.sign.T)
+
     def _cell_indices(self, u: float, v: float) -> tuple[int, int]:
-        r"""
-        Mixed checkerboard copula (per–cell choice of :math:`\Pi` / ↗ / ↘).
-
-        A sign matrix :math:`S` with entries :math:`\{0,+1,-1\}` selects, in every
-        checkerboard rectangle, which base copula to use:
-
-          * :math:`0`  → independence  (:math:`\Pi`)
-          * :math:`+1` → perfect positive dependence (check-min, ↗)
-          * :math:`-1` → perfect negative dependence (check-w, ↘)
-
-        The probability matrix :math:`\Delta` (argument ``matr``) is shared across
-        all three modes.
-        """
-
+        """Cell ``(i, j)`` containing the point ``(u, v)``."""
         i = min(int(np.floor(u * self.m)), self.m - 1)
         j = min(int(np.floor(v * self.n)), self.n - 1)
         return i, j
 
-    # ------------------------------------------------------------------ #
-    #                               CDF                                  #
-    # ------------------------------------------------------------------ #
-    def cdf(self, u: float | np.ndarray, v: float | np.ndarray):
-        r"""Piecewise delegates to :math:`\Pi`, ↗ or ↘ according to ``sign``.
+    def pdf(self, *args, **kwargs):
+        """Density of the absolutely continuous part (cells with sign 0)."""
+        if not self.is_absolutely_continuous:
+            from copul.exceptions import PropertyUnavailableException
 
-        For each evaluation point :math:`(u,v)`, the method chooses the base
-        checkerboard copula dictated by the cell’s sign entry and returns the
-        corresponding CDF value.
+            raise PropertyUnavailableException(
+                "PDF does not exist for a mixed checkerboard with singular cells."
+            )
+        from copul.checkerboard import _biv_engine as eng
 
-        Parameters
-        ----------
-        u, v : float or ndarray
-            Coordinates in :math:`[0,1]`. Must have identical shapes.
-
-        Returns
-        -------
-        float or ndarray
-            CDF value(s) with the same shape as the broadcasted inputs.
-        """
-
-        u_arr = np.asarray(u, dtype=float)
-        v_arr = np.asarray(v, dtype=float)
-        if u_arr.shape != v_arr.shape:
-            raise ValueError("u and v must have the same shape")
-
-        out = np.empty_like(u_arr, dtype=float)
-
-        it = np.nditer(
-            [u_arr, v_arr, out],
-            flags=["refs_ok", "multi_index"],
-            op_flags=[["readonly"], ["readonly"], ["writeonly"]],
-        )
-        for uu, vv, dest in it:
-            i, j = self._cell_indices(float(uu), float(vv))
-            s = self.sign[i, j]
-            if s == 0:
-                dest[...] = self._pi.cdf(float(uu), float(vv))
-            elif s == 1:
-                dest[...] = self._min.cdf(float(uu), float(vv))
-            else:  # s == −1
-                dest[...] = self._w.cdf(float(uu), float(vv))
-
-        return out if out.shape else float(out)
-
-    # ------------------------------------------------------------------ #
-    #                matrices for closed-form measures                   #
-    # ------------------------------------------------------------------ #
-    @staticmethod
-    def _xi_matrix(size: int) -> np.ndarray:
-        r"""Matrix :math:`2\,\mathrm{tri} - I` (strict lower-triangular coefficient).
-
-        Constructs the :math:`s\times s` matrix
-        :math:`\Xi_s = 2\,\mathrm{tri}_s - I_s`, where :math:`\mathrm{tri}_s`
-        is the unit lower-triangular matrix and :math:`I_s` the identity.
-        Used in the closed-form expression for Kendall’s :math:`\tau`.
-        """
-
-        return 2 * np.tri(size) - np.eye(size)
-
-    def _omega(self) -> np.ndarray:
-        r"""
-        Ω-matrix with entries
-        :math:`\displaystyle \Omega_{i,j}=\frac{(2m-2i-1)(2n-2j-1)}{mn}`,
-        for **zero-based** indices :math:`i=0,\dots,m-1` and :math:`j=0,\dots,n-1`.
-
-        Returns
-        -------
-        ndarray
-            Array of shape ``(m, n)`` with the weights used in Spearman’s
-            :math:`\rho` computation.
-        """
-
-        i = np.arange(self.m).reshape(-1, 1)  # 0 … m-1
-        j = np.arange(self.n).reshape(1, -1)
-        num = (2 * self.m - 2 * i - 1) * (2 * self.n - 2 * j - 1)
-        return num / (self.m * self.n)
-
-    # ------------------------------------------------------------------ #
-    #                    exact dependence measures                       #
-    # ------------------------------------------------------------------ #
-    def kendalls_tau(self) -> float:
-        Xi_m = self._xi_matrix(self.m)
-        Xi_n = self._xi_matrix(self.n)
-        core = np.trace(Xi_m @ self.matr @ Xi_n @ self.matr.T)
-        extra = np.sum(self.sign * (self.matr**2))
-        return 1.0 - core + extra
-
-    def chatterjees_xi(self, *, condition_on_y: bool = False) -> float:
-        # base value from plain checkerboard
-        base = self._pi.chatterjees_xi(condition_on_y)
-
-        # scaling m/n depends on conditioning
-        m, n = (self.n, self.m) if condition_on_y else (self.m, self.n)
-        extra = (m / n) * np.sum(np.abs(self.sign) * (self.matr**2))
-        return base + extra
-
-    def spearmans_rho(self) -> float:
-        Omega = self._omega()
-        core = 3.0 * np.trace(Omega.T @ self.matr) - 3.0
-        extra = np.sum(self.sign * self.matr) / (self.m * self.n)
-        return core + extra
-
-    def cond_distr(
-        self,
-        dim: int,
-        u: float | np.ndarray | None = None,
-        v: float | np.ndarray | None = None,
-    ):
-        r"""
-        Compute conditional distribution F_{U_{-dim}|U_{dim}}.
-
-        Calculates the partial derivative of the Copula.
-        If dim=1, returns dC(u,v)/du = P(V <= v | U=u).
-        If dim=2, returns dC(u,v)/dv = P(U <= u | V=v).
-        """
-        if u is None or v is None:
-            raise ValueError("u and v must be provided for numeric evaluation")
-
-        u = np.asarray(u)
-        v = np.asarray(v)
-
-        # Clip inputs to [0, 1] to prevent indexing errors
-        u = np.clip(u, 0.0, 1.0)
-        v = np.clip(v, 0.0, 1.0)
-
-        # Broadcast if necessary so operations work on matching shapes
-        if u.shape != v.shape:
-            u, v = np.broadcast_arrays(u, v)
-
-        # Standardize to: x (conditioning variable), y (target variable)
-        if dim == 1:
-            x, y = u, v
-            matr = self.matr
-            sign = self.sign
-            m_cond, n_target = self.m, self.n
-        else:
-            x, y = v, u
-            matr = self.matr.T
-            sign = self.sign.T
-            m_cond, n_target = self.n, self.m
-
-        # 1. Identify grid indices
-        x_scaled = x * m_cond
-        y_scaled = y * n_target
-
-        # Integer indices
-        i = np.floor(x_scaled).astype(int)
-        j = np.floor(y_scaled).astype(int)
-
-        # Clamp to valid range (FIX: removed out= argument to support scalars)
-        i = np.clip(i, 0, m_cond - 1)
-        j = np.clip(j, 0, n_target - 1)
-
-        # Local coordinates within the cell [0, 1]
-        x_loc = x_scaled - i
-        y_loc = y_scaled - j
-
-        # 2. Base Probability (Accumulated mass from cells below y in the current column)
-        # Precompute cumsum along the target axis (axis 1)
-        weights = matr * m_cond
-        # Add a column of zeros at the start for cumsum logic
-        cum_weights = np.hstack([np.zeros((m_cond, 1)), np.cumsum(weights, axis=1)])
-
-        # Extract base values
-        # cum_weights[i, j] gives sum(weights[i, :j])
-        # Note: we use tuple(i,j) indexing for correct broadcasting if inputs are arrays
-        base_val = cum_weights[i, j]
-
-        # 3. Local Contribution from the current cell (i, j)
-        p_cell = weights[i, j]
-        s_cell = sign[i, j]
-
-        # Case S=0 (Independence): Linear growth
-        val_0 = p_cell * y_loc
-
-        # Case S=1 (Min / Ascending): Step function when y_loc >= x_loc
-        val_1 = p_cell * (y_loc >= x_loc).astype(float)
-
-        # Case S=-1 (W / Descending): Step function when y_loc >= 1 - x_loc
-        val_w = p_cell * (y_loc >= (1.0 - x_loc)).astype(float)
-
-        # Select the correct value based on the sign of the cell
-        local_val = np.select(
-            [s_cell == 0, s_cell == 1, s_cell == -1],
-            [val_0, val_1, val_w],
-            default=0.0,
-        )
-
-        return base_val + local_val
-
-    def cond_distr_1(self, u: float | None = None, v: float | None = None):
-        return self.cond_distr(1, u, v)
-
-    def cond_distr_2(self, u: float | None = None, v: float | None = None):
-        return self.cond_distr(2, u, v)
-
-    # ------------------------------------------------------------------ #
-    # misc                                                               #
-    # ------------------------------------------------------------------ #
-    def is_cis(self, i: int = 1) -> bool:
-        return CISVerifier(i).is_cis(self)
-
-    # ------------------------------------------------------------------ #
-    #                            sampling                                #
-    # ------------------------------------------------------------------ #
-    def rvs(
-        self, n: int = 1, *, random_state: int | None = None, **kwargs
-    ) -> np.ndarray:
-        r"""
-        Draw :math:`n` i.i.d. samples from the mixed checkerboard copula.
-
-        Sampling proceeds by (i) selecting a cell according to :math:`\Delta`,
-        then (ii) drawing a point **inside** that cell according to the
-        cell’s mode (uniform for :math:`\Pi`, diagonal ↗ or ↘ for the two
-        perfect-dependence cases).
-
-        Parameters
-        ----------
-        n : int, default 1
-            Number of samples to generate.
-        random_state : int, optional
-            Seed for the RNG (reproducibility).
-
-        Returns
-        -------
-        ndarray of shape (n, 2)
-            Samples :math:`(U,V)` in :math:`[0,1]^2`.
-        """
-
-        rng = np.random.default_rng(random_state)
-
-        # ------ 1) pick the cell for every sample  -------------------- #
-        flat_Δ = self.matr.ravel()
-        probs = flat_Δ / flat_Δ.sum()  # should already sum to 1
-        flat_idx = rng.choice(flat_Δ.size, size=n, p=probs)
-
-        i_idx, j_idx = np.unravel_index(flat_idx, self.matr.shape)  # (n,)
-
-        # ------ 2) draw location *inside* the selected cell ----------- #
-        u = np.empty(n)
-        v = np.empty(n)
-
-        # split into the three regimes once; then fill the vectors
-        for s_val, mask in (
-            (0, self.sign[i_idx, j_idx] == 0),  # Π   (independence)
-            (1, self.sign[i_idx, j_idx] == 1),  # ↗   (check-min)
-            (-1, self.sign[i_idx, j_idx] == -1),  # ↘   (check-w)
-        ):
-            if not mask.any():
-                continue
-            ii = i_idx[mask]
-            jj = j_idx[mask]
-
-            if s_val == 0:  # uniform on the rectangle
-                u[mask] = (ii + rng.random(mask.sum())) / self.m
-                v[mask] = (jj + rng.random(mask.sum())) / self.n
-
-            elif s_val == 1:  # perfect + dependence ↗
-                t = rng.random(mask.sum())
-                u[mask] = (ii + t) / self.m
-                v[mask] = (jj + t) / self.n
-
-            else:  # perfect – dependence ↘
-                t = rng.random(mask.sum())
-                u[mask] = (ii + t) / self.m
-                v[mask] = (jj + 1 - t) / self.n  # descending line
-
-        return np.column_stack((u, v))
+        u, v, scalar = eng.parse_uv(args, kwargs)
+        return eng.finish(eng.pdf_pi(self.matr, u, v), scalar)
 
 
 # -------------------------------------------------------------------------- #
 # quick manual check
 # -------------------------------------------------------------------------- #
 if __name__ == "__main__":  # pragma: no cover
-    Delta = [[1, 1]]
-    S = [[1, 0]]
-    cop = BivCheckMixed(Delta, sign=S)
-    print(np.sqrt(cop.chatterjees_xi()))
-    print(cop.spearmans_rho())
-    cop.plot_cond_distr_1(plot_type="contour")
-    cop.plot_cond_distr_2()
-    Δ = np.full((2, 2), 0.25)
     Delta = [[1, 0], [0, 1]]
     S = np.array([[0, 0], [0, 1]])
     cop = BivCheckMixed(Delta, sign=S)
-    print(
-        "τ:", cop.kendalls_tau(), "ρ:", cop.spearmans_rho(), "ξ:", cop.chatterjees_xi()
-    )
+    print("τ:", cop.kendalls_tau(), "ρ:", cop.spearmans_rho(), "ξ:", cop.chatterjees_xi())

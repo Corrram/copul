@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+
 from copul.checkerboard.biv_check_pi import BivCheckPi
 
 
@@ -48,7 +49,7 @@ from copul.checkerboard.biv_check_pi import BivCheckPi
 )
 def test_checkerboards(matr, expected):
     cb = BivCheckPi(matr)
-    result = cb.is_cis()[0]
-    assert result == expected, (
-        f"Expected {expected}, but got {result} for matrix:\n{matr}"
-    )
+    result = cb.is_cis()
+    assert isinstance(result, bool)
+    assert cb.cis_direction()[0] == expected
+    assert result == expected, f"Expected {expected}, but got {result} for matrix:\n{matr}"

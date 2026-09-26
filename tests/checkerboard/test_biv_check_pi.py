@@ -298,7 +298,7 @@ def test_xi_independence(n, condition_on_y):
     """Test that xi is close to 0 for independence copula."""
     matr = np.ones((n, n))  # Uniform distribution represents independence
     ccop = BivCheckPi(matr)
-    assert np.isclose(ccop.chatterjees_xi(condition_on_y), 0, atol=1e-2)
+    assert np.isclose(ccop.chatterjees_xi(condition_on_y=condition_on_y), 0, atol=1e-2)
 
 
 def test_xi_perfect_dependence():
@@ -473,21 +473,17 @@ def test_footrule_and_gamma_for_farlie_gumbel_morgenstern(theta):
     )
     blomqvist_direct = fgm.blomqvists_beta()
     blomqvist_check = checkerboard.blomqvists_beta()
-    assert np.isclose(blomqvist_direct.evalf(), blomqvist_check, atol=1e-2), (
+    assert np.isclose(float(blomqvist_direct), blomqvist_check, atol=1e-2), (
         f"Expected {blomqvist_direct}, got {blomqvist_check}"
     )
 
 
-def test_footrule_and_gamma_rectangular_matrix_warning():
-    """Ensure rectangular matrices return NaN with warning for footrule/gamma."""
+def test_footrule_and_gamma_rectangular_matrix():
+    """Rectangular grids have exact closed forms (independence -> 0)."""
     matr = np.ones((2, 3))
     ccop = BivCheckPi(matr)
-    with pytest.warns(UserWarning, match="Footrule is implemented"):
-        footrule_val = ccop.spearmans_footrule()
-    with pytest.warns(UserWarning, match="Gini's Gamma is implemented"):
-        gamma_val = ccop.ginis_gamma()
-    assert np.isnan(footrule_val)
-    assert np.isnan(gamma_val)
+    assert np.isclose(ccop.spearmans_footrule(), 0.0, atol=1e-14)
+    assert np.isclose(ccop.ginis_gamma(), 0.0, atol=1e-14)
 
 
 # ---------------------------------------------------------------------------
@@ -510,9 +506,9 @@ def _brute_force_ginis_gamma(cop, grid=4000):
 @pytest.mark.parametrize(
     "matr, expected",
     [
-        ([[0, 1], [1, 0]], -2.0 / 3.0),   # 2x2 countermonotone checkerboard
-        ([[1, 0], [0, 1]], 2.0 / 3.0),    # 2x2 comonotone checkerboard
-        ([[1, 1], [1, 1]], 0.0),          # independence
+        ([[0, 1], [1, 0]], -2.0 / 3.0),  # 2x2 countermonotone checkerboard
+        ([[1, 0], [0, 1]], 2.0 / 3.0),  # 2x2 comonotone checkerboard
+        ([[1, 1], [1, 1]], 0.0),  # independence
         ([[1, 1, 1], [1, 1, 1], [1, 1, 1]], 0.0),
     ],
 )
@@ -526,16 +522,16 @@ def test_ginis_gamma_matches_brute_force(seed):
     rng = np.random.default_rng(seed)
     n = int(rng.integers(2, 9))
     ccop = BivCheckPi(rng.random((n, n)))
-    assert np.isclose(
-        ccop.ginis_gamma(), _brute_force_ginis_gamma(ccop), atol=2e-3
-    ), f"n={n}: closed form {ccop.ginis_gamma()} vs brute {_brute_force_ginis_gamma(ccop)}"
+    assert np.isclose(ccop.ginis_gamma(), _brute_force_ginis_gamma(ccop), atol=2e-3), (
+        f"n={n}: closed form {ccop.ginis_gamma()} vs brute {_brute_force_ginis_gamma(ccop)}"
+    )
 
 
 @pytest.mark.parametrize(
     "matr, expected",
     [
-        ([[0, 1], [1, 0]], -0.5),   # within-cell comonotone -> -1/2, not -2/3
-        ([[1, 0], [0, 1]], 1.0),    # fully comonotone -> gamma = 1
+        ([[0, 1], [1, 0]], -0.5),  # within-cell comonotone -> -1/2, not -2/3
+        ([[1, 0], [0, 1]], 1.0),  # fully comonotone -> gamma = 1
     ],
 )
 def test_biv_check_min_ginis_gamma_known_values(matr, expected):
@@ -552,6 +548,6 @@ def test_biv_check_min_ginis_gamma_matches_brute_force(seed):
     rng = np.random.default_rng(1000 + seed)
     n = int(rng.integers(2, 9))
     cmin = BivCheckMin(rng.random((n, n)))
-    assert np.isclose(
-        cmin.ginis_gamma(), _brute_force_ginis_gamma(cmin), atol=2e-3
-    ), f"n={n}: closed form {cmin.ginis_gamma()} vs brute {_brute_force_ginis_gamma(cmin)}"
+    assert np.isclose(cmin.ginis_gamma(), _brute_force_ginis_gamma(cmin), atol=2e-3), (
+        f"n={n}: closed form {cmin.ginis_gamma()} vs brute {_brute_force_ginis_gamma(cmin)}"
+    )

@@ -153,13 +153,10 @@ def test_3x3x3_multivar_checkerboard():
     u = (0.5, 0.5, 0.5)
     with pytest.raises(PropertyUnavailableException):
         copula.pdf(*u)
-    expected_cdf = (
-        1 / 6
-    )  # 1/27 for (0,0,0) block + 7*1/27 for (0,0,1),...,(1,1,1) blocks
+    expected_cdf = 1 / 6  # 1/27 for (0,0,0) block + 7*1/27 for (0,0,1),...,(1,1,1) blocks
     assert np.isclose(copula.cdf(*u), expected_cdf)
     expected_cd = (
-        1 / 3
-        + 1 / 9  # 1/9 for (1,0,0) block + 3*1/9 for (1,1,1),(1,0,1),(1,1,1) blocks
+        1 / 3 + 1 / 9  # 1/9 for (1,0,0) block + 3*1/9 for (1,1,1),(1,0,1),(1,1,1) blocks
     )
     actual_cd1 = copula.cond_distr(1, u)
     assert actual_cd1 == expected_cd

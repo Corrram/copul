@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -51,7 +51,7 @@ class BivBlockDiagMixed(BivCheckMixed):
         self,
         sizes: Sequence[int],
         *,
-        sign: Union[np.ndarray, Sequence[Sequence[int]], None] = None,
+        sign: np.ndarray | Sequence[Sequence[int]] | None = None,
         **kwargs,
     ):
         # ---- sanity for the block-size vector ------------------------ #
@@ -60,7 +60,7 @@ class BivBlockDiagMixed(BivCheckMixed):
         if any(s <= 0 for s in sizes):
             raise ValueError("all block sizes must be positive integers")
 
-        self.sizes: List[int] = list(map(int, sizes))
+        self.sizes: list[int] = list(map(int, sizes))
         self.k: int = len(self.sizes)  # number of blocks
         self.d: int = sum(self.sizes)  # total dimension
         self._offsets = np.concatenate(([0], np.cumsum(self.sizes)))[:-1]
@@ -125,7 +125,10 @@ class BivBlockDiagMixed(BivCheckMixed):
         return S_r, P_r, B2
 
     # --------------  Chatterjee’s ξ  ---------------------------------- #
-    def chatterjees_xi(self, *, condition_on_y: bool = False) -> float:  # noqa: D401
+    def chatterjees_xi(self, *, condition_on_y: bool = False) -> float:
+        """Closed-form xi.  ``condition_on_y`` is honoured trivially: ``Delta``
+        is symmetric and ``P_r`` is invariant under transposing ``S``, so
+        xi(V | U) = xi(U | V) for block-diagonal checkerboards."""
         S_r, P_r, B2 = self._block_sums()
         d = self.d
         term_blocks = sum(P / n_r**2 for P, n_r in zip(P_r, self.sizes))

@@ -1,4 +1,5 @@
 import logging
+
 import numpy as np
 
 log = logging.getLogger(__name__)
@@ -49,7 +50,7 @@ class LTDVerifier:
 
         try:
             param_name = str(copul.params[0])
-        except (AttributeError, IndexError):
+        except (AttributeError, IndexError, TypeError):
             return check_func(copul, grid)
 
         interval = copul.intervals[param_name]
@@ -69,7 +70,27 @@ class LTDVerifier:
 
         return True
 
+    @staticmethod
+    def _exact(C, kind):
+        """Exact check for checkerboard copulas (``None`` if not applicable).
+
+        For checkerboards ``u -> C(u, v)`` is piecewise linear with affine
+        dependence of the pieces on the cell-local ``v``-coordinate, so the
+        tail monotonicity reduces to finitely many sign conditions, see
+        :func:`copul.checkerboard._biv_engine.tail_monotonicity`.
+        """
+        from copul.checkerboard._biv_mixin import BivCheckerboardMixin
+
+        if isinstance(C, BivCheckerboardMixin):
+            from copul.checkerboard import _biv_engine as eng
+
+            return eng.tail_monotonicity(C.matr, C._kernel_signs(), kind)
+        return None
+
     def _copula_is_ltd(self, C, grid):
+        exact = self._exact(C, "ltd")
+        if exact is not None:
+            return exact
         return self._check_monotone_ratio(
             C,
             grid,
@@ -79,6 +100,9 @@ class LTDVerifier:
         )
 
     def _copula_is_lti(self, C, grid):
+        exact = self._exact(C, "lti")
+        if exact is not None:
+            return exact
         return self._check_monotone_ratio(
             C,
             grid,
@@ -88,22 +112,26 @@ class LTDVerifier:
         )
 
     def _copula_is_rti(self, C, grid):
+        exact = self._exact(C, "rti")
+        if exact is not None:
+            return exact
         return self._check_monotone_ratio(
             C,
             grid,
             symbolic_ratio=lambda expr, u, v: (1 - u - v + expr) / (1 - u),
-            numeric_ratio=lambda cdf, u, v: (1 - u - v + max(float(cdf(u, v)), 0.0))
-            / (1 - u),
+            numeric_ratio=lambda cdf, u, v: (1 - u - v + max(float(cdf(u, v)), 0.0)) / (1 - u),
             increasing=True,
         )
 
     def _copula_is_rtd(self, C, grid):
+        exact = self._exact(C, "rtd")
+        if exact is not None:
+            return exact
         return self._check_monotone_ratio(
             C,
             grid,
             symbolic_ratio=lambda expr, u, v: (1 - u - v + expr) / (1 - u),
-            numeric_ratio=lambda cdf, u, v: (1 - u - v + max(float(cdf(u, v)), 0.0))
-            / (1 - u),
+            numeric_ratio=lambda cdf, u, v: (1 - u - v + max(float(cdf(u, v)), 0.0)) / (1 - u),
             increasing=False,
         )
 

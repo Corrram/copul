@@ -11,186 +11,144 @@ References:
 
 import numpy as np
 from scipy import stats
-from typing import Tuple
 
 
-def xi_ncalculate(xvec: np.ndarray, yvec: np.ndarray) -> float:
-    """
-    Calculate the Xi_n dependence measure between two vectors of data.
+def _validate_pair(xvec, yvec) -> tuple[np.ndarray, np.ndarray]:
+    x = np.asarray(xvec, dtype=float).ravel()
+    y = np.asarray(yvec, dtype=float).ravel()
+    if x.shape != y.shape:
+        raise ValueError(f"xvec and yvec must have the same length, got {x.size} and {y.size}.")
+    if np.isnan(x).any() or np.isnan(y).any():
+        raise ValueError("Input contains NaN values.")
+    return x, y
 
-    Xi_n is a measure of association that can detect both linear and nonlinear
-    relationships, and is based on the ranks of the data. The measure ranges
-    approximately from 0 to 1, where 0 indicates no association and 1 indicates
-    a perfect deterministic relationship.
+
+def xi_ncalculate(xvec: np.ndarray, yvec: np.ndarray, random_state=None) -> float:
+    r"""
+    Chatterjee's rank correlation :math:`\xi_n(X, Y)` (Chatterjee, 2021).
+
+    The data are ordered by ``xvec`` (ties in ``xvec`` are broken uniformly at
+    random) and, with :math:`r_i = \#\{j : Y_j \le Y_{(i)}\}` and
+    :math:`l_i = \#\{j : Y_j \ge Y_{(i)}\}`,
+
+    .. math::
+
+       \xi_n = 1 - \frac{n \sum_{i=1}^{n-1} |r_{i+1} - r_i|}
+                        {2 \sum_{i=1}^n l_i (n - l_i)} .
+
+    Without ties in ``yvec`` this reduces to
+    :math:`1 - 3\sum_i |r_{i+1} - r_i| / (n^2 - 1)`.
 
     Parameters
     ----------
-    xvec : np.ndarray
-        First vector of data.
-    yvec : np.ndarray
-        Second vector of data.
+    xvec, yvec : array-like
+        Samples of equal length.
+    random_state : int, numpy Generator or None, optional
+        Randomness for breaking ties in ``xvec`` (irrelevant without ties).
 
     Returns
     -------
     float
         The Xi_n dependence measure.
 
+    Raises
+    ------
+    ValueError
+        If the inputs have different lengths or contain NaN values.
+
     Notes
     -----
     - The measure is not symmetric: xi_n(x, y) may not equal xi_n(y, x).
-    - For perfect correlations (positive or negative), the function returns 0.5.
-    - For constant data (either x or y), the function returns 0.5.
-    - For inputs containing NaN, the function returns 0.5.
+    - For ``Y`` a strictly monotone function of ``X`` (no ties),
+      :math:`\xi_n = 1 - 3/(n+1)`, which tends to 1 (it is *not* 0.5 in
+      general; for ``n = 5`` it happens to equal 0.5).
+    - For constant ``yvec`` the coefficient is undefined and ``nan`` is returned.
     - Empty or single-element vectors return NaN.
 
     Examples
     --------
     >>> import numpy as np
-    >>> x = np.array([1, 2, 3, 4, 5])
-    >>> y = np.array([1, 2, 3, 4, 5])  # Perfect positive correlation
-    >>> xi_ncalculate(x, y)
-    0.5
-    >>> y = np.array([5, 4, 3, 2, 1])  # Perfect negative correlation
-    >>> xi_ncalculate(x, y)
-    0.5
-    >>> y = np.array([1, 4, 2, 5, 3])  # Some random association
-    >>> xi_ncalculate(x, y)  # Will be between 0 and 1
+    >>> x = np.arange(1, 11)
+    >>> round(xi_ncalculate(x, x), 4)  # 1 - 3/11
+    0.7273
     """
-    # Handle edge cases
-    if not isinstance(xvec, np.ndarray):
-        xvec = np.array(xvec)
-    if not isinstance(yvec, np.ndarray):
-        yvec = np.array(yvec)
-
-    # Check for empty arrays
-    if xvec.size == 0 or yvec.size == 0:
+    x, y = _validate_pair(xvec, yvec)
+    n = x.size
+    if n < 2:
         return np.nan
 
-    # For single element arrays, dependence is undefined
-    if xvec.size == 1 or yvec.size == 1:
+    if np.unique(x).size < n:
+        rng = np.random.default_rng(random_state)
+        order = np.lexsort((rng.random(n), x))
+    else:
+        order = np.argsort(x, kind="stable")
+    ys = y[order]
+    sorted_y = np.sort(y)
+    r = np.searchsorted(sorted_y, ys, side="right")
+    l_ = n - np.searchsorted(sorted_y, ys, side="left")
+    denom = 2.0 * np.sum(l_ * (n - l_), dtype=float)
+    if denom == 0:
         return np.nan
-
-    # Ensure the arrays have the same length
-    n = len(xvec)
-    if len(yvec) != n:
-        # We don't raise an exception as it appears the function handles this case
-        # but we should log a warning or handle this case more explicitly
-        if len(yvec) > n:
-            yvec = yvec[:n]  # Truncate to match length
-        else:
-            # Pad with the last value to match length
-            yvec = np.append(yvec, [yvec[-1]] * (n - len(yvec)))
-
-    # Skip computation if NaN values are present - based on test results, return 0.5
-    if np.isnan(xvec).any() or np.isnan(yvec).any():
-        return 0.5
-
-    # Get ranks using scipy's rankdata
-    xrank = stats.rankdata(xvec, method="ordinal")
-    yrank = stats.rankdata(yvec, method="ordinal")
-
-    # Sort y ranks according to x ranks
-    ord_ = np.argsort(xrank)
-    yrank = yrank[ord_]
-
-    # Calculate absolute differences between consecutive y ranks
-    np_abs = np.abs(yrank[1:n] - yrank[: n - 1])
-
-    # Calculate the mean of absolute differences
-    coef_sum = np.mean(np_abs)
-
-    # Calculate Xi_n
-    xi = 1 - 3 * coef_sum / (n + 1)
-
-    return xi
+    return float(1.0 - n * np.sum(np.abs(np.diff(r)), dtype=float) / denom)
 
 
 def xi_nvarcalculate(xvec: np.ndarray, yvec: np.ndarray) -> float:
-    """
-    Calculate the variance of the Xi_n dependence measure.
+    r"""
+    Estimate the asymptotic variance of :math:`\sqrt{n}\,\xi_n`.
 
-    This function computes the asymptotic variance of Chatterjee's Xi coefficient,
-    which can be used for statistical inference.
+    The returned value estimates :math:`\sigma^2` in
+    :math:`\sqrt{n}(\xi_n - \xi) \to N(0, \sigma^2)` (general, possibly
+    dependent case); the standard error of :math:`\xi_n` itself is therefore
+    ``sqrt(xi_nvarcalculate(x, y) / n)``.  All sums are evaluated in
+    :math:`O(n \log n)` via sorting.  The estimator is consistent but tends
+    to underestimate the variance in small samples (e.g. by ~30% at
+    ``n = 500`` for moderately dependent data).
 
     Parameters
     ----------
-    xvec : np.ndarray
-        First vector of data.
-    yvec : np.ndarray
-        Second vector of data.
+    xvec, yvec : array-like
+        Samples of equal length.
 
     Returns
     -------
     float
-        The estimated variance of the Xi_n dependence measure.
+        The estimated asymptotic variance (non-negative), ``nan`` for fewer
+        than two observations.
 
-    Notes
-    -----
-    - The variance is always non-negative, with a minimum value of 0.
-    - For inputs containing NaN, the function may still return a numerical result.
-    - If vectors are of different lengths, the function will process them anyway.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> x = np.array([1, 2, 3, 4, 5])
-    >>> y = np.array([1, 2, 3, 4, 5])  # Perfect correlation
-    >>> xi_nvarcalculate(x, y)  # Should be small
-    >>> y = np.random.rand(5)  # Random values
-    >>> xi_nvarcalculate(x, y)  # Will likely be higher
+    Raises
+    ------
+    ValueError
+        If the inputs have different lengths or contain NaN values.
     """
-    # Handle edge cases
-    if not isinstance(xvec, np.ndarray):
-        xvec = np.array(xvec)
-    if not isinstance(yvec, np.ndarray):
-        yvec = np.array(yvec)
-
-    # Check for empty arrays
-    if xvec.size == 0 or yvec.size == 0:
+    x, y = _validate_pair(xvec, yvec)
+    n = x.size
+    if n < 2:
         return np.nan
 
-    # For single element arrays, variance is undefined
-    if xvec.size == 1 or yvec.size == 1:
-        return np.nan
-
-    # Ensure the arrays have the same length
-    n = len(xvec)
-    if len(yvec) != n:
-        # We don't raise an exception as it appears the function handles this case
-        # but we should log a warning or handle this case more explicitly
-        if len(yvec) > n:
-            yvec = yvec[:n]  # Truncate to match length
-        else:
-            # Pad with the last value to match length
-            yvec = np.append(yvec, [yvec[-1]] * (n - len(yvec)))
-
-    # Skip checking NaN since the function appears to handle them
-
-    # Calculate ranks using numpy's argsort
-    xrank = np.argsort(np.argsort(xvec)) + 1
-    yrank_temp = np.argsort(np.argsort(yvec)) + 1
-
-    # Sort y ranks according to x ranks
-    ord_ = np.argsort(xrank)
-    yrank = yrank_temp[ord_]
+    # ordinal ranks, y ranks ordered by x
+    yrank_temp = np.argsort(np.argsort(y, kind="stable"), kind="stable") + 1
+    yrank = yrank_temp[np.argsort(x, kind="stable")].astype(float)
 
     # Create shifted versions of the y ranks
     yrank1 = np.concatenate((yrank[1:n], [yrank[n - 1]]))
-    yrank2 = np.concatenate((yrank[2:n], [yrank[n - 1]] * 2))
-    yrank3 = np.concatenate((yrank[3:n], [yrank[n - 1]] * 3))
+    yrank2 = np.concatenate((yrank[2:n], [yrank[n - 1]] * min(2, n)))[:n]
+    yrank3 = np.concatenate((yrank[3:n], [yrank[n - 1]] * min(3, n)))[:n]
 
     # Compute the terms needed for variance calculation
     term1 = np.minimum(yrank, yrank1)
     term2 = np.minimum(yrank, yrank2)
     term3 = np.minimum(yrank2, yrank3)
-
-    # Vectorize the computation of term4 where possible
-    term4 = np.zeros(n)
-    for i in range(n):
-        mask = np.arange(n) != i
-        term4[i] = np.sum(yrank[i] <= term1[mask])
-
     term5 = np.minimum(yrank1, yrank2)
+
+    # term4[i] = #{k != i : yrank[i] <= term1[k]}  (sorting instead of O(n^2))
+    t1_sorted = np.sort(term1)
+    term4 = n - np.searchsorted(t1_sorted, yrank, side="left")
+    term4 = term4 - (term1 >= yrank)
+
+    # sum6_terms[i] = sum_{k != i} min(term1[i], term1[k])
+    csum = np.concatenate(([0.0], np.cumsum(t1_sorted)))
+    idx = np.searchsorted(t1_sorted, term1, side="left")
+    sum6_terms = csum[idx] + term1 * (n - idx) - term1
 
     # Compute the sums needed for variance calculation
     sum1 = np.mean((term1 / n) ** 2)
@@ -198,29 +156,53 @@ def xi_nvarcalculate(xvec: np.ndarray, yvec: np.ndarray) -> float:
     sum3 = np.mean(term1 * term3 / n**2)
     sum4 = np.mean(term4 * term1 / (n * (n - 1)))
     sum5 = np.mean(term4 * term5 / (n * (n - 1)))
-
-    # Compute sum6 - this is the most computationally intensive part
-    # and could potentially be optimized further
-    sum6_terms = np.zeros(n)
-    for i in range(n):
-        mask = np.arange(n) != i
-        sum6_terms[i] = np.sum(np.minimum(term1[i], term1[mask]))
     sum6 = np.mean(sum6_terms / (n * (n - 1)))
-
     sum7 = (np.mean(term1 / n)) ** 2
 
-    # Calculate the final variance
     variance = 36 * (sum1 + 2 * sum2 - 2 * sum3 + 4 * sum4 - 2 * sum5 + sum6 - 4 * sum7)
+    return float(max(0.0, variance))
 
-    # Ensure variance is non-negative
-    return max(0, variance)
+
+def xi_null_variance(yvec: np.ndarray) -> float:
+    r"""
+    Asymptotic variance of :math:`\sqrt{n}\,\xi_n` under independence.
+
+    Equals :math:`2/5` for continuous ``Y`` (Chatterjee 2021, Thm. 2.1); with
+    ties in ``yvec`` the consistent estimator of Chatterjee (2021, Thm. 2.2)
+    is used.
+    """
+    y = np.asarray(yvec, dtype=float).ravel()
+    n = y.size
+    if n < 2:
+        return np.nan
+    if np.unique(y).size == n:
+        return 0.4
+    sorted_y = np.sort(y)
+    fr = np.searchsorted(sorted_y, y, side="right") / n  # rank (ties: max) / n
+    gr = (n - np.searchsorted(sorted_y, y, side="left")) / n  # rank of -y / n
+    cu = np.mean(gr * (1.0 - gr))
+    if cu == 0:
+        return np.nan
+    qfr = np.sort(fr)
+    ind = np.arange(1, n + 1)
+    ind2 = 2 * n - 2 * ind + 1
+    ai = np.mean(ind2 * qfr * qfr) / n
+    ci = np.mean(ind2 * qfr) / n
+    cq = np.cumsum(qfr)
+    m = (cq + (n - ind) * qfr) / n
+    b = np.mean(m**2)
+    return float((ai - 2.0 * b + ci**2) / cu**2)
 
 
 def xi_n_with_ci(
     xvec: np.ndarray, yvec: np.ndarray, alpha: float = 0.05
-) -> Tuple[float, Tuple[float, float]]:
+) -> tuple[float, tuple[float, float]]:
     """
-    Calculate Xi_n dependence measure with confidence interval.
+    Calculate Xi_n dependence measure with an asymptotic confidence interval.
+
+    Uses ``xi_n +- z_{1-alpha/2} * sqrt(sigma^2 / n)`` with the variance
+    estimate ``sigma^2`` of :func:`xi_nvarcalculate` (which refers to
+    ``sqrt(n) * xi_n``), clipped to ``[0, 1]``.
 
     Parameters
     ----------
@@ -235,83 +217,44 @@ def xi_n_with_ci(
     -------
     Tuple[float, Tuple[float, float]]
         The Xi_n dependence measure and its confidence interval as (xi_n, (lower, upper)).
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> x = np.random.rand(100)
-    >>> y = 2*x + np.random.normal(0, 0.1, 100)
-    >>> xi, (lower, upper) = xi_n_with_ci(x, y)
-    >>> print(f"Xi_n: {xi:.4f}, 95% CI: ({lower:.4f}, {upper:.4f})")
     """
-    len(xvec)
-    xi = xi_ncalculate(xvec, yvec)
-    var = xi_nvarcalculate(xvec, yvec)
-
-    # Calculate standard error
-    se = np.sqrt(var)
-
-    # Calculate z-value for the given alpha
+    x, y = _validate_pair(xvec, yvec)
+    n = x.size
+    xi = xi_ncalculate(x, y)
+    var = xi_nvarcalculate(x, y)
+    se = np.sqrt(var / n)
     z = stats.norm.ppf(1 - alpha / 2)
-
-    # Calculate confidence interval
-    lower = max(0, xi - z * se)  # Xi_n is bounded by 0
-    upper = min(1, xi + z * se)  # Xi_n is bounded by 1
-
+    lower = max(0.0, xi - z * se)
+    upper = min(1.0, xi + z * se)
     return xi, (lower, upper)
 
 
 def test_independence(
     xvec: np.ndarray, yvec: np.ndarray, alpha: float = 0.05
-) -> Tuple[float, float, bool]:
-    """
-    Test the null hypothesis of independence between x and y.
+) -> tuple[float, float, bool]:
+    r"""
+    One-sided asymptotic test of the null hypothesis of independence.
 
-    Parameters
-    ----------
-    xvec : np.ndarray
-        First vector of data.
-    yvec : np.ndarray
-        Second vector of data.
-    alpha : float, optional
-        Significance level, default is 0.05.
+    Under :math:`H_0`, :math:`\sqrt{n}\,\xi_n \to N(0, \tau^2)` with
+    :math:`\tau^2 = 2/5` for continuous ``Y`` (see :func:`xi_null_variance`
+    for ties); the p-value is :math:`1 - \Phi(\sqrt{n}\,\xi_n / \tau)`.
 
     Returns
     -------
     Tuple[float, float, bool]
         The Xi_n value, p-value, and boolean indicating if the null hypothesis
         of independence should be rejected.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> # Independent data
-    >>> x = np.random.rand(100)
-    >>> y = np.random.rand(100)
-    >>> xi, p_value, reject = test_independence(x, y)
-    >>> print(f"Xi_n: {xi:.4f}, p-value: {p_value:.4f}, reject H0: {reject}")
-    >>>
-    >>> # Dependent data
-    >>> x = np.random.rand(100)
-    >>> y = x + np.random.normal(0, 0.1, 100)
-    >>> xi, p_value, reject = test_independence(x, y)
-    >>> print(f"Xi_n: {xi:.4f}, p-value: {p_value:.4f}, reject H0: {reject}")
     """
-    len(xvec)
-    xi = xi_ncalculate(xvec, yvec)
-    var = xi_nvarcalculate(xvec, yvec)
+    x, y = _validate_pair(xvec, yvec)
+    n = x.size
+    xi = xi_ncalculate(x, y)
+    var0 = xi_null_variance(y)
+    if not np.isfinite(xi) or not np.isfinite(var0) or var0 <= 0:
+        return xi, np.nan, False
+    z_score = np.sqrt(n) * xi / np.sqrt(var0)
+    p_value = float(stats.norm.sf(z_score))
+    return xi, p_value, bool(p_value < alpha)
 
-    # Under the null hypothesis of independence, Xi_n is asymptotically normal
-    # with mean 0 and variance given by xi_nvarcalculate
-    if var > 0:
-        z_score = xi / np.sqrt(var)
-        # One-sided test as we're only interested in positive dependence
-        p_value = 1 - stats.norm.cdf(z_score)
-    else:
-        # If variance is 0, we can't perform the test
-        p_value = np.nan
 
-    # Reject the null hypothesis if p-value < alpha
-    reject = p_value < alpha
-
-    return xi, p_value, reject
+# prevent pytest from collecting the statistical test function above
+test_independence.__test__ = False

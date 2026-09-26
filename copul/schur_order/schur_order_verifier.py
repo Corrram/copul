@@ -7,8 +7,10 @@ property as the parameter varies.
 
 import itertools
 import logging
+
 import numpy as np
 import sympy
+
 from copul.checkerboard.checkerboarder import Checkerboarder
 from copul.schur_order.cis_rearranger import CISRearranger
 
@@ -116,9 +118,7 @@ class SchurOrderVerifier:
                 rearranged_ccop = CISRearranger().rearrange_checkerboard(theta_ccop)
 
                 # Calculate conditional distributions
-                cond_dens = sympy.Matrix.zeros(
-                    rearranged_ccop.shape[0], rearranged_ccop.shape[1]
-                )
+                cond_dens = sympy.Matrix.zeros(rearranged_ccop.shape[0], rearranged_ccop.shape[1])
                 for k, l_ in np.ndindex(rearranged_ccop.shape):
                     cond_dens[k, l_] = sum(rearranged_ccop[i, l_] for i in range(k + 1))
 
@@ -189,26 +189,20 @@ class SchurOrderVerifier:
             smaller_cop = cond_distributions[i]
             larger_cop = cond_distributions[i + 1]
 
-            if positively_ordered and not self._is_pointwise_lower_equal(
-                smaller_cop, larger_cop
-            ):
+            if positively_ordered and not self._is_pointwise_lower_equal(smaller_cop, larger_cop):
                 msg = f"Not positively Schur ordered at {thetas[i]} / {thetas[i + 1]}."
-                logger.info(msg)
+                logger.debug(msg)
                 if verbose:
                     print(msg)
 
                 counterexample = [
                     f"{i} {j}, diff: {larger_cop[i, j] - smaller_cop[i, j]}"
-                    for i, j in itertools.product(
-                        range(smaller_cop.rows), range(smaller_cop.cols)
-                    )
+                    for i, j in itertools.product(range(smaller_cop.rows), range(smaller_cop.cols))
                     if not smaller_cop[i, j] <= larger_cop[i, j] + self._tolerance
                 ]
 
                 if verbose and counterexample:
-                    print(
-                        f"Found {len(counterexample)} violations. Example: {counterexample[:3]}"
-                    )
+                    print(f"Found {len(counterexample)} violations. Example: {counterexample[:3]}")
 
                 positively_ordered = False
 
@@ -221,7 +215,7 @@ class SchurOrderVerifier:
 
                 if not self._is_pointwise_lower_equal(smaller_cop, larger_cop):
                     msg = f"Not negatively Schur ordered at {thetas[i]} / {thetas[i + 1]}."
-                    logger.info(msg)
+                    logger.debug(msg)
                     if verbose:
                         print(msg)
 
@@ -243,7 +237,7 @@ class SchurOrderVerifier:
 
             if negatively_ordered:
                 msg = "Negatively Schur ordered."
-                logger.info(msg)
+                logger.debug(msg)
                 if verbose:
                     print(msg)
                 return True
@@ -251,7 +245,7 @@ class SchurOrderVerifier:
                 return False
         else:
             msg = "Positively Schur ordered."
-            logger.info(msg)
+            logger.debug(msg)
             if verbose:
                 print(msg)
             return True

@@ -2,16 +2,17 @@
 Tests for the SchurVisualizer class and related functions.
 """
 
+import pathlib
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import sympy as sp
-from unittest.mock import patch, MagicMock
-import pathlib
 
 from copul.family import archimedean
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 # Import from the module we're testing
 from copul.schur_order.schur_visualizer import SchurVisualizer, visualize_rearranged
+from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 class TestSchurVisualizer:
@@ -61,9 +62,7 @@ class TestSchurVisualizer:
     def test_compute_with_biv_check(self):
         """Test compute method with BivCheck copulas."""
         # Mock BivCheckPi copula
-        with patch(
-            "copul.checkerboard.biv_check_pi.BivCheckPi", autospec=True
-        ) as MockBivCheckPi:
+        with patch("copul.checkerboard.biv_check_pi.BivCheckPi", autospec=True) as MockBivCheckPi:
             # Create a properly mocked copula
             mock_pi_copula = MockBivCheckPi.return_value
             mock_pi_copula.cond_distr_1.return_value = lambda u: u
@@ -203,12 +202,8 @@ class TestSchurVisualizer:
         # Call function with patch for rearranger
         # Patch the actual import path used in the module
         with (
-            patch(
-                "copul.schur_order.schur_visualizer.CISRearranger"
-            ) as mock_rearranger,
-            patch(
-                "copul.schur_order.schur_visualizer.SchurVisualizer"
-            ) as mock_visualizer,
+            patch("copul.schur_order.schur_visualizer.CISRearranger") as mock_rearranger,
+            patch("copul.schur_order.schur_visualizer.SchurVisualizer") as mock_visualizer,
             patch("copul.schur_order.schur_visualizer.BivCheckPi") as mock_biv_check_pi,
         ):
             # Set up rearranger mock

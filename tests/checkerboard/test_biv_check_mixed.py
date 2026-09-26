@@ -10,10 +10,10 @@ import matplotlib
 import numpy as np
 import pytest
 
-from copul.checkerboard.biv_check_pi import BivCheckPi
 from copul.checkerboard.biv_check_min import BivCheckMin
-from copul.checkerboard.biv_check_w import BivCheckW
 from copul.checkerboard.biv_check_mixed import BivCheckMixed
+from copul.checkerboard.biv_check_pi import BivCheckPi
+from copul.checkerboard.biv_check_w import BivCheckW
 
 matplotlib.use("Agg")  # do not open GUI windows
 

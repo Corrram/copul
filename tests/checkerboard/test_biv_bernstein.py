@@ -1,4 +1,5 @@
 import numpy as np
+
 from copul.checkerboard.biv_bernstein import BivBernsteinCopula
 from copul.family.frechet.lower_frechet import LowerFrechet
 from copul.family.frechet.upper_frechet import UpperFrechet

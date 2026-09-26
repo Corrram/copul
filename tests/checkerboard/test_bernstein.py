@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from scipy.stats import kstest, pearsonr
 from scipy.integrate import dblquad
+from scipy.stats import kstest, pearsonr
 
 from copul.checkerboard.bernstein import BernsteinCopula
 
@@ -97,9 +97,7 @@ def test_cdf_edge_cases_rough(point, expected):
     theta = np.ones((3, 3))  # shape=(2,2), m1=1, m2=1
     cop = BernsteinCopula(theta)
     actual = cop.cdf(point)
-    assert np.isclose(actual, expected, atol=0.1), (
-        f"CDF at {point} should be {expected}"
-    )
+    assert np.isclose(actual, expected, atol=0.1), f"CDF at {point} should be {expected}"
 
 
 def test_cdf_vectorized_edge_cases():
@@ -119,9 +117,7 @@ def test_cdf_vectorized_edge_cases_rough():
     cop = BernsteinCopula(theta)
     actual = cop.cdf(points)
     expected = np.array([0.5, 0.5, 0, 1])
-    assert np.all(np.isclose(actual, expected, atol=0.1)), (
-        f"CDF at {points} should be {expected}"
-    )
+    assert np.all(np.isclose(actual, expected, atol=0.1)), f"CDF at {points} should be {expected}"
 
 
 @pytest.mark.parametrize(
@@ -262,9 +258,7 @@ def test_pdf_2d_independence_vectorized():
     )
     pdf_vals = cop.pdf(pts)
     # Expect ~1.0 for all interior points
-    assert np.allclose(pdf_vals, 1.0, atol=0.02), (
-        f"PDF values should all be ~1, got {pdf_vals}"
-    )
+    assert np.allclose(pdf_vals, 1.0, atol=0.02), f"PDF values should all be ~1, got {pdf_vals}"
 
 
 def test_pdf_2d_independence_integrates_to_one():
@@ -280,9 +274,7 @@ def test_pdf_2d_independence_integrates_to_one():
 
     # Use a double integral from 0..1
     val, err = dblquad(pdf_wrapper, 0, 1, lambda _: 0, lambda _: 1)
-    assert np.isclose(val, 1.0, atol=1e-2), (
-        f"Integral of PDF should be ~1. Got {val} (err={err})."
-    )
+    assert np.isclose(val, 1.0, atol=1e-2), f"Integral of PDF should be ~1. Got {val} (err={err})."
 
 
 def test_pdf_raises_for_out_of_bounds():
@@ -319,9 +311,7 @@ def test_rvs_independence_2d():
     # Check each marginal is ~Uniform(0,1) using KS test
     for dim_idx in range(2):
         stat, pval = kstest(samples[:, dim_idx], "uniform")
-        assert pval > 1e-3, (
-            f"Marginal {dim_idx} fails uniformity KS test with pval={pval}."
-        )
+        assert pval > 1e-3, f"Marginal {dim_idx} fails uniformity KS test with pval={pval}."
 
     # Check correlation is near zero
     corr, _ = pearsonr(samples[:, 0], samples[:, 1])

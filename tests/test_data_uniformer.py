@@ -1,7 +1,8 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 import pytest
+from numpy.testing import assert_array_almost_equal
 from scipy import stats
+
 from copul.data_uniformer import DataUniformer
 
 
@@ -23,9 +24,7 @@ class TestDataUniformer:
     @pytest.mark.parametrize("touch_boundaries", [True, False])
     def test_basic_transformation(self, touch_boundaries):
         """Test basic data transformation to uniform distribution."""
-        transformed = self.uniformer.uniform(
-            self.data_basic, touch_boundaries=touch_boundaries
-        )
+        transformed = self.uniformer.uniform(self.data_basic, touch_boundaries=touch_boundaries)
 
         # Check shape preservation
         assert transformed.shape == self.data_basic.shape

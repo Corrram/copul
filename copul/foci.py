@@ -8,20 +8,26 @@ The implementation is based on the paper "An Empirical Study on New Model-Free M
 Variable Selection Methods" by Ansari et al.
 """
 
-import decimal
-from typing import Union, Optional, Dict, List, Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
-import pandas as pd
 from scipy.spatial import cKDTree
 from scipy.stats import rankdata
 
+from copul._lazy import is_pandas_instance
+
+if TYPE_CHECKING:
+    import pandas as pd
+
 
 def codec(
-    Y: Union[np.ndarray, pd.Series, pd.DataFrame, List],
-    Z: Union[np.ndarray, pd.Series, pd.DataFrame, List],
-    X: Optional[Union[np.ndarray, pd.Series, pd.DataFrame, List]] = None,
+    Y: np.ndarray | pd.Series | pd.DataFrame | list,
+    Z: np.ndarray | pd.Series | pd.DataFrame | list,
+    X: np.ndarray | pd.Series | pd.DataFrame | list | None = None,
     na_rm: bool = True,
-) -> Union[float, Dict[str, float]]:
+) -> float | dict[str, float]:
     """
     Calculate the conditional dependence coefficient (CODEC).
 
@@ -68,7 +74,7 @@ def codec(
     >>> codec_y_z_x = codec(y, z, x)
     """
     # Handle DataFrame case for Y (multiple response variables)
-    if isinstance(Y, pd.DataFrame):
+    if is_pandas_instance(Y, "DataFrame"):
         results = {}
         for i in range(Y.shape[1]):
             results[Y.columns[i]] = codec(Y.iloc[:, i], Z, X, na_rm)
@@ -240,24 +246,13 @@ def estimate_q(Y: np.ndarray, X: np.ndarray) -> float:
     # Find nearest neighbors for X
     nn_index_X = find_nearest_neighbors(X)
 
-    # Calculate rank statistics
-    R_Y = rankdata(Y.ravel(), method="max")
-    L_Y = rankdata(-Y.ravel(), method="max")
-
-    # Convert to decimal for numerical stability
-    L_Y_dec = np.array([decimal.Decimal(str(float(val))) for val in L_Y])
-    R_Y_dec = np.array([decimal.Decimal(str(float(val))) for val in R_Y])
-
-    # Get ranks at nearest neighbor indices
-    R_Y_nn = R_Y_dec[nn_index_X]
-
-    # Calculate minimums and L_Y squared
-    min_values = np.minimum(R_Y_dec, R_Y_nn)
-    L_Y_squared = L_Y_dec**2
-    n_dec = decimal.Decimal(str(n))
+    # Calculate rank statistics (integers; exact in float64 for n < 2**26)
+    R_Y = rankdata(Y.ravel(), method="max").astype(float)
+    L_Y = rankdata(-Y.ravel(), method="max").astype(float)
 
     # Calculate Q statistic
-    Q_n = np.mean(min_values - L_Y_squared / n_dec) / n
+    min_values = np.minimum(R_Y, R_Y[nn_index_X])
+    Q_n = np.mean(min_values - L_Y**2 / n) / n
 
     return float(Q_n)
 
@@ -279,14 +274,10 @@ def estimate_s(Y: np.ndarray) -> float:
     n = len(Y)
 
     # Calculate rank statistics
-    L_Y = rankdata(-Y.ravel(), method="max")
-
-    # Convert to decimal for numerical stability
-    L_Y_dec = np.array([decimal.Decimal(str(float(val))) for val in L_Y])
-    n_dec = decimal.Decimal(str(n))
+    L_Y = rankdata(-Y.ravel(), method="max").astype(float)
 
     # Calculate S statistic
-    S_n = np.sum(L_Y_dec * (n_dec - L_Y_dec)) / (n_dec**3)
+    S_n = np.sum(L_Y * (n - L_Y)) / float(n) ** 3
 
     return float(S_n)
 
@@ -316,81 +307,71 @@ def estimate_t(Y: np.ndarray, X: np.ndarray) -> float:
         return q / S
 
 
-def find_nearest_neighbors(X: np.ndarray) -> np.ndarray:
+def find_nearest_neighbors(X: np.ndarray, random_state=None) -> np.ndarray:
     """
-    Find the nearest neighbors for each point in X, handling repeats and ties.
+    Find the nearest neighbour of each point in X, handling repeats and ties.
+
+    A point is never its own neighbour.  Repeated points (zero distance to
+    the nearest other point) get a uniformly random *other* member of their
+    group of identical points; ties between several other points at the same
+    minimal distance are broken uniformly at random (as in the FOCI R
+    package).
 
     Parameters
     ----------
     X : np.ndarray
-        The data points.
+        The data points, shape ``(n,)`` or ``(n, d)``.
+    random_state : int, numpy Generator or None
+        Randomness for breaking repeats/ties.  ``None`` uses NumPy's global
+        generator (never reseeded).
 
     Returns
     -------
     np.ndarray
         Indices of nearest neighbors.
     """
-    # Ensure X is a numpy array
-    X = np.asarray(X)
+    from copul.checkerboard._biv_engine import resolve_rng
 
-    # Use cKDTree for nearest neighbor search
+    rng = resolve_rng(random_state)
+    X = np.asarray(X, dtype=float)
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+    n = X.shape[0]
+    if n < 2:
+        return np.zeros(n, dtype=int)
+
     tree = cKDTree(X)
-    distances, nn_indices = tree.query(X, k=min(3, X.shape[0]))
+    k = min(3, n)
+    distances, nn_indices = tree.query(X, k=k)
+    own = np.arange(n)
 
-    # Get the second nearest neighbor (first is the point itself)
-    nn_index_X = (
-        nn_indices[:, 1].copy()
-        if nn_indices.shape[1] > 1
-        else np.zeros(X.shape[0], dtype=int)
-    )
+    # the returned neighbour list may start with a duplicate instead of the
+    # point itself -> take the first index that differs from the point
+    nn_index_X = np.where(nn_indices[:, 0] != own, nn_indices[:, 0], nn_indices[:, 1])
 
-    # Find data points that are not unique (zero distance to nearest neighbor)
-    repeat_data = np.where(distances[:, 1] == 0)[0] if distances.shape[1] > 1 else []
+    # Repeated data points: pick a random *other* point of the same group
+    repeat_data = np.where(distances[:, 1] == 0)[0]
+    if repeat_data.size > 0:
+        _, groups = np.unique(X[repeat_data], axis=0, return_inverse=True)
+        groups = np.asarray(groups).ravel()
+        for g in np.unique(groups):
+            members = repeat_data[groups == g]
+            m = members.size
+            # draw from the other m - 1 members uniformly
+            draw = (rng.random(m) * (m - 1)).astype(int)
+            draw = np.minimum(draw, m - 2)
+            draw = draw + (draw >= np.arange(m))
+            nn_index_X[members] = members[draw]
 
-    # Handle repeated data points using DataFrame approach (like original code)
-    if len(repeat_data) > 0:
-        # Create a DataFrame to manage repeated data
-        df_X = pd.DataFrame({"id": repeat_data, "group": nn_indices[repeat_data, 0]})
-
-        # Function to select a random nearest neighbor
-        def random_nn(group_ids):
-            if len(group_ids) > 0:
-                return np.random.choice(group_ids)
-            return None
-
-        # Apply to each group
-        df_X["rnn"] = df_X.groupby("group")["id"].transform(random_nn)
-
-        # Update nearest neighbor indices
-        for idx, rnn in zip(repeat_data, df_X["rnn"]):
-            if rnn is not None:
-                nn_index_X[idx] = rnn
-
-    # Handle ties (equal distances to second and third nearest neighbors)
-    if nn_indices.shape[1] > 2:
+    # Ties: equal distances to the 2nd and 3rd nearest points
+    if k > 2:
         ties = np.where(distances[:, 1] == distances[:, 2])[0]
         ties = np.setdiff1d(ties, repeat_data)
-
-        if len(ties) > 0:
-            for a in ties:
-                # Take current point
-                a_point = X[a].reshape(1, -1)
-
-                # Get all other points
-                rest_points = np.delete(X, a, axis=0)
-                rest_indices = np.delete(np.arange(X.shape[0]), a)
-
-                # Find distances to all other points
-                distances_to_others = np.linalg.norm(rest_points - a_point, axis=1)
-
-                # Find points at minimum distance
-                min_indices = np.where(
-                    distances_to_others == distances_to_others.min()
-                )[0]
-
-                # Adjust indices and randomly select one
-                adjusted_indices = rest_indices[min_indices]
-                nn_index_X[a] = np.random.choice(adjusted_indices)
+        for a in ties:
+            d = np.linalg.norm(X - X[a], axis=1)
+            d[a] = np.inf
+            candidates = np.flatnonzero(d == d.min())
+            nn_index_X[a] = candidates[int(rng.random() * candidates.size) % candidates.size]
 
     return nn_index_X
 
@@ -411,9 +392,7 @@ def _ensure_numpy_array(data: Any) -> np.ndarray:
     """
     if isinstance(data, list):
         data = np.array(data)
-    elif isinstance(data, pd.Series):
-        data = data.to_numpy()
-    elif isinstance(data, pd.DataFrame):
+    elif is_pandas_instance(data, "Series", "DataFrame"):
         data = data.to_numpy()
 
     # Ensure 2D array for matrix data
@@ -428,15 +407,17 @@ def _ensure_numpy_array(data: Any) -> np.ndarray:
 
 
 if __name__ == "__main__":
+    import pandas as pd
+
     # Example usage and tests
-    np.random.seed(42)  # For reproducibility
+    rng = np.random.default_rng(42)  # For reproducibility
 
     # Generate example data
     n_samples = 1000
-    X = np.random.rand(n_samples, 2)
+    X = rng.random((n_samples, 2))
     Y_dependent = (X[:, 0] + X[:, 1]) % 1  # Y depends on X
-    Y_independent = np.random.rand(n_samples)  # Y independent of X
-    Z = np.random.randn(n_samples, 1)
+    Y_independent = rng.random(n_samples)  # Y independent of X
+    Z = rng.standard_normal((n_samples, 1))
 
     # Calculate various CODEC values
     print("CODEC between Y_dependent and X:", codec(Y_dependent, X))

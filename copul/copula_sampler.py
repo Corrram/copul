@@ -1,14 +1,16 @@
 import inspect
 import logging
-import random
 import warnings
-from typing import Any, Callable, Tuple, Optional
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import scipy.optimize as opt
 import sympy
-from copul.checkerboard.checkerboarder import Checkerboarder
+
+from copul.checkerboard._biv_engine import resolve_rng
 from copul.checkerboard.check_pi import CheckPi
+from copul.checkerboard.checkerboarder import Checkerboarder
 
 # Set up module logger
 log = logging.getLogger(__name__)
@@ -25,20 +27,21 @@ class CopulaSampler:
     # Class-level error counter
     err_counter = 0
 
-    def __init__(
-        self, copul: Any, precision: int = 3, random_state: Optional[int] = None
-    ):
+    def __init__(self, copul: Any, precision: int = 3, random_state: int | None = None):
         """
         Initialize a CopulaSampler instance.
 
         Args:
             copul: The copula object to sample from.
             precision: Precision level for numerical methods (default: 3).
-            random_state: Random seed for reproducibility (default: None).
+            random_state: int, numpy Generator or None.  With an int every call
+                of :meth:`rvs` is reproducible; ``None`` uses NumPy's global
+                generator.  No global seed is ever set.
         """
         self._copul = copul
         self._precision = precision
         self._random_state = random_state
+        self._rng = resolve_rng(random_state)
 
     def rvs(self, n: int = 1, approximate=False) -> np.ndarray:
         """
@@ -52,17 +55,14 @@ class CopulaSampler:
             np.ndarray: Array of shape (n, 2) containing the sampled (u, v) pairs.
         """
         if not approximate and self._copul.dim > 2:
-            raise ValueError(
-                "Sampling from copula with dimension > 2 requires approximate=True"
-            )
+            raise ValueError("Sampling from copula with dimension > 2 requires approximate=True")
+        # fresh generator per call for integer seeds (reproducible calls)
+        self._rng = resolve_rng(self._random_state)
         if approximate:
             grid_partitions = np.ceil(n ** (1 / self._copul.dim)).astype(int)
             checkerboarder = Checkerboarder(grid_partitions, dim=self._copul.dim)
             ccop = checkerboarder.get_checkerboard_copula(self._copul)
-            return ccop.rvs(n)
-        # Set random seed if specified
-        if self._random_state is not None:
-            random.seed(self._random_state)
+            return ccop.rvs(n, random_state=self._rng)
 
         # Get the conditional distribution function
         cond_distr = self._copul.cond_distr_2
@@ -79,12 +79,9 @@ class CopulaSampler:
             # Get symbolic expression and convert to a callable function
             try:
                 func_expr = cond_distr().func
-                sampling_func = sympy.lambdify(
-                    self._copul.u_symbols, func_expr, ["numpy"]
-                )
+                sampling_func = sympy.lambdify(self._copul.u_symbols, func_expr, ["numpy"])
             except Exception as e:
-                log.error(f"Error creating lambda function: {e}")
-                raise ValueError(f"Could not create sampling function: {e}")
+                raise ValueError(f"Could not create sampling function: {e}") from e
 
         # Generate samples
         results = self._sample_val(sampling_func, n)
@@ -112,7 +109,7 @@ class CopulaSampler:
 
         return result
 
-    def sample_val(self, function: Callable) -> Tuple[float, float]:
+    def sample_val(self, function: Callable) -> tuple[float, float]:
         """
         Generate a single sample from the copula using inverse CDF method.
 
@@ -123,8 +120,8 @@ class CopulaSampler:
             Tuple[float, float]: A (u, v) pair from the copula distribution.
         """
         # Generate uniform random variables
-        v = random.uniform(0, 1)
-        t = random.uniform(0, 1)
+        v = float(self._rng.uniform(0, 1))
+        t = float(self._rng.uniform(0, 1))
 
         # Create function to find root: F(u|v) = t
         def func2(u: float) -> float:

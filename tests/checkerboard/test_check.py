@@ -1,8 +1,10 @@
+from unittest.mock import MagicMock, patch
+
 import numpy as np
-import sympy
-from unittest.mock import patch, MagicMock
-from copul.checkerboard.check import Check
 import pytest
+import sympy
+
+from copul.checkerboard.check import Check
 
 
 def test_init_numpy():
