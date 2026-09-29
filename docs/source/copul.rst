@@ -14,6 +14,7 @@ Subpackages
    copul.regions
    copul.schur_order
    copul.search
+   copul.stats
    copul.simulations
    copul.wrapper
 

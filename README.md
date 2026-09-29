@@ -16,6 +16,16 @@ measures. It combines
   Blomqvist's $\beta$, distances to independence and tail coefficients, with
   one uniform `method=` switch between closed forms, quadrature, SymPy and
   Monte Carlo;
+- a **uniform, vectorised numerical API** (`cdf`, `pdf`, `logpdf`,
+  conditional distributions and their inverses, fast exact `rvs`) on every
+  copula;
+- **constructions** (rotations, reflections, survival copulas, mixtures,
+  Khoudraji asymmetrisation, ordinal sums, gluing) and Joe's two-parameter
+  **BB families**;
+- **statistics**: pseudo-observations, the empirical copula, estimators with
+  confidence intervals for every measure, independence tests, maximum
+  likelihood and moment fitting, model selection and goodness-of-fit tests
+  (`copul.stats`);
 - **checkerboard, shuffle-of-min and Bernstein copulas** with exact,
   vectorised formulas for all measures;
 - a **research toolkit**: a registry of exact regions between measures
@@ -42,11 +52,32 @@ copul requires Python 3.10 or newer.
 import copul as cp
 
 clayton = cp.Clayton(theta=2)
-float(clayton.cdf(0.3, 0.7))       # 0.28686...
-float(clayton.pdf(0.3, 0.7))       # 0.62928...
-float(clayton.cond_distr_1(0.3, 0.7))  # P(V <= 0.7 | U = 0.3)
-samples = clayton.rvs(1000, random_state=0)  # ndarray of shape (1000, 2)
-assert samples.shape == (1000, 2)
+clayton.cdf(0.3, 0.7)              # 0.28686... (a float)
+clayton.pdf(0.3, 0.7)              # 0.62928...
+clayton.cond_distr_1(0.3, 0.7)     # P(V <= 0.7 | U = 0.3)
+samples = clayton.rvs(100_000, random_state=0)  # exact, vectorised
+assert samples.shape == (100_000, 2)
+```
+
+Every bivariate copula has the same vectorised numerical API: `cdf`, `pdf`,
+`logpdf`, `cond_distr_1`, `cond_distr_2`, their inverses
+`cond_distr_1_inv(u, w)` / `cond_distr_2_inv(v, w)` (conditional quantiles)
+and `survival_function` accept scalars, broadcastable arrays, an `(N, 2)`
+array or `u=`, `v=` keywords. Called without arguments they return the
+symbolic expression.
+
+```python
+import numpy as np
+import copul as cp
+
+P = np.random.default_rng(0).random((5, 2))
+gumbel = cp.GumbelHougaard(theta=2)
+gumbel.cdf(P)                          # ndarray of shape (5,)
+gumbel.logpdf(P[:, 0], P[:, 1])        # numerically stable log-density
+v = gumbel.cond_distr_1_inv(P[:, 0], 0.5)  # conditional medians of V | U
+np.allclose(gumbel.cond_distr_1(P[:, 0], v), 0.5)  # True
+cp.Clayton().cdf(P, theta=2)           # free parameters as keywords
+cp.Clayton().cdf()                     # theta-dependent SymPy expression
 ```
 
 ### Dependence measures
@@ -98,6 +129,51 @@ round(frank.kendalls_tau(), 10)             # 0.5
 ```
 
 `curve.plot()` draws all measures against the parameter.
+
+## Constructions and further families
+
+```python
+import copul as cp
+
+rot = cp.rotate(cp.Clayton(2), 90)            # negative dependence
+round(rot.kendalls_tau(), 10)                  # -0.5
+surv = cp.survival(cp.Clayton(2))              # upper tail dependence
+mix = cp.mixture([cp.Clayton(2), cp.UpperFrechet()], [0.7, 0.3])
+asym = cp.khoudraji(cp.BivIndependenceCopula(), cp.GumbelHougaard(3), 0.3, 0.9)
+osum = cp.ordinal_sum([(0.0, 0.6, cp.GumbelHougaard(3)), (0.6, 1.0, cp.Clayton(2))])
+bb1 = cp.BB1(theta=0.7, delta=1.4)             # Joe's BB1 (Clayton-Gumbel)
+round(bb1.kendalls_tau(), 10)                  # 1 - 2 / (delta (theta + 2))
+samples = asym.rvs(1000, random_state=0)
+```
+
+Constructions return ordinary copula objects: all measures, sampling and
+plotting work on them, with exact measure relations where they are classical
+(e.g. sign changes under rotations, linearity of $\rho$, $\beta$, $\nu$,
+$\gamma$ and the tail coefficients in mixtures). Available BB families:
+`BB1`, `BB2`, `BB3`, `BB6`, `BB7`, `BB8`, `BB9`, `BB10` (Joe, 1997/2014), all
+with exact frailty samplers.
+
+## Statistics: estimation, fitting and goodness of fit
+
+```python
+import copul as cp
+
+X = cp.Clayton(theta=2).rvs(1000, random_state=0)      # or your own data (n x 2)
+U = cp.pseudo_obs(X)                                    # rank transform
+table = cp.estimate(X, ["tau", "rho", "xi"], ci="asymptotic")   # DataFrame
+emp = cp.EmpiricalCopula(X)
+emp.cdf(0.5, 0.5)                                       # empirical copula
+res = cp.fit(cp.Clayton, X)                             # maximum likelihood
+res.copula.kendalls_tau()                               # fitted copula
+res_tau = cp.fit(cp.Frank, X, method="itau")            # inversion of tau
+ranking = cp.select(X, ["Clayton", "Frank", "Gaussian"])  # AIC ranking
+```
+
+`cp.gof_test(res, X, n_boot=200)` runs the Cramér–von Mises test of Genest,
+Rémillard and Beaudoin (2009) with a parametric bootstrap, and
+`cp.stats.independence_test(X, method="xi")` tests independence with
+Kendall's $\tau$, Spearman's $\rho$, Chatterjee's $\xi$, Hoeffding's $D$ or
+a Cramér–von Mises statistic.
 
 ## Checkerboard copulas
 
@@ -223,6 +299,7 @@ $M$, $W$, $\Pi$ denote the upper and lower Fréchet bounds and independence.
 | category | classes |
 |---|---|
 | Archimedean | `Clayton` (`Nelsen1`), `Nelsen2`, `AliMikhailHaq` (`Nelsen3`), `GumbelHougaard` (`Nelsen4`), `Frank` (`Nelsen5`), `Joe` (`Nelsen6`), `Nelsen7`, `Nelsen8`, `GumbelBarnett` (`Nelsen9`), `Nelsen10`–`Nelsen14`, `GenestGhoudi` (`Nelsen15`), `Nelsen16`–`Nelsen22`; custom ones via `cp.from_generator` |
+| Two-parameter Archimedean (Joe) | `BB1`, `BB2`, `BB3`, `BB6`, `BB7`, `BB8`, `BB9`, `BB10` |
 | Extreme value | `BB5`, `CuadrasAuge`, `Galambos`, `GumbelHougaardEV`, `HueslerReiss`, `JoeEV`, `MarshallOlkin`, `Tawn`, `tEV`; custom ones via `cp.from_pickands` |
 | Elliptical | `Gaussian`, `StudentT`, `Laplace` |
 | Other families | `FarlieGumbelMorgenstern`, `Frechet`, `Mardia`, `Plackett`, `Raftery`, `B11`, `DiagonalBandCopula` |
@@ -230,7 +307,9 @@ $M$, $W$, $\Pi$ denote the upper and lower Fréchet bounds and independence.
 | Special copulas | `UpperFrechet` ($M$), `LowerFrechet` ($W$), `BivIndependenceCopula` / `IndependenceCopula` ($\Pi$) |
 | Approximations | `BivCheckPi`, `BivCheckMin`, `BivCheckW`, `BivCheckMixed`, `BivBlockDiagMixed`, `CheckPi`, `CheckMin` ($d$-dimensional), `ShuffleOfMin`, `BivBernstein`, `Bernstein` |
 
-Copulas can also be built from a cdf, density or conditional distribution
+New copulas arise from `cp.rotate`, `cp.reflect`, `cp.transpose`,
+`cp.survival`, `cp.mixture`, `cp.khoudraji`, `cp.ordinal_sum`, `cp.gluing` and
+`cp.markov_product`. Copulas can also be built from a cdf, density or conditional distribution
 (`cp.from_cdf`, `cp.from_pdf`, `cp.from_cond_distr_1`, `cp.from_cond_distr_2`)
 or from a mass matrix (`cp.from_matrix`). `cp.Families` lists everything
 programmatically.

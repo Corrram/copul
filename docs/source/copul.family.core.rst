@@ -46,6 +46,12 @@ copul.family.core.copula\_sampling\_mixin module
    :members:
    :undoc-members:
 
+copul.family.core.numeric\_api module
+-------------------------------------
+
+.. automodule:: copul.family.core.numeric_api
+   :members:
+
 copul.family.core.core\_copula module
 -------------------------------------
 

@@ -8,6 +8,8 @@ Subpackages
    :maxdepth: 4
 
    copul.family.archimedean
+   copul.family.bb
+   copul.family.constructions
    copul.family.core
    copul.family.elliptical
    copul.family.extreme_value

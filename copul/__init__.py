@@ -31,7 +31,7 @@ import logging
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _pkg_version
 
-from copul import measures, optim, regions, search
+from copul import measures, optim, regions, search, stats
 from copul.chatterjee import xi_ncalculate
 from copul.checkerboard.bernstein import Bernstein, BernsteinCopula
 from copul.checkerboard.biv_bernstein import BivBernstein, BivBernsteinCopula
@@ -78,6 +78,17 @@ from copul.family.archimedean import (
     Nelsen22,
 )
 from copul.family.archimedean.archimedean_copula import from_generator
+from copul.family.bb import BB1, BB2, BB3, BB6, BB7, BB8, BB9, BB10
+from copul.family.constructions import (
+    gluing,
+    khoudraji,
+    mixture,
+    ordinal_sum,
+    reflect,
+    rotate,
+    survival,
+    transpose,
+)
 from copul.family.copula_builder import (
     from_cdf,
     from_cond_distr_1,
@@ -128,6 +139,7 @@ from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.schur_order.plod_verifier import PLODVerifier
 from copul.search import check_inequality, find_counterexample, random_checkerboards
 from copul.star_product import markov_product
+from copul.stats import EmpiricalCopula, estimate, fit, gof_test, pseudo_obs, select
 
 try:
     __version__ = _pkg_version("copul")
@@ -139,7 +151,15 @@ logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "B11",
+    "BB1",
+    "BB2",
+    "BB3",
     "BB5",
+    "BB6",
+    "BB7",
+    "BB8",
+    "BB9",
+    "BB10",
     "AliMikhailHaq",
     "Bernstein",
     "BernsteinCopula",
@@ -162,6 +182,7 @@ __all__ = [
     "CornerSetVerifier",
     "CuadrasAuge",
     "DiagonalBandCopula",
+    "EmpiricalCopula",
     "EndSwapCopula",
     "Families",
     "FarlieGumbelMorgenstern",
@@ -223,8 +244,10 @@ __all__ = [
     "check_inequality",
     "compute_measures",
     "copulas",
+    "estimate",
     "families",
     "find_counterexample",
+    "fit",
     "from_cdf",
     "from_cond_distr_1",
     "from_cond_distr_2",
@@ -236,13 +259,25 @@ __all__ = [
     "from_pickands",
     "from_samples",
     "get_region",
+    "gluing",
+    "gof_test",
+    "khoudraji",
     "markov_product",
     "measure_curve",
     "measures",
+    "mixture",
     "optim",
+    "ordinal_sum",
+    "pseudo_obs",
     "random_checkerboards",
+    "reflect",
     "regions",
+    "rotate",
     "search",
+    "select",
+    "stats",
+    "survival",
     "tEV",
+    "transpose",
     "xi_ncalculate",
 ]
