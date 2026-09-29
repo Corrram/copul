@@ -150,6 +150,19 @@ class Families(enum.Enum):
     MARSHALL_OLKIN = "copul.family.extreme_value.MarshallOlkin"
 
     # -----------------------
+    # Two-parameter Archimedean BB families (Joe 2014); category "other"
+    # by module path, see copul.family.bb
+    # -----------------------
+    BB1 = "copul.family.bb.BB1"
+    BB2 = "copul.family.bb.BB2"
+    BB3 = "copul.family.bb.BB3"
+    BB6 = "copul.family.bb.BB6"
+    BB7 = "copul.family.bb.BB7"
+    BB8 = "copul.family.bb.BB8"
+    BB9 = "copul.family.bb.BB9"
+    BB10 = "copul.family.bb.BB10"
+
+    # -----------------------
     # Elliptical Copulas
     # -----------------------
     GAUSSIAN = "copul.family.elliptical.Gaussian"
