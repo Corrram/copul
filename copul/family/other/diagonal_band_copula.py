@@ -110,34 +110,67 @@ class DiagonalBandCopula(BivCopula):
         return SymPyFuncWrapper(sp.simplify(pdf_expr))
 
     # ------------------------------------------------------------------
-    # CDF   C(u,v)  (symbolic integration w.r.t. first coordinate)
+    # CDF   C(u,v)  (closed form)
     # ------------------------------------------------------------------
+    def _F(self, z):
+        """CDF of the base distribution, uniform on [-alpha, alpha]."""
+        a = self.alpha
+        return sp.Piecewise((0, z <= -a), ((z + a) / (2 * a), z <= a), (1, True))
+
+    def _G(self, z):
+        """Integrated base CDF, G(z) = int_{-oo}^z F(s) ds."""
+        a = self.alpha
+        return sp.Piecewise((0, z <= -a), ((z + a) ** 2 / (4 * a), z <= a), (z, True))
+
     @property
     def _cdf_expr(self):
-        r"""Symbolic CDF :math:`C(u,v)` obtained by integrating the density in the first
-        coordinate:
+        r"""Closed-form CDF.
+
+        Integrating the density twice gives, with the integrated base CDF
+        :math:`G(z)=\int_{-\infty}^z F(s)\,ds`,
 
         .. math::
 
-           C(u,v) \;=\; \int_{0}^{u} g_\alpha(t,v)\,dt.
-
-        This property returns the SymPy expression for the integral (not a callable).
+           C(u,v) = G(u+v) - G(u-v) + G(-v) - G(v) + G(u+v-2)
+                    - G(u-2) - G(v-2) + G(-2).
         """
-        t = sp.symbols("t", nonnegative=True)
-        g = self.pdf.func  # underlying sympy Expr from wrapper
-        # substitute u -> t to integrate over the first coordinate
-        g_sub = g.subs(self.u, t)
-        expr = sp.integrate(g_sub, (t, 0, self.u))
-        return expr
+        u, v, G = self.u, self.v, self._G
+        return G(u + v) - G(u - v) + G(-v) - G(v) + G(u + v - 2) - G(u - 2) - G(v - 2) + G(-2)
 
     # ------------------------------------------------------------------
     # Conditional  F_{U|V}(u|v)
     # ------------------------------------------------------------------
     def cond_distr_2(self, u=None, v=None):
-        t = sp.symbols("t", nonnegative=True)
-        g = self.pdf.func.subs(self.u, t)
-        cd2 = sp.integrate(g, (t, 0, self.u))
-        return SymPyFuncWrapper(sp.simplify(cd2))(u, v)
+        r""":math:`\partial_2 C = F(u-v)-F(-v)+F(u+v)-F(v)+F(u+v-2)-F(v-2)`."""
+        x, y, F = self.u, self.v, self._F
+        cd2 = F(x - y) - F(-y) + F(x + y) - F(y) + F(x + y - 2) - F(y - 2)
+        return SymPyFuncWrapper(cd2)(u, v)
+
+    def _numeric_callables(self):
+        """Vectorized closed forms of the diagonal band copula."""
+        import numpy as np
+
+        a = float(self.alpha)
+
+        def F(z):
+            return np.clip((z + a) / (2 * a), 0.0, 1.0)
+
+        def G(z):
+            return np.where(z <= -a, 0.0, np.where(z <= a, (z + a) ** 2 / (4 * a), z))
+
+        def f(z):
+            return np.where(np.abs(z) <= a, 1.0 / (2 * a), 0.0)
+
+        def cdf(u, v):
+            return G(u + v) - G(u - v) + G(-v) - G(v) + G(u + v - 2) - G(u - 2) - G(v - 2) + G(-2.0)
+
+        def h2(u, v):
+            return F(u - v) - F(-v) + F(u + v) - F(v) + F(u + v - 2) - F(v - 2)
+
+        def pdf(u, v):
+            return f(u - v) + f(u + v) + f(u + v - 2)
+
+        return {"cdf": cdf, "h1": lambda u, v: h2(v, u), "h2": h2, "pdf": pdf}
 
 
 if __name__ == "__main__":

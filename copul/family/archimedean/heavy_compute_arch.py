@@ -4,10 +4,8 @@ import warnings
 from abc import ABC
 
 import numpy as np
-import sympy
 from scipy import optimize
 
-from copul.copula_sampler import CopulaSampler
 from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
 
 log = logging.getLogger(__name__)
@@ -16,22 +14,9 @@ log = logging.getLogger(__name__)
 class HeavyComputeArch(BivArchimedeanCopula, ABC):
     err_counter = 0
 
-    def rvs(self, n=1, random_state=None, approximate=False):
-        """Sample a value from the copula"""
-        if approximate:
-            sampler = CopulaSampler(self, random_state=random_state)
-            return sampler.rvs(n, approximate)
-        results = []
-        for _ in range(n):
-            v = random.uniform(0, 1)
-            sympy_func = self.cond_distr_2().subs(self.v, v).func
-            function = sympy.lambdify(self.u, sympy_func, ["numpy"])
-            sympy_func = self.cond_distr_2().subs(self.v, v).func
-            result = np.array([self._sample_values(function, v, sympy_func) for _ in range(1)])
-            results.append(result)
-            # array of lists to array
-        log.debug(self.err_counter)
-        return np.concatenate(results)
+    # Sampling uses the generic vectorized conditional-inversion sampler of
+    # the numerical API (``CopulaSamplingMixin.rvs``); the helpers below are
+    # kept for backward compatibility.
 
     def _sample_values(self, function, v, sympy_func):
         t = random.uniform(0, 1)

@@ -6,8 +6,6 @@ import sympy as sp
 
 from copul.exceptions import PropertyUnavailableException
 from copul.family.extreme_value.marshall_olkin import MarshallOlkin
-from copul.wrapper.cd1_wrapper import CD1Wrapper
-from copul.wrapper.cd2_wrapper import CD2Wrapper
 from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
@@ -132,14 +130,10 @@ def test_mo_cdf():
     # Create a simple instance for testing
     copula = MarshallOlkin(0.3, 0.7)
 
-    # Mock the SymPyFuncWrapper to avoid actual computation
-    with patch.object(CDFWrapper, "__call__") as mock_call:
-        mock_call.return_value = 0.42  # Mock return value
-
-        # Call CDF with specific values
-        result = copula.cdf(0.5, 0.6)
-
-        assert np.isclose(result, 0.42)
+    # C(u, v) = min(u^(1 - a1) v, u v^(1 - a2))
+    result = copula.cdf(0.5, 0.6)
+    assert isinstance(result, float)
+    assert np.isclose(result, min(0.5**0.7 * 0.6, 0.5 * 0.6**0.3))
 
 
 def test_mo_cdf_independence_case():
@@ -158,19 +152,16 @@ def test_mo_conditional_distributions():
     """Test conditional distribution functions"""
     copula = MarshallOlkin(0.3, 0.7)
 
-    # Test cond_distr_1
-    with patch.object(CD1Wrapper, "__call__") as mock_cd1:
-        mock_cd1.return_value = 0.55  # Mock return value
-        result = copula.cond_distr_1(0.5, 0.6)
-        mock_cd1.assert_called_once_with(0.5, 0.6)
-        assert result == 0.55
-
-    # Test cond_distr_2
-    with patch.object(CD2Wrapper, "__call__") as mock_cd2:
-        mock_cd2.return_value = 0.65  # Mock return value
-        result = copula.cond_distr_2(0.5, 0.6)
-        mock_cd2.assert_called_once_with(0.5, 0.6)
-        assert result == 0.65
+    u, v = 0.5, 0.6
+    # at (0.5, 0.6): u^(a1) = 0.5^0.3 < v^(a2) = 0.6^0.7, i.e. C = u^(1 - a1) v
+    assert 0.5**0.3 < 0.6**0.7 or 0.5**0.3 > 0.6**0.7
+    c1 = min(u**0.7 * v, u * v**0.3)
+    assert np.isclose(copula.cdf(u, v), c1)
+    h = 1e-6
+    fd1 = (copula.cdf(u + h, v) - copula.cdf(u - h, v)) / (2 * h)
+    fd2 = (copula.cdf(u, v + h) - copula.cdf(u, v - h)) / (2 * h)
+    assert np.isclose(copula.cond_distr_1(u, v), fd1, atol=1e-6)
+    assert np.isclose(copula.cond_distr_2(u, v), fd2, atol=1e-6)
 
 
 def test_mo_pdf_unavailable():

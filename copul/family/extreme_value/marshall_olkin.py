@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import sympy
 
 from copul.exceptions import PropertyUnavailableException
@@ -26,6 +27,10 @@ class MarshallOlkin(BivExtremeValueCopula):
     @property
     def is_absolutely_continuous(self):
         return (self._alpha_1 == 0) | (self._alpha_2 == 0)
+
+    def _numeric_callables(self):
+        """Exact shock-model sampler (the numerics come from the Pickands function)."""
+        return {"rvs": shock_model_sampler(float(self.alpha_1), float(self.alpha_2))}
 
     @property
     def alpha_1(self):
@@ -261,3 +266,28 @@ if __name__ == "__main__":
     # sample = cop.rvs(100000)
     # cop.scatter_plot()
     print("Done!")
+
+
+def shock_model_sampler(a1: float, a2: float):
+    r"""Exact sampler of :math:`C(u,v)=\min(u^{1-a_1}v,\,uv^{1-a_2})`.
+
+    Marshall--Olkin shock model (Nelsen 2006, Sec. 3.1.1): with independent
+    exponential shocks of rates :math:`\lambda_1=1/a_1-1`,
+    :math:`\lambda_2=1/a_2-1`, :math:`\lambda_{12}=1`,
+    :math:`Z_i=\min(E_i,E_{12})` and :math:`U=e^{-(\lambda_1+1)Z_1}`,
+    :math:`V=e^{-(\lambda_2+1)Z_2}` has copula :math:`C`.
+    """
+
+    def rvs(n, rng):
+        if a1 <= 0 or a2 <= 0:  # independence
+            return rng.random((n, 2))
+        lam1, lam2 = 1.0 / a1 - 1.0, 1.0 / a2 - 1.0
+        e12 = rng.standard_exponential(n)
+        e1 = rng.standard_exponential(n)
+        e2 = rng.standard_exponential(n)
+        with np.errstate(divide="ignore"):
+            z1 = np.minimum(np.where(lam1 > 0, e1 / lam1, np.inf), e12)
+            z2 = np.minimum(np.where(lam2 > 0, e2 / lam2, np.inf), e12)
+        return np.column_stack([np.exp(-(lam1 + 1.0) * z1), np.exp(-(lam2 + 1.0) * z2)])
+
+    return rvs

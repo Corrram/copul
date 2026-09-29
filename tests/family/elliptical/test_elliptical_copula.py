@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import pytest
 import sympy as sp
 
@@ -19,8 +17,8 @@ class ConcreteEllipticalCopula(EllipticalCopula):
     @property
     def cdf(self):
         """Implement the abstract CDF method for testing."""
-        # A simple placeholder CDF
-        cdf = (self.u + self.v) * (1 + self.rho * (1 - self.u) * (1 - self.v)) / 2
+        # A simple placeholder CDF (a valid copula: FGM with parameter rho)
+        cdf = self.u * self.v * (1 + self.rho * (1 - self.u) * (1 - self.v))
         return SymPyFuncWrapper(cdf)
 
 
@@ -108,17 +106,12 @@ def test_cdf_abstract_method():
 
 
 def test_cdf_evaluation(elliptical_copula_with_rho):
-    """Test evaluation of the CDF."""
-    # Mock the wrapper __call__ method to isolate the test
-    with patch.object(SymPyFuncWrapper, "__call__") as mock_call:
-        mock_call.return_value = 0.6  # Arbitrary return value
-
-        # Evaluate the CDF at a specific point
-        result = elliptical_copula_with_rho.cdf(0.3, 0.7)
-
-        # Check that the wrapper was called with correct arguments
-        mock_call.assert_called_once_with(0.3, 0.7)
-        assert result == 0.6
+    """Test numerical evaluation of the CDF (returns a float)."""
+    result = elliptical_copula_with_rho.cdf(0.3, 0.7)
+    assert isinstance(result, float)
+    assert result == pytest.approx(0.3 * 0.7 * (1 + 0.5 * 0.7 * 0.3))
+    # symbolic partial evaluation still returns a wrapper
+    assert isinstance(elliptical_copula_with_rho.cdf(v=0.7), SymPyFuncWrapper)
 
 
 def test_edge_cases():

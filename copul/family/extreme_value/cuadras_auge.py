@@ -56,6 +56,14 @@ class CuadrasAuge(BivExtremeValueCopula):
 
     delta = sp.symbols("delta", nonnegative=True)
     params = [delta]
+
+    def _numeric_callables(self):
+        """Exact shock-model sampler (Cuadras-Augé = Marshall-Olkin with a1 = a2)."""
+        from copul.family.extreme_value.marshall_olkin import shock_model_sampler
+
+        d = float(self.delta)
+        return {"rvs": shock_model_sampler(d, d)}
+
     intervals = {"delta": sp.Interval(0, 1, left_open=False, right_open=False)}
 
     def __call__(self, *args, **kwargs):

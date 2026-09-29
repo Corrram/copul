@@ -212,7 +212,7 @@ def test_nelsen13_lower_orthant_ordered():
     nelsen2 = Nelsen13(1.5)
 
     def func(u, v):
-        return (nelsen.cdf(u, v) - nelsen2.cdf(u, v)).evalf()
+        return nelsen.cdf(u, v) - nelsen2.cdf(u, v)
 
     linspace = np.linspace(0.01, 0.99, 10)
     grid2d = np.meshgrid(linspace, linspace)

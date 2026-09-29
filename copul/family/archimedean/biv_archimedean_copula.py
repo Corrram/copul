@@ -103,9 +103,8 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         if type(self).__name__ == "IndependenceCopula":
             return u * v
 
-        # 2. Get the numeric functions (ideally, these could also be cached)
-        generator_func = self.generator.numpy_func()
-        inv_generator_func = self.inv_generator.numpy_func()
+        # 2. Get the numeric functions (lambdified once per parameter value)
+        generator_func, inv_generator_func = self._generator_numpy_funcs()
 
         # 3. Create the output array. `np.broadcast` creates the correct shape
         #    to handle all input combinations (scalar-scalar, array-scalar, etc.)
@@ -131,6 +130,18 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
 
         result[compute_mask] = final_vals
         return result
+
+    def _generator_numpy_funcs(self):
+        """Lambdified generator and inverse generator, cached per parameter value."""
+        from copul.measures.backend import _param_key
+
+        key = _param_key(self)
+        hit = self.__dict__.get("_copul_generator_numpy")
+        if hit is not None and hit[0] == key:
+            return hit[1]
+        funcs = (self.generator.numpy_func(), self.inv_generator.numpy_func())
+        self.__dict__["_copul_generator_numpy"] = (key, funcs)
+        return funcs
 
     @cached_property
     def pdf(self):

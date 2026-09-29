@@ -49,8 +49,8 @@ class PiOverSigmaMinusPi(BivArchimedeanCopula):
         """
         First conditional distribution: ∂C(u,v)/∂u
         """
-        # Formula: v / (u + v - u*v)²
-        cond_distr = self.v / (self.u + self.v - self.u * self.v) ** 2
+        # Formula: v² / (u + v - u*v)²
+        cond_distr = self.v**2 / (self.u + self.v - self.u * self.v) ** 2
         wrapped_cd1 = CD1Wrapper(cond_distr)
         return wrapped_cd1(u, v)
 
@@ -58,20 +58,20 @@ class PiOverSigmaMinusPi(BivArchimedeanCopula):
         """
         Second conditional distribution: ∂C(u,v)/∂v
         """
-        # Formula: u / (u + v - u*v)²
-        cond_distr = self.u / (self.u + self.v - self.u * self.v) ** 2
+        # Formula: u² / (u + v - u*v)²
+        cond_distr = self.u**2 / (self.u + self.v - self.u * self.v) ** 2
         return CD2Wrapper(cond_distr)(u, v)
 
     @property
     def pdf(self):
         """
         Probability density function of the copula
-        c(u,v) = 2(u+v-uv) / (u+v-uv)³
+        c(u,v) = 2uv / (u+v-uv)³  (the Clayton density with theta = 1)
         """
         u = self.u
         v = self.v
         denominator = (u + v - u * v) ** 3
-        numerator = 2 * (u + v - u * v)
+        numerator = 2 * u * v
         return SymPyFuncWrapper(numerator / denominator)
 
     @property

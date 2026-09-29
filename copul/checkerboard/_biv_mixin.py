@@ -17,6 +17,10 @@ from copul.checkerboard import _biv_engine as eng
 class BivCheckerboardMixin:
     """Shared exact numerics for BivCheckPi / BivCheckMin / BivCheckW / Mixed."""
 
+    #: evaluation methods are exact and vectorized already (the numerical API
+    #: of :mod:`copul.family.core.numeric_api` passes calls through)
+    _numeric_native = True
+
     # ------------------------------------------------------------------
     # kernel description
     # ------------------------------------------------------------------

@@ -10,6 +10,7 @@ import sympy as sp
 
 from copul._lazy import mcolors, plt
 from copul.family.copula_graphs import CopulaGraphs
+from copul.family.core import numeric_api as _numeric_api
 from copul.family.rank_correlation_plotter import RankCorrelationPlotter
 from copul.family.tp2_verifier import TP2Verifier
 from copul.measures.engine import (
@@ -83,6 +84,7 @@ class BivCoreCopula:
         """
         super().__init_subclass__(**kwargs)
         install_dispatchers(cls, is_base=False)
+        _numeric_api.install_numeric_api(cls)
 
     def __init__(self):
         """
@@ -252,6 +254,38 @@ class BivCoreCopula:
         """
         result = CD2Wrapper(sp.diff(self.cdf().func, self.v))
         return result(u, v)
+
+    # ------------------------------------------------------------------
+    # numerical evaluation API (see copul.family.core.numeric_api)
+    # ------------------------------------------------------------------
+    def logpdf(self, *args, **kwargs):
+        r"""Log-density :math:`\log c(u,v)` (vectorized).
+
+        Uses a closed-form log-density where the family provides one (e.g.
+        Gaussian, Student-t, Clayton, Frank, Gumbel--Hougaard), otherwise
+        ``log(pdf)``.  Accepts ``(u, v)`` scalars or arrays, an ``(N, 2)``
+        array or ``u=, v=`` keywords.
+        """
+        return _numeric_api.evaluate_logpdf(self, args, kwargs)
+
+    def survival_function(self, *args, **kwargs):
+        r"""Joint survival function :math:`P(U>u, V>v) = 1-u-v+C(u,v)` (vectorized)."""
+        return _numeric_api.evaluate_survival(self, args, kwargs)
+
+    def cond_distr_1_inv(self, *args, **kwargs):
+        r"""Quantile of :math:`V \mid U=u` at level ``w``.
+
+        Returns :math:`\inf\{v : \partial_1 C(u,v) \ge w\}`; call as
+        ``cond_distr_1_inv(u, w)`` (scalars, arrays or an ``(N, 2)`` array of
+        ``(u, w)`` rows).  Closed forms are used where available, otherwise a
+        vectorized safeguarded Newton/bisection iteration on the monotone
+        conditional distribution function.
+        """
+        return _numeric_api.evaluate_inverse(self, 1, args, kwargs)
+
+    def cond_distr_2_inv(self, *args, **kwargs):
+        r"""Quantile of :math:`U \mid V=v` at level ``w``; call as ``cond_distr_2_inv(v, w)``."""
+        return _numeric_api.evaluate_inverse(self, 2, args, kwargs)
 
     def chatterjees_xi(self, *args, condition_on_y=False, **kwargs):
         r"""
@@ -1899,3 +1933,4 @@ class BivCoreCopula:
 
 # wrap the base-class measure methods (the generic symbolic implementations)
 install_dispatchers(BivCoreCopula, is_base=True)
+_numeric_api.install_numeric_api(BivCoreCopula)

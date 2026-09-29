@@ -71,20 +71,6 @@ class StudentT(EllipticalCopula):
     def is_absolutely_continuous(self) -> bool:
         return True
 
-    def rvs(self, n=1, **kwargs):
-        """
-        Generate random samples from the Student's t copula.
-
-        Args:
-            n (int): Number of samples to generate
-
-        Returns:
-            numpy.ndarray: Array of shape (n, 2) containing the samples
-        """
-        from statsmodels.distributions.copula.elliptical import StudentTCopula
-
-        return StudentTCopula(self.rho, df=self.nu).rvs(n)
-
     def _calculate_student_t_cdf(self, u, v, rho_val, nu_val):
         """Calculate Student's t CDF at point (u, v)."""
         if u <= 0 or v <= 0:
@@ -166,6 +152,11 @@ class StudentT(EllipticalCopula):
         """
         if v in [0, 1]:
             return CD1Wrapper(sympy.S(v))
+        if u is None or v is None:
+            raise NotImplementedError(
+                "The Student-t copula has no symbolic conditional distribution; "
+                "evaluate it numerically, e.g. cond_distr_1(u, v) with arrays."
+            )
         cd1 = self._conditional_distribution(u, v)
         return CD1Wrapper(cd1)
 
@@ -182,6 +173,11 @@ class StudentT(EllipticalCopula):
         """
         if u in [0, 1]:
             return CD2Wrapper(sympy.S(u))
+        if u is None or v is None:
+            raise NotImplementedError(
+                "The Student-t copula has no symbolic conditional distribution; "
+                "evaluate it numerically, e.g. cond_distr_2(u, v) with arrays."
+            )
         cd2 = self._conditional_distribution(v, u)
         return CD2Wrapper(cd2)
 
@@ -200,7 +196,7 @@ class StudentT(EllipticalCopula):
         )
 
     def _numeric_callables(self):
-        r"""Vectorized ingredients for the measures engine.
+        r"""Vectorized ingredients for the numerical API and the measures engine.
 
         With :math:`x=t_\nu^{-1}(u)`, :math:`y=t_\nu^{-1}(v)`,
 
@@ -209,22 +205,35 @@ class StudentT(EllipticalCopula):
            \partial_1 C(u,v) = t_{\nu+1}\!\Bigl(\frac{y-\rho x}
                {\sqrt{(\nu+x^2)(1-\rho^2)/(\nu+1)}}\Bigr),
 
-        the density is the ratio of the bivariate and univariate t
-        densities, and :math:`C(u,v)=\int_0^u\partial_1C(s,v)\,ds` is evaluated
-        by 48-point Gauss--Legendre quadrature after the substitution
-        :math:`s=u\,w^4` (which removes the algebraic endpoint behaviour).
-        The engine prefers the h-function formulas for rho and nu.
+        whose inverse in :math:`v` is explicit; the density is the ratio of
+        the bivariate and univariate t densities.  For integer :math:`\nu`
+        the CDF is the bivariate t distribution function of Dunnett & Sobel
+        (1954) in the form of Genz (2004, algorithm ``BVTL``); otherwise
+        :math:`C(u,v)=\int_0^u\partial_1C(s,v)\,ds` is evaluated by 48-point
+        Gauss--Legendre quadrature after the substitution :math:`s=u\,w^4`.
+        Samples are drawn as :math:`t_\nu(Z_i/\sqrt{W/\nu})` with correlated
+        normals :math:`Z` and :math:`W\sim\chi^2_\nu`.
+
+        References
+        ----------
+        Dunnett, C. W. & Sobel, M. (1954). A bivariate generalization of
+        Student's t-distribution with tables for certain special cases.
+        *Biometrika* 41, 153--169.
+        Genz, A. (2004). Numerical computation of rectangular bivariate and
+        trivariate normal and t probabilities. *Statistics and Computing* 14,
+        251--260.
         """
         from scipy.special import gammaln, stdtr, stdtrit
 
         r = float(self.rho)
         nu = float(self.nu)
         s = np.sqrt(1.0 - r * r)
+        scale = np.sqrt(nu + 1.0)
 
         def h(a, b):
             x = stdtrit(nu, a)
             y = stdtrit(nu, b)
-            return stdtr(nu + 1.0, (y - r * x) / (s * np.sqrt((nu + x * x) / (nu + 1.0))))
+            return stdtr(nu + 1.0, scale * (y - r * x) / (s * np.sqrt(nu + x * x)))
 
         def h1(u, v):
             return h(u, v)
@@ -234,38 +243,72 @@ class StudentT(EllipticalCopula):
 
         logk = gammaln((nu + 2) / 2) + gammaln(nu / 2) - 2 * gammaln((nu + 1) / 2)
 
-        def pdf(u, v):
+        def logpdf(u, v):
             x = stdtrit(nu, u)
             y = stdtrit(nu, v)
             q = (x * x - 2 * r * x * y + y * y) / (nu * (1 - r * r))
-            lg = (
+            return (
                 logk
                 - np.log(s)
                 - (nu + 2) / 2 * np.log1p(q)
                 + (nu + 1) / 2 * (np.log1p(x * x / nu) + np.log1p(y * y / nu))
             )
-            return np.exp(lg)
 
-        gx, gw = np.polynomial.legendre.leggauss(48)
-        gx = 0.5 * (gx + 1.0)
-        gw = 0.5 * gw
-        w4 = gx**4
-        jac = 4 * gx**3 * gw
+        def pdf(u, v):
+            return np.exp(logpdf(u, v))
 
-        def cdf(u, v):
-            u, v = np.broadcast_arrays(np.asarray(u, float), np.asarray(v, float))
-            shape = u.shape
-            uf, vf = u.ravel(), v.ravel()
-            out = np.empty(uf.size)
-            step = 20_000
-            for i in range(0, uf.size, step):
-                uu = uf[i : i + step, None]
-                vv = vf[i : i + step, None]
-                vals = h(uu * w4[None, :], np.broadcast_to(vv, (vv.shape[0], w4.size)))
-                out[i : i + step] = uu[:, 0] * (vals @ jac)
-            return out.reshape(shape)
+        def h1_inv(u, w):
+            x = stdtrit(nu, u)
+            q = stdtrit(nu + 1.0, w)
+            return stdtr(nu, r * x + q * s * np.sqrt(nu + x * x) / scale)
 
-        return {"cdf": cdf, "h1": h1, "h2": h2, "pdf": pdf, "prefer_h": True}
+        def h2_inv(v, w):
+            return h1_inv(v, w)
+
+        def rvs(n, rng):
+            z1 = rng.standard_normal(n)
+            z2 = r * z1 + s * rng.standard_normal(n)
+            k = np.sqrt(nu / rng.chisquare(nu, n))
+            return np.column_stack([stdtr(nu, z1 * k), stdtr(nu, z2 * k)])
+
+        if nu == round(nu) and 1 <= nu <= 1000:
+            nu_int = round(nu)
+
+            def cdf(u, v):
+                return _bvt_lower(nu_int, stdtrit(nu, u), stdtrit(nu, v), r)
+
+        else:
+            gx, gw = np.polynomial.legendre.leggauss(48)
+            gx = 0.5 * (gx + 1.0)
+            gw = 0.5 * gw
+            w4 = gx**4
+            jac = 4 * gx**3 * gw
+
+            def cdf(u, v):
+                u, v = np.broadcast_arrays(np.asarray(u, float), np.asarray(v, float))
+                shape = u.shape
+                uf, vf = u.ravel(), v.ravel()
+                out = np.empty(uf.size)
+                step = 20_000
+                for i in range(0, uf.size, step):
+                    uu = uf[i : i + step, None]
+                    y = stdtrit(nu, vf[i : i + step])[:, None]
+                    x = stdtrit(nu, uu * w4[None, :])
+                    vals = stdtr(nu + 1.0, scale * (y - r * x) / (s * np.sqrt(nu + x * x)))
+                    out[i : i + step] = uu[:, 0] * (vals @ jac)
+                return out.reshape(shape)
+
+        return {
+            "cdf": cdf,
+            "h1": h1,
+            "h2": h2,
+            "pdf": pdf,
+            "logpdf": logpdf,
+            "h1_inv": h1_inv,
+            "h2_inv": h2_inv,
+            "rvs": rvs,
+            "prefer_h": True,
+        }
 
     # ------------------------------------------------------------------
     # Analytical dependence measures
@@ -432,3 +475,61 @@ class StudentT(EllipticalCopula):
         if out.ndim == 0:
             return float(out)
         return out
+
+
+def _bvt_lower(nu: int, dh, dk, r: float):
+    r"""Bivariate Student-t probability :math:`P(X<h, Y<k)` for integer ``nu``.
+
+    Vectorized port of ``BVTL`` from Genz (2004), which implements the
+    closed form of Dunnett & Sobel (1954) for correlation ``r`` and ``nu``
+    degrees of freedom.
+    """
+    dh, dk = np.broadcast_arrays(np.asarray(dh, float), np.asarray(dk, float))
+    tpi = 2.0 * np.pi
+    snu = np.sqrt(nu)
+    ors = 1.0 - r * r
+    hrk = dh - r * dk
+    krh = dk - r * dh
+    with np.errstate(all="ignore"):
+        xnhk = hrk**2 / (hrk**2 + ors * (nu + dk**2))
+        xnkh = krh**2 / (krh**2 + ors * (nu + dh**2))
+    hs = np.where(hrk >= 0, 1.0, -1.0)
+    ks = np.where(krh >= 0, 1.0, -1.0)
+    if nu % 2 == 0:
+        bvt = np.full(dh.shape, np.arctan2(np.sqrt(ors), -r) / tpi)
+        gmph = dh / np.sqrt(16 * (nu + dh**2))
+        gmpk = dk / np.sqrt(16 * (nu + dk**2))
+        btnckh = 2 * np.arctan2(np.sqrt(xnkh), np.sqrt(1 - xnkh)) / np.pi
+        btpdkh = 2 * np.sqrt(xnkh * (1 - xnkh)) / np.pi
+        btnchk = 2 * np.arctan2(np.sqrt(xnhk), np.sqrt(1 - xnhk)) / np.pi
+        btpdhk = 2 * np.sqrt(xnhk * (1 - xnhk)) / np.pi
+        for j in range(1, nu // 2 + 1):
+            bvt = bvt + gmph * (1 + ks * btnckh) + gmpk * (1 + hs * btnchk)
+            btnckh = btnckh + btpdkh
+            btpdkh = 2 * j * btpdkh * (1 - xnkh) / (2 * j + 1)
+            btnchk = btnchk + btpdhk
+            btpdhk = 2 * j * btpdhk * (1 - xnhk) / (2 * j + 1)
+            gmph = gmph * (2 * j - 1) / (2 * j * (1 + dh**2 / nu))
+            gmpk = gmpk * (2 * j - 1) / (2 * j * (1 + dk**2 / nu))
+    else:
+        qhrk = np.sqrt(dh**2 + dk**2 - 2 * r * dh * dk + nu * ors)
+        hkrn = dh * dk + r * nu
+        hkn = dh * dk - nu
+        hpk = dh + dk
+        bvt = np.arctan2(-snu * (hkn * qhrk + hpk * hkrn), hkn * hkrn - nu * hpk * qhrk) / tpi
+        bvt = np.where(bvt < -1e-15, bvt + 1.0, bvt)
+        gmph = dh / (tpi * snu * (1 + dh**2 / nu))
+        gmpk = dk / (tpi * snu * (1 + dk**2 / nu))
+        btnckh = np.sqrt(xnkh)
+        btpdkh = btnckh
+        btnchk = np.sqrt(xnhk)
+        btpdhk = btnchk
+        for j in range(1, (nu - 1) // 2 + 1):
+            bvt = bvt + gmph * (1 + ks * btnckh) + gmpk * (1 + hs * btnchk)
+            btpdkh = (2 * j - 1) * btpdkh * (1 - xnkh) / (2 * j)
+            btnckh = btnckh + btpdkh
+            btpdhk = (2 * j - 1) * btpdhk * (1 - xnhk) / (2 * j)
+            btnchk = btnchk + btpdhk
+            gmph = gmph * 2 * j / ((2 * j + 1) * (1 + dh**2 / nu))
+            gmpk = gmpk * 2 * j / ((2 * j + 1) * (1 + dk**2 / nu))
+    return bvt

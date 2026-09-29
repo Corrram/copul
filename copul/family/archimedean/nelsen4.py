@@ -93,51 +93,63 @@ class GumbelHougaard(BivArchimedeanCopula):
         self._set_params(args, kwargs)
         return abs(self.spearmans_rho())
 
-    def rvs(
-        self, n: int = 1, random_state: int | None = None, approximate: bool = False
-    ) -> np.ndarray:
+    def _numeric_callables(self):
+        r"""Closed forms for the numerical API.
+
+        With :math:`x=-\log u`, :math:`y=-\log v`,
+        :math:`A=(x^\theta+y^\theta)^{1/\theta}` (log-sum-exp):
+        :math:`C=e^{-A}`,
+        :math:`\partial_1C=C\,A^{1-\theta}x^{\theta-1}/u`,
+        :math:`\log c=-A+x+y+(\theta-1)\log(xy)+(1-2\theta)\log A
+        +\log(A+\theta-1)`; exact sampling with a positive
+        :math:`1/\theta`-stable frailty (Marshall--Olkin, Kanter's method).
         """
-        Fast vectorized Marshall–Olkin sampler for Gumbel–Hougaard.
+        from copul.family.archimedean import _frailty
 
-        Steps:
-          1) α = 1/θ
-          2) Sample V ~ positive α-stable via Kanter's method
-          3) Sample E1,E2 ~ Exp(1) i.i.d.
-          4) Return (U, V) with U = exp(-(E1/V)^α), V = exp(-(E2/V)^α)
+        th = float(self.theta)
+        alpha = 1.0 / th
 
-        Independence (θ≈1) is handled by returning U(0,1)^2 directly.
-        """
-        rng = np.random.default_rng(random_state)
-        theta = float(self.theta)
+        def parts(u, v):
+            x, y = -np.log(u), -np.log(v)
+            lx, ly = np.log(x), np.log(y)
+            log_a = np.logaddexp(th * lx, th * ly) / th
+            return x, y, lx, ly, log_a
 
-        # Independence shortcut (θ = 1)
-        if np.isclose(theta, 1.0):
-            return rng.random((n, 2))
+        def cdf(u, v):
+            *_, log_a = parts(u, v)
+            return np.exp(-np.exp(log_a))
 
-        # α-stable index (0 < α <= 1)
-        alpha = 1.0 / theta
+        def _h(a, b):
+            x, _, lx, _, log_a = parts(a, b)
+            return np.exp(-np.exp(log_a) + (1.0 - th) * log_a + (th - 1.0) * lx + x)
 
-        # --- Kanter's sampler for positive α-stable -----------------------
-        # U ~ Uniform(0, π), W ~ Exp(1)
-        U = rng.uniform(0.0, np.pi, size=n)
-        W = rng.exponential(scale=1.0, size=n)
+        def logpdf(u, v):
+            x, y, lx, ly, log_a = parts(u, v)
+            big_a = np.exp(log_a)
+            return (
+                -big_a
+                + x
+                + y
+                + (th - 1.0) * (lx + ly)
+                + (1.0 - 2.0 * th) * log_a
+                + np.log(big_a + th - 1.0)
+            )
 
-        # Kanter (1975) representation:
-        # S = [ sin(αU) / (sin U)^(1/α) ] * [ sin((1-α)U) / W ]^((1-α)/α)
-        # S > 0 has Laplace transform E[e^{-s S}] = exp(-s^α)
-        sinU = np.sin(U)
-        # guard against rare 0s
-        sinU[sinU == 0.0] = np.finfo(float).tiny
+        def pdf(u, v):
+            return np.exp(logpdf(u, v))
 
-        part1 = np.sin(alpha * U) / (sinU ** (1.0 / alpha))
-        part2 = (np.sin((1.0 - alpha) * U) / W) ** ((1.0 - alpha) / alpha)
-        S = part1 * part2  # V in the frailty construction
+        def rvs(n, rng):
+            frailty = _frailty.positive_stable(n, rng, alpha)
+            return _frailty.marshall_olkin(lambda t: np.exp(-(t**alpha)), frailty, rng)
 
-        # --- Marshall–Olkin transform ------------------------------------
-        E = rng.exponential(scale=1.0, size=(n, 2))
-        # U_i = ψ(E_i / S) with ψ(s)=exp(-s^α)
-        out = np.exp(-((E / S[:, None]) ** alpha))
-        return out  # shape (n, 2)
+        return {
+            "cdf": cdf,
+            "h1": _h,
+            "h2": lambda u, v: _h(v, u),
+            "pdf": pdf,
+            "logpdf": logpdf,
+            "rvs": rvs,
+        }
 
 
 Nelsen4 = GumbelHougaard

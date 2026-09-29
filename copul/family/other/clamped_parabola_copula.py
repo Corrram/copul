@@ -96,11 +96,94 @@ class XiNuBoundaryCopula(BivCopula):
                 f"Residuals: F(-1/b)={rl:.3g}, F(1)={rh:.3g}"
             ) from e
 
+    @staticmethod
+    def _marginal_integral_vec(q, b):
+        """Vectorized ``int_0^1 h_v(t) dt`` as a function of ``q`` (decreasing in q)."""
+        s_v = np.where(q < 0, 1.0, 1.0 - np.sqrt(np.maximum(q, 0.0)))
+        a_v = np.maximum(0.0, 1.0 - np.sqrt(np.maximum(q + 1.0 / b, 0.0)))
+        val_at_s = -((1.0 - s_v) ** 3) / 3.0 - q * s_v
+        val_at_a = -((1.0 - a_v) ** 3) / 3.0 - q * a_v
+        return a_v + b * (val_at_s - val_at_a)
+
     def _get_q_v_vec(self, v_arr, b_val):
-        v_arr = np.asarray(v_arr)
-        shp = v_arr.shape
-        q_flat = np.array([self._get_q_v(v, b_val) for v in v_arr.ravel()])
-        return q_flat.reshape(shp)
+        """Vectorized q(v) by bisection on [-1/b, 1] (the integral decreases in q)."""
+        v_arr = np.asarray(v_arr, dtype=float)
+        b_val = float(b_val)
+        lo = np.full(v_arr.shape, -1.0 / b_val)
+        hi = np.ones(v_arr.shape)
+        for _ in range(62):
+            mid = 0.5 * (lo + hi)
+            too_large = self._marginal_integral_vec(mid, b_val) > v_arr
+            lo = np.where(too_large, mid, lo)
+            hi = np.where(too_large, hi, mid)
+        q = 0.5 * (lo + hi)
+        return np.where(v_arr <= 0.0, 1.0, np.where(v_arr >= 1.0, -1.0 / b_val, q))
+
+    def _numeric_callables(self):
+        r"""Vectorized ingredients for the numerical API.
+
+        For :math:`b>0`: :math:`\partial_1C(u,v)=h_v(u)`, the density is constant
+        in :math:`u` on :math:`(a(v),s(v))`, so :math:`U\mid V=v` is uniform on
+        :math:`[a(v),s(v)]` (``cond_distr_2`` and its inverse are explicit and
+        samples are drawn as :math:`V\sim U(0,1)`, :math:`U\mid V`).  Negative
+        :math:`b` is the reflection :math:`C(u,v)=u-C_{|b|}(u,1-v)`.
+        """
+        b = float(self.b)
+        b_abs = abs(b)
+
+        def pts(v):
+            q = self._get_q_v_vec(v, b_abs)
+            a, s = self._switch_points(q, b_abs)
+            return q, a, s
+
+        def h1_base(u, v):
+            q = self._get_q_v_vec(v, b_abs)
+            return np.clip(b_abs * ((1.0 - u) ** 2 - q), 0.0, 1.0)
+
+        def h2_base(u, v):
+            _, a, s = pts(v)
+            return np.clip((u - a) / np.maximum(s - a, 1e-300), 0.0, 1.0)
+
+        def h2_inv_base(v, w):
+            _, a, s = pts(v)
+            return a + (s - a) * w
+
+        def bc(u, v):
+            return np.broadcast_arrays(np.asarray(u, float), np.asarray(v, float))
+
+        if b >= 0:
+            out = {
+                "cdf": lambda u, v: self._base_cdf_vectorized(*bc(u, v)),
+                "h1": lambda u, v: h1_base(*bc(u, v)),
+                "h2": lambda u, v: h2_base(*bc(u, v)),
+                "pdf": lambda u, v: self._base_pdf_vectorized(*bc(u, v)),
+                "h2_inv": lambda v, w: h2_inv_base(*bc(v, w)),
+            }
+
+            def rvs(n, rng):
+                v = rng.random(n)
+                return np.column_stack([h2_inv_base(v, rng.random(n)), v])
+
+        else:
+
+            def cdf(u, v):
+                u, v = bc(u, v)
+                return u - self._base_cdf_vectorized(u, 1.0 - v)
+
+            out = {
+                "cdf": cdf,
+                "h1": lambda u, v: 1.0 - h1_base(*bc(u, 1.0 - np.asarray(v, float))),
+                "h2": lambda u, v: h2_base(*bc(u, 1.0 - np.asarray(v, float))),
+                "pdf": lambda u, v: self._base_pdf_vectorized(*bc(u, 1.0 - np.asarray(v, float))),
+                "h2_inv": lambda v, w: h2_inv_base(*bc(1.0 - np.asarray(v, float), w)),
+            }
+
+            def rvs(n, rng):
+                v = rng.random(n)
+                return np.column_stack([h2_inv_base(v, rng.random(n)), 1.0 - v])
+
+        out["rvs"] = rvs
+        return out
 
     # ---------------------------
     # Vectorized CDF / PDF

@@ -313,7 +313,7 @@ class IndependenceCopula(Copula, CopulaPlottingMixin):
         """
         return 0
 
-    def rvs(self, n=1, random_state=None):
+    def rvs(self, n=1, random_state=None, **kwargs):
         """
         Generate random variates from the independence copula.
 
@@ -323,17 +323,72 @@ class IndependenceCopula(Copula, CopulaPlottingMixin):
         ----------
         n : int, optional
             Number of samples to generate (default is 1).
-        random_state : int or None, optional
-            Seed for the random number generator.
+        random_state : int, numpy Generator or None, optional
+            Seed or generator; ``None`` uses NumPy's global generator without
+            reseeding it (the global seed is never set).
 
         Returns
         -------
         numpy.ndarray
             Array of shape (n, dim) containing independent uniform samples.
         """
-        # Set random seed if provided
-        if random_state is not None:
-            np.random.seed(random_state)
+        from copul.checkerboard._biv_engine import resolve_rng
 
-        # Generate independent uniform random variables
-        return np.random.uniform(0, 1, size=(n, self.dim))
+        if kwargs.get("size") is not None:
+            n = kwargs["size"]
+        rng = resolve_rng(random_state)
+        return rng.random((int(n), self.dim))
+
+    # ------------------------------------------------------------------
+    # numerical API (bivariate case), see copul.family.core.numeric_api
+    # ------------------------------------------------------------------
+    def _numeric_callables(self):
+        if self.dim != 2:
+            return {}
+
+        def ones(u, v):
+            return np.ones(np.broadcast(u, v).shape)
+
+        return {
+            "cdf": lambda u, v: u * v,
+            "h1": lambda u, v: v * ones(u, v),
+            "h2": lambda u, v: u * ones(u, v),
+            "pdf": ones,
+            "logpdf": lambda u, v: 0.0 * ones(u, v),
+            "h1_inv": lambda u, w: w * ones(u, w),
+            "h2_inv": lambda v, w: w * ones(v, w),
+            "rvs": lambda n, rng: rng.random((n, 2)),
+        }
+
+    def logpdf(self, *args, **kwargs):
+        """Log-density (bivariate case), see :meth:`BivCoreCopula.logpdf`."""
+        from copul.family.core import numeric_api
+
+        return numeric_api.evaluate_logpdf(self, args, kwargs)
+
+    def survival_function(self, *args, **kwargs):
+        """Joint survival function (bivariate case)."""
+        from copul.family.core import numeric_api
+
+        return numeric_api.evaluate_survival(self, args, kwargs)
+
+    def cond_distr_1_inv(self, *args, **kwargs):
+        """Quantile of ``V | U = u`` at level ``w`` (bivariate case): ``w``."""
+        from copul.family.core import numeric_api
+
+        return numeric_api.evaluate_inverse(self, 1, args, kwargs)
+
+    def cond_distr_2_inv(self, *args, **kwargs):
+        """Quantile of ``U | V = v`` at level ``w`` (bivariate case): ``w``."""
+        from copul.family.core import numeric_api
+
+        return numeric_api.evaluate_inverse(self, 2, args, kwargs)
+
+
+def _install():
+    from copul.family.core.numeric_api import install_numeric_api
+
+    install_numeric_api(IndependenceCopula)
+
+
+_install()

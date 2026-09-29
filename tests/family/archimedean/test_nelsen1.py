@@ -4,7 +4,9 @@ import pytest
 from copul.family.archimedean import Clayton, Nelsen1
 
 
-@pytest.mark.parametrize("theta, expected", [(2, True), (0, True), (-0.5, False)])
+# for -1 < theta < 0 the generator has infinite slope at 0, so the zero set
+# carries no mass (Nelsen 2006, Thm. 4.3.3): the copula is absolutely continuous
+@pytest.mark.parametrize("theta, expected", [(2, True), (0, True), (-0.5, True)])
 def test_is_absolutely_continuous(theta, expected):
     copula = Nelsen1(theta)
     result = copula.is_absolutely_continuous

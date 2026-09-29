@@ -127,6 +127,8 @@ class JoeEV(BivExtremeValueCopula):
             u = kwargs.pop("u", None)
         if v is None:
             v = kwargs.pop("v", None)
+        if u is None and v is None and not kwargs:
+            return self._pickands_cdf_wrapper()  # symbolic C(u, v)
         if u is None or v is None:
             raise TypeError("cdf() requires keyword arguments u and v")
         scalar_in = not hasattr(u, "__len__")

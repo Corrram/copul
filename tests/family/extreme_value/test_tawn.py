@@ -1,5 +1,4 @@
-from unittest.mock import patch
-
+import numpy as np
 import pytest
 import sympy as sp
 
@@ -7,7 +6,6 @@ from copul.family.extreme_value import GumbelHougaardEV as GumbelHougaard
 from copul.family.extreme_value import Tawn
 from copul.family.extreme_value.marshall_olkin import MarshallOlkin
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
-from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 @pytest.fixture
@@ -154,16 +152,11 @@ def test_tawn_cdf():
     """Test CDF computation"""
     copula = Tawn(0.3, 0.7, 1.5)
 
-    # Mock the CDFWrapper to avoid actual computation
-    with patch.object(CDFWrapper, "__call__") as mock_call:
-        mock_call.return_value = 0.42  # Mock return value
-
-        # Call CDF
-        result = copula.cdf(0.5, 0.6)
-
-        # Verify it was called with correct params
-        mock_call.assert_called_once_with(0.5, 0.6)
-        assert result == 0.42
+    # numerical evaluation agrees with the symbolic expression
+    result = copula.cdf(0.5, 0.6)
+    assert isinstance(result, float)
+    expected = float(copula.cdf().func.subs({copula.u: 0.5, copula.v: 0.6}))
+    assert np.isclose(result, expected, rtol=1e-10)
 
 
 def test_tawn_call_method():

@@ -37,6 +37,9 @@ class XiPsiApproxLowerBoundaryCopula(BivCopula):
         Controls the vertical thickness of the hole. beta in (0, 1).
     """
 
+    #: exact vectorized cdf/pdf/cond_distr (passed through by the numeric API)
+    _numeric_native = True
+
     # Parameters and domains
     alpha, beta = sp.symbols("alpha beta", real=True)
     params = [alpha, beta]

@@ -8,8 +8,6 @@ from copul.family.elliptical.student_t import StudentT
 from copul.family.other import LowerFrechet, UpperFrechet
 from copul.wrapper.cd1_wrapper import CD1Wrapper
 from copul.wrapper.cd2_wrapper import CD2Wrapper
-from copul.wrapper.cdf_wrapper import CDFWrapper
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 @pytest.fixture
@@ -97,20 +95,12 @@ def test_student_t_cdf():
     copula.rho = 0.5
     copula.nu = 4.0
 
-    # Mock the _calculate_student_t_cdf method
-    with patch.object(StudentT, "_calculate_student_t_cdf", return_value=0.42) as mock_cdf:
-        # Get the callable
-        cdf_func = copula.cdf
-        # Call it with arguments
-        result = cdf_func(0.3, 0.7)
-
-        # Check that the method was called with the correct arguments
-        # The first argument is not 'self' because the method is called via the object
-        mock_cdf.assert_called_once_with(0.3, 0.7, 0.5, 4.0)
-
-        # Check the result type and value
-        assert isinstance(result, CDFWrapper)
-        assert float(result.evalf()) == 0.42
+    # numerical evaluation returns a float that agrees with the (slow)
+    # reference implementation based on scipy's multivariate t cdf
+    result = copula.cdf(0.3, 0.7)
+    assert isinstance(result, float)
+    reference = float(copula._calculate_student_t_cdf(0.3, 0.7, 0.5, 4.0))
+    assert np.isclose(result, reference, atol=1e-4)  # scipy uses a randomized QMC rule
 
 
 def test_student_t_conditional_distribution(student_t_copula):
@@ -136,11 +126,10 @@ def test_student_t_cond_distr_1(student_t_copula):
     assert student_t_copula.cond_distr_1(None, 0) == CD1Wrapper(sympy.S(0))
     assert student_t_copula.cond_distr_1(None, 1) == CD1Wrapper(sympy.S(1))
 
-    # Test regular case with mock
-    with patch.object(StudentT, "_conditional_distribution", return_value=sympy.S(0.75)) as mock_cd:
-        result = student_t_copula.cond_distr_1(0.3, 0.7)
-        mock_cd.assert_called_once_with(0.3, 0.7)
-        assert result == CD1Wrapper(sympy.S(0.75))
+    # Regular case: numerical value matches the scipy-based reference
+    result = student_t_copula.cond_distr_1(0.3, 0.7)
+    assert isinstance(result, float)
+    assert np.isclose(result, float(student_t_copula._conditional_distribution(0.3, 0.7)))
 
 
 def test_student_t_cond_distr_2(student_t_copula):
@@ -149,11 +138,10 @@ def test_student_t_cond_distr_2(student_t_copula):
     assert student_t_copula.cond_distr_2(0, None) == CD2Wrapper(sympy.S(0))
     assert student_t_copula.cond_distr_2(1, None) == CD2Wrapper(sympy.S(1))
 
-    # Test regular case with mock
-    with patch.object(StudentT, "_conditional_distribution", return_value=sympy.S(0.75)) as mock_cd:
-        result = student_t_copula.cond_distr_2(0.7, 0.3)
-        mock_cd.assert_called_once_with(0.3, 0.7)
-        assert result == CD2Wrapper(sympy.S(0.75))
+    # Regular case: numerical value matches the scipy-based reference
+    result = student_t_copula.cond_distr_2(0.7, 0.3)
+    assert isinstance(result, float)
+    assert np.isclose(result, float(student_t_copula._conditional_distribution(0.3, 0.7)))
 
 
 def test_student_t_pdf():
@@ -162,18 +150,11 @@ def test_student_t_pdf():
     copula.rho = 0.5
     copula.nu = 4.0
 
-    # Mock the StudentTCopula.pdf to avoid actual computation
-    with patch(
-        "statsmodels.distributions.copula.elliptical.StudentTCopula.pdf",
-        return_value=1.25,
-    ) as mock_pdf:
-        result = copula.pdf(0.3, 0.7)
+    from statsmodels.distributions.copula.elliptical import StudentTCopula
 
-        # Check that the function was called
-        mock_pdf.assert_called_once_with([0.3, 0.7])
-
-        # Check the result type
-        assert isinstance(result, SymPyFuncWrapper)
+    result = copula.pdf(0.3, 0.7)
+    assert isinstance(result, float)
+    assert np.isclose(result, StudentTCopula(0.5, df=4.0).pdf([0.3, 0.7]))
 
 
 def test_student_t_call_method():
@@ -258,5 +239,5 @@ def test_calculate_student_t_cdf():
 def test_cdf_edge_cases(point, expected):
     cop = StudentT(0.5, 2)
     evaluated_cdf = cop.cdf(*point)
-    actual = evaluated_cdf.evalf()
+    actual = float(evaluated_cdf)
     assert np.isclose(actual, expected)

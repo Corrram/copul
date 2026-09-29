@@ -1,5 +1,6 @@
 import copy
 
+import numpy as np
 import sympy
 
 from copul.exceptions import PropertyUnavailableException
@@ -53,6 +54,10 @@ class Frechet(BivCopula):
     @property
     def is_absolutely_continuous(self) -> bool:
         return (self.alpha == 0) & (self.beta == 0)
+
+    def _numeric_callables(self):
+        """Closed forms and exact mixture sampling (see :func:`fr_mixture_callables`)."""
+        return fr_mixture_callables(float(self.alpha), float(self.beta))
 
     @property
     def alpha(self):
@@ -332,3 +337,36 @@ if __name__ == "__main__":
     print(f"Gini's Gamma: {gamma}, Checkerboard Gini's Gamma: {ccop_gamma}")
     print(f"Footrule: {footrule}, Checkerboard Footrule: {ccop_footrule}")
     print("Done!")
+
+
+def fr_mixture_callables(a: float, b: float) -> dict:
+    r"""Numerical ingredients of :math:`aM+(1-a-b)\Pi+bW`.
+
+    The conditional distribution of :math:`V` given :math:`U=u` is the
+    mixture of the point masses at :math:`u` (weight :math:`a`) and
+    :math:`1-u` (weight :math:`b`) with the uniform distribution; samples
+    are drawn component-wise.
+    """
+    c = 1.0 - a - b
+
+    def cdf(u, v):
+        return a * np.minimum(u, v) + c * u * v + b * np.maximum(u + v - 1.0, 0.0)
+
+    # partial derivatives of min / max: at the kinks the symmetric derivative
+    # (1/2) is used, matching SymPy's Heaviside(0) = 1/2
+    def h1(u, v):
+        return a * np.heaviside(v - u, 0.5) + b * np.heaviside(u + v - 1.0, 0.5) + c * v
+
+    def h2(u, v):
+        return a * np.heaviside(u - v, 0.5) + b * np.heaviside(u + v - 1.0, 0.5) + c * u
+
+    def rvs(n, rng):
+        u = rng.random(n)
+        z = rng.random(n)
+        v = np.where(z < a, u, np.where(z < a + b, 1.0 - u, rng.random(n)))
+        return np.column_stack([u, v])
+
+    out = {"cdf": cdf, "h1": h1, "h2": h2, "rvs": rvs}
+    if a == 0 and b == 0:
+        out["pdf"] = lambda u, v: np.ones(np.broadcast(u, v).shape)
+    return out

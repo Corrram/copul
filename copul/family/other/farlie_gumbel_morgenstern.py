@@ -1,3 +1,4 @@
+import numpy as np
 import sympy
 
 from copul.family.core.biv_copula import BivCopula
@@ -56,6 +57,37 @@ class FarlieGumbelMorgenstern(BivCopula):
     @property
     def is_absolutely_continuous(self) -> bool:
         return True
+
+    def _numeric_callables(self):
+        r"""Closed forms incl. the conditional quantile.
+
+        :math:`\partial_1 C(u,v)=v+a\,v(1-v)` with :math:`a=\theta(1-2u)`, whose
+        inverse is :math:`v=2w/\bigl(1+a+\sqrt{(1+a)^2-4aw}\bigr)`.
+        """
+        th = float(self.theta)
+
+        def cdf(u, v):
+            return u * v * (1.0 + th * (1.0 - u) * (1.0 - v))
+
+        def _h(a, b):
+            return b * (1.0 + th * (1.0 - b) * (1.0 - 2.0 * a))
+
+        def pdf(u, v):
+            return 1.0 + th * (1.0 - 2.0 * u) * (1.0 - 2.0 * v)
+
+        def _h_inv(a, w):
+            k = th * (1.0 - 2.0 * a)
+            return 2.0 * w / (1.0 + k + np.sqrt(np.maximum((1.0 + k) ** 2 - 4.0 * k * w, 0.0)))
+
+        return {
+            "cdf": cdf,
+            "h1": _h,
+            "h2": lambda u, v: _h(v, u),
+            "pdf": pdf,
+            "logpdf": lambda u, v: np.log(pdf(u, v)),
+            "h1_inv": _h_inv,
+            "h2_inv": _h_inv,
+        }
 
     @property
     def is_symmetric(self) -> bool:

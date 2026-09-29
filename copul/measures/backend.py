@@ -37,12 +37,18 @@ from collections.abc import Callable
 import numpy as np
 import sympy as sp
 
+from copul.family.core.numeric_api import bypassed, numeric_bypass
 from copul.measures.numeric import NumericCopula, _fd_partial
 from copul.numerics import NUMPY_SAFE_MAP, drop_distributions
 
 log = logging.getLogger(__name__)
 
-__all__ = ["NumericBackend", "free_parameters", "numeric_backend"]
+__all__ = ["NumericBackend", "NumericUnavailableError", "free_parameters", "numeric_backend"]
+
+
+class NumericUnavailableError(TypeError):
+    """No numerical representation of the copula could be obtained."""
+
 
 # fixed interior test points used for validating vectorized implementations
 _TEST_U = np.array([0.13, 0.31, 0.52, 0.77, 0.9, 0.42, 0.66])
@@ -157,6 +163,11 @@ def _param_key(copula):
 
 
 def _scalar_cdf(copula, u, v) -> float:
+    with numeric_bypass(copula):
+        return _scalar_cdf_raw(copula, u, v)
+
+
+def _scalar_cdf_raw(copula, u, v) -> float:
     errors = []
     for call in (
         lambda: copula.cdf(u=u, v=v),
@@ -170,6 +181,11 @@ def _scalar_cdf(copula, u, v) -> float:
 
 
 def _scalar_cond(copula, i, u, v) -> float:
+    with numeric_bypass(copula):
+        return _scalar_cond_raw(copula, i, u, v)
+
+
+def _scalar_cond_raw(copula, i, u, v) -> float:
     name = f"cond_distr_{i}"
     for call in (
         lambda: getattr(copula, name)(u=u, v=v),
@@ -211,6 +227,10 @@ class NumericBackend(NumericCopula):
         self.copula_name = copula_name
         self.source: dict[str, str] = {}
         self.prefer_h = False
+        #: optional class-provided extras (``logpdf``, ``h1_inv``, ``h2_inv``, ``rvs``)
+        self.extras: dict[str, Callable] = {}
+        self._copula = None
+        self._ac = True
         super().__init__()
 
     def _built(self, what: str) -> bool:
@@ -223,7 +243,12 @@ class NumericBackend(NumericCopula):
         builder = self._builders.pop(what, None)
         if builder is not None:
             try:
-                f = builder()
+                copula = self._copula
+                if copula is not None:
+                    with numeric_bypass(copula):
+                        f = builder()
+                else:
+                    f = builder()
             except Exception as e:
                 log.debug("backend builder %s failed for %s: %s", what, self.copula_name, e)
                 f = None
@@ -245,6 +270,75 @@ class NumericBackend(NumericCopula):
 
     def __repr__(self):  # pragma: no cover - cosmetic
         return f"NumericBackend({self.copula_name}, source={self.source})"
+
+    # ------------------------------------------------------------------
+    # log-density, conditional quantiles and sampling
+    # ------------------------------------------------------------------
+    def logpdf(self, u, v):
+        """Vectorized log-density (class formula if provided, else ``log(pdf)``)."""
+        f = self.extras.get("logpdf")
+        u, v = np.broadcast_arrays(np.asarray(u, float), np.asarray(v, float))
+        with np.errstate(all="ignore"):
+            if f is not None:
+                val = _as_float_array(f(u, v), u.shape)
+                bad = np.isnan(val)
+                if np.any(bad):
+                    val = val.copy()
+                    val[bad] = np.log(self.pdf(u[bad], v[bad]))
+                return val
+            return np.log(self.pdf(u, v))
+
+    def _newton_ok(self) -> bool:
+        """Whether a (closed-form or symbolic) density is available for Newton steps.
+
+        Copulas with singular components (jumps of the conditional
+        distribution) use the derivative-free Illinois iteration instead.
+        """
+        if not self._ac:
+            return False
+        try:
+            self.get("pdf")
+        except Exception:
+            return False
+        return self.source.get("pdf") not in ("finite_differences", None)
+
+    def h1_inv(self, u, w):
+        r"""Quantile :math:`v` of :math:`V\mid U=u` at level ``w`` (vectorized)."""
+        f = self.extras.get("h1_inv")
+        if f is not None:
+            return _clean_inverse(f, u, w)
+        h1 = self.get("h1")
+        pdf = self.get("pdf") if self._newton_ok() else None
+        return invert_h(
+            lambda a, b: h1(a, b),
+            None if pdf is None else (lambda a, b: pdf(a, b)),
+            u,
+            w,
+        )
+
+    def h2_inv(self, v, w):
+        r"""Quantile :math:`u` of :math:`U\mid V=v` at level ``w`` (vectorized)."""
+        f = self.extras.get("h2_inv")
+        if f is not None:
+            return _clean_inverse(f, v, w)
+        h2 = self.get("h2")
+        pdf = self.get("pdf") if self._newton_ok() else None
+        return invert_h(
+            lambda a, b: h2(b, a),
+            None if pdf is None else (lambda a, b: pdf(b, a)),
+            v,
+            w,
+        )
+
+    def rvs(self, n: int, rng) -> np.ndarray:
+        """``n`` samples: class sampler if provided, else conditional inversion."""
+        f = self.extras.get("rvs")
+        if f is not None:
+            out = np.asarray(f(int(n), rng), dtype=float).reshape(int(n), 2)
+            return np.clip(out, 0.0, 1.0)
+        u = rng.random(int(n))
+        w = rng.random(int(n))
+        return np.column_stack([u, self.h1_inv(u, w)])
 
 
 def _lazy(name):
@@ -309,6 +403,107 @@ def _clean_pdf(raw: Callable, fallback: Callable) -> Callable:
     return pdf
 
 
+def _clean_inverse(f, x, w):
+    x, w = np.broadcast_arrays(np.asarray(x, float), np.asarray(w, float))
+    with np.errstate(all="ignore"):
+        val = _as_float_array(f(x, w), x.shape)
+    val = np.where(w <= 0.0, 0.0, np.where(w >= 1.0, 1.0, val))
+    return np.clip(val, 0.0, 1.0)
+
+
+def invert_h(h, dh, x, w, xtol=1e-13, ftol=1e-14, maxiter=100):
+    r"""Vectorized quantile of a conditional distribution.
+
+    Returns :math:`y=\inf\{y\in[0,1] : h(x,y)\ge w\}` for the nondecreasing
+    function ``y -> h(x, y)`` with :math:`h(x,0)=0`, :math:`h(x,1)=1`.  Uses a
+    safeguarded Newton iteration (``dh`` = derivative in ``y``, e.g. the
+    density) that falls back to bisection whenever the Newton step leaves the
+    current bracket or does not reduce the residual fast enough
+    (``rtsafe``); without ``dh`` the Illinois variant of regula falsi is used,
+    which keeps the bracket and converges superlinearly on smooth parts.  Only
+    the entries that have not converged yet are re-evaluated.
+    """
+    x, w = np.broadcast_arrays(np.asarray(x, float), np.asarray(w, float))
+    shape = x.shape
+    x = x.ravel()
+    w = w.ravel()
+    y = np.where(w <= 0.0, 0.0, 1.0)
+    act = np.flatnonzero((w > 0.0) & (w < 1.0))
+    if act.size == 0:
+        return y.reshape(shape)
+    lo = np.zeros(act.size)
+    hi = np.ones(act.size)
+    xa = x[act]
+    wa = w[act]
+    ya = wa.copy()  # independence as starting point
+    dx_old = np.ones(act.size)
+    dx = np.ones(act.size)
+    # function values at the bracket ends and the side replaced last (Illinois)
+    f_lo = -wa.copy()
+    f_hi = 1.0 - wa
+    side = np.zeros(act.size, dtype=np.int8)
+    idx = np.arange(act.size)
+    result = np.empty(act.size)
+    for _ in range(maxiter):
+        if idx.size == 0:
+            break
+        with np.errstate(all="ignore"):
+            f = np.asarray(h(xa[idx], ya[idx]), float) - wa[idx]
+        yi = ya[idx]
+        nan = ~np.isfinite(f)
+        f = np.where(nan, 0.0, f)
+        neg = f < 0
+        lo[idx] = np.where(neg, yi, lo[idx])
+        hi[idx] = np.where(neg, hi[idx], yi)
+        if dh is None:
+            s_old = side[idx]
+            f_hi[idx] = np.where(neg & (s_old == -1), 0.5 * f_hi[idx], f_hi[idx])
+            f_lo[idx] = np.where(~neg & (s_old == 1), 0.5 * f_lo[idx], f_lo[idx])
+            f_lo[idx] = np.where(neg, f, f_lo[idx])
+            f_hi[idx] = np.where(neg, f_hi[idx], f)
+            side[idx] = np.where(neg, -1, 1)
+        done = nan | (np.abs(f) <= ftol) | (hi[idx] - lo[idx] <= xtol)
+        mid = 0.5 * (lo[idx] + hi[idx])
+        if dh is not None:
+            with np.errstate(all="ignore"):
+                d = np.asarray(dh(xa[idx], yi), float)
+            step = f / d
+            ynew = yi - step
+            use_newton = (
+                np.isfinite(ynew)
+                & (d > 0)
+                & (ynew > lo[idx])
+                & (ynew < hi[idx])
+                & (np.abs(2.0 * f) <= np.abs(dx_old[idx] * d))
+            )
+            dx_old[idx] = dx[idx]
+            dx[idx] = np.where(use_newton, np.abs(step), 0.5 * (hi[idx] - lo[idx]))
+            ynew = np.where(use_newton, ynew, mid)
+            done |= use_newton & (np.abs(step) <= xtol)
+        else:
+            # Illinois (modified regula falsi) step inside the bracket
+            a, b = lo[idx], hi[idx]
+            fa, fb = f_lo[idx], f_hi[idx]
+            with np.errstate(all="ignore"):
+                ynew = (a * fb - b * fa) / (fb - fa)
+            ynew = np.where(np.isfinite(ynew) & (ynew > a) & (ynew < b), ynew, mid)
+        # converged entries keep their value; entries converged by bracketing
+        # return the upper end (the smallest point known to satisfy h >= w)
+        fin = idx[done]
+        result[fin] = np.where(
+            np.abs(f[done]) <= ftol,
+            yi[done],
+            np.where(use_newton[done], ynew[done], hi[fin]) if dh is not None else hi[fin],
+        )
+        keep = ~done
+        ya[idx[keep]] = ynew[keep]
+        idx = idx[keep]
+    if idx.size:
+        result[idx] = hi[idx]
+    y[act] = np.clip(result, 0.0, 1.0)
+    return y.reshape(shape)
+
+
 def _close(a, b, rtol=1e-7, atol=1e-9):
     a = np.asarray(a, float)
     b = np.asarray(b, float)
@@ -352,13 +547,13 @@ def _sympy_cdf_expr(copula):
 def _vectorized_candidates(copula):
     """Yield (name, callable) candidates for a vectorized cdf."""
     if hasattr(copula, "cdf_vectorized"):
-        yield "cdf_vectorized", lambda u, v: copula.cdf_vectorized(u, v)
+        yield "cdf_vectorized", bypassed(copula, lambda u, v: copula.cdf_vectorized(u, v))
 
     def points_call(u, v):
         pts = np.column_stack([np.ravel(u), np.ravel(v)])
         return np.asarray(copula.cdf(pts), float).reshape(np.shape(u))
 
-    yield "cdf(points)", points_call
+    yield "cdf(points)", bypassed(copula, points_call)
 
 
 def _cond_candidates(copula, i):
@@ -366,13 +561,13 @@ def _cond_candidates(copula, i):
         pts = np.column_stack([np.ravel(u), np.ravel(v)])
         return np.asarray(copula.cond_distr(i, pts), float).reshape(np.shape(u))
 
-    yield f"cond_distr({i}, points)", points_call
+    yield f"cond_distr({i}, points)", bypassed(copula, points_call)
 
     def pair_call(u, v):
         out = getattr(copula, f"cond_distr_{i}")(np.ravel(u), np.ravel(v))
         return np.asarray(out, float).reshape(np.shape(u))
 
-    yield f"cond_distr_{i}(u, v)", pair_call
+    yield f"cond_distr_{i}(u, v)", bypassed(copula, pair_call)
 
 
 _CORNER_EPS = np.array([1e-6, 1e-6, 1e-4])
@@ -429,14 +624,19 @@ def _fd_d2A(A):
 def _pickands_numeric(copula):
     """Vectorized ``(A, A', A'')`` of a bivariate EV copula, or ``None``.
 
-    ``A`` comes from a class hook ``_pickands_numpy()`` (vectorized A, whose
-    derivatives are then taken by finite differences) or from lambdifying the
+    ``A`` comes from a class hook ``_pickands_numpy()`` (vectorized ``A`` or a
+    tuple ``(A, A', A'')``; missing derivatives are taken by finite
+    differences) or from lambdifying the
     SymPy Pickands expression and its derivatives.
     """
     tt = np.array([0.05, 0.3, 0.5, 0.7, 0.95])
     hook = getattr(copula, "_pickands_numpy", None)
     if callable(hook):
-        A = hook()
+        res = hook()
+        if isinstance(res, tuple):  # (A, A', A'')
+            A, dA, d2A = (*res, None, None)[:3]
+            return A, dA or _fd_dA(A), d2A or _fd_d2A(A)
+        A = res
         return A, _fd_dA(A), _fd_d2A(A)
     pk = copula.pickands
     A_expr = getattr(pk, "func", pk)
@@ -611,8 +811,18 @@ def _checkerboard_callables(copula):
 
 
 def _build(copula) -> NumericBackend:
+    with numeric_bypass(copula):
+        return _build_raw(copula)
+
+
+def _build_raw(copula) -> NumericBackend:
     name = type(copula).__name__
     be = NumericBackend(name)
+    be._copula = copula
+    try:
+        be._ac = bool(copula.is_absolutely_continuous)
+    except Exception:
+        be._ac = True
     provided: dict[str, Callable] = {}
     sources: dict[str, str] = {}
 
@@ -625,6 +835,9 @@ def _build(copula) -> NumericBackend:
                 if d.get(k) is not None:
                     provided[k] = d[k]
                     sources[k] = "class_hook"
+            for k in ("logpdf", "h1_inv", "h2_inv", "rvs"):
+                if d.get(k) is not None:
+                    be.extras[k] = d[k]
             if d.get("prefer_h"):
                 be.prefer_h = True
             if d.get("breaks") is not None:
@@ -643,6 +856,23 @@ def _build(copula) -> NumericBackend:
                     sources[k] = "checkerboard"
         except Exception as e:
             log.debug("checkerboard callables failed for %s: %s", name, e)
+
+    # 1c. classes with an exact, vectorized native API ------------------------
+    if getattr(type(copula), "_numeric_native", False):
+        names = [("cdf", "cdf"), ("h1", "cond_distr_1"), ("h2", "cond_distr_2")]
+        if be._ac:
+            names.append(("pdf", "pdf"))
+        for key, meth in names:
+            if key in provided:
+                continue
+
+            def native(u, v, _m=meth):
+                u, v = np.broadcast_arrays(np.asarray(u, float), np.asarray(v, float))
+                out = getattr(copula, _m)(u.ravel(), v.ravel())
+                return np.asarray(out, float).reshape(u.shape)
+
+            provided[key] = bypassed(copula, native)
+            sources[key] = "native"
 
     # 2. extreme-value copulas ----------------------------------------------
     if len(provided) < 4:
@@ -716,7 +946,7 @@ def _build(copula) -> NumericBackend:
             scal = np.vectorize(lambda a, b: _scalar_cdf(copula, float(a), float(b)))
             provided["cdf"], sources["cdf"] = scal, "scalar"
         else:
-            raise TypeError(f"Cannot obtain a numerical CDF for {name}.")
+            raise NumericUnavailableError(f"Cannot obtain a numerical CDF for {name}.")
 
     be.cdf = _clean_cdf(provided["cdf"])
     be.source["cdf"] = sources["cdf"]
@@ -761,6 +991,14 @@ def _build(copula) -> NumericBackend:
         if "pdf" in provided:
             be.source["pdf"] = sources["pdf"]
             return _clean_pdf(provided["pdf"], fd)
+        if not be._ac:
+            # copulas with a singular component: the family's own density of
+            # the absolutely continuous part avoids the Heaviside/DiracDelta
+            # terms of the mixed derivative of min/max expressions
+            f = _family_pdf(copula, fd)
+            if f is not None:
+                be.source["pdf"] = "family_pdf"
+                return _clean_pdf(f, fd)
         if expr is not None:
             try:
                 d = sp.diff(expr, uv[0], uv[1])
@@ -776,6 +1014,28 @@ def _build(copula) -> NumericBackend:
 
     be._builders["pdf"] = pdf_builder
     return be
+
+
+def _family_pdf(copula, fd):
+    """Lambdified symbolic density of the family (validated) or ``None``."""
+    try:
+        w = copula.pdf
+        if callable(w) and not hasattr(w, "func"):
+            w = w()
+        pexpr = getattr(w, "func", w)
+        if not isinstance(pexpr, sp.Expr) or pexpr.has(sp.DiracDelta, sp.Integral):
+            return None
+        uv = _uv_symbols(pexpr)
+        if uv is None:
+            return None
+        f = _lambdify(pexpr, uv)
+        with np.errstate(all="ignore"):
+            val = _as_float_array(f(_TEST_U, _TEST_V), _TEST_U.shape)
+        if _close(val, fd(_TEST_U, _TEST_V), rtol=1e-3, atol=1e-4):
+            return f
+    except Exception as e:
+        log.debug("family pdf failed for %s: %s", type(copula).__name__, e)
+    return None
 
 
 def special_numeric(copula, key, rtol, atol):

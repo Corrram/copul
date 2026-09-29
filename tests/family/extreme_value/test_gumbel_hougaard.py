@@ -8,7 +8,6 @@ from copul.family.extreme_value.gumbel_hougaard import (
     GumbelHougaardEV as GumbelHougaard,
 )
 from copul.family.other import BivIndependenceCopula
-from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 class TestGumbelHougaard:
@@ -65,16 +64,10 @@ class TestGumbelHougaard:
 
     def test_cdf(self, gumbel_copula):
         """Test CDF computation at specific points"""
-        # For GumbelHougaard with theta=2, at u=v=0.5
-        with patch.object(CDFWrapper, "__call__") as mock_call:
-            mock_call.return_value = 0.25  # Mock return value
-
-            # Call CDF
-            result = gumbel_copula.cdf(0.5, 0.5)
-
-            # Verify CDF was called correctly
-            mock_call.assert_called_once_with(0.5, 0.5)
-            assert result == 0.25
+        # For GumbelHougaard with theta=2, at u=v=0.5: C = 0.25^(2^(1/2) / 2)
+        result = gumbel_copula.cdf(0.5, 0.5)
+        assert isinstance(result, float)
+        assert np.isclose(result, 0.25 ** (np.sqrt(2) / 2))
 
     def test_independence_special_case(self):
         """Test special case when theta=1 (should return Independence copula)"""
@@ -139,18 +132,11 @@ class TestGumbelHougaard:
 
     def test_sampling(self, gumbel_copula):
         """Test random sampling from the copula"""
-        # Patch the rvs method to avoid actual computation
-        with patch("copul.copula_sampler.CopulaSampler.rvs") as mock_rvs:
-            # Prepare mock data
-            mock_data = np.array([[0.2, 0.3], [0.4, 0.5], [0.6, 0.7]])
-            mock_rvs.return_value = mock_data
-
-            # Generate samples
-            samples = gumbel_copula.rvs(3)
-
-            # Verify result
-            assert np.array_equal(samples, mock_data)
-            mock_rvs.assert_called_once_with(3, False)
+        samples = gumbel_copula.rvs(3, random_state=1)
+        assert samples.shape == (3, 2)
+        assert np.all((samples >= 0) & (samples <= 1))
+        # reproducible with a seed
+        assert np.array_equal(samples, gumbel_copula.rvs(3, random_state=1))
 
     def test_tail_dependence(self):
         """Test tail dependence properties"""

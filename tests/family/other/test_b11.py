@@ -83,12 +83,13 @@ def test_is_symmetric(copula):
 
 def test_is_absolutely_continuous():
     """Test the absolutely continuous property."""
-    # Should be absolutely continuous for delta < 1
+    # Only delta = 0 (independence) is absolutely continuous: for delta > 0
+    # the min(u, v) component puts mass delta on the diagonal
     copula1 = B11(delta=0)
     assert copula1.is_absolutely_continuous is True
 
     copula2 = B11(delta=0.5)
-    assert copula2.is_absolutely_continuous is True
+    assert copula2.is_absolutely_continuous is False
 
     # Should not be absolutely continuous for delta = 1
     copula3 = B11(delta=1)
@@ -165,23 +166,17 @@ def test_dependence_measures():
                 f"Spearman's rho incorrect for delta={delta}"
             )
 
-        # Similarly, Kendall's tau = delta/3 * (3 - 2*delta)
-        # (this is a theoretical result for this family)
-        if hasattr(copula, "kendalls_tau"):
-            tau = float(copula.kendalls_tau())
-            expected_tau = delta / 3 * (3 - 2 * delta)
-            assert abs(tau - expected_tau) < 1e-10, f"Kendall's tau incorrect for delta={delta}"
+        # Kendall's tau of delta*M + (1-delta)*Pi is delta*(2 + delta)/3
+        # (Nelsen 2006, Example 5.5; the former delta/3*(3-2*delta) gave 1/3 for M)
+        tau = float(copula.kendalls_tau())
+        expected_tau = delta * (2 + delta) / 3
+        assert abs(tau - expected_tau) < 1e-10, f"Kendall's tau incorrect for delta={delta}"
+        assert abs(tau - copula.kendalls_tau(method="numeric")) < 1e-6
 
-        # Upper tail dependence = delta (only at corners)
-        if hasattr(copula, "lambda_U"):
-            lambda_U = float(copula.lambda_U)
-            assert abs(lambda_U - (delta if delta == 1 else 0)) < 1e-10, (
-                f"Upper tail dependence incorrect for delta={delta}"
-            )
-
-        # Lower tail dependence = delta (only at corners)
-        if hasattr(copula, "lambda_L"):
-            lambda_L = float(copula.lambda_L)
-            assert abs(lambda_L - (delta if delta == 1 else 0)) < 1e-10, (
-                f"Lower tail dependence incorrect for delta={delta}"
-            )
+        # Tail dependence: C(t,t)/t = delta + (1-delta) t -> delta (both tails)
+        assert abs(float(copula.lambda_U()) - delta) < 1e-10, (
+            f"Upper tail dependence incorrect for delta={delta}"
+        )
+        assert abs(float(copula.lambda_L()) - delta) < 1e-10, (
+            f"Lower tail dependence incorrect for delta={delta}"
+        )

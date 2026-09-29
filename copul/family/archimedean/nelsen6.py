@@ -28,48 +28,56 @@ class Joe(BivArchimedeanCopula):
         theta = self.theta
         return 1 - (-((1 - self.u) ** theta - 1) * ((1 - self.v) ** theta - 1) + 1) ** (1 / theta)
 
-    def rvs(
-        self, n: int = 1, random_state: int | None = None, approximate: bool = False
-    ) -> np.ndarray:
+    def _numeric_callables(self):
+        r"""Closed forms for the numerical API.
+
+        With :math:`a=(1-u)^\theta`, :math:`b=(1-v)^\theta`, :math:`s=a+b-ab`:
+        :math:`C=1-s^{1/\theta}`,
+        :math:`\partial_1C=(1-u)^{\theta-1}(1-b)s^{1/\theta-1}`,
+        :math:`c=s^{1/\theta-2}(1-u)^{\theta-1}(1-v)^{\theta-1}(\theta-1+s)`;
+        exact sampling with a Sibuya(1/θ) frailty (Marshall--Olkin).
         """
-        Generate random samples from the Joe copula using a fast, vectorized algorithm.
+        from copul.family.archimedean import _frailty
 
-        This method overrides the slow, iterative solver from the parent class. It uses a
-        numerically stable, closed-form inverse of the conditional distribution, allowing
-        for thousands of samples to be generated almost instantly.
+        th = float(self.theta)
+        alpha = 1.0 / th
 
-        Parameters
-        ----------
-        n : int
-            Number of samples to generate.
-        random_state : int, optional
-            Seed for the random number generator for reproducibility.
-        approximate : bool
-            This parameter is ignored as the exact vectorized method is always fast.
+        def parts(u, v):
+            a = (1.0 - u) ** th
+            b = (1.0 - v) ** th
+            return a, b, a + b - a * b
 
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape (n, 2) containing the generated samples.
-        """
-        rng = np.random.default_rng(random_state)
-        w = rng.random((n, 2))
+        def cdf(u, v):
+            *_, s = parts(u, v)
+            return 1.0 - s**alpha
 
-        theta_val = float(self.theta)
+        def _h(x, y):
+            _, b, s = parts(x, y)
+            return (1.0 - x) ** (th - 1.0) * (1.0 - b) * s ** (alpha - 1.0)
 
-        # Handle the independence case
-        if np.isclose(theta_val, 1):
-            return w
+        def logpdf(u, v):
+            *_, s = parts(u, v)
+            return (
+                (alpha - 2.0) * np.log(s)
+                + (th - 1.0) * (np.log1p(-u) + np.log1p(-v))
+                + np.log(th - 1.0 + s)
+            )
 
-        v = w[:, 1]
+        def pdf(u, v):
+            return np.exp(logpdf(u, v))
 
-        # Use the closed-form inverse of the conditional distribution C(u|v)
-        # This is a highly efficient and numerically stable algorithm
-        term1 = (1 - v) ** (-theta_val) - 1
-        term2 = w[:, 0] ** (-theta_val / (theta_val - 1)) - 1
-        u = 1 - (1 + term1 * (1 + term2)) ** (-1 / theta_val)
+        def rvs(n, rng):
+            frailty = _frailty.sibuya(n, rng, alpha)
+            return _frailty.marshall_olkin(lambda t: 1.0 - (-np.expm1(-t)) ** alpha, frailty, rng)
 
-        return np.column_stack((u, v))
+        return {
+            "cdf": cdf,
+            "h1": _h,
+            "h2": lambda u, v: _h(v, u),
+            "pdf": pdf,
+            "logpdf": logpdf,
+            "rvs": rvs,
+        }
 
     def cdf_vectorized(self, u: np.ndarray, v: np.ndarray) -> np.ndarray:
         """

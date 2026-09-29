@@ -44,54 +44,63 @@ class Frank(BivArchimedeanCopula):
             )
         )
 
-    def rvs(
-        self, n: int = 1, random_state: int | None = None, approximate: bool = False
-    ) -> np.ndarray:
+    def _numeric_callables(self):
+        r"""Closed forms for the numerical API.
+
+        With :math:`a=e^{-\theta u}-1`, :math:`b=e^{-\theta v}-1`,
+        :math:`e=e^{-\theta}-1` (all via ``expm1``):
+        :math:`C=-\log(1+ab/e)/\theta`, :math:`\partial_1C=b\,e^{-\theta u}/(e+ab)`,
+        :math:`c=-\theta e\,e^{-\theta(u+v)}/(e+ab)^2`, the conditional quantile
+        :math:`v=-\log\bigl(1+w e/(w+(1-w)e^{-\theta u})\bigr)/\theta` and, for
+        :math:`\theta>0`, Marshall--Olkin sampling with a logarithmic frailty.
         """
-        Generate random samples from the Frank copula using a fast, vectorized algorithm.
+        from copul.family.archimedean import _frailty
 
-        This method uses a numerically stable, closed-form inverse of the conditional
-        distribution, allowing for thousands of samples to be generated almost instantly.
+        th = float(self.theta)
+        if th == 0:
+            return {}
+        em = np.expm1(-th)
 
-        Parameters
-        ----------
-        n : int
-            Number of samples to generate.
-        random_state : int, optional
-            Seed for the random number generator for reproducibility.
-        approximate : bool
-            This parameter is ignored as the exact vectorized method is always fast.
+        def cdf(u, v):
+            return -np.log1p(np.expm1(-th * u) * np.expm1(-th * v) / em) / th
 
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape (n, 2) containing the generated samples.
-        """
-        rng = np.random.default_rng(random_state)
-        w = rng.random((n, 2))
+        def _h(a, b):
+            ea = np.expm1(-th * a)
+            eb = np.expm1(-th * b)
+            return eb * np.exp(-th * a) / (em + ea * eb)
 
-        theta_val = float(self.theta)
+        log_k = np.log(-th * em)
 
-        # Handle the independence case where theta is close to 0
-        if np.isclose(theta_val, 0):
-            return w
+        def logpdf(u, v):
+            d = em + np.expm1(-th * u) * np.expm1(-th * v)
+            return log_k - th * (u + v) - 2.0 * np.log(np.abs(d))
 
-        u = w[:, 0]
-        w2 = w[:, 1]
+        def pdf(u, v):
+            return np.exp(logpdf(u, v))
 
-        # Use the closed-form inverse of the conditional distribution C(v|u) = w2
-        # v = (-1/θ) * log( [e⁻θu(w₂-1) - w₂e⁻θ] / [e⁻θu(w₂-1) - w₂] )
-        exp_thetau = np.exp(-theta_val * u)
-        exp_theta = np.exp(-theta_val)
+        def _h_inv(a, w):
+            return -np.log1p(w * em / (w + (1.0 - w) * np.exp(-th * a))) / th
 
-        # Numerator of the log's argument
-        num = exp_thetau * (w2 - 1) - w2 * exp_theta
-        # Denominator of the log's argument
-        den = exp_thetau * (w2 - 1) - w2
+        out = {
+            "cdf": cdf,
+            "h1": _h,
+            "h2": lambda u, v: _h(v, u),
+            "pdf": pdf,
+            "logpdf": logpdf,
+            "h1_inv": _h_inv,
+            "h2_inv": _h_inv,
+        }
+        p = -em
+        if th > 0 and p < 1.0:
 
-        v = (-1 / theta_val) * np.log(num / den)
+            def rvs(n, rng):
+                frailty = _frailty.logarithmic_frailty(n, rng, p)
+                return _frailty.marshall_olkin(
+                    lambda t: -np.log1p(-p * np.exp(-t)) / th, frailty, rng
+                )
 
-        return np.column_stack((u, v))
+            out["rvs"] = rvs
+        return out
 
     def cdf_vectorized(self, u: np.ndarray, v: np.ndarray) -> np.ndarray:
         """

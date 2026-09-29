@@ -62,29 +62,22 @@ class TestGalambos:
 
     def test_cdf_at_specific_points(self, galambos_copula):
         """Test CDF computation at specific points"""
-        # Galambos.cdf routes to cdf_vectorized, so we patch that
-        with patch.object(Galambos, "cdf_vectorized") as mock_cdf:
-            mock_cdf.return_value = np.array([0.5])
-
-            # Call CDF at specific points
-            result = galambos_copula.cdf(0.5, 0.5)
-
-            # Verify cdf_vectorized was called and result is correct
-            mock_cdf.assert_called_once()
-            assert result == 0.5
+        # numerical evaluation agrees with the vectorized implementation
+        result = galambos_copula.cdf(0.5, 0.5)
+        assert isinstance(result, float)
+        expected = galambos_copula.cdf_vectorized(np.array([0.5]), np.array([0.5]))[0]
+        assert np.isclose(result, expected)
 
     def test_pdf_at_specific_points(self, galambos_copula):
         """Test PDF computation at specific points"""
-        # Galambos.pdf routes to _pdf_numerical, so we patch that
-        with patch.object(Galambos, "_pdf_numerical") as mock_pdf:
-            mock_pdf.return_value = 1.25  # Mock return value
-
-            # Call PDF at specific points
-            result = galambos_copula.pdf(0.5, 0.5)
-
-            # Verify _pdf_numerical was called and result is correct
-            mock_pdf.assert_called_once()
-            assert result == 1.25
+        result = galambos_copula.pdf(0.5, 0.5)
+        assert isinstance(result, float)
+        h = 1e-4
+        c = galambos_copula.cdf
+        fd = (
+            c(0.5 + h, 0.5 + h) - c(0.5 + h, 0.5 - h) - c(0.5 - h, 0.5 + h) + c(0.5 - h, 0.5 - h)
+        ) / (4 * h * h)
+        assert np.isclose(result, fd, rtol=1e-5)
 
     def test_subexpressions(self, galambos_copula):
         """Test the subexpression evaluation methods"""
@@ -162,18 +155,11 @@ class TestGalambos:
 
     def test_sampling(self, galambos_copula):
         """Test random sampling from the copula"""
-        # Patch the rvs method to avoid actual computation
-        with patch("copul.copula_sampler.CopulaSampler.rvs") as mock_rvs:
-            # Prepare mock data
-            mock_data = np.array([[0.2, 0.3], [0.4, 0.5], [0.6, 0.7]])
-            mock_rvs.return_value = mock_data
-
-            # Generate samples
-            samples = galambos_copula.rvs(3)
-
-            # Verify result
-            assert np.array_equal(samples, mock_data)
-            mock_rvs.assert_called_once_with(3, False)
+        samples = galambos_copula.rvs(3, random_state=1)
+        assert samples.shape == (3, 2)
+        assert np.all((samples >= 0) & (samples <= 1))
+        # reproducible with a seed
+        assert np.array_equal(samples, galambos_copula.rvs(3, random_state=1))
 
     def test_tail_dependence(self):
         """Test tail dependence properties"""

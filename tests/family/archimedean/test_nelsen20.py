@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import numpy as np
 import pytest
 
@@ -173,15 +171,11 @@ def test_large_theta_behavior():
 
 
 def test_rvs_method(nelsen20_copula):
-    """Test the rvs method inherited from HeavyComputeArch."""
-    # Mock the _sample_values method to avoid actual computation
-    with patch.object(nelsen20_copula, "_sample_values", return_value=(0.5, 0.6)):
-        # Generate a small sample
-        samples = nelsen20_copula.rvs(3)
-
-        # Check shape and values
-        assert samples.shape == (3, 2)
-        assert np.allclose(samples, np.array([(0.5, 0.6), (0.5, 0.6), (0.5, 0.6)]))
+    """Sampling by vectorized conditional inversion (seeded, reproducible)."""
+    samples = nelsen20_copula.rvs(3, random_state=0)
+    assert samples.shape == (3, 2)
+    assert np.all((samples >= 0) & (samples <= 1))
+    assert np.array_equal(samples, nelsen20_copula.rvs(3, random_state=0))
 
 
 def test_numerical_stability():

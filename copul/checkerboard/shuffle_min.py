@@ -42,6 +42,9 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
     :math:`C_2(u\mid 1)=u`.
     """
 
+    #: exact vectorized evaluation methods (passed through by the numeric API)
+    _numeric_native = True
+
     def __init__(self, pi: Sequence[int]) -> None:
         self.pi = np.array(pi, dtype=int)  # copy: never modify the caller's data
         if self.pi.ndim != 1:
@@ -215,6 +218,11 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
             return out.item()
         else:
             return out
+
+    @property
+    def is_absolutely_continuous(self) -> bool:
+        """Shuffles of Min are singular."""
+        return False
 
     # ---------- PDF ----------------------------------------------------------
     def pdf(self, *args) -> float | np.ndarray:

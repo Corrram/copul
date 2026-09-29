@@ -103,6 +103,8 @@ class tEV(BivExtremeValueCopula):
             u = kwargs.pop("u", None)
         if v is None:
             v = kwargs.pop("v", None)
+        if u is None and v is None and not kwargs:
+            return self._pickands_cdf_wrapper()  # symbolic C(u, v)
         if u is None or v is None:
             raise TypeError("cdf() requires keyword arguments u and v")
 
@@ -142,7 +144,7 @@ class tEV(BivExtremeValueCopula):
         return float((c[0] - c[1] - c[2] + c[3]) / (4.0 * h * h))
 
     def _pickands_numpy(self):
-        r"""Vectorized Pickands function (used by :mod:`copul.measures`).
+        r"""Vectorized Pickands function and its first two derivatives.
 
         :math:`A(t) = t\,T_{\nu+1}(z(t)) + (1-t)\,T_{\nu+1}(z(1-t))` with
         :math:`z(t) = \sqrt{\nu+1}\,((t/(1-t))^{1/\nu}-\rho)/\sqrt{1-\rho^2}`.
@@ -153,13 +155,30 @@ class tEV(BivExtremeValueCopula):
         rho_val = float(self.rho)
         c = np.sqrt(1.0 + nu_val) / np.sqrt(1.0 - rho_val**2)
 
-        def A(t):
+        from scipy.stats import t as t_student
+
+        def z(t):
             t = np.clip(np.asarray(t, float), 1e-300, 1 - 1e-16)
-            z1 = c * ((t / (1 - t)) ** (1.0 / nu_val) - rho_val)
-            z2 = c * (((1 - t) / t) ** (1.0 / nu_val) - rho_val)
+            r1 = (t / (1 - t)) ** (1.0 / nu_val)
+            r2 = ((1 - t) / t) ** (1.0 / nu_val)
+            return t, r1, r2, c * (r1 - rho_val), c * (r2 - rho_val)
+
+        def A(t):
+            t, _, _, z1, z2 = z(t)
             return t * stdtr(nu_val + 1.0, z1) + (1 - t) * stdtr(nu_val + 1.0, z2)
 
-        return A
+        def dA(t):
+            # the density terms of the product rule cancel
+            _, _, _, z1, z2 = z(t)
+            return stdtr(nu_val + 1.0, z1) - stdtr(nu_val + 1.0, z2)
+
+        def d2A(t):
+            t, r1, r2, z1, z2 = z(t)
+            k = c / (nu_val * t * (1 - t))
+            f = t_student(nu_val + 1.0).pdf
+            return k * (f(z1) * r1 + f(z2) * r2)
+
+        return A, dA, d2A
 
     def cdf_vectorized(self, u, v):
         """

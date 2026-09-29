@@ -1,3 +1,4 @@
+import numpy as np
 import sympy
 
 from copul.family.core.biv_copula import BivCopula
@@ -24,6 +25,69 @@ class Plackett(BivCopula):
     @property
     def is_absolutely_continuous(self) -> bool:
         return True
+
+    def _numeric_callables(self):
+        r"""Closed forms incl. the conditional quantile.
+
+        With :math:`S=1+(\theta-1)(u+v)`, :math:`R=\sqrt{S^2-4\theta(\theta-1)uv}`:
+        :math:`C=(S-R)/(2(\theta-1))`, :math:`\partial_1C=(1-(S-2\theta v)/R)/2`,
+        :math:`c=\theta(1+(\theta-1)(u+v-2uv))/R^3`.  The quantile of
+        :math:`V\mid U=u` at level :math:`t` is (Johnson 1987; Nelsen 2006,
+        Ex. 3.38) :math:`v=(c-(1-2t)d)/(2b)` with :math:`a=t(1-t)`,
+        :math:`b=\theta+a(\theta-1)^2`, :math:`c=2a(u\theta^2+1-u)+\theta(1-2a)`,
+        :math:`d=\sqrt\theta\sqrt{\theta+4au(1-u)(1-\theta)^2}`.
+        """
+        th = float(self.theta)
+        if th == 0.0:
+            from copul.family.frechet.frechet import fr_mixture_callables
+
+            return fr_mixture_callables(0.0, 1.0)  # lower Frechet bound
+        if th == 1.0:
+            return {
+                "cdf": lambda u, v: u * v,
+                "h1": lambda u, v: v * np.ones_like(u),
+                "h2": lambda u, v: u * np.ones_like(v),
+                "pdf": lambda u, v: np.ones(np.broadcast(u, v).shape),
+                "h1_inv": lambda u, w: w * np.ones_like(u),
+                "h2_inv": lambda v, w: w * np.ones_like(v),
+            }
+
+        def parts(u, v):
+            s = 1.0 + (th - 1.0) * (u + v)
+            r = np.sqrt(np.maximum(s * s - 4.0 * th * (th - 1.0) * u * v, 0.0))
+            return s, r
+
+        def cdf(u, v):
+            s, r = parts(u, v)
+            # (S - R) / (2(theta - 1)) = 2 theta u v / (S + R); use the form
+            # without cancellation (S + R for S >= 0, S - R otherwise)
+            with np.errstate(all="ignore"):
+                return np.where(s >= 0, 2.0 * th * u * v / (s + r), (s - r) / (2.0 * (th - 1.0)))
+
+        def _h(a, b):
+            s, r = parts(a, b)
+            return 0.5 * (1.0 - (s - 2.0 * th * b) / r)
+
+        def pdf(u, v):
+            _, r = parts(u, v)
+            return th * (1.0 + (th - 1.0) * (u + v - 2.0 * u * v)) / r**3
+
+        def _h_inv(x, t):
+            a = t * (1.0 - t)
+            b = th + a * (th - 1.0) ** 2
+            c = 2.0 * a * (x * th**2 + 1.0 - x) + th * (1.0 - 2.0 * a)
+            d = np.sqrt(th) * np.sqrt(th + 4.0 * a * x * (1.0 - x) * (1.0 - th) ** 2)
+            return (c - (1.0 - 2.0 * t) * d) / (2.0 * b)
+
+        return {
+            "cdf": cdf,
+            "h1": _h,
+            "h2": lambda u, v: _h(v, u),
+            "pdf": pdf,
+            "logpdf": lambda u, v: np.log(pdf(u, v)),
+            "h1_inv": _h_inv,
+            "h2_inv": _h_inv,
+        }
 
     @property
     def cdf(self):

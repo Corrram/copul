@@ -35,7 +35,7 @@ def test_from_cdf_with_plackett():
     )
     copula_family = from_cdf(plackett_cdf)
     copula = copula_family(0.1)
-    result = copula.cdf(0.5, 0.5).evalf()
+    result = float(copula.cdf(0.5, 0.5))
     assert np.isclose(result, 0.12012653667602105)
 
 
@@ -43,7 +43,7 @@ def test_from_cdf_with_gumbel_barnett():
     cdf = "u*v*exp(-theta*ln(u)*ln(v))"
     copula_family = from_cdf(cdf)
     copula = copula_family(0.1)
-    result = copula.cdf(0.5, 0.5).evalf()
+    result = float(copula.cdf(0.5, 0.5))
     assert np.isclose(result, 0.2382726524420907)
 
 
@@ -55,44 +55,39 @@ def test_from_cdf_with_gumbel_barnett_different_var_names():
     copula = from_cdf(cdf)
 
     # Test CDF
-    result = copula.cdf(0.5, 0.5).evalf()
+    result = float(copula.cdf(0.5, 0.5))
     assert np.isclose(result, 0.19661242613985133, atol=1e-8)
 
     # Test PDF
-    pdf = copula.pdf(0.5, 0.5).evalf()
+    pdf = float(copula.pdf(0.5, 0.5))
     assert np.isclose(pdf, 1.0328132803599177, atol=1e-8)
 
     # Test conditional distribution 1
     cd1_func = copula.cond_distr_1()
-    cd1 = cd1_func(0.4, 0.3).evalf()
+    cd1 = float(cd1_func(0.4, 0.3))
     assert np.isclose(cd1, 0.27683793816935376, atol=1e-8)
 
     # Test conditional distribution 2
-    cd2 = copula.cond_distr_2(0.4, 0.3).evalf()
+    cd2 = float(copula.cond_distr_2(0.4, 0.3))
     assert np.isclose(cd2, 0.33597451772973175, atol=1e-8)
 
     # Test random variable generation
     sample_data = copula.rvs(3, 42)
     print("Generated sample data:", sample_data)  # Debugging: Print the generated data
 
-    # Values from np.random.default_rng(42) (the sampler no longer seeds
-    # Python's global `random` module); v is the first uniform draw and u
-    # solves C_2(u | v) = t for the second one.
-    expected = np.array(
-        [
-            [0.3243774879, 0.7739560486],
-            [0.5673800135, 0.8585979199],
-            [0.9854438411, 0.0941773479],
-        ]
-    )
-    assert np.allclose(sample_data, expected, atol=1e-8)
+    # Conditional inversion with np.random.default_rng(42): U is the first
+    # uniform draw and V solves C_1(v | u) = w for the second one.
+    rng = np.random.default_rng(42)
+    u, w = rng.random(3), rng.random(3)
+    assert np.allclose(sample_data[:, 0], u)
+    assert np.allclose(copula.cond_distr_1(u, sample_data[:, 1]), w, atol=1e-10)
 
 
 def test_from_cdf_with_gumbel_barnett_different_var_names_and_theta():
     cdf = "x*y*exp(-theta*ln(x)*ln(y))"
     copula_family = from_cdf(cdf)
     copula = copula_family(0.5)
-    result = copula.cdf(0.5, 0.5).evalf()
+    result = float(copula.cdf(0.5, 0.5))
     assert np.isclose(result, 0.19661242613985133)
 
 
@@ -146,7 +141,7 @@ def test_from_cdf_with_alpha_param():
     assert "alpha" in {str(p) for p in copula_family.params}
 
     copula = copula_family(alpha=0.5)
-    result = float(copula.cdf(0.5, 0.5).evalf())
+    result = float(float(copula.cdf(0.5, 0.5)))
     # Same numeric as theta=0.5 case
     assert np.isclose(result, 0.19661242613985133, atol=1e-12)
 

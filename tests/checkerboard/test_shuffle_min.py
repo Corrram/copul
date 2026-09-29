@@ -164,11 +164,9 @@ def test_invalid_arguments():
     with pytest.raises(ValueError, match="2D input must have 2 columns"):
         cop.cond_distr(1, [[0.3, 0.4, 0.5]])
 
-    # Out of bounds
-    with pytest.raises(ValueError, match="u, v must lie in"):
-        cop.cdf(-0.1, 0.5)
-    with pytest.raises(ValueError, match="u, v must lie in"):
-        cop.cdf(0.5, 1.1)
+    # Out of bounds: the public cdf clips to [0, 1] (uniform numerical API)
+    assert cop.cdf(-0.1, 0.5) == 0.0
+    assert cop.cdf(0.5, 1.1) == pytest.approx(0.5)
     with pytest.raises(ValueError, match="u, v must lie in"):
         cop.cond_distr(1, -0.1, 0.5)
     with pytest.raises(ValueError, match="u, v must lie in"):

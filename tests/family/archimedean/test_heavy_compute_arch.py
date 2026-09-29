@@ -32,27 +32,20 @@ def copula():
     return SampleHeavyCopula(1)
 
 
-def test_rvs_basic(copula):
-    """Test basic functionality of rvs method."""
-    # Patch _sample_values to return controlled values
-    with patch.object(copula, "_sample_values", return_value=(0.5, 0.6)):
-        samples = copula.rvs(3)
+def test_rvs_uses_vectorized_sampler():
+    """HeavyComputeArch families (Nelsen 20) sample by vectorized conditional inversion."""
+    from copul.family.archimedean import Nelsen20
 
-        # Check shape and values
-        assert samples.shape == (3, 2)
-        assert np.allclose(samples, np.array([(0.5, 0.6), (0.5, 0.6), (0.5, 0.6)]))
-
-
-def test_rvs_multiple_samples(copula):
-    """Test rvs with multiple different samples."""
-    # Patch _sample_values to return different values each time
-    sample_values = [(0.2, 0.8), (0.4, 0.6), (0.6, 0.4)]
-    with patch.object(copula, "_sample_values", side_effect=sample_values):
-        samples = copula.rvs(3)
-
-        # Check result matches our expected values
-        expected = np.array(sample_values)
-        assert np.allclose(samples, expected)
+    cop = Nelsen20(0.5)
+    samples = cop.rvs(200, random_state=0)
+    assert samples.shape == (200, 2)
+    assert np.all((samples >= 0) & (samples <= 1))
+    assert np.array_equal(samples, cop.rvs(200, random_state=0))
+    # V solves C_1(V | U) = W for the uniforms drawn by the generator
+    rng = np.random.default_rng(0)
+    u, w = rng.random(200), rng.random(200)
+    assert np.allclose(samples[:, 0], u)
+    assert np.allclose(cop.cond_distr_1(u, samples[:, 1]), w, atol=1e-8)
 
 
 def test_sample_values_success(copula):

@@ -109,53 +109,68 @@ class BivClayton(BivArchimedeanCopula):
         cdf = sympy.Max((u ** (-theta) + v ** (-theta) - 1), 0) ** (-1 / theta)
         return cdf
 
-    def rvs(
-        self, n: int = 1, random_state: int | None = None, approximate: bool = False
-    ) -> np.ndarray:
+    def _numeric_callables(self):
+        r"""Closed forms for the numerical API.
+
+        With :math:`s=u^{-\theta}+v^{-\theta}-1`:
+        :math:`C=s_+^{-1/\theta}`,
+        :math:`\partial_1C=(1+u^{\theta}(v^{-\theta}-1))_+^{-1-1/\theta}`,
+        :math:`\log c=\log(1+\theta)-(1+\theta)\log(uv)-(2+1/\theta)\log s`
+        (log-sum-exp for :math:`\log s`), the conditional quantile
+        :math:`v=(1+u^{-\theta}(w^{-\theta/(1+\theta)}-1))^{-1/\theta}` and, for
+        :math:`\theta>0`, Marshall--Olkin sampling with a Gamma(1/θ) frailty.
         """
-        Generate random samples from the Clayton copula using a fast, vectorized algorithm.
+        from copul.family.archimedean import _frailty
 
-        This method overrides the slow, iterative solver from the parent class. It uses a
-        numerically stable, closed-form inverse of the conditional distribution, allowing
-        for thousands of samples to be generated almost instantly.
+        th = float(self.theta)
+        if th == 0:
+            return {}
 
-        Parameters
-        ----------
-        n : int
-            Number of samples to generate.
-        random_state : int, optional
-            Seed for the random number generator for reproducibility.
-        approximate : bool
-            This parameter is ignored as the exact vectorized method is always fast.
+        def cdf(u, v):
+            s = u ** (-th) + v ** (-th) - 1.0
+            return np.where(s > 0, np.maximum(s, 0.0) ** (-1.0 / th), 0.0)
 
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape (n, 2) containing the generated samples.
-        """
-        rng = np.random.default_rng(random_state)
-        w = rng.random((n, 2))
+        def _h(a, b):
+            base = 1.0 + a**th * (b ** (-th) - 1.0)
+            return np.where(base > 0, np.maximum(base, 0.0) ** (-1.0 - 1.0 / th), 0.0)
 
-        theta_val = float(self.theta)
+        def logpdf(u, v):
+            lu, lv = np.log(u), np.log(v)
+            if th > 0:
+                a, b = -th * lu, -th * lv
+                m = np.maximum(a, b)
+                log_s = m + np.log(np.exp(a - m) + np.exp(b - m) - np.exp(-m))
+            else:
+                s = u ** (-th) + v ** (-th) - 1.0
+                log_s = np.where(s > 0, np.log(np.maximum(s, 1e-300)), -np.inf)
+            val = np.log1p(th) - (1.0 + th) * (lu + lv) - (2.0 + 1.0 / th) * log_s
+            if th < 0:
+                val = np.where(np.isfinite(log_s), val, -np.inf)
+            return val
 
-        # Handle special cases for independence and countermonotonicity
-        if np.isclose(theta_val, 0):
-            return w
-        if np.isclose(theta_val, -1):
-            u = w[:, 0]
-            v = 1 - u
-            return np.column_stack((u, v))
+        def pdf(u, v):
+            return np.exp(logpdf(u, v))
 
-        u = w[:, 0]
-        w2 = w[:, 1]
+        def _h_inv(a, w):
+            return (1.0 + a ** (-th) * (w ** (-th / (1.0 + th)) - 1.0)) ** (-1.0 / th)
 
-        # Use the closed-form inverse of the conditional distribution C(v|u) = w2
-        # Formula: v = [u**(-theta) * (w2**(-theta / (theta + 1)) - 1) + 1]**(-1 / theta)
-        term1 = w2 ** (-theta_val / (theta_val + 1)) - 1
-        term2 = u ** (-theta_val)
-        v = (term2 * term1 + 1) ** (-1 / theta_val)
+        out = {
+            "cdf": cdf,
+            "h1": _h,
+            "h2": lambda u, v: _h(v, u),
+            "pdf": pdf,
+            "logpdf": logpdf,
+            "h1_inv": _h_inv,
+            "h2_inv": _h_inv,
+        }
+        if th > 0:
 
-        return np.column_stack((u, v))
+            def rvs(n, rng):
+                frailty = _frailty.gamma_frailty(n, rng, 1.0 / th)
+                return _frailty.marshall_olkin(lambda t: np.exp(-np.log1p(t) / th), frailty, rng)
+
+            out["rvs"] = rvs
+        return out
 
     def cond_distr_1(self, u=None, v=None):
         """
@@ -278,9 +293,11 @@ class BivClayton(BivArchimedeanCopula):
         Returns
         -------
         bool
-            True for θ ≥ 0, False otherwise
+            True for θ > -1 (for -1 < θ < 0 the zero set carries no mass since
+            the generator has infinite slope at 0, Nelsen 2006, Thm. 4.3.3);
+            θ = -1 is the lower Fréchet bound.
         """
-        return self.theta >= 0
+        return self.theta > -1
 
     # ------------------------------------------------------------------
     # Additional dependence measures

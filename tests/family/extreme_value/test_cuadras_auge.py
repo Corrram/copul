@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 import numpy as np
 import pytest
 import sympy as sp
@@ -8,8 +6,6 @@ from copul.exceptions import PropertyUnavailableException
 from copul.family.extreme_value import CuadrasAuge
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
 from copul.family.frechet.upper_frechet import UpperFrechet
-from copul.wrapper.cd1_wrapper import CD1Wrapper
-from copul.wrapper.cdf_wrapper import CDFWrapper
 
 
 @pytest.fixture
@@ -149,28 +145,19 @@ def test_ca_cdf():
     """Test CDF computation"""
     copula = CuadrasAuge(0.3)
 
-    # Mock the SymPyFuncWrapper to avoid actual computation
-    with patch.object(CDFWrapper, "__call__") as mock_call:
-        mock_call.return_value = 0.42  # Mock return value
-
-        # Call CDF
-        result = copula.cdf(0.5, 0.6)
-
-        # Verify it was called with correct params
-        mock_call.assert_called_once_with(0.5, 0.6)
-        assert result == 0.42
+    # numerical evaluation returns a float: C = min(u, v)^d (u v)^(1 - d)
+    result = copula.cdf(0.5, 0.6)
+    assert isinstance(result, float)
+    assert result == pytest.approx(0.5**0.3 * (0.5 * 0.6) ** 0.7, rel=1e-12)
 
 
 def test_ca_cond_distr_1():
     """Test conditional distribution 1"""
     copula = CuadrasAuge(0.3)
 
-    # Test cond_distr_1
-    with patch.object(CD1Wrapper, "__call__") as mock_cd1:
-        mock_cd1.return_value = 0.55  # Mock return value
-        result = copula.cond_distr_1(0.5, 0.6)
-        mock_cd1.assert_called_once_with(0.5, 0.6)
-        assert result == 0.55
+    # for u < v: C = u v^(1 - d), so dC/du = v^(1 - d)
+    result = copula.cond_distr_1(0.5, 0.6)
+    assert result == pytest.approx(0.6**0.7, rel=1e-6)
 
 
 def test_ca_pdf_unavailable():

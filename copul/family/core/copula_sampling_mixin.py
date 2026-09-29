@@ -14,24 +14,42 @@ class CopulaSamplingMixin:
     This class provides methods for sampling from copulas using different techniques.
     """
 
-    def rvs(self, n=1, random_state=None, approximate=False):
+    def rvs(self, n=1, random_state=None, approximate=False, **kwargs):
         """
         Generate random variates from the copula.
+
+        Bivariate copulas are sampled exactly and fully vectorized: with a
+        family-specific algorithm where one is standard (Marshall--Olkin
+        frailty sampling for Archimedean families with a standard Laplace
+        transform, multivariate normal / t sampling for elliptical copulas,
+        closed-form conditional inversion, mixtures of the Fréchet bounds),
+        otherwise by conditional inversion ``V = cond_distr_1_inv(U, W)``
+        with independent uniforms ``U, W``.
 
         Parameters
         ----------
         n : int, optional
             Number of samples to generate (default is 1).
-        random_state : int or None, optional
-            Seed for the random number generator.
+        random_state : int, numpy Generator/RandomState or None, optional
+            Seed or generator; ``None`` uses NumPy's global generator without
+            reseeding it.  No global seed is ever set.
         approximate : bool, optional
-            Whether to use approximate sampling.
+            Sample from a checkerboard approximation instead.
 
         Returns
         -------
         np.ndarray
             An array of shape (n, dim) containing samples from the copula.
         """
+        if kwargs.get("size") is not None:
+            n = kwargs["size"]
+        if not approximate and getattr(self, "dim", None) == 2:
+            from copul.family.core.biv_core_copula import BivCoreCopula
+
+            if isinstance(self, BivCoreCopula):
+                from copul.family.core.numeric_api import sample
+
+                return sample(self, n, random_state)
         sampler = CopulaSampler(self, random_state=random_state)
         return sampler.rvs(n, approximate)
 

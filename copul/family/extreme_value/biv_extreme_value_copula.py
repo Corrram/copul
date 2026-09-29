@@ -329,6 +329,13 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
             # Fallback to parent implementation
             return super().cdf
 
+    def _pickands_cdf_wrapper(self):
+        r"""Symbolic :math:`C(u,v)=(uv)^{A(\log v/\log(uv))}` without simplification."""
+        pk = self.pickands
+        expr = getattr(pk, "func", pk)
+        t_expr = sp.log(self.v) / sp.log(self.u * self.v)
+        return CDFWrapper((self.u * self.v) ** expr.subs(self.t, t_expr))
+
     def cdf_vectorized(self, u, v):
         r"""Vectorized cumulative distribution function.
 
@@ -423,7 +430,7 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
                 # Apply it element-wise to the interior points
                 for idx in np.ndindex(u.shape):
                     if interior_idx[idx]:
-                        result[idx] = float(cdf_func(u[idx], v[idx]).evalf())
+                        result[idx] = float(cdf_func(u[idx], v[idx]))
 
         return result
 
@@ -739,8 +746,14 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         if isinstance(u, (tuple, list)) and v is None:
             u, v = u[0], u[1]
 
-        u_f = float(u) if u is not None else None
-        v_f = float(v) if v is not None else None
+        if u is None or v is None or isinstance(u, sp.Basic) or isinstance(v, sp.Basic):
+            # symbolic (partial) evaluation
+            from copul.wrapper.cd1_wrapper import CD1Wrapper
+
+            return CD1Wrapper(sp.diff(self.cdf().func, self.u))(u, v)
+
+        u_f = float(u)
+        v_f = float(v)
 
         # Boundary cases for ∂C/∂u
         if v_f == 0.0:
@@ -780,8 +793,14 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         if isinstance(u, (tuple, list)) and v is None:
             u, v = u[0], u[1]
 
-        u_f = float(u) if u is not None else None
-        v_f = float(v) if v is not None else None
+        if u is None or v is None or isinstance(u, sp.Basic) or isinstance(v, sp.Basic):
+            # symbolic (partial) evaluation
+            from copul.wrapper.cd2_wrapper import CD2Wrapper
+
+            return CD2Wrapper(sp.diff(self.cdf().func, self.v))(u, v)
+
+        u_f = float(u)
+        v_f = float(v)
 
         # Boundary cases for ∂C/∂v
         if u_f == 0.0:

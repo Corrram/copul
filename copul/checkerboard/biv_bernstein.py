@@ -54,6 +54,9 @@ def _logcomb(n, k):
 
 
 class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
+    #: exact vectorized evaluation methods (passed through by the numeric API)
+    _numeric_native = True
+
     def __init__(self, theta, check_theta=True):
         BernsteinCopula.__init__(self, theta, check_theta)
         BivCoreCopula.__init__(self)

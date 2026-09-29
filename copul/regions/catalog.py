@@ -340,9 +340,7 @@ def rho_nu() -> ExactRegion:
             "arXiv:2609.27634; upper boundary by the V-threshold family, "
             "lower boundary by central symmetry."
         ),
-        source=(
-            "copul/family/other/v_threshold_copula.py"
-        ),
+        source=("copul/family/other/v_threshold_copula.py"),
         boundary_family={"upper": _rho_nu_upper},
         status="preprint",
         notes=(
@@ -371,9 +369,7 @@ def xi_footrule_si() -> ExactRegion:
             "and Spearman's footrule, J. Comput. Appl. Math. (2026); "
             "xi <= psi <= sqrt(xi) for SI copulas."
         ),
-        source=(
-            "copul/schur_order/bounds_from_xi.py (psi_bounds_from_xi, cls='SI')"
-        ),
+        source=("copul/schur_order/bounds_from_xi.py (psi_bounds_from_xi, cls='SI')"),
         boundary_family={"upper": _frechet_sqrt},
         copula_class="si",
         status="published",

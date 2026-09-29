@@ -204,6 +204,11 @@ class VThresholdCopula(BivCopula):
 
     # (Optional) expose a “no symbolic PDF” like in Frechet
     @property
+    def is_absolutely_continuous(self) -> bool:
+        """The copula has singular components."""
+        return False
+
+    @property
     def pdf(self):
         raise PropertyUnavailableException(
             "This copula has singular components; no purely absolutely-continuous PDF."

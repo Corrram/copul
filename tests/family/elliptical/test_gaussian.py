@@ -1,12 +1,9 @@
-from unittest.mock import patch
-
 import numpy as np
 import pytest
 import sympy
 
 from copul.family.elliptical.gaussian import Gaussian
 from copul.family.other import BivIndependenceCopula, LowerFrechet, UpperFrechet
-from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 
 
 @pytest.fixture
@@ -44,14 +41,14 @@ def test_gaussian_rvs():
 def test_gaussian_cdf():
     gaussian_family = Gaussian()
     cop = gaussian_family(0.5)
-    assert np.isclose(cop.cdf(0.5, 0.5).evalf(), 1 / 3)
+    assert np.isclose(float(cop.cdf(0.5, 0.5)), 1 / 3)
 
 
 def test_gaussian_cd1():
     gaussian_family = Gaussian()
     cop = gaussian_family(0.5)
     cdf = cop.cond_distr_1(0.3, 0.4)
-    assert np.isclose(cdf.evalf(), 0.504078212489690)
+    assert np.isclose(cdf, 0.504078212489690)
 
 
 @pytest.mark.instable
@@ -122,31 +119,25 @@ def test_gaussian_cond_distr_2():
     cop = Gaussian(0.5)
 
     # Test edge cases
-    assert np.isclose(cop.cond_distr_2(0, 0.5).evalf(), 0)
-    assert np.isclose(cop.cond_distr_2(1, 0.5).evalf(), 1)
+    assert np.isclose(float(cop.cond_distr_2(0, 0.5)), 0)
+    assert np.isclose(float(cop.cond_distr_2(1, 0.5)), 1)
 
     # Test regular case
     cdf = cop.cond_distr_2(0.4, 0.3)
     # Expected value based on the conditional distribution formula
     # Value may need adjustment if implementation details change
     expected_value = 0.504078212489690  # Same as cond_distr_1 with args swapped
-    assert np.isclose(cdf.evalf(), expected_value)
+    assert np.isclose(cdf, expected_value)
 
 
 def test_gaussian_pdf():
-    """Test PDF calculation."""
+    """Test PDF calculation (numerical evaluation returns a float)."""
+    from statsmodels.distributions.copula.elliptical import GaussianCopula
+
     cop = Gaussian(0.5)
-
-    # Mock the PDF calculation from statsmodels to isolate the test
-    with patch("statsmodels.distributions.copula.elliptical.GaussianCopula.pdf") as mock_pdf:
-        mock_pdf.return_value = 1.25  # Arbitrary test value
-
-        # Evaluate the PDF at a specific point
-        result = cop.pdf(0.3, 0.7)
-
-        # Check that the wrapper was called with correct arguments
-        mock_pdf.assert_called_once_with([0.3, 0.7])
-        assert isinstance(result, SymPyFuncWrapper)
+    result = cop.pdf(0.3, 0.7)
+    assert isinstance(result, float)
+    assert np.isclose(result, GaussianCopula(0.5).pdf([0.3, 0.7]))
 
 
 def test_gaussian_rho():
@@ -240,7 +231,7 @@ def test_gaussian_cdf_vectorized_basic(gaussian_copula):
     # Calculate expected results using scalar CDF
     expected_results = np.array(
         [
-            float(gaussian_copula.cdf(u=u_values[i], v=v_values[i]).evalf())
+            float(float(gaussian_copula.cdf(u=u_values[i], v=v_values[i])))
             for i in range(len(u_values))
         ]
     )
@@ -262,7 +253,7 @@ def test_gaussian_cdf_vectorized_broadcasting(gaussian_copula):
 
     # Calculate expected results using scalar CDF
     expected_results = np.array(
-        [float(gaussian_copula.cdf(u=u_scalar, v=v).evalf()) for v in v_array]
+        [float(float(gaussian_copula.cdf(u=u_scalar, v=v))) for v in v_array]
     )
 
     # Calculate results using vectorized CDF
@@ -277,7 +268,7 @@ def test_gaussian_cdf_vectorized_broadcasting(gaussian_copula):
 
     # Calculate expected results using scalar CDF
     expected_results = np.array(
-        [float(gaussian_copula.cdf(u=u, v=v_scalar).evalf()) for u in u_array]
+        [float(float(gaussian_copula.cdf(u=u, v=v_scalar))) for u in u_array]
     )
 
     # Calculate results using vectorized CDF
@@ -300,7 +291,7 @@ def test_gaussian_cdf_vectorized_grid(gaussian_copula):
     expected_results = np.zeros_like(U)
     for i in range(U.shape[0]):
         for j in range(U.shape[1]):
-            expected_results[i, j] = float(gaussian_copula.cdf(u=U[i, j], v=V[i, j]).evalf())
+            expected_results[i, j] = float(float(gaussian_copula.cdf(u=U[i, j], v=V[i, j])))
 
     # Calculate results using vectorized CDF
     actual_results = gaussian_copula.cdf_vectorized(U, V)
@@ -326,7 +317,7 @@ def test_gaussian_cdf_vectorized_boundary_values(gaussian_copula):
     # C(1,v) = v for all v
     # C(u,1) = u for all u
     # For the (0.5, 0.5) case, we use the actual CDF value
-    expected = np.array([0, 0, 0, 1, float(gaussian_copula.cdf(u=0.5, v=0.5).evalf())])
+    expected = np.array([0, 0, 0, 1, float(float(gaussian_copula.cdf(u=0.5, v=0.5)))])
 
     # Check that results match
     np.testing.assert_allclose(results, expected, rtol=1e-3)
@@ -358,10 +349,7 @@ def test_gaussian_cdf_vectorized_performance(gaussian_copula):
     # Time scalar evaluation
     start_scalar = time.time()
     scalar_results = np.array(
-        [
-            float(gaussian_copula.cdf(u=u_large[i], v=v_large[i]).evalf())
-            for i in range(len(u_large))
-        ]
+        [float(float(gaussian_copula.cdf(u=u_large[i], v=v_large[i]))) for i in range(len(u_large))]
     )
     scalar_time = time.time() - start_scalar
 

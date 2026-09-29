@@ -69,7 +69,15 @@ class Mardia(BivCopula):
 
     @property
     def is_absolutely_continuous(self) -> bool:
-        return self.theta == 0 or self.theta == -1
+        # theta = -1 is the lower Frechet bound W (singular)
+        return self.theta == 0
+
+    def _numeric_callables(self):
+        """Closed forms and exact sampling of the Frechet-bound mixture."""
+        from copul.family.frechet.frechet import fr_mixture_callables
+
+        th = float(self.theta)
+        return fr_mixture_callables(th**2 * (1 + th) / 2, th**2 * (1 - th) / 2)
 
     @property
     def cdf(self):
@@ -87,9 +95,8 @@ class Mardia(BivCopula):
 
         # Handle special cases
         if theta == -1:
-            # For theta = -1, the formula simplifies to (u*v + max(u+v-1,0))/2
-            cdf = (self.u * self.v + frechet_lower) / 2
-            return SymPyFuncWrapper(cdf)
+            # For theta = -1 the weights are (0, 0, 1): the lower Frechet bound
+            return SymPyFuncWrapper(frechet_lower)
 
         if theta == 0:
             # For theta = 0, it's the independence copula

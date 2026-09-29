@@ -74,12 +74,12 @@ def test_is_symmetric(copula):
 
 def test_is_absolutely_continuous():
     """Test the absolutely continuous property."""
-    # Only absolutely continuous when theta=0 or theta=-1
+    # Only absolutely continuous when theta=0 (theta=-1 is the singular bound W)
     copula1 = Mardia(theta=0)
     assert copula1.is_absolutely_continuous is True
 
     copula2 = Mardia(theta=-1)
-    assert copula2.is_absolutely_continuous is True
+    assert copula2.is_absolutely_continuous is False
 
     # Not absolutely continuous otherwise
     copula3 = Mardia(theta=0.5)
@@ -164,12 +164,12 @@ def test_special_cases():
     cdf_val = float(upper.cdf(u=u, v=v))
     assert abs(cdf_val - min(u, v)) < 1e-10, f"C({u},{v}) should be {min(u, v)} for theta=1"
 
-    # Lower Fréchet bound: not achievable with Mardia in general
-    # But for theta = -1, it's a mixture
+    # Lower Fréchet bound: theta = -1 gives the weights (0, 0, 1), i.e. W
     lower = Mardia(theta=-1)
-    cdf_val = float(lower.cdf(u=u, v=v))
-    expected = (u * v + max(u + v - 1, 0)) / 2
-    assert abs(cdf_val - expected) < 1e-10, f"C({u},{v}) incorrect for theta=-1"
+    for u, v in [(0.3, 0.7), (0.6, 0.8)]:
+        expected = max(u + v - 1, 0)
+        assert abs(float(lower.cdf(u=u, v=v)) - expected) < 1e-10
+        assert abs(float(lower.cdf().func.subs({lower.u: u, lower.v: v})) - expected) < 1e-10
 
 
 def test_pdf_not_available(copula):

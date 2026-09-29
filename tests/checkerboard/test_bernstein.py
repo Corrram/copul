@@ -277,20 +277,18 @@ def test_pdf_2d_independence_integrates_to_one():
     assert np.isclose(val, 1.0, atol=1e-2), f"Integral of PDF should be ~1. Got {val} (err={err})."
 
 
-def test_pdf_raises_for_out_of_bounds():
+def test_pdf_vanishes_out_of_bounds():
     """
-    PDF should raise ValueError if input is out of [0,1].
+    The density vanishes outside the unit square (uniform numerical API).
     """
     theta = np.array([[0.25, 0.25], [0.25, 0.25]])
     cop = BernsteinCopula(theta)
-    with pytest.raises(ValueError):
-        _ = cop.pdf([-0.1, 0.5])
-    with pytest.raises(ValueError):
-        _ = cop.pdf([1.1, 0.5])
+    assert cop.pdf([-0.1, 0.5]) == 0.0
+    assert cop.pdf([1.1, 0.5]) == 0.0
 
     # Similarly for vectorized
-    with pytest.raises(ValueError):
-        _ = cop.pdf([[0.5, 0.5], [2.0, -1.0]])
+    out = cop.pdf([[0.5, 0.5], [2.0, -1.0]])
+    assert out[1] == 0.0 and out[0] > 0
 
 
 # ------------------------------------------------------------------------------

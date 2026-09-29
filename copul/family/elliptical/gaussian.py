@@ -2,7 +2,6 @@ import numpy as np
 import sympy as sp
 from scipy.stats import norm
 
-from copul.copula_sampler import CopulaSampler
 from copul.family.elliptical.elliptical_copula import EllipticalCopula
 from copul.family.elliptical.multivar_gaussian import MultivariateGaussian
 from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
@@ -110,42 +109,6 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
 
         return super().__call__(**kwargs)
 
-    def rvs(self, n=1, approximate=False, random_state=None, **kwargs):
-        r"""
-        Generate random samples from the Gaussian copula.
-
-        For the bivariate case, a fast implementation from ``statsmodels`` is used.
-
-        Parameters
-        ----------
-        n : int, default 1
-            Number of samples to generate.
-        approximate : bool, default False
-            If ``True``, use the project’s generic approximating sampler.
-        random_state : int or numpy.random.Generator, optional
-            Seed or generator for reproducibility.
-        **kwargs
-            Passed to the multivariate sampler when ``dim > 2``.
-
-        Returns
-        -------
-        numpy.ndarray
-            Array of shape :math:`(n,2)` with samples on :math:`[0,1]^2`.
-        """
-        if approximate:
-            sampler = CopulaSampler(self, random_state=random_state)
-            return sampler.rvs(n, approximate)
-        from statsmodels.distributions.copula.elliptical import (
-            GaussianCopula as StatsGaussianCopula,
-        )
-
-        # For bivariate case, we can use the statsmodels implementation
-        if self.dim == 2:
-            return StatsGaussianCopula(float(self.rho)).rvs(n)
-        else:
-            # Otherwise use the multivariate implementation
-            return super().rvs(n, **kwargs)
-
     @property
     def cdf(self):
         """
@@ -178,6 +141,13 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
             # Otherwise use the multivariate implementation
             return super().cdf
 
+    def rvs(self, n=1, random_state=None, approximate=False, **kwargs):
+        """Exact samples ``(Phi(Z_1), Phi(Z_2))`` with correlated normals, see
+        :meth:`copul.family.core.copula_sampling_mixin.CopulaSamplingMixin.rvs`."""
+        from copul.family.core.copula_sampling_mixin import CopulaSamplingMixin
+
+        return CopulaSamplingMixin.rvs(self, n, random_state, approximate, **kwargs)
+
     def _numeric_callables(self):
         r"""Vectorized ``cdf``/``h1``/``h2``/``pdf`` for the measures engine.
 
@@ -209,13 +179,39 @@ class Gaussian(MultivariateGaussian, EllipticalCopula):
         def h2(u, v):
             return ndtr((ndtri(u) - r * ndtri(v)) / s)
 
-        def pdf(u, v):
+        log_s = np.log(s)
+
+        def logpdf(u, v):
             x = ndtri(u)
             y = ndtri(v)
             q = (r * r * (x * x + y * y) - 2 * r * x * y) / (2 * (1 - r * r))
-            return np.exp(-q) / s
+            return -q - log_s
 
-        return {"cdf": cdf, "h1": h1, "h2": h2, "pdf": pdf}
+        def pdf(u, v):
+            return np.exp(logpdf(u, v))
+
+        def h1_inv(u, w):
+            # V | U = u  ~  Phi(r x + s Z)
+            return ndtr(r * ndtri(u) + s * ndtri(w))
+
+        def h2_inv(v, w):
+            return ndtr(r * ndtri(v) + s * ndtri(w))
+
+        def rvs(n, rng):
+            z1 = rng.standard_normal(n)
+            z2 = r * z1 + s * rng.standard_normal(n)
+            return np.column_stack([ndtr(z1), ndtr(z2)])
+
+        return {
+            "cdf": cdf,
+            "h1": h1,
+            "h2": h2,
+            "pdf": pdf,
+            "logpdf": logpdf,
+            "h1_inv": h1_inv,
+            "h2_inv": h2_inv,
+            "rvs": rvs,
+        }
 
     def cdf_vectorized(self, u, v):
         r"""

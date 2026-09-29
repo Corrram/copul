@@ -28,7 +28,14 @@ class B11(BivCopula):
 
     @property
     def is_absolutely_continuous(self) -> bool:
-        return self.delta < 1
+        # the min(u, v) component puts mass delta on the diagonal
+        return self.delta == 0
+
+    def _numeric_callables(self):
+        """Closed forms and exact mixture sampling of delta*M + (1-delta)*Pi."""
+        from copul.family.frechet.frechet import fr_mixture_callables
+
+        return fr_mixture_callables(float(self.delta), 0.0)
 
     # Define parameter
     delta = sympy.symbols("delta", nonnegative=True)
@@ -67,14 +74,17 @@ class B11(BivCopula):
         return super().__call__(**kwargs)
 
     @property
+    def _cdf_expr(self):
+        return self.delta * sympy.Min(self.u, self.v) + (1 - self.delta) * self.u * self.v
+
+    @property
     def cdf(self):
         """
         Cumulative distribution function of the copula.
 
         C(u,v) = delta * min(u,v) + (1-delta) * u*v
         """
-        cdf = self.delta * sympy.Min(self.u, self.v) + (1 - self.delta) * self.u * self.v
-        return SymPyFuncWrapper(cdf)
+        return SymPyFuncWrapper(self._cdf_expr)
 
     def spearmans_rho(self, *args, **kwargs):
         """
@@ -89,25 +99,24 @@ class B11(BivCopula):
         """
         Calculate Kendall's tau for the B11 copula.
 
-        For B11, tau = delta/3 * (3 - 2*delta)
+        For the Fréchet mixture delta*M + (1-delta)*Pi, tau = delta*(2 + delta)/3
+        (Nelsen 2006, Example 5.5 with beta = 0).
         """
         self._set_params(args, kwargs)
-        return self.delta / 3 * (3 - 2 * self.delta)
+        return self.delta * (2 + self.delta) / 3
 
-    @property
     def lambda_U(self):
         """
-        Upper tail dependence coefficient.
+        Upper tail dependence coefficient, lambda_U = delta.
 
-        For B11, lambda_U = delta if delta = 1, otherwise 0
+        (1 - 2t + C(t, t)) / (1 - t) = delta + (1 - delta)(1 - t) -> delta.
         """
-        return self.delta if self.delta == 1 else 0
+        return self.delta
 
-    @property
     def lambda_L(self):
         """
-        Lower tail dependence coefficient.
+        Lower tail dependence coefficient, lambda_L = delta.
 
-        For B11, lambda_L = delta if delta = 1, otherwise 0
+        C(t, t) / t = delta + (1 - delta) t -> delta.
         """
-        return self.delta if self.delta == 1 else 0
+        return self.delta

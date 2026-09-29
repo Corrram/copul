@@ -59,32 +59,15 @@ def test_cdf_values():
 
 
 def test_pdf_values():
-    """Test specific PDF values."""
+    """Test specific PDF values: c(u,v) = 2uv / (u+v-uv)^3 (Clayton, theta = 1)."""
     copula = PiOverSigmaMinusPi()
-    test_cases = [
-        (
-            0.5,
-            0.5,
-            3.56,
-        ),  # Exact value at (0.5, 0.5) = 2*(0.5+0.5-0.5*0.5)/(0.5+0.5-0.5*0.5)^3 = 2*0.75/0.75^3
-        (
-            0.3,
-            0.7,
-            3.27,
-        ),  # Exact value at (0.3, 0.7) = 2*(0.3+0.7-0.3*0.7)/(0.3+0.7-0.3*0.7)^3
-    ]
+    test_cases = [(0.5, 0.5, 2 * 0.25 / 0.75**3), (0.3, 0.7, 2 * 0.21 / 0.79**3)]
 
     for u, v, expected in test_cases:
         pdf_val = float(copula.pdf(u=u, v=v))
-        # Calculate the exact expected value to compare with
-        denom = (u + v - u * v) ** 3
-        numer = 2 * (u + v - u * v)
-        expected_exact = numer / denom
-
-        # Compare with our calculated value
-        assert abs(pdf_val - expected_exact) < 1e-10, f"PDF value incorrect at u={u}, v={v}"
-        # Also check that our expected test value is approximately correct
-        assert abs(expected_exact - expected) < 0.1, f"Expected test value is off at u={u}, v={v}"
+        assert abs(pdf_val - expected) < 1e-10, f"PDF value incorrect at u={u}, v={v}"
+        # symbolic density agrees
+        assert abs(float(copula.pdf.func.subs({copula.u: u, copula.v: v})) - expected) < 1e-10
 
 
 def test_conditional_distributions():
@@ -94,8 +77,8 @@ def test_conditional_distributions():
     u, v = 0.5, 0.6
 
     # Expected values
-    expected_cond1 = v / (u + v - u * v) ** 2  # ∂C(u,v)/∂u at (0.5, 0.6)
-    expected_cond2 = u / (u + v - u * v) ** 2  # ∂C(u,v)/∂v at (0.5, 0.6)
+    expected_cond1 = v**2 / (u + v - u * v) ** 2  # ∂C(u,v)/∂u at (0.5, 0.6)
+    expected_cond2 = u**2 / (u + v - u * v) ** 2  # ∂C(u,v)/∂v at (0.5, 0.6)
 
     # Get conditional distributions
     cond1 = float(copula.cond_distr_1(u=u, v=v))
