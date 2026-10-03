@@ -7,6 +7,7 @@ from copul.family.extreme_value.gumbel_hougaard import (
 from copul.family.extreme_value.huesler_reiss import HueslerReiss
 from copul.family.extreme_value.joeev import JoeEV
 from copul.family.extreme_value.marshall_olkin import MarshallOlkin, MarshallOlkinDiag
+from copul.family.extreme_value.numeric_extreme_value import NumericExtremeValueCopula
 from copul.family.extreme_value.t_ev import tEV
 from copul.family.extreme_value.tawn import Tawn
 
@@ -19,6 +20,7 @@ __all__ = [
     "JoeEV",
     "MarshallOlkin",
     "MarshallOlkinDiag",
+    "NumericExtremeValueCopula",
     "Tawn",
     "tEV",
 ]

@@ -20,6 +20,7 @@ from copul.family.archimedean.nelsen19 import Nelsen19
 from copul.family.archimedean.nelsen20 import Nelsen20
 from copul.family.archimedean.nelsen21 import Nelsen21
 from copul.family.archimedean.nelsen22 import Nelsen22
+from copul.family.archimedean.numeric_archimedean import NumericArchimedeanCopula
 
 __all__ = [
     "AliMikhailHaq",
@@ -52,4 +53,5 @@ __all__ = [
     "Nelsen20",
     "Nelsen21",
     "Nelsen22",
+    "NumericArchimedeanCopula",
 ]

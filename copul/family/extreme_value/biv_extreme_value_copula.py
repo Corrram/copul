@@ -942,6 +942,55 @@ class BivExtremeValueCopula(MultivariateExtremeValueCopula, BivCoreCopula):
         """
         return self.spearmans_rho(*args, **kwargs)
 
+    # ------------------------------------------------------------------
+    # extreme-value theory (thin wrappers around copul.theory.extreme_value)
+    # ------------------------------------------------------------------
+
+    def pickands_function(self, t):
+        r"""Vectorised numerical Pickands function :math:`A(t)`.
+
+        See :func:`copul.theory.extreme_value.pickands_function`.
+        """
+        from copul.theory.extreme_value import pickands_function
+
+        return pickands_function(self, t)
+
+    def check_pickands(self, **kwargs):
+        r"""Validity of the Pickands function (convexity and bounds).
+
+        See :func:`copul.theory.extreme_value.check_pickands`.
+        """
+        from copul.theory.extreme_value import check_pickands
+
+        return check_pickands(self, **kwargs)
+
+    def extremal_coefficient(self) -> float:
+        r"""Extremal coefficient :math:`\theta=2A(1/2)` (:math:`C(u,u)=u^\theta`).
+
+        See :func:`copul.theory.extreme_value.extremal_coefficient`.
+        """
+        from copul.theory.extreme_value import extremal_coefficient
+
+        return extremal_coefficient(self)
+
+    def stable_tail_dependence(self, x, y):
+        r"""Stable tail dependence function :math:`\ell(x,y)=(x+y)A(y/(x+y))`.
+
+        See :func:`copul.theory.extreme_value.stable_tail_dependence`.
+        """
+        from copul.theory.extreme_value import stable_tail_dependence
+
+        return stable_tail_dependence(self, x, y)
+
+    def max_stability_defect(self, **kwargs) -> float:
+        r""":math:`\max|C(u^s,v^s)-C(u,v)^s|` on a grid (zero for EV copulas).
+
+        See :func:`copul.theory.extreme_value.max_stability_defect`.
+        """
+        from copul.theory.extreme_value import max_stability_defect
+
+        return max_stability_defect(self, **kwargs)
+
     @property
     def is_ci(self):
         r"""Whether the copula is conditionally increasing.

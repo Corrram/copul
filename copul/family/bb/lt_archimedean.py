@@ -37,6 +37,7 @@ from __future__ import annotations
 import numpy as np
 import sympy as sp
 
+from copul.family.archimedean._theory_mixins import BivArchimedeanTheoryMixin
 from copul.family.constructions._base import _finish, _parse_uv, as_rng
 from copul.family.core.biv_copula import BivCopula
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -63,7 +64,7 @@ def _is_numeric(x) -> bool:
     return True
 
 
-class LTArchimedeanCopula(BivCopula):
+class LTArchimedeanCopula(BivArchimedeanTheoryMixin, BivCopula):
     """Base class of Archimedean copulas with a Laplace-transform generator inverse.
 
     Subclasses define ``params``/``intervals`` (SymPy symbols) and the
@@ -208,6 +209,54 @@ class LTArchimedeanCopula(BivCopula):
             ls = self._ls(u, v, p)
             d = np.exp(self._log_d2psi_ls(ls, *p) + self._log_mdphi(u, *p) + self._log_mdphi(v, *p))
         return np.maximum(np.nan_to_num(d, nan=0.0, posinf=np.inf), 0.0)
+
+    def _archimedean_generator(self):
+        r"""Numeric generator data on the log scale (see
+        :func:`copul.theory.archimedean.archimedean_generator`).
+
+        :math:`\varphi=e^{\log\varphi}`, :math:`\varphi'=-e^{\log(-\varphi')}`,
+        :math:`\varphi/\varphi' = -e^{\log\varphi-\log(-\varphi')}` (no
+        overflow) and :math:`\varphi''=-\psi''(\varphi)/\psi'(\varphi)^3
+        = e^{\log\psi''-3\log(-\psi')}` at :math:`s=\varphi(t)`; the inverse
+        generator is a Laplace transform, so the generator is strict.
+        """
+        from copul.family.archimedean.numeric_archimedean import ArchimedeanGenerator
+
+        if not self._fully_specified():
+            raise ValueError(f"{type(self).__name__} has free parameters.")
+        p = self._pv
+
+        def _t(t):
+            return np.clip(np.asarray(t, dtype=float), 0.0, 1.0)
+
+        def phi(t):
+            with np.errstate(all="ignore"):
+                return np.exp(self._log_phi(_t(t), *p))
+
+        def dphi(t):
+            with np.errstate(all="ignore"):
+                return -np.exp(self._log_mdphi(_t(t), *p))
+
+        def ratio(t):
+            t = _t(t)
+            with np.errstate(all="ignore"):
+                return -np.exp(self._log_phi(t, *p) - self._log_mdphi(t, *p))
+
+        def d2phi(t):
+            t = _t(t)
+            with np.errstate(all="ignore"):
+                ls = self._log_phi(t, *p)
+                return np.exp(self._log_d2psi_ls(ls, *p) - 3.0 * self._log_mdpsi_ls(ls, *p))
+
+        def psi(s):
+            s = np.asarray(s, dtype=float)
+            with np.errstate(all="ignore"):
+                out = self._psi_ls(np.log(np.maximum(s, 0.0)), *p)
+            return np.clip(np.where(s <= 0.0, 1.0, np.nan_to_num(out, nan=0.0)), 0.0, 1.0)
+
+        return ArchimedeanGenerator(
+            phi=phi, dphi=dphi, psi=psi, phi0=np.inf, d2phi=d2phi, ratio=ratio, source="log-scale"
+        )
 
     def _numeric_callables(self):
         """Hook for :func:`copul.measures.backend.numeric_backend`."""

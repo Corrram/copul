@@ -244,3 +244,11 @@ class MultivariateClayton(ArchimedeanCopula):
             Always 0 for Clayton
         """
         return 0
+
+    def to_nd(self):
+        r"""Numerical version: :class:`copul.multivariate.ArchimedeanCopulaND`
+        (Clayton family, same :math:`\theta` and dimension) with vectorized
+        cdf/pdf, exact frailty sampling and multivariate measures."""
+        from copul.multivariate import as_copula_nd
+
+        return as_copula_nd(self)

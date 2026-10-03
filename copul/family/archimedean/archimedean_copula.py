@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 
 import sympy
 
+from copul.family.archimedean._theory_mixins import ArchimedeanGeneratorMixin
 from copul.family.core.copula import Copula
 from copul.wrapper.inv_gen_wrapper import InvGenWrapper
 from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
@@ -10,7 +11,7 @@ from copul.wrapper.sympy_wrapper import SymPyFuncWrapper
 log = logging.getLogger(__name__)
 
 
-class ArchimedeanCopula(Copula, ABC):
+class ArchimedeanCopula(ArchimedeanGeneratorMixin, Copula, ABC):
     """
     General Archimedean Copula base class.
 
@@ -307,6 +308,18 @@ class ArchimedeanCopula(Copula, ABC):
             The minimum value of theta
         """
         return self.theta_interval.closure.inf
+
+    def _archimedean_generator(self):
+        r"""Vectorized numeric generator data (see
+        :func:`copul.theory.archimedean.archimedean_generator`).
+
+        Returns
+        -------
+        copul.family.archimedean.numeric_archimedean.ArchimedeanGenerator
+        """
+        from copul.family.archimedean.numeric_archimedean import generator_from_sympy
+
+        return generator_from_sympy(self)
 
     def compute_gen_max(self):
         """

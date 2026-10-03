@@ -7,6 +7,7 @@ import sympy
 from scipy import optimize
 
 from copul._lazy import plt
+from copul.family.archimedean._theory_mixins import BivArchimedeanTheoryMixin
 from copul.family.archimedean.archimedean_copula import ArchimedeanCopula
 from copul.family.copula_graphs import CopulaGraphs
 from copul.family.core.biv_core_copula import BivCoreCopula
@@ -22,7 +23,7 @@ def _show_if_interactive():
         plt.show()
 
 
-class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
+class BivArchimedeanCopula(BivArchimedeanTheoryMixin, ArchimedeanCopula, BivCoreCopula, ABC):
     """
     Bivariate Archimedean Copula implementation.
 
@@ -139,7 +140,15 @@ class BivArchimedeanCopula(ArchimedeanCopula, BivCoreCopula, ABC):
         hit = self.__dict__.get("_copul_generator_numpy")
         if hit is not None and hit[0] == key:
             return hit[1]
-        funcs = (self.generator.numpy_func(), self.inv_generator.numpy_func())
+        try:
+            # validated generator / pseudo-inverse with exact support handling
+            # (the wrapper's numpy functions snap values within np.isclose
+            # tolerances of 0 and phi(0), which spoils the cdf near the zero
+            # curve and near (1, 1))
+            gen = self._archimedean_generator()
+            funcs = (gen.phi, gen.psi)
+        except Exception:
+            funcs = (self.generator.numpy_func(), self.inv_generator.numpy_func())
         self.__dict__["_copul_generator_numpy"] = (key, funcs)
         return funcs
 
