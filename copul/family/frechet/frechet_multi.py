@@ -237,6 +237,14 @@ class MVFrechet(_FrechetMultiMixin, Copula):
             self.intervals = {**self.intervals, "alpha": sp.Interval(0, 1, False, False)}
             self.intervals = {**self.intervals, "beta": sp.Interval(0, 0, False, False)}
 
+    def to_nd(self):
+        r"""Numerical version: :class:`copul.multivariate.MixtureND` of
+        :math:`M_d`, :math:`\Pi_d` (and :math:`W` for :math:`d=2`) with the
+        weights :math:`\alpha`, :math:`1-\alpha-\beta`, :math:`\beta`."""
+        from copul.multivariate import as_copula_nd
+
+        return as_copula_nd(self)
+
 
 if __name__ == "__main__":
     copula = MVFrechet(dimension=3, alpha=0.8)

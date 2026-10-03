@@ -431,6 +431,19 @@ class MultivariateGaussian(MultivariateEllipticalCopula):
 
                 return uniform_samples
 
+    def to_nd(self):
+        r"""Numerical :math:`d`-dimensional version of this copula.
+
+        Returns a :class:`copul.multivariate.GaussianND` with the same
+        correlation matrix (vectorized cdf/pdf/logpdf, exact sampling,
+        margins and multivariate measures); the bivariate
+        :class:`~copul.family.elliptical.gaussian.Gaussian` returns a
+        :class:`copul.multivariate.BivariateCopulaND` view of itself.
+        """
+        from copul.multivariate import as_copula_nd
+
+        return as_copula_nd(self)
+
     def _create_correlation_matrix(self):
         """
         Create a correlation matrix for the multivariate Gaussian copula.

@@ -100,6 +100,13 @@ class IndependenceCopula(Copula, CopulaPlottingMixin):
         product = sp.prod(self.u_symbols)
         return CDFWrapper(product)
 
+    def to_nd(self):
+        """Numerical version: :class:`copul.multivariate.IndependenceND` of the
+        same dimension."""
+        from copul.multivariate import IndependenceND
+
+        return IndependenceND(self.dim)
+
     def cdf_vectorized(self, *args):
         """
         Vectorized implementation of the CDF for the independence copula.
