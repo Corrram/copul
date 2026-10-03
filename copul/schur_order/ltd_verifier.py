@@ -87,10 +87,22 @@ class LTDVerifier:
             return eng.tail_monotonicity(C.matr, C._kernel_signs(), kind)
         return None
 
+    @staticmethod
+    def _engine(C, key):
+        """:func:`copul.theory.dependence.check_property` for fully specified copulas."""
+        from copul.theory.dependence import _is_specified_bivariate, check_property
+
+        if _is_specified_bivariate(C):
+            return bool(check_property(C, key, i=1))
+        return None
+
     def _copula_is_ltd(self, C, grid):
         exact = self._exact(C, "ltd")
         if exact is not None:
             return exact
+        engine = self._engine(C, "LTD")
+        if engine is not None:
+            return engine
         return self._check_monotone_ratio(
             C,
             grid,
@@ -103,6 +115,9 @@ class LTDVerifier:
         exact = self._exact(C, "lti")
         if exact is not None:
             return exact
+        engine = self._engine(C, "LTI")
+        if engine is not None:
+            return engine
         return self._check_monotone_ratio(
             C,
             grid,
@@ -115,6 +130,9 @@ class LTDVerifier:
         exact = self._exact(C, "rti")
         if exact is not None:
             return exact
+        engine = self._engine(C, "RTI")
+        if engine is not None:
+            return engine
         return self._check_monotone_ratio(
             C,
             grid,
@@ -127,6 +145,9 @@ class LTDVerifier:
         exact = self._exact(C, "rtd")
         if exact is not None:
             return exact
+        engine = self._engine(C, "RTD")
+        if engine is not None:
+            return engine
         return self._check_monotone_ratio(
             C,
             grid,

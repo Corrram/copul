@@ -258,6 +258,21 @@ _MEASURE_LIST: list[Measure] = [
         doc="Equals minus the copula entropy; infinite for copulas with a singular component.",
     ),
     Measure(
+        key="zeta1",
+        name="Trutschnig's zeta_1 (D_1 distance to independence)",
+        method_name="trutschnig_zeta",
+        aliases=("zeta_1", "zeta", "trutschnig_zeta", "trutschnig", "d1_dependence"),
+        symbol=r"\zeta_1",
+        formula=r"\zeta_1(C) = 3\,D_1(C,\Pi) = 3\int_0^1\int_0^1 |\partial_1 C(u,v) - v|\,du\,dv",
+        range=(0.0, 1.0),
+        at_M=1.0,
+        at_W=1.0,
+        at_Pi=0.0,
+        needs=("h1",),
+        doc="Trutschnig (2011): zeta_1(C) = 0 iff C = Pi and zeta_1(C) = 1 iff C is "
+        "completely dependent (V a measurable function of U); not symmetric in (u, v).",
+    ),
+    Measure(
         key="lambda_l",
         name="Lower tail dependence coefficient",
         method_name="lambda_L",

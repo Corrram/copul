@@ -55,7 +55,16 @@ class TP2Verifier:
 
         Returns:
             True if the copula is TP2, False otherwise
+
+        Fully specified bivariate copulas are checked by
+        :func:`copul.theory.dependence.check_property` (exact family
+        characterizations or a dense grid check of the density); families
+        with free parameters are scanned over their parameter interval.
         """
+        from copul.theory.dependence import _is_specified_bivariate, check_property
+
+        if _is_specified_bivariate(copula):
+            return bool(check_property(copula, "TP2"))
         result = self.verify_tp2(copula)
         return result.is_tp2
 

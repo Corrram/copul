@@ -11,6 +11,8 @@ Call conventions (all evaluation methods): ``f(u, v)`` with scalars returns a
 
 from __future__ import annotations
 
+import numpy as np
+
 from copul.checkerboard import _biv_engine as eng
 
 
@@ -130,19 +132,32 @@ class BivCheckerboardMixin:
         """Stochastically decreasing w.r.t. conditioning variable ``i`` (exact)."""
         return self.cis_direction(i)[1]
 
-    def is_ltd(self, *args, **kwargs) -> bool:
-        """Left tail decreasing LTD(V|U) (exact)."""
-        return eng.tail_monotonicity(self.matr, self._kernel_signs(), "ltd")
+    def _tail_monotonicity(self, kind: str, i: int = 1) -> bool:
+        P = self.matr
+        S = self._kernel_signs()
+        if i == 2:  # (U|V): the same property of the transposed copula
+            P = np.asarray(P, dtype=float)
+            S = eng._signs(P, S)
+            P, S = P.T, (None if S is None else S.T)
+        elif i != 1:
+            raise ValueError("i must be 1 or 2")
+        return eng.tail_monotonicity(P, S, kind)
 
-    def is_lti(self, *args, **kwargs) -> bool:
-        return eng.tail_monotonicity(self.matr, self._kernel_signs(), "lti")
+    def is_ltd(self, *args, i: int = 1, **kwargs) -> bool:
+        """Left tail decreasing LTD(V|U) (``i=1``) or LTD(U|V) (``i=2``) (exact)."""
+        return self._tail_monotonicity("ltd", i)
 
-    def is_rti(self, *args, **kwargs) -> bool:
-        """Right tail increasing RTI(V|U) (exact)."""
-        return eng.tail_monotonicity(self.matr, self._kernel_signs(), "rti")
+    def is_lti(self, *args, i: int = 1, **kwargs) -> bool:
+        """Left tail increasing LTI(V|U) (``i=1``) or LTI(U|V) (``i=2``) (exact)."""
+        return self._tail_monotonicity("lti", i)
 
-    def is_rtd(self, *args, **kwargs) -> bool:
-        return eng.tail_monotonicity(self.matr, self._kernel_signs(), "rtd")
+    def is_rti(self, *args, i: int = 1, **kwargs) -> bool:
+        """Right tail increasing RTI(V|U) (``i=1``) or RTI(U|V) (``i=2``) (exact)."""
+        return self._tail_monotonicity("rti", i)
+
+    def is_rtd(self, *args, i: int = 1, **kwargs) -> bool:
+        """Right tail decreasing RTD(V|U) (``i=1``) or RTD(U|V) (``i=2``) (exact)."""
+        return self._tail_monotonicity("rtd", i)
 
     def is_pqd(self, *args, tol: float = 1e-12, **kwargs) -> bool:
         """Positive quadrant dependence ``C >= uv`` (exact)."""

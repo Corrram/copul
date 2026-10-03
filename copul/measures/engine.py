@@ -74,6 +74,7 @@ MEASURE_METHODS = (
     "lp_distance",
     "blum_kiefer_rosenblatt",
     "mutual_information",
+    "trutschnig_zeta",
     "lambda_L",
     "lambda_U",
 )
@@ -106,6 +107,7 @@ _METHOD_TO_KEY = {
     "lp_distance": "lp",
     "blum_kiefer_rosenblatt": "bkr",
     "mutual_information": "mutual_information",
+    "trutschnig_zeta": "zeta1",
     "lambda_L": "lambda_l",
     "lambda_U": "lambda_u",
 }

@@ -36,11 +36,25 @@ class CornerSetVerifier:
 
     def is_lcsd(self, copula) -> bool:
         r"""Check whether the copula instance is LCSD (i.e. :math:`C` is TP2)."""
+        engine = self._engine(copula, "LCSD")
+        if engine is not None:
+            return engine
         return self._is_tp2_function(copula, survival=False)
 
     def is_rcsi(self, copula) -> bool:
         r"""Check whether the copula instance is RCSI (i.e. :math:`\bar C` is TP2)."""
+        engine = self._engine(copula, "RCSI")
+        if engine is not None:
+            return engine
         return self._is_tp2_function(copula, survival=True)
+
+    def _engine(self, copula, key):
+        """:func:`copul.theory.dependence.check_property` (exact or refined grid)."""
+        from copul.theory.dependence import _is_specified_bivariate, check_property
+
+        if _is_specified_bivariate(copula):
+            return bool(check_property(copula, key, n_grid=max(int(self.n_grid), 9)))
+        return None
 
     # ------------------------------------------------------------------
     # internals

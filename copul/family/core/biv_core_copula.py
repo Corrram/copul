@@ -11,6 +11,7 @@ import sympy as sp
 from copul._lazy import mcolors, plt
 from copul.family.copula_graphs import CopulaGraphs
 from copul.family.core import numeric_api as _numeric_api
+from copul.family.core.theory_mixin import TheoryMixin
 from copul.family.rank_correlation_plotter import RankCorrelationPlotter
 from copul.family.tp2_verifier import TP2Verifier
 from copul.measures.engine import (
@@ -55,7 +56,7 @@ class _hybridmethod:
         return bound
 
 
-class BivCoreCopula:
+class BivCoreCopula(TheoryMixin):
     """
     Base class for bivariate copulas using symbolic expressions.
 
@@ -949,109 +950,194 @@ class BivCoreCopula:
         expr = (1 - self.cdf(v=self.u).func) / (1 - self.u)
         return sp.simplify(2 - sp.limit(expr, self.u, 1, dir="-"))
 
-    def is_tp2(self, range_min=None, range_max=None):
-        """
-        Check if the copula satisfies the TP2 (Total Positivity of order 2) property.
+    # ------------------------------------------------------------------
+    # Dependence concepts (engine: copul.theory.dependence)
+    # ------------------------------------------------------------------
+
+    def dependence_property(self, prop, i=None, **kwargs):
+        r"""Check a dependence property and return the full result.
 
         Parameters
         ----------
-        range_min : numeric, optional
-            Minimum value of the range for testing (default is None).
-        range_max : numeric, optional
-            Maximum value of the range for testing (default is None).
+        prop : str
+            ``"PQD"``, ``"NQD"``, ``"LTD"``, ``"LTI"``, ``"RTI"``, ``"RTD"``,
+            ``"SI"``, ``"SD"``, ``"LCSD"``, ``"RCSI"``, ``"TP2"``, ``"RR2"``
+            or an alias, see :func:`copul.theory.dependence.resolve_property`.
+        i : {1, 2}, optional
+            Conditioning variable of conditioned concepts (default 1).
+        **kwargs
+            ``method``, ``n_grid``, ``tol``, ``refine``, see
+            :func:`copul.theory.dependence.check_property`.
+
+        Returns
+        -------
+        copul.theory.dependence.PropertyResult
+            Truthy iff the property holds; records the method (``"exact"``,
+            ``"symbolic"`` or ``"grid"``), the worst violation and its
+            location.
+        """
+        from copul.theory.dependence import check_property
+
+        return check_property(self, prop, i=i, **kwargs)
+
+    def dependence_profile(self, properties=None, **kwargs):
+        r"""All dependence properties of the copula with an implication check.
+
+        See :func:`copul.theory.dependence.dependence_profile`.
+
+        Returns
+        -------
+        copul.theory.dependence.DependenceProfile
+        """
+        from copul.theory.dependence import dependence_profile
+
+        return dependence_profile(self, properties, **kwargs)
+
+    def _dependence_check(self, prop, i=None, n_grid=None, tol=None) -> bool:
+        """Boolean dependence check; families with free parameters are scanned."""
+        if self._has_free_symbols():
+            return self._dependence_family_check(prop, i or 1)
+        return bool(self.dependence_property(prop, i=i, n_grid=n_grid, tol=tol))
+
+    def _dependence_family_check(self, prop, i) -> bool:
+        """Scan the parameter range (legacy verifiers) for copulas with free parameters."""
+        from copul.schur_order.ltd_verifier import LTDVerifier
+        from copul.schur_order.plod_verifier import PLODVerifier
+        from copul.theory.dependence import resolve_property
+
+        key = resolve_property(prop, i)
+        concept = key.split("(")[0]
+        if concept in ("LTD", "LTI", "RTI", "RTD") and key.endswith("(V|U)"):
+            return bool(getattr(LTDVerifier(), f"is_{concept.lower()}")(self))
+        if key == "PQD":
+            return bool(PLODVerifier().is_plod(self))
+        if concept in ("SI", "SD"):
+            si, sd = CISVerifier(1 if key.endswith("(V|U)") else 2).cis_direction(self)
+            return bool(si if concept == "SI" else sd)
+        raise ValueError(
+            f"{type(self).__name__}: checking {key} needs a fully specified copula "
+            f"(free parameters {self.params})."
+        )
+
+    def is_tp2(self, range_min=None, range_max=None):
+        r"""Whether the copula density is totally positive of order 2 (TP2).
+
+        A fully specified copula is checked by
+        :func:`copul.theory.dependence.check_property` (exact family
+        characterizations, otherwise a dense grid check of
+        :math:`c(u_1,v_1)c(u_2,v_2)\ge c(u_1,v_2)c(u_2,v_1)`); for families
+        with free parameters every parameter of a grid of the admissible
+        interval (restricted to ``[range_min, range_max]``) is checked.
+        Copulas without a density are not TP2.
 
         Returns
         -------
         bool
-            True if the copula is TP2, False otherwise.
         """
         return TP2Verifier(range_min, range_max).is_tp2(self)
 
-    def is_cis(self, cond_distr=1):
-        """
-        Check if the copula satisfies the CIS (Conditional Increasing in Sequence) property.
+    def is_rr2(self, n_grid: int | None = None, tol: float | None = None) -> bool:
+        r"""Whether the copula density is reverse regular of order 2 (RR2).
 
-        Parameters
-        ----------
-        cond_distr : int, optional
-            Specifies which conditional distribution to use (default is 1).
+        :math:`c(u_1,v_1)c(u_2,v_2)\le c(u_1,v_2)c(u_2,v_1)` for
+        :math:`u_1\le u_2`, :math:`v_1\le v_2` (negative likelihood ratio
+        dependence; implies SD in both variables).
+        """
+        return self._dependence_check("RR2", None, n_grid, tol)
+
+    def is_cis(self, cond_distr=1):
+        r"""Whether the copula is stochastically increasing (SI, also CI/CIS).
+
+        ``cond_distr=1`` checks that :math:`u\mapsto\partial_1C(u,v)` is
+        nonincreasing for every :math:`v` (:math:`V` stochastically increasing
+        in :math:`U`), ``cond_distr=2`` the same for :math:`\partial_2 C`.
+        Same as :meth:`is_si`.
 
         Returns
         -------
         bool
-            True if the copula is CIS, False otherwise.
         """
         return CISVerifier(cond_distr).is_cis(self)
+
+    def is_si(self, i: int = 1, n_grid: int | None = None, tol: float | None = None) -> bool:
+        r"""Stochastically increasing, SI(V|U) (``i=1``) or SI(U|V) (``i=2``).
+
+        SI(V|U): :math:`P(V\le v\mid U=u)=\partial_1 C(u,v)` is nonincreasing
+        in :math:`u` for every :math:`v`, equivalently :math:`C(\cdot,v)` is
+        concave (Nelsen 2006, Sect. 5.2.3).
+        """
+        return self._dependence_check("SI", i, n_grid, tol)
+
+    def is_sd(self, i: int = 1, n_grid: int | None = None, tol: float | None = None) -> bool:
+        r"""Stochastically decreasing, SD(V|U) (``i=1``) or SD(U|V) (``i=2``).
+
+        :math:`\partial_i C` nondecreasing in the conditioning variable,
+        i.e. :math:`C` convex in it.
+        """
+        return self._dependence_check("SD", i, n_grid, tol)
+
+    def is_cds(self, i: int = 1) -> bool:
+        """Alias of :meth:`is_sd` (conditionally decreasing in sequence)."""
+        return self.is_sd(i)
 
     # ------------------------------------------------------------------
     # Tail monotonicity and corner set monotonicity
     # ------------------------------------------------------------------
 
-    def is_ltd(self, n_grid: int = 40) -> bool:
-        r"""Check whether the copula is left tail decreasing, LTD(V|U).
+    def is_ltd(self, n_grid: int | None = None, *, i: int = 1, tol: float | None = None) -> bool:
+        r"""Left tail decreasing, LTD(V|U) (``i=1``) or LTD(U|V) (``i=2``).
 
-        :math:`C` is LTD(V|U) if :math:`u \mapsto C(u,v)/u` is
-        nonincreasing on :math:`(0,1)` for all :math:`v`. For exchangeable
-        copulas this is equivalent to LTD(U|V).
+        :math:`C` is LTD(V|U) if :math:`u \mapsto P(V\le v\mid U\le u)=C(u,v)/u`
+        is nonincreasing on :math:`(0,1)` for all :math:`v` (Nelsen 2006,
+        Sect. 5.2.2).  For exchangeable copulas LTD(V|U) and LTD(U|V)
+        coincide.
         """
-        from copul.schur_order.ltd_verifier import LTDVerifier
+        return self._dependence_check("LTD", i, n_grid, tol)
 
-        grid = np.linspace(0.001, 0.999, n_grid)
-        return LTDVerifier()._copula_is_ltd(self, grid)
+    def is_lti(self, n_grid: int | None = None, *, i: int = 1, tol: float | None = None) -> bool:
+        r"""Left tail increasing: :math:`u\mapsto C(u,v)/u` nondecreasing (``i=1``)."""
+        return self._dependence_check("LTI", i, n_grid, tol)
 
-    def is_rti(self, n_grid: int = 40) -> bool:
-        r"""Check whether the copula is right tail increasing, RTI(V|U).
+    def is_rti(self, n_grid: int | None = None, *, i: int = 1, tol: float | None = None) -> bool:
+        r"""Right tail increasing, RTI(V|U) (``i=1``) or RTI(U|V) (``i=2``).
 
-        :math:`C` is RTI(V|U) if :math:`u \mapsto (1-u-v+C(u,v))/(1-u)`
-        is nondecreasing on :math:`(0,1)` for all :math:`v`.
+        :math:`C` is RTI(V|U) if
+        :math:`u \mapsto P(V>v\mid U>u)=(1-u-v+C(u,v))/(1-u)` is nondecreasing
+        on :math:`(0,1)` for all :math:`v`.
         """
-        from copul.schur_order.ltd_verifier import LTDVerifier
+        return self._dependence_check("RTI", i, n_grid, tol)
 
-        grid = np.linspace(0.001, 0.999, n_grid)
-        return LTDVerifier()._copula_is_rti(self, grid)
+    def is_rtd(self, n_grid: int | None = None, *, i: int = 1, tol: float | None = None) -> bool:
+        r"""Right tail decreasing: :math:`(1-u-v+C(u,v))/(1-u)` nonincreasing (``i=1``)."""
+        return self._dependence_check("RTD", i, n_grid, tol)
 
-    def is_lcsd(self, n_grid: int = 40) -> bool:
-        r"""Check whether the copula is left corner set decreasing (LCSD).
+    def is_lcsd(self, n_grid: int | None = None, tol: float | None = None) -> bool:
+        r"""Left corner set decreasing (LCSD).
 
         Equivalent to the *function* :math:`C` being TP2, see
         [Nelsen 2006, Cor. 5.2.17].
         """
-        from copul.schur_order.corner_set_verifier import CornerSetVerifier
+        return self._dependence_check("LCSD", None, n_grid, tol)
 
-        return CornerSetVerifier(n_grid).is_lcsd(self)
-
-    def is_rcsi(self, n_grid: int = 40) -> bool:
-        r"""Check whether the copula is right corner set increasing (RCSI).
+    def is_rcsi(self, n_grid: int | None = None, tol: float | None = None) -> bool:
+        r"""Right corner set increasing (RCSI).
 
         Equivalent to the survival function :math:`\bar C` being TP2, see
         [Nelsen 2006, Cor. 5.2.17].
         """
-        from copul.schur_order.corner_set_verifier import CornerSetVerifier
+        return self._dependence_check("RCSI", None, n_grid, tol)
 
-        return CornerSetVerifier(n_grid).is_rcsi(self)
+    def is_pqd(self, n_grid: int | None = None, tol: float | None = None) -> bool:
+        r"""Positive quadrant dependence, :math:`C(u,v)\geq uv` on :math:`[0,1]^2`.
 
-    def is_pqd(self, n_grid: int = 40, tol: float = 1e-12) -> bool:
-        r"""Check whether the copula is positively quadrant dependent (PQD),
-        i.e., :math:`C(u,v)\geq uv` for all :math:`(u,v)\in[0,1]^2`.
-        In the bivariate case, PQD coincides with PLOD."""
-        grid = np.linspace(0.001, 0.999, n_grid)
-        cdf = self.cdf
-        for u in grid:
-            for v in grid:
-                if float(cdf(u=u, v=v)) < u * v - tol:
-                    return False
-        return True
+        In the bivariate case PQD coincides with PLOD (Nelsen 2006,
+        Sect. 5.2.1).
+        """
+        return self._dependence_check("PQD", None, n_grid, tol)
 
-    def is_nqd(self, n_grid: int = 40, tol: float = 1e-12) -> bool:
-        r"""Check whether the copula is negatively quadrant dependent (NQD),
-        i.e., :math:`C(u,v)\leq uv` for all :math:`(u,v)\in[0,1]^2`."""
-        grid = np.linspace(0.001, 0.999, n_grid)
-        cdf = self.cdf
-        for u in grid:
-            for v in grid:
-                if float(cdf(u=u, v=v)) > u * v + tol:
-                    return False
-        return True
+    def is_nqd(self, n_grid: int | None = None, tol: float | None = None) -> bool:
+        r"""Negative quadrant dependence, :math:`C(u,v)\leq uv` on :math:`[0,1]^2`."""
+        return self._dependence_check("NQD", None, n_grid, tol)
 
     def is_mk_tp2(self, n_grid: int = 40, tol: float = 1e-10) -> bool:
         r"""Check whether the copula is MK-TP2, i.e., whether its Markov
@@ -1541,38 +1627,37 @@ class BivCoreCopula:
     # Concordance ordering
     # ------------------------------------------------------------------
 
-    def concordance_order(self, other: BivCoreCopula, n_grid: int = 20, tol: float = 1e-9) -> bool:
+    def concordance_order(
+        self, other: BivCoreCopula, n_grid: int | None = None, tol: float | None = None
+    ) -> bool:
         r"""
-        Numerically check whether *self* is concordance-ordered below *other*.
+        Whether *self* is concordance-ordered below *other*.
 
         Returns ``True`` if :math:`C_1(u,v) \le C_2(u,v)` for all
-        :math:`(u,v)` on a uniform :math:`n\_grid \times n\_grid` grid over
-        :math:`(0.05, 0.95)^2`, i.e. whether
-        :math:`C_1 \preceq_c C_2` in the concordance partial order.
+        :math:`(u,v)`, i.e. :math:`C_1 \preceq_c C_2` in the concordance
+        (PQD) order (Nelsen 2006, Def. 2.8.1).  Uses exact rules where
+        available (Fréchet--Hoeffding bounds, Gaussian and FGM families,
+        independence-kernel checkerboards, comparisons with :math:`\Pi`)
+        and a refined grid check otherwise, see
+        :func:`copul.theory.orders.concordance_order` (which also returns the
+        worst violation and its location).
 
         Parameters
         ----------
         other : BivCoreCopula
             The copula to compare against.
-        n_grid : int
-            Number of evaluation points per axis (default 20).
-        tol : float
-            Numerical tolerance for the inequality (default 1e-9).
+        n_grid : int, optional
+            Grid points per axis of the numerical check (default 65).
+        tol : float, optional
+            Numerical tolerance for the inequality (default 1e-10).
 
         Returns
         -------
         bool
-            ``True`` if *self* ≤_c *other* on the grid, ``False`` otherwise.
         """
-        grid = np.linspace(0.05, 0.95, n_grid)
-        for u in grid:
-            for v in grid:
-                u_f, v_f = float(u), float(v)
-                c1 = float(self.cdf(u=u_f, v=v_f))
-                c2 = float(other.cdf(u=u_f, v=v_f))
-                if c1 > c2 + tol:
-                    return False
-        return True
+        from copul.theory.orders import concordance_order
+
+        return bool(concordance_order(self, other, n_grid=n_grid, tol=tol))
 
     # ==================================================================
     # Schweizer–Wolff sigma
@@ -1741,6 +1826,36 @@ class BivCoreCopula:
         """
         self._set_params(args, kwargs)
         return float(_compute_measures(self, "kappa", method="numeric"))
+
+    def trutschnig_zeta(self, *args, **kwargs):
+        r"""
+        Trutschnig's dependence measure :math:`\zeta_1`.
+
+        .. math::
+
+           \zeta_1(C) = 3\,D_1(C, \Pi)
+             = 3\int_0^1\!\!\int_0^1 \bigl|\partial_1 C(u,v) - v\bigr|\,du\,dv,
+
+        where :math:`D_1` is the :math:`\partial`-metric of Trutschnig (2011)
+        (see :func:`copul.theory.distances.copula_distance`).
+        :math:`\zeta_1(C)\in[0,1]`, :math:`\zeta_1(C)=0` iff :math:`C=\Pi`
+        and :math:`\zeta_1(C)=1` iff :math:`C` is completely dependent
+        (:math:`V` is a measurable function of :math:`U`), e.g. for
+        :math:`M`, :math:`W` and every shuffle of :math:`M`.  Not symmetric:
+        :math:`\zeta_1(C^\top)` measures the dependence of :math:`U` on
+        :math:`V`.
+
+        Exact for checkerboard copulas, shuffles of :math:`M` and the
+        Fréchet bounds, otherwise evaluated by adaptive quadrature; requires a
+        fully specified copula.
+
+        References
+        ----------
+        Trutschnig, W. (2011). On a strong metric on the space of copulas and
+        its induced dependence measure. *J. Math. Anal. Appl.* 384, 690--705.
+        """
+        self._set_params(args, kwargs)
+        return float(_compute_measures(self, "zeta1", method="numeric"))
 
     # Normalisation constants k(p) so that the measure equals 1 at the
     # Fréchet upper bound M(u,v)=min(u,v); k(p) = (p+1) / (2 B(p+1, p+2)).

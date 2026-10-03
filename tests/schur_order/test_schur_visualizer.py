@@ -20,8 +20,10 @@ class TestSchurVisualizer:
 
     def setup_method(self):
         """Setup test fixtures."""
-        # Create a simple copula for testing
-        self.copula = archimedean.Nelsen2
+        # A throw-away subclass: several tests replace attributes such as
+        # ``cond_distr_1`` or ``params`` on the class, which must not leak
+        # into ``Nelsen2`` itself for the rest of the test session.
+        self.copula = type("Nelsen2ForTest", (archimedean.Nelsen2,), {})
         self.v = 0.5
         self.x_vals = np.linspace(0, 1, 10)  # Using fewer points for faster tests
         self.visualizer = SchurVisualizer(self.copula, v=self.v, x_vals=self.x_vals)

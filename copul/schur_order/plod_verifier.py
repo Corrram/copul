@@ -101,6 +101,10 @@ class PLODVerifier:
         if isinstance(C, BivCheckerboardMixin):
             # exact check, see copul.checkerboard._biv_engine.quadrant_dependence
             return C.is_pqd(tol=tol)
+        from copul.theory.dependence import _is_specified_bivariate, check_property
+
+        if _is_specified_bivariate(C):
+            return bool(check_property(C, "PQD"))
         try:
             C_expr = C.cdf.func  # SymPy expression
             u_sym, v_sym = C.u, C.v

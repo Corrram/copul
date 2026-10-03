@@ -1038,18 +1038,52 @@ def _family_pdf(copula, fd):
     return None
 
 
+def _zeta1_special(copula):
+    r"""Exact :math:`\zeta_1` of checkerboards, shuffles of M and the Fréchet bounds.
+
+    Completely dependent copulas (:math:`M`, :math:`W`, straight shuffles of
+    :math:`M`) have :math:`\zeta_1 = 1` and :math:`\Pi` has
+    :math:`\zeta_1=0` (Trutschnig 2011); checkerboards use
+    :func:`copul.measures.numeric.zeta1_checkerboard`.
+    """
+    try:
+        from copul.checkerboard._biv_mixin import BivCheckerboardMixin
+        from copul.checkerboard.shuffle_min import ShuffleOfMin
+        from copul.family.frechet.biv_independence_copula import BivIndependenceCopula
+        from copul.family.frechet.lower_frechet import LowerFrechet
+        from copul.family.frechet.upper_frechet import UpperFrechet
+        from copul.family.other.independence_copula import IndependenceCopula
+    except Exception:  # pragma: no cover
+        return None
+    if isinstance(copula, (UpperFrechet, LowerFrechet, ShuffleOfMin)):
+        return 1.0, 0.0, "complete_dependence"
+    if isinstance(copula, (BivIndependenceCopula, IndependenceCopula)):
+        return 0.0, 0.0, "independence"
+    if isinstance(copula, BivCheckerboardMixin):
+        from copul.checkerboard import _biv_engine as eng
+        from copul.measures.numeric import zeta1_checkerboard
+
+        P = np.asarray(copula.matr, dtype=float)
+        return zeta1_checkerboard(P, eng._signs(P, copula._kernel_signs())), 0.0, "checkerboard"
+    return None
+
+
 def special_numeric(copula, key, rtol, atol):
     r"""One-dimensional representations for specific families, or ``None``.
 
     * Archimedean, Kendall's tau: :math:`1 + 4\int_0^1 \varphi/\varphi'\,dt`;
     * extreme-value, Spearman's rho: :math:`12\int_0^1 (1+A)^{-2}dt - 3`;
     * extreme-value, Kendall's tau (integrated by parts, valid for kinked A):
-      :math:`\int_0^1 A'(t)\,[t(1-t)A'(t) - (1-2t)A(t)]/A(t)^2\,dt`.
+      :math:`\int_0^1 A'(t)\,[t(1-t)A'(t) - (1-2t)A(t)]/A(t)^2\,dt`;
+    * Trutschnig's :math:`\zeta_1`: exact values for checkerboards, shuffles
+      of :math:`M`, the Fréchet bounds and independence.
 
     Returns ``(value, error, source)``.
     """
     from copul.measures.quadrature import integrate_1d
 
+    if key == "zeta1":
+        return _zeta1_special(copula)
     if key not in ("tau", "rho"):
         return None
     try:

@@ -146,6 +146,14 @@ class CISVerifier:
         exact = self._exact_direction(my_copul)
         if exact is not None:
             return exact
+        from copul.theory.dependence import _is_specified_bivariate, check_property
+
+        if _is_specified_bivariate(my_copul):
+            i = self.cond_distr
+            return (
+                bool(check_property(my_copul, "SI", i=i)),
+                bool(check_property(my_copul, "SD", i=i)),
+            )
         H = self._cond_grid(my_copul, points)
         d = np.diff(H, axis=0)  # along the conditioning variable
         is_ci = bool(np.all(d <= tol))
