@@ -11,7 +11,10 @@ It accompanies the `Dependence properties of bivariate copula families <https://
 
 Since version 0.4, copul also provides a numerical engine for dependence measures with a uniform
 ``method=`` switch (see :doc:`measures`), a registry of exact regions between measures, exact
-optimisation over checkerboard copulas and a counterexample search (see :doc:`research_workflows`).
+optimisation over checkerboard copulas and a counterexample search (see :doc:`research_workflows`),
+and a copula theory toolkit -- Sklar's theorem, Archimedean and extreme-value theory, dependence
+concepts, Markov operators, bounds, quasi-copulas, symmetry and multivariate copulas (see
+:doc:`copula_theory`).
 Install with ``pip install copul`` (or ``pip install "copul[optim]"`` for :mod:`copul.optim`).
 
 .. - **Archimedean** copula families: Clayton, Ali-Mikhail-Haq, Gumbel-Hougaard, etc.
@@ -278,6 +281,7 @@ Extreme-value copulas are characterized by a pickands dependence function, which
    custom_copulas
    approximating_copulas
    research_workflows
+   copula_theory
    modules
 
 Indices and tables

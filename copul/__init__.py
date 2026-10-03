@@ -31,7 +31,7 @@ import logging
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _pkg_version
 
-from copul import measures, optim, regions, search, stats
+from copul import measures, multivariate, optim, regions, search, sklar, stats, theory
 from copul.chatterjee import xi_ncalculate
 from copul.checkerboard.bernstein import Bernstein, BernsteinCopula
 from copul.checkerboard.biv_bernstein import BivBernstein, BivBernsteinCopula
@@ -130,6 +130,19 @@ from copul.family.other.xi_rho_boundary_copula import XiRhoBoundaryCopula
 from copul.family_list import Families, approximations, copulas, families
 from copul.measures import compute as compute_measures
 from copul.measures import from_measure, measure_curve
+from copul.multivariate import (
+    AliMikhailHaqND,
+    ArchimedeanCopulaND,
+    ClaytonND,
+    CopulaND,
+    FrankND,
+    GaussianND,
+    GumbelND,
+    IndependenceND,
+    JoeND,
+    StudentTND,
+    UpperFrechetND,
+)
 from copul.regions import get as get_region
 from copul.schur_order.bounds_from_xi import bounds_from_xi
 from copul.schur_order.cis_rearranger import CISRearranger
@@ -138,8 +151,10 @@ from copul.schur_order.corner_set_verifier import CornerSetVerifier
 from copul.schur_order.ltd_verifier import LTDVerifier
 from copul.schur_order.plod_verifier import PLODVerifier
 from copul.search import check_inequality, find_counterexample, random_checkerboards
+from copul.sklar import JointDistribution, copula_from_joint
 from copul.star_product import markov_product
 from copul.stats import EmpiricalCopula, estimate, fit, gof_test, pseudo_obs, select
+from copul.theory import copula_distance, dependence_profile, kendall_distribution
 
 try:
     __version__ = _pkg_version("copul")
@@ -161,6 +176,8 @@ __all__ = [
     "BB9",
     "BB10",
     "AliMikhailHaq",
+    "AliMikhailHaqND",
+    "ArchimedeanCopulaND",
     "Bernstein",
     "BernsteinCopula",
     "BivBernstein",
@@ -179,6 +196,8 @@ __all__ = [
     "CheckPi",
     "Checkerboarder",
     "Clayton",
+    "ClaytonND",
+    "CopulaND",
     "CornerSetVerifier",
     "CuadrasAuge",
     "DiagonalBandCopula",
@@ -187,17 +206,23 @@ __all__ = [
     "Families",
     "FarlieGumbelMorgenstern",
     "Frank",
+    "FrankND",
     "Frechet",
     "Galambos",
     "Gaussian",
+    "GaussianND",
     "GenestGhoudi",
     "GumbelBarnett",
     "GumbelHougaard",
     "GumbelHougaardEV",
+    "GumbelND",
     "HueslerReiss",
     "IndependenceCopula",
+    "IndependenceND",
     "Joe",
     "JoeEV",
+    "JoeND",
+    "JointDistribution",
     "LTDVerifier",
     "Laplace",
     "LowerFrechet",
@@ -231,8 +256,10 @@ __all__ = [
     "Raftery",
     "ShuffleOfMin",
     "StudentT",
+    "StudentTND",
     "Tawn",
     "UpperFrechet",
+    "UpperFrechetND",
     "VThresholdCopula",
     "XiBetaBoundaryCopula",
     "XiNuBoundaryCopula",
@@ -243,7 +270,10 @@ __all__ = [
     "bounds_from_xi",
     "check_inequality",
     "compute_measures",
+    "copula_distance",
+    "copula_from_joint",
     "copulas",
+    "dependence_profile",
     "estimate",
     "families",
     "find_counterexample",
@@ -261,11 +291,13 @@ __all__ = [
     "get_region",
     "gluing",
     "gof_test",
+    "kendall_distribution",
     "khoudraji",
     "markov_product",
     "measure_curve",
     "measures",
     "mixture",
+    "multivariate",
     "optim",
     "ordinal_sum",
     "pseudo_obs",
@@ -275,9 +307,11 @@ __all__ = [
     "rotate",
     "search",
     "select",
+    "sklar",
     "stats",
     "survival",
     "tEV",
+    "theory",
     "transpose",
     "xi_ncalculate",
 ]

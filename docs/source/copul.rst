@@ -10,11 +10,14 @@ Subpackages
    copul.checkerboard
    copul.family
    copul.measures
+   copul.multivariate
    copul.optim
    copul.regions
    copul.schur_order
    copul.search
+   copul.sklar
    copul.stats
+   copul.theory
    copul.simulations
    copul.wrapper
 

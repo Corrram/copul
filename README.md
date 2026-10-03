@@ -26,6 +26,10 @@ measures. It combines
   confidence intervals for every measure, independence tests, maximum
   likelihood and moment fitting, model selection and goodness-of-fit tests
   (`copul.stats`);
+- a **copula theory toolkit** (`copul.theory`, `copul.sklar`,
+  `copul.multivariate`): Sklar's theorem, Archimedean and extreme-value
+  theory, dependence concepts and orderings, Markov operators and distances,
+  bounds, quasi-copulas, diagonals, symmetry and $d$-dimensional copulas;
 - **checkerboard, shuffle-of-min and Bernstein copulas** with exact,
   vectorised formulas for all measures;
 - a **research toolkit**: a registry of exact regions between measures
@@ -174,6 +178,43 @@ Rémillard and Beaudoin (2009) with a parametric bootstrap, and
 `cp.stats.independence_test(X, method="xi")` tests independence with
 Kendall's $\tau$, Spearman's $\rho$, Chatterjee's $\xi$, Hoeffding's $D$ or
 a Cramér–von Mises statistic.
+
+## Copula theory
+
+`copul.theory`, `copul.sklar` and `copul.multivariate` implement standard copula
+theory (Nelsen 2006; Durante & Sempi 2016; Joe 2014) on every copula object:
+Sklar's theorem with `scipy.stats` margins, Kendall distribution functions,
+generator checks and $d$-monotonicity, associativity, max-stability,
+extreme-value attractors and tail copulas, dependence concepts (PQD, LTD, RTI,
+SI, TP2, ...) with exact family characterizations, the concordance order,
+Markov products and operators, complete dependence, distances between copulas
+(sup, $L^p$, Trutschnig's $\partial$-metrics, $\zeta_1$), best-possible bounds
+given a value, a diagonal or a value of $\tau$, $\rho$ or $\beta$,
+quasi-copulas, Bertino and diagonal copulas, non-exchangeability and radial
+asymmetry with tests, and $d$-dimensional Gaussian, Student-t and Archimedean
+copulas with multivariate $\rho$, $\tau$ and $\beta$.
+
+```python
+from scipy import stats
+import copul as cp
+from copul import theory as th
+
+H = cp.JointDistribution(cp.Clayton(2), [stats.norm(), stats.expon()])  # Sklar
+H.cdf([0.0, 1.0])                              # H(x, y) = C(F(x), G(y))
+H.regression(0.5)                              # E[Y | X = 0.5]
+
+C = cp.Clayton(2)
+C.kendall_distribution(0.3)                    # K_C(t) = t + t (1 - t^theta) / theta
+th.max_dimension(cp.Clayton(-0.3))             # 4: valid up to d = 4
+th.is_max_stable(cp.GumbelHougaard(2))         # True
+profile = cp.Frank(3).dependence_profile()     # PQD, LTD, RTI, SI, TP2, ...
+C.distance(cp.Frank(5), metric="D1")           # Trutschnig's D1 metric
+bounds = th.bounds_given_measure("tau", 0.5)   # pointwise best-possible bounds
+bounds.upper.cdf(0.3, 0.6)                     # 0.3
+cp.khoudraji(cp.BivIndependenceCopula(), cp.GumbelHougaard(3), 0.3, 0.9).nonexchangeability()
+C3 = cp.ClaytonND(2.0, dim=3)                  # 3-dimensional Clayton copula
+cp.multivariate.kendalls_tau_nd(C3)            # 0.5
+```
 
 ## Checkerboard copulas
 

@@ -94,6 +94,46 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
   (Joe 1997, 2014) on a shared Laplace-transform Archimedean base with
   Marshall–Olkin frailty samplers, symbolic cdfs for free parameters and
   closed-form Kendall's tau / tail coefficients where known.
+- **Copula theory toolkit** (`copul.theory`, all functions also usable on
+  any copula object, many as methods):
+  - *Archimedean*: Kendall distribution function $K_C$ for any copula (closed
+    form for Archimedean ones) and its inverse, generator checks (validity,
+    strictness, zero-curve mass, $d$-monotonicity, complete monotonicity,
+    `max_dimension`), `is_archimedean` (associativity and $C(t,t)<t$),
+    numerical Archimedean copulas from generators, Laplace transforms or
+    Kendall distributions (`NumericArchimedeanCopula`).
+  - *Extreme value*: Pickands checks, max-stability, extremal coefficient,
+    stable tail dependence function, tail copulas, extreme-value attractor of
+    any copula, Pickands and Capéraà–Fougères–Genest estimators, numerical EV
+    copulas from Pickands functions (`NumericExtremeValueCopula`).
+  - *Dependence concepts*: PQD/NQD, LTD/LTI, RTI/RTD, SI/SD, LCSD/RCSI,
+    TP2/RR2 with exact family characterizations and `dependence_profile`
+    checked against the implication hierarchy; concordance order and family
+    monotonicity, "more SI" order.
+  - *Markov theory and distances*: Markov products/powers, invertibility,
+    complete and mutual complete dependence, idempotents, Markov operators,
+    conditional expectations; sup, $L^1$, $L^2$ and Trutschnig's $D_1$, $D_2$,
+    $D_\infty$ distances; the measure $\zeta_1$ (new registry key `zeta1`,
+    method `trutschnig_zeta`, exact for checkerboards).
+  - *Bounds, quasi-copulas, diagonals*: best-possible bounds given $C(a,b)$,
+    a diagonal, or a value of Kendall's $\tau$, Spearman's $\rho$ or
+    Blomqvist's $\beta$ (Nelsen et al. 2001, 2004); quasi-copulas, lattice
+    operations and 2-increasing defects; diagonal sections, Bertino and
+    diagonal copulas.
+  - *Symmetry*: non-exchangeability $\mu_\infty=3\sup|C-C^\top|$, radial
+    asymmetry, symmetrizations, exchangeability and radial-symmetry tests
+    (Genest–Nešlehová–Quessy 2012; Genest–Nešlehová 2014).
+- **`copul.sklar`**: `JointDistribution(copula, scipy margins)` (cdf, density,
+  sampling, conditional distributions and quantiles, regression curves,
+  Hoeffding covariance, IFM/CML fitting) and `copula_from_joint`.
+- **`copul.multivariate`**: $d$-dimensional `GaussianND`, `StudentTND`,
+  `ArchimedeanCopulaND` (`ClaytonND`, `GumbelND`, `FrankND`, `JoeND`,
+  `AliMikhailHaqND`, any Laplace transform) with vectorized cdf/density,
+  frailty sampling and bivariate margins; multivariate Spearman's $\rho$
+  (Schmid–Schmidt), Kendall's $\tau$ (Nelsen) and Blomqvist's $\beta$ for
+  copulas and data.
+- Overflow-free numerics for Nelsen's families 4.2.19 and 4.2.20 near the
+  lower tail.
 - Student-t copula CDF via the Dunnett–Sobel / Genz (BVTL) formula for
   integer degrees of freedom; analytic Pickands derivatives for `tEV`.
 - `tests/properties`: universal property tests (margins, 2-increasingness,
