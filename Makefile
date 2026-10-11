@@ -1,12 +1,13 @@
-.PHONY: help install test test-all test-slow doctest coverage lint format docs build publish clean upgrade
+.PHONY: help all install test test-all test-slow doctest coverage lint format docs build publish clean clean-build upgrade
 
 # Package manager / interpreter (override e.g. with `make test UV=`)
 UV := uv
-RUN := $(if $(UV),$(UV) run,)
-PYTHON := $(RUN) python
-PYTEST := $(RUN) pytest
-RUFF := $(RUN) ruff
-TWINE := $(RUN) twine
+RUN := $(if $(UV),$(UV) run --active,)
+PYTHON := python
+PY := $(RUN) $(PYTHON)
+PYTEST := $(PY) -m pytest
+RUFF := $(PY) -m ruff
+TWINE := $(PY) -m twine
 
 SRC_DIR := copul
 TEST_DIR := tests
@@ -15,6 +16,7 @@ DOCS_OUT := docs/build/html
 FAST := -m "not slow and not instable"
 
 help:
+	@echo "all       clean, format, upgrade, docs, build and fast tests (in order)"
 	@echo "install   editable install with dev, docs and optim extras"
 	@echo "test      fast test suite (parallel)"
 	@echo "test-all  all tests including slow and instable ones"
@@ -28,6 +30,15 @@ help:
 	@echo "publish   upload dist/* to PyPI"
 	@echo "clean     remove build artifacts and caches"
 	@echo "upgrade   upgrade the uv lock file and requirements.txt"
+
+# Recursive invocations keep the stages ordered, including with `make -j`.
+all:
+	$(MAKE) clean
+	$(MAKE) format
+	$(MAKE) upgrade
+	$(MAKE) docs
+	$(MAKE) build
+	$(MAKE) test
 
 install:
 	$(UV) pip install -e ".[dev,docs,optim]"
@@ -56,20 +67,23 @@ format:
 	$(RUFF) format $(SRC_DIR) $(TEST_DIR)
 
 docs:
-	$(PYTHON) -m sphinx -W --keep-going -b html $(DOCS_SRC) $(DOCS_OUT)
+	$(PY) -m sphinx -W --keep-going -b html $(DOCS_SRC) $(DOCS_OUT)
 
-build: clean
-	$(PYTHON) -m build
+build: clean-build
+	$(PY) -m build
 	$(TWINE) check dist/*
 
 publish: build
 	$(TWINE) upload dist/*
 
-clean:
-	$(PYTHON) -c "import shutil; [shutil.rmtree(p, ignore_errors=True) for p in ['build', 'dist', '.pytest_cache', '.ruff_cache', 'htmlcov', 'docs/build', '.coverage']]"
-	$(PYTHON) -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('$(SRC_DIR)').rglob('__pycache__')]"
-	$(PYTHON) -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('$(TEST_DIR)').rglob('__pycache__')]"
+clean-build:
+	$(PY) -c "import shutil; [shutil.rmtree(p, ignore_errors=True) for p in ['build', 'dist']]"
+
+clean: clean-build
+	$(PY) -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for p in ['.pytest_cache', '.ruff_cache', 'htmlcov', 'docs/build']]; pathlib.Path('.coverage').unlink(missing_ok=True)"
+	$(PY) -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('$(SRC_DIR)').rglob('__pycache__')]"
+	$(PY) -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for p in pathlib.Path('$(TEST_DIR)').rglob('__pycache__')]"
 
 upgrade:
-	$(UV) sync --upgrade --extra dev
-	$(UV) export --format requirements-txt --extra dev --no-hashes --output-file requirements.txt > $(if $(filter $(OS),Windows_NT),NUL,/dev/null) 2>&1
+	$(UV) sync --active --upgrade --extra dev --extra docs
+	$(UV) export --format requirements-txt --extra dev --extra docs --no-hashes --output-file requirements.txt

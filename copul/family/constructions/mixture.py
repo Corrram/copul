@@ -37,6 +37,7 @@ Sec. 5.1 (Exercises 5.3, 5.8: convex combinations).
 from __future__ import annotations
 
 import numpy as np
+from scipy.special import logsumexp
 
 from copul.family.constructions._base import (
     NumericBivCopula,
@@ -120,6 +121,22 @@ class MixtureCopula(NumericBivCopula):
         out = 0.0
         for i in self._active:
             out = out + self.weights[i] * component_pdf(self.copulas[i])(u, v)
+        return out
+
+    def _logpdf(self, u, v):
+        """Stable log(sum_i w_i c_i) without exponentiating component logs."""
+        from copul.measures.backend import numeric_backend
+
+        values = [
+            np.log(self.weights[i]) + numeric_backend(self.copulas[i]).logpdf(u, v)
+            for i in self._active
+        ]
+        return logsumexp(np.stack(values), axis=0)
+
+    def _numeric_callables(self):
+        out = super()._numeric_callables()
+        if self.is_absolutely_continuous:
+            out["logpdf"] = self._logpdf
         return out
 
     def _rvs(self, n, rng):

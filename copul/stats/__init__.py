@@ -23,6 +23,12 @@ Parametric
     parametric family, returning a :class:`FitResult`.
 :func:`select`
     AIC/BIC ranking of several families.
+:func:`fit_mixture`
+    Multiple-start EM estimation of copula mixtures, with fixed or free
+    component parameters and weights.
+:func:`bootstrap_fit`
+    Paired nonparametric or parametric bootstrap of fitted parameters,
+    including reranking for pseudo-likelihood estimation.
 :func:`gof_test`
     Goodness-of-fit test of Genest, Rémillard & Beaudoin (2009) with
     parametric bootstrap.
@@ -61,6 +67,7 @@ from copul.stats.estimators import (
     sample_xi,
     sample_xi_2,
 )
+from copul.stats.fit_bootstrap import BootstrapFitResult, bootstrap_fit
 from copul.stats.fitting import (
     DEFAULT_FAMILIES,
     FitResult,
@@ -78,23 +85,28 @@ from copul.stats.inference import (
     estimate,
     independence_test,
 )
+from copul.stats.mixture_fitting import MixtureFitResult, fit_mixture
 from copul.stats.pseudo_obs import pseudo_obs, ranks
 
 __all__ = [
     "ASYMPTOTIC_MEASURES",
     "DEFAULT_FAMILIES",
     "SAMPLE_ESTIMATORS",
+    "BootstrapFitResult",
     "EmpiricalCopula",
     "FitResult",
     "GofResult",
     "IndependenceTestResult",
+    "MixtureFitResult",
     "SingularFamilyError",
     "asymptotic_variance",
     "bootstrap",
+    "bootstrap_fit",
     "checkerboard_mass",
     "cramer_von_mises_independence",
     "estimate",
     "fit",
+    "fit_mixture",
     "gof_statistic",
     "gof_test",
     "independence_test",

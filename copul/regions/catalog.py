@@ -105,48 +105,41 @@ def xi_nu_parametric(b) -> tuple[np.ndarray, np.ndarray]:
        \frac{-105s^8A+87s^6t+250s^4t-376s^2t+448s^2+144t-144}{420s^4}, & b>1,
        \end{cases}
 
-    (see :mod:`copul.schur_order.bounds_from_xi`).  Evaluated in extended
-    precision to limit the cancellation for large :math:`b`.
+    (see :mod:`copul.schur_order.bounds_from_xi`). For numerical evaluation,
+    substitute :math:`w=1-t=s^2/(1+t)` and :math:`r=1/(1+t)` to cancel
+    the common powers of :math:`s` algebraically. This remains stable in
+    ordinary double precision, including platforms without extended precision.
     """
-    b = np.asarray(b, dtype=np.longdouble)
-    s2 = 1.0 / b
-    s = np.sqrt(s2)
+    b = np.asarray(b, dtype=float)
+    if np.any(~np.isfinite(b) | (b <= 0)):
+        raise ValueError("b must contain positive finite numbers.")
     small = b <= 1
     xi = np.empty_like(b)
     nu = np.empty_like(b)
-    xi[small] = 8.0 * (7.0 * s2[small] - 3.0) / (105.0 * s2[small] ** 3)
-    nu[small] = 4.0 * (28.0 * s2[small] - 9.0) / (105.0 * s2[small] ** 2)
+    bs = b[small]
+    xi[small] = (8.0 / 105.0) * (7.0 - 3.0 * bs) * bs * bs
+    nu[small] = (4.0 / 105.0) * (28.0 - 9.0 * bs) * bs
     lg = ~small
     if np.any(lg):
-        sl, s2l = s[lg], s2[lg]
+        s2l = 1.0 / b[lg]
         t = np.sqrt(1.0 - s2l)
-        A = np.arcsinh(t / sl)
-        tm1 = -s2l / (1.0 + t)  # t - 1 without cancellation
-        num_x = (
-            -105.0 * s2l**4 * A
-            + 183.0 * s2l**3 * t
-            - 38.0 * s2l**2 * t
-            - 88.0 * s2l * t
-            + 112.0 * s2l
-            + 48.0 * tm1
-        )
-        num_n = (
-            -105.0 * s2l**4 * A
-            + 87.0 * s2l**3 * t
-            + 250.0 * s2l**2 * t
-            - 376.0 * s2l * t
-            + 448.0 * s2l
-            + 144.0 * tm1
-        )
-        xi[lg] = num_x / (210.0 * s2l**3)
-        nu[lg] = num_n / (420.0 * s2l**2)
-    return xi.astype(float), nu.astype(float)
+        r = 1.0 / (1.0 + t)
+        w = s2l * r
+        A = 0.5 * np.log(b[lg]) + np.log1p(t)
+        xi[lg] = (183.0 * t + r**3 * (216.0 - 190.0 * w + 38.0 * w * w) - 105.0 * s2l * A) / 210.0
+        nu[lg] = (
+            87.0 * s2l * t
+            + r * r * (1680.0 - 2376.0 * w + 1250.0 * w * w - 250.0 * w**3)
+            - 105.0 * s2l * s2l * A
+        ) / 420.0
+    return np.minimum(xi, 1.0), np.minimum(nu, 1.0)
 
 
 def _b_of_xi_nu(x: np.ndarray, iters: int = 110) -> np.ndarray:
     """Vectorised bisection for :math:`\\Xi(b)=x` in :math:`\\log b`."""
     x = np.asarray(x, dtype=float)
-    lo = np.full(x.shape, -40.0)
+    # Xi(b) <= (8/15) b^2 for b <= 1, hence sqrt(x) is a lower bracket.
+    lo = 0.5 * np.log(x)
     hi = np.full(x.shape, 40.0)
     for _ in range(iters):
         mid = 0.5 * (lo + hi)

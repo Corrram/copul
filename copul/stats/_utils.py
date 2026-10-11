@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from numbers import Integral
 from typing import Any
 
 import numpy as np
@@ -22,6 +23,12 @@ RandomLike = int | np.random.Generator | np.random.SeedSequence | None
 
 # number of float64 entries processed per vectorized chunk (~32 MB)
 _CHUNK_ELEMS = 4_000_000
+
+
+def _positive_integer(value, name):
+    if isinstance(value, bool) or not isinstance(value, Integral) or value < 1:
+        raise ValueError(f"{name} must be a positive integer.")
+    return int(value)
 
 
 def as_rng(random_state: Any = None) -> np.random.Generator:

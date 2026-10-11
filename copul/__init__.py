@@ -25,6 +25,8 @@ regions
     Registry of known exact regions between pairs of measures.
 search
     Random checkerboards, counterexample search and inequality checks.
+vine
+    Simplified C-vines, D-vines and regular vines with likelihood fitting.
 """
 
 import logging
@@ -153,8 +155,30 @@ from copul.schur_order.plod_verifier import PLODVerifier
 from copul.search import check_inequality, find_counterexample, random_checkerboards
 from copul.sklar import JointDistribution, copula_from_joint
 from copul.star_product import markov_product
-from copul.stats import EmpiricalCopula, estimate, fit, gof_test, pseudo_obs, select
+from copul.stats import (
+    BootstrapFitResult,
+    EmpiricalCopula,
+    MixtureFitResult,
+    bootstrap_fit,
+    estimate,
+    fit,
+    fit_mixture,
+    gof_test,
+    pseudo_obs,
+    select,
+)
 from copul.theory import copula_distance, dependence_profile, kendall_distribution
+from copul.vine import (
+    CVineCopula,
+    DVineCopula,
+    PairCopulaFamily,
+    RVineCopula,
+    VineCopula,
+    VineEdge,
+    VineFitResult,
+    VineStructure,
+    fit_vine,
+)
 
 try:
     __version__ = _pkg_version("copul")
@@ -190,8 +214,10 @@ __all__ = [
     "BivClayton",
     "BivCopula",
     "BivIndependenceCopula",
+    "BootstrapFitResult",
     "CISRearranger",
     "CISVerifier",
+    "CVineCopula",
     "CheckMin",
     "CheckPi",
     "Checkerboarder",
@@ -200,6 +226,7 @@ __all__ = [
     "CopulaND",
     "CornerSetVerifier",
     "CuadrasAuge",
+    "DVineCopula",
     "DiagonalBandCopula",
     "EmpiricalCopula",
     "EndSwapCopula",
@@ -229,6 +256,7 @@ __all__ = [
     "Mardia",
     "MarshallOlkin",
     "MedianSwapCopula",
+    "MixtureFitResult",
     "Nelsen1",
     "Nelsen2",
     "Nelsen3",
@@ -252,7 +280,9 @@ __all__ = [
     "Nelsen21",
     "Nelsen22",
     "PLODVerifier",
+    "PairCopulaFamily",
     "Plackett",
+    "RVineCopula",
     "Raftery",
     "ShuffleOfMin",
     "StudentT",
@@ -261,12 +291,17 @@ __all__ = [
     "UpperFrechet",
     "UpperFrechetND",
     "VThresholdCopula",
+    "VineCopula",
+    "VineEdge",
+    "VineFitResult",
+    "VineStructure",
     "XiBetaBoundaryCopula",
     "XiNuBoundaryCopula",
     "XiPsiApproxLowerBoundaryCopula",
     "XiRhoBoundaryCopula",
     "__version__",
     "approximations",
+    "bootstrap_fit",
     "bounds_from_xi",
     "check_inequality",
     "compute_measures",
@@ -278,6 +313,8 @@ __all__ = [
     "families",
     "find_counterexample",
     "fit",
+    "fit_mixture",
+    "fit_vine",
     "from_cdf",
     "from_cond_distr_1",
     "from_cond_distr_2",
@@ -313,5 +350,6 @@ __all__ = [
     "tEV",
     "theory",
     "transpose",
+    "vine",
     "xi_ncalculate",
 ]

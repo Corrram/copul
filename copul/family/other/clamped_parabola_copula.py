@@ -356,29 +356,10 @@ class XiNuBoundaryCopula(BivCopula):
         return cls(b=1.0 / mu_val)
 
     def chatterjees_xi(self):
-        import numpy as _np
+        """Chatterjee's xi, evaluated without large-parameter cancellation."""
+        from copul.schur_order.bounds_from_xi import _Xi_of_b
 
-        b_abs = float(abs(self.b))
-        if b_abs <= 0.0:
-            raise ValueError("b must be nonzero.")
-        mu = 1.0 / b_abs
-        s = _np.sqrt(mu)
-        if mu < 1.0:
-            t = _np.sqrt(1.0 - mu)
-            A = _np.asinh(t / s)
-            num = (
-                -105 * s**8 * A
-                + 183 * s**6 * t
-                - 38 * s**4 * t
-                - 88 * s**2 * t
-                + 112 * s**2
-                + 48 * t
-                - 48
-            )
-            den = 210 * s**6
-            return num / den
-        else:
-            return 8.0 * (7.0 * mu - 3.0) / (105.0 * mu**3)
+        return _Xi_of_b(float(abs(self.b)))
 
     def blests_nu(self):
         """
@@ -388,32 +369,14 @@ class XiNuBoundaryCopula(BivCopula):
         satisfy ``ν(-b) = -ν(b)``. We therefore return ``sign(b) * ν(|b|)``,
         where ``ν(|b|)`` is the closed form in terms of ``μ = 1/|b|``.
         """
-        import numpy as _np
+        from copul.schur_order.bounds_from_xi import _N_of_b
 
         b = float(self.b)
         if b == 0.0:
             return 0.0  # limit = independence
 
         sgn = 1.0 if b > 0.0 else -1.0
-        mu = 1.0 / abs(b)
-        s = _np.sqrt(mu)
-
-        if mu < 1.0:
-            t = _np.sqrt(1.0 - mu)
-            A = _np.asinh(t / s)
-            num = (
-                -105 * s**8 * A
-                + 87 * s**6 * t
-                + 250 * s**4 * t
-                - 376 * s**2 * t
-                + 448 * s**2
-                + 144 * t
-                - 144
-            )
-            den = 420 * s**4
-            return sgn * (num / den)
-        else:
-            return sgn * (4.0 * (28.0 * mu - 9.0) / (105.0 * mu**2))
+        return sgn * _N_of_b(abs(b))
 
     # ===================================================================
     # START: Rich plotting capabilities (restored, adapted to b)

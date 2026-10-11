@@ -18,6 +18,7 @@ Subpackages
    copul.sklar
    copul.stats
    copul.theory
+   copul.vine
    copul.simulations
    copul.wrapper
 

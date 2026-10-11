@@ -14,6 +14,28 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
 
 ### Added
 
+- `make all` runs cleanup, formatting, dependency upgrades, documentation,
+  package builds and fast tests in sequence, including under parallel make.
+  Dependency upgrades include the documentation extras.
+- **Copula mixture fitting**: `fit_mixture` estimates component parameters
+  and weights by multiple-start generalized EM, with fixed/reflected
+  components, stable log-sum-exp likelihoods, posterior responsibilities,
+  monotone accepted likelihood paths and per-start convergence diagnostics.
+- **Parameter bootstrap inference**: `bootstrap_fit` and `FitResult.bootstrap`
+  provide paired nonparametric and parametric refits, percentile/basic
+  confidence intervals, covariance and bias estimates. Resamples are ranked
+  again when margins are estimated; failed refits raise by default.
+
+- **`copul.vine`**: simplified C-vines, D-vines and general regular vines
+  built from existing absolutely continuous bivariate copulas. Validated
+  trees and proximity conditions, vectorized log-density, forward/inverse
+  Rosenblatt transforms, seeded sampling and Sobol conditional CDF integration.
+- **`fit_vine` and vine support in `fit`**: sequential structure and family
+  selection, AIC/BIC, reflected candidates, fixed parameters, truncation,
+  optional joint likelihood refinement and explicit convergence/failure
+  diagnostics. Mathematical guide and independent Gaussian, Student-t,
+  Clayton, normalization and fitting-recovery tests.
+
 - **`copul.measures`**: registry of dependence measures (canonical keys
   `xi`, `xi_2`, `rho`, `tau`, `footrule`, `gamma`, `beta`, `nu`,
   `hoeffdings_d`, `sigma`, `kappa`, `lp`, `bkr`, `mutual_information`,
@@ -193,6 +215,10 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
 
 ### Fixed
 
+- The xi--nu region's boundary evaluation and inversion no longer rely on
+  extended precision. Algebraically stable formulas prevent cancellation
+  at large parameters, restoring correct boundary copulas and reversed
+  regions on Windows. `XiNuBoundaryCopula` uses the same stable closed forms.
 - `cp.from_generator` (and `ArchimedeanCopula.from_generator`) raised an
   `AttributeError`; it now returns a bivariate Archimedean copula family with
   parameter `theta` (optional `params=` and `theta_interval=`) that matches

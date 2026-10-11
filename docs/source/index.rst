@@ -115,6 +115,8 @@ Where to go next
    approximating_copulas
    research_workflows
    copula_theory
+   vine_copulas
+   fitting_workflows
    community
    modules
 

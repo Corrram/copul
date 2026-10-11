@@ -43,8 +43,9 @@ import math
 import time
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
+from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from scipy import optimize, stats
@@ -58,6 +59,9 @@ from copul.stats.estimators import sample_measure
 from copul.stats.pseudo_obs import pseudo_obs as _pseudo_obs
 
 log = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from copul.vine import VineFitResult
 
 __all__ = [
     "DEFAULT_FAMILIES",
@@ -363,6 +367,12 @@ class FitResult:
         """Sample from the fitted copula."""
         return self.copula.rvs(n, random_state=random_state)
 
+    def bootstrap(self, data, **kwargs):
+        """Bootstrap parameter uncertainty; see :func:`copul.stats.bootstrap_fit`."""
+        from copul.stats.fit_bootstrap import bootstrap_fit
+
+        return bootstrap_fit(self, data, **kwargs)
+
 
 # ---------------------------------------------------------------------------
 # likelihood
@@ -384,6 +394,11 @@ def loglik(copula, data: Any, pseudo_obs: bool = True) -> float:
     r"""(Pseudo-)log-likelihood :math:`\sum_i \log c(\hat U_i, \hat V_i)` of a
     fully specified copula."""
     from copul.stats._adapters import logpdf
+    from copul.vine.fitting import _prepare
+    from copul.vine.model import VineCopula
+
+    if isinstance(copula, VineCopula):
+        return copula.loglik(_prepare(data, pseudo_obs, "average"))
 
     U = _uv(data, pseudo_obs)
     return float(np.sum(logpdf(copula, U[:, 0], U[:, 1])))
@@ -638,7 +653,23 @@ def _density_cdf_mismatch(logdens, copula, a: float = 0.05, b: float = 0.95) -> 
     return integral - float(cc[0] - cc[1] - cc[2] + cc[3])
 
 
-def _fit_mle(base, fam_name, U, fixed, n, start, optimizer, options, light=False) -> FitResult:
+def _fit_mle(
+    base, fam_name, U, fixed, n, start, optimizer, options, light=False, weights=None
+) -> FitResult:
+    # Fractional responsibilities for mixture EM. Zero-weight observations
+    # must be removed before evaluating densities to avoid 0 * (-inf).
+    if weights is not None:
+        weights = np.asarray(weights, dtype=float)
+        if weights.shape != (len(U),) or not np.all(np.isfinite(weights)) or np.any(weights < 0):
+            raise ValueError("weights must be finite, nonnegative and match the observations.")
+        active = weights > 0
+        if not np.any(active):
+            raise ValueError("At least one weight must be positive.")
+        U, weights = U[active], weights[active]
+
+    def total(values):
+        return float(np.sum(values) if weights is None else np.dot(weights, values))
+
     params = _params_of(base)
     if not params:
         raise ValueError(f"{fam_name} has no free parameters to estimate.")
@@ -665,7 +696,7 @@ def _fit_mle(base, fam_name, U, fixed, n, start, optimizer, options, light=False
             lp = dens(theta, u, v, fast=use_fast[0])
         except Exception:
             return np.inf
-        s = float(np.sum(lp))
+        s = total(lp)
         return -s if np.isfinite(s) else np.inf
 
     t0 = time.perf_counter()
@@ -722,7 +753,7 @@ def _fit_mle(base, fam_name, U, fixed, n, start, optimizer, options, light=False
         # the log-expanded symbolic density can lose accuracy (cancellation)
         # far from the validation points: cross-check with the plain symbolic
         # density and re-optimize without the expansion if they disagree
-        ll_plain = float(np.sum(dens(theta, u, v, fast=False)))
+        ll_plain = total(dens(theta, u, v, fast=False))
         if not np.isclose(ll, ll_plain, rtol=1e-6, atol=1e-6):
             use_fast[0] = False
             theta, success, msg = optimize_from(x0)
@@ -816,8 +847,15 @@ def fit(
     optimizer: str | None = None,
     options: dict | None = None,
     _light: bool = False,
-) -> FitResult:
-    r"""Fit a parametric copula family to bivariate data.
+    **vine_options: Any,
+) -> FitResult | VineFitResult:
+    r"""Fit a parametric bivariate family or a simplified vine copula.
+
+    For ``CVineCopula``, ``DVineCopula`` or ``VineCopula`` classes (or their
+    names), return a :class:`copul.vine.VineFitResult`. ``method='mle'``
+    performs sequential initialization followed by joint refinement;
+    ``method='sequential'`` only fits pairs in tree order. Additional vine
+    options are forwarded to :func:`copul.vine.fit_vine`.
 
     Parameters
     ----------
@@ -878,6 +916,39 @@ def fit(
     >>> fit("Clayton", X, method="itau").params  # doctest: +SKIP
     {'theta': 2.0...}
     """
+    from copul.vine import CVineCopula, DVineCopula, VineCopula, fit_vine
+
+    vine_classes = {
+        "cvinecopula": CVineCopula,
+        "dvinecopula": DVineCopula,
+        "vinecopula": VineCopula,
+        "rvinecopula": VineCopula,
+    }
+    vine_class = vine_classes.get(family.lower()) if isinstance(family, str) else family
+    if isinstance(vine_class, type) and issubclass(vine_class, VineCopula):
+        if method not in ("mle", "sequential"):
+            raise ValueError("Vine fitting supports method='mle' or 'sequential'.")
+        if start is not None or optimizer is not None:
+            raise ValueError(
+                "Vine fitting uses sequential starts and the joint L-BFGS-B optimizer."
+            )
+        kind = (
+            "cvine"
+            if vine_class is CVineCopula
+            else "dvine"
+            if vine_class is DVineCopula
+            else "rvine"
+        )
+        return fit_vine(
+            data,
+            vine_type=kind,
+            pseudo_obs=pseudo_obs,
+            joint=method == "mle",
+            joint_options=options,
+            **vine_options,
+        )
+    if vine_options:
+        raise TypeError(f"Unexpected bivariate fitting options: {', '.join(vine_options)}")
     base, fam_name = resolve_family(family)
     U = _uv(data, pseudo_obs)
     n = U.shape[0]
@@ -886,12 +957,15 @@ def fit(
         method = "mle"
     fixed = _fixed_params(base)
     if method in _MOMENT_METHODS:
-        return _fit_moment(base, fam_name, U, method, fixed, n, light=_light)
-    if method != "mle":
+        result = _fit_moment(base, fam_name, U, method, fixed, n, light=_light)
+    elif method == "mle":
+        result = _fit_mle(base, fam_name, U, fixed, n, start, optimizer, options, light=_light)
+    else:
         raise ValueError(
             f"method must be 'mle' or one of {sorted(_MOMENT_METHODS)}, got {method!r}"
         )
-    return _fit_mle(base, fam_name, U, fixed, n, start, optimizer, options, light=_light)
+    result.extra.update(family_spec=deepcopy(base), pseudo_obs=bool(pseudo_obs))
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -985,6 +1059,9 @@ def select(
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 res = fit(fam, U, method=method, pseudo_obs=False, **fit_kwargs)
+            # The outer operation may have estimated the margins even
+            # though its internal call already received normalized ranks.
+            res.extra["pseudo_obs"] = bool(pseudo_obs)
             row.update(
                 family=res.family,
                 params=res.params,

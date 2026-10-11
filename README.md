@@ -195,6 +195,31 @@ Rémillard and Beaudoin (2009) with a parametric bootstrap, and
 Kendall's $\tau$, Spearman's $\rho$, Chatterjee's $\xi$, Hoeffding's $D$ or
 a Cramér–von Mises statistic.
 
+Mixture fitting and parameter uncertainty are also available:
+
+```python
+import copul as cp
+
+X = cp.Clayton(theta=2).rvs(600, random_state=0)
+mixture_fit = cp.fit_mixture(
+    X, [cp.Gaussian, cp.Clayton], n_init=3, random_state=42,
+)
+mixture_fit.weights
+mixture_fit.component_params
+print(mixture_fit.summary())
+
+fitted = cp.fit(cp.Clayton, X)
+boot = fitted.bootstrap(X, n_boot=200, random_state=7)
+boot.conf_int()          # percentile intervals; basic intervals also supported
+boot.to_frame()          # estimates, bootstrap errors, bias and intervals
+```
+
+Mixtures use multiple-start EM with convergence diagnostics and support
+fixed parameters, fixed weights and reflected components. Parameter
+bootstraps resample paired observations and re-estimate ranks when margins
+are unknown. See the [fitting guide](docs/source/fitting_workflows.rst) for
+the mathematics, examples and inference limits.
+
 ## Copula theory
 
 `copul.theory`, `copul.sklar` and `copul.multivariate` implement standard copula
@@ -231,6 +256,43 @@ cp.khoudraji(cp.BivIndependenceCopula(), cp.GumbelHougaard(3), 0.3, 0.9).nonexch
 C3 = cp.ClaytonND(2.0, dim=3)                  # 3-dimensional Clayton copula
 cp.multivariate.kendalls_tau_nd(C3)            # 0.5
 ```
+
+## Vine copulas
+
+`copul.vine` adds simplified **C-vines, D-vines and general regular vines**
+with validated tree/proximity conditions, vectorized densities, Rosenblatt
+transforms, sampling and a numerical CDF. Existing bivariate families,
+including reflected pairs, supply the building blocks.
+
+```python
+import copul as cp
+
+truth = cp.DVineCopula(3, [
+    [cp.Clayton(theta=2), cp.Gaussian(rho=-0.5)],
+    [cp.Frank(theta=3)],
+])
+U = truth.rvs(1000, random_state=42)
+result = cp.fit_vine(U, families=["Independence", "Gaussian", "Clayton", "Frank"],
+                     criterion="bic", pseudo_obs=False, joint=True)
+print(result.summary())
+result.copula.logpdf(U[:5])
+result.copula.rosenblatt(U)                  # fitted independent-uniform residuals
+result.rvs(1000, random_state=7)
+
+# Fix a D-vine path; raw data are ranked once by default.
+model = cp.DVineCopula.fit(U, order=[0, 1, 2], families=["Gaussian", "T"])
+# The generic fitting API also accepts vine classes.
+result = cp.fit(cp.CVineCopula, U, method="sequential", families=["Gaussian"])
+```
+
+Fitting supports sequential structure/family selection, AIC/BIC, fixed pair
+parameters, truncation to independence and optional joint likelihood
+refinement. Inspect `result.converged`, `edge_fits` and `selection_failures`.
+These are continuous **simplified** vines: pair parameters do not vary with
+conditioning values. Structure search is heuristic, and the general CDF is
+an explicitly numerical Sobol integral. See the
+[mathematical guide](docs/source/vine_copulas.rst) for definitions, estimation
+conventions, references and numerical limits.
 
 ## Checkerboard copulas
 
@@ -375,6 +437,7 @@ programmatically.
 
 ```bash
 pip install -e ".[dev]"
+make all         # clean, format, upgrade dependencies, docs, build, fast tests (requires uv)
 make test        # fast test suite (pytest -m "not slow and not instable" -n auto)
 make test-all    # including slow tests
 make lint        # ruff
