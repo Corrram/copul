@@ -147,11 +147,7 @@ class ArchimedeanCopula(ArchimedeanGeneratorMixin, Copula, ABC):
         ArchimedeanCopula
             A new copula instance using the provided generator
         """
-        sp_generator = sympy.sympify(generator)
-        func_vars, params = cls._segregate_symbols(sp_generator, "t", params)
-        obj = cls._from_string(params)
-        obj._generator = sp_generator.subs(func_vars[0], cls.t)
-        return obj
+        return from_generator(generator, params=params)
 
     @abstractmethod
     def is_absolutely_continuous(self) -> bool:
@@ -341,24 +337,105 @@ class ArchimedeanCopula(ArchimedeanGeneratorMixin, Copula, ABC):
         return sympy.simplify(limit)
 
 
-def from_generator(generator, params=None):
-    """
-    Create an Archimedean copula from a generator function.
+def from_generator(generator, params=None, theta_interval=None):
+    r"""
+    Create a bivariate Archimedean copula (family) from a generator function.
+
+    The copula is :math:`C(u, v) = \varphi^{[-1]}(\varphi(u) + \varphi(v))`
+    with the pseudo-inverse :math:`\varphi^{[-1]}` of the generator
+    :math:`\varphi`. The returned object is an ordinary
+    :class:`~copul.family.archimedean.biv_archimedean_copula.BivArchimedeanCopula`:
+    cdf, conditional distributions, dependence measures, sampling and
+    plotting are available.
 
     Parameters
     ----------
     generator : str or sympy expression
-        The generator function φ
-    params : list or None
-        List of parameters if needed
+        The generator :math:`\varphi(t)` in the variable ``t``, e.g.
+        ``"(t**(-theta) - 1)/theta"``. At most one parameter is supported; it
+        is exposed as ``theta`` (a parameter with another name is renamed to
+        ``theta``).
+    params : list, str or None
+        Name(s) of the parameter symbol(s) if they cannot be inferred, i.e.
+        if the variable is not called ``t``.
+    theta_interval : sympy.Interval or None
+        Admissible parameter values; defaults to the whole real line. The
+        caller is responsible for :math:`\varphi` being a valid generator
+        (continuous, strictly decreasing and convex with
+        :math:`\varphi(1) = 0`) for the chosen parameters.
 
     Returns
     -------
-    ArchimedeanCopula
-        A new copula instance using the provided generator
+    BivArchimedeanCopula
+        A copula family (free ``theta``) or a copula (no parameter).
+
+    Examples
+    --------
+    >>> import copul as cp
+    >>> family = cp.from_generator("(t**(-theta) - 1)/theta")  # Clayton
+    >>> C = family(theta=2)
+    >>> bool(abs(C.cdf(0.3, 0.7) - cp.Clayton(2).cdf(0.3, 0.7)) < 1e-12)
+    True
+    >>> round(C.kendalls_tau(), 10)
+    0.5
     """
+    # local imports: the bivariate classes import this module
+    from copul.family.archimedean.biv_archimedean_copula import BivArchimedeanCopula
+
     sp_generator = sympy.sympify(generator)
-    func_vars, params = ArchimedeanCopula._segregate_symbols(sp_generator, "t", params)
-    obj = ArchimedeanCopula._from_string(params)
-    obj._generator = sp_generator.subs(func_vars[0], ArchimedeanCopula.t)
-    return obj
+    symbols = sorted(sp_generator.free_symbols, key=str)
+    if params is not None:
+        names = {str(p) for p in (params if isinstance(params, (list, tuple)) else [params])}
+        param_syms = [s for s in symbols if str(s) in names]
+        func_vars = [s for s in symbols if str(s) not in names]
+    else:
+        func_vars = [s for s in symbols if str(s) == "t"]
+        param_syms = [s for s in symbols if str(s) != "t"]
+    if len(func_vars) != 1:
+        raise ValueError(
+            "The generator must depend on exactly one variable (called 't', or "
+            f"pass the parameter names via params=); found {sorted(map(str, func_vars))}."
+        )
+    if len(param_syms) > 1:
+        raise ValueError(
+            "from_generator supports generators with at most one parameter; "
+            f"found {sorted(map(str, param_syms))}."
+        )
+
+    t = BivArchimedeanCopula.t
+    theta = ArchimedeanCopula.theta
+    expr = sp_generator.subs(func_vars[0], t)
+    if param_syms:
+        expr = expr.subs(param_syms[0], theta)
+    interval = (
+        theta_interval
+        if theta_interval is not None
+        else sympy.Interval(-sympy.oo, sympy.oo, left_open=True, right_open=True)
+    )
+
+    class ArchimedeanFromGenerator(BivArchimedeanCopula):
+        """Bivariate Archimedean copula defined by a user-supplied generator."""
+
+        theta_interval = interval
+        params = [theta] if param_syms else []
+        _user_generator = expr
+
+        @property
+        def _raw_generator(self):
+            return self._user_generator.subs(ArchimedeanCopula.theta, self.theta)
+
+        @property
+        def _generator_at_0(self):
+            try:
+                value = sympy.limit(self._raw_generator, self.t, 0, "+")
+            except (NotImplementedError, TypeError, ValueError):
+                return sympy.oo
+            return value if value.is_finite or value == sympy.oo else sympy.oo
+
+        @property
+        def is_absolutely_continuous(self) -> bool:
+            # strict generators (phi(0) = oo) give absolutely continuous
+            # copulas; non-strict ones put mass on the zero curve
+            return self._generator_at_0 == sympy.oo
+
+    return ArchimedeanFromGenerator()

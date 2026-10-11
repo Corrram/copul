@@ -860,15 +860,41 @@ class CoreCopula:
             raise ValueError("Copula has free parameters; fix all parameters before validation.")
 
         d = self.dim
-        f = self._lambdify_cdf_numpy()
+        try:
+            f = self._lambdify_cdf_numpy()
+        except Exception:
+            if d != 2:
+                raise
+
+            # no (lambdifiable) symbolic cdf, e.g. families defined through a
+            # generator, a Pickands function, an integral or a closed-form
+            # numerical cdf: use the vectorised numerical API
+            def f(u, v):
+                return self.cdf(u, v)
+
         axes = [np.linspace(0.0, 1.0, m + 1) for _ in range(d)]
         grids = np.meshgrid(*axes, indexing="ij")  # list of d arrays shape (m+1,...,m+1)
 
         # Evaluate C on the grid
-        with np.errstate(divide="ignore", invalid="ignore"):
-            C_grid = f(*grids)
+        with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
+            C_grid = np.array(np.broadcast_to(f(*grids), grids[0].shape), dtype=float)
+            # Expressions such as u*v*exp(-theta*log(u)*log(v)) (Gumbel-Barnett)
+            # are undefined on parts of the boundary of the unit cube although
+            # their continuous extension is a copula. Copulas are 1-Lipschitz in
+            # every argument, so evaluating at boundary knots moved inside the
+            # cube by eps changes the value by at most d * eps.
+            on_boundary = np.zeros(grids[0].shape, dtype=bool)
+            for g in grids:
+                on_boundary |= (g == 0.0) | (g == 1.0)
+            fix = ~np.isfinite(C_grid) & on_boundary
+            n_boundary_limits = int(fix.sum())
+            if n_boundary_limits:
+                eps = 1e-12
+                inner = [np.clip(g, eps, 1.0 - eps) for g in grids]
+                C_inner = np.broadcast_to(f(*inner), grids[0].shape)
+                C_grid[fix] = C_inner[fix]
         if not np.all(np.isfinite(C_grid)):
-            details = {"finite": False}
+            details = {"finite": False, "n_boundary_limits": n_boundary_limits}
             return (False, details) if return_details else False
 
         # Bounds: 0 <= C <= 1
@@ -904,6 +930,8 @@ class CoreCopula:
         sum_mass = mass.sum()
         increasing_ok = (min_mass >= -1e-10) and (abs(sum_mass - 1.0) <= 1e-6)
 
+        bounds_ok, grounded_ok = bool(bounds_ok), bool(grounded_ok)
+        margins_ok, increasing_ok = bool(margins_ok), bool(increasing_ok)
         ok = bounds_ok and grounded_ok and margins_ok and increasing_ok
 
         if not return_details:
@@ -920,6 +948,7 @@ class CoreCopula:
             "grid_size_per_axis": m + 1,
             "dim": d,
             "tol": tol,
+            "n_boundary_limits": n_boundary_limits,
         }
         return ok, details
 

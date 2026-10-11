@@ -39,6 +39,22 @@ measures. It combines
 
 Documentation: <https://copul.readthedocs.io>
 
+## Why copul?
+
+Mature copula software, such as the R packages `copula`, `VineCopula` and
+`rvinecopulib` or the Python packages `copulae`, `pyvinecopulib`, the SDV
+project's `copulas` and `statsmodels`, is built for estimation and simulation
+from data. Research on copulas and dependence measures needs something
+different: exact expressions for families with free parameters, reliable
+values of measures such as Chatterjee's $\xi$ for which closed forms are
+rarely known, approximating copulas with exact formulas, and quick ways to
+test a conjectured inequality or to locate extremal copulas. `copul` is
+written for this workflow. It is aimed at researchers in probability,
+statistics and quantitative finance who study dependence structures, and at
+teachers and students who want executable versions of the formulas in
+textbooks such as Nelsen (2006) and Joe (2014). It complements, rather than
+replaces, the estimation-centred packages above.
+
 ## Installation
 
 ```bash
@@ -355,14 +371,34 @@ New copulas arise from `cp.rotate`, `cp.reflect`, `cp.transpose`,
 or from a mass matrix (`cp.from_matrix`). `cp.Families` lists everything
 programmatically.
 
-## Development
+## Testing and development
 
 ```bash
 pip install -e ".[dev]"
-make test        # fast test suite
+make test        # fast test suite (pytest -m "not slow and not instable" -n auto)
+make test-all    # including slow tests
 make lint        # ruff
 make docs        # Sphinx documentation
 ```
+
+The test suite combines universal property tests for all bivariate copulas
+(uniform margins, 2-increasingness, Fréchet bounds, conditional distributions
+and their inverses, densities, sampling, agreement of the symbolic and
+numerical routes) with checks of closed-form dependence measures against the
+numerical engine, Monte Carlo and special cases. It runs in
+[continuous integration](https://github.com/Corrram/copul/actions) on Python
+3.10–3.13 together with linting, the documentation build and the examples of
+this README.
+
+## Getting help and contributing
+
+- Questions and bug reports: [GitHub issues](https://github.com/Corrram/copul/issues/new/choose).
+- Contributions (new families, measures, formulas, fixes, documentation) are
+  welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) for the development setup and
+  the standards for mathematical contributions.
+- Everyone interacting in the project is expected to follow the
+  [Code of Conduct](CODE_OF_CONDUCT.md).
+- Changes between versions are listed in [CHANGELOG.md](CHANGELOG.md).
 
 ## Citation
 
@@ -374,10 +410,12 @@ If you use copul in your research, please cite it:
   title   = {copul: copulas and dependence measures in Python},
   year    = {2026},
   version = {0.4.0},
-  url     = {https://github.com/Corrram/copul},
-  note    = {TODO: replace with the reference of the copul paper once available}
+  url     = {https://github.com/Corrram/copul}
 }
 ```
+
+A software paper on copul is in preparation; this entry will be updated once
+it is available.
 
 See also [`CITATION.cff`](CITATION.cff).
 

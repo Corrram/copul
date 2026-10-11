@@ -87,6 +87,9 @@ class GumbelHougaardEV(MultivariateGumbelHougaard, BivExtremeValueCopula):
         if theta is not None:
             self.theta = theta
             self._free_symbols = {"theta": self.theta}
+            # theta is fixed now: drop it from the free parameters (as for all
+            # other families), so that e.g. ``is_fully_specified`` holds
+            self.params = [p for p in self.params if str(p) != "theta"]
 
     def __call__(self, *args, **kwargs):
         """

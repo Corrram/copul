@@ -66,6 +66,7 @@ References
 
 from __future__ import annotations
 
+import inspect
 from typing import Any
 
 import numpy as np
@@ -77,6 +78,37 @@ from copul.multivariate.base import CopulaND
 __all__ = ["EllipticalCopulaND", "GaussianND", "StudentTND", "nearest_correlation"]
 
 _CDF_SEED = 20240611
+
+
+def _accepts_keyword(fn, name: str) -> bool:
+    """Whether the callable ``fn`` takes the keyword argument ``name``."""
+    try:
+        return name in inspect.signature(fn).parameters
+    except (TypeError, ValueError):
+        return False
+
+
+def _seeded_gaussian_cdf(X: np.ndarray, corr: np.ndarray, seed: int) -> np.ndarray:
+    """Gaussian cdf with a seeded randomised quasi-Monte Carlo rule.
+
+    Fallback for SciPy < 1.16 (the newest SciPy for Python 3.10), whose
+    ``multivariate_normal.cdf`` takes no ``rng`` and is not reproducible. It
+    runs the algorithm of ``multivariate_normal.cdf(x, rng=...)`` in newer
+    SciPy (``_qauto`` with ``_qmvn``, same default tolerances), so the copula
+    cdf is deterministic on all supported SciPy versions.
+    """
+    try:
+        from scipy.stats._qmvnt import _qauto, _qmvn
+    except ImportError:  # pragma: no cover - private SciPy API moved
+        return np.asarray(stats.multivariate_normal.cdf(X, cov=corr), dtype=float)
+    rng = np.random.default_rng(seed)
+    d = corr.shape[0]
+    low = np.full(d, -np.inf)
+    out = np.empty(X.shape[0])
+    for i, x in enumerate(X):
+        res = _qauto(_qmvn, corr, low, x, rng, error=1e-5, limit=1_000_000 * d, n_batches=10)
+        out[i] = float(np.squeeze(res[0]))
+    return out
 
 
 def _validate_corr(R: Any) -> np.ndarray:
@@ -217,7 +249,11 @@ class GaussianND(EllipticalCopulaND):
         if np.any(inside):
             X = ndtri(U[inside])
             dist = stats.multivariate_normal(mean=np.zeros(self.dim), cov=self.corr)
-            out[inside] = np.atleast_1d(dist.cdf(X, rng=np.random.default_rng(_CDF_SEED)))
+            if _accepts_keyword(dist.cdf, "rng"):
+                vals = dist.cdf(X, rng=np.random.default_rng(_CDF_SEED))
+            else:
+                vals = _seeded_gaussian_cdf(X, self.corr, _CDF_SEED)
+            out[inside] = np.atleast_1d(vals)
         return out
 
     def _logpdf(self, U):

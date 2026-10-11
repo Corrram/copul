@@ -19,17 +19,27 @@ Furthermore, the package provides the following copulas:
 A list of all implemented copulas can be found in :py:mod:`copul.Families`.
 
 
-**Properties**
+**Evaluation**
 
-The following properties are available for the above copula families and copulas if they exist and are known:
+All copulas share one API. Called with arguments (scalars, broadcastable arrays,
+an ``(N, 2)`` array or ``u=``, ``v=`` keywords) the methods return numbers;
+called without arguments they return SymPy expressions.
 
-- ``cdf``: Cumulative distribution function
-- ``pdf``: Probability density function
-- ``cond_distr_1``, ``cond_distr_2``: Conditional distribution functions
-- ``lambda_L``, ``lambda_U``: Lower and upper tail dependence coefficients
-- ``rho``, ``tau``, ``xi``: Spearman's rho, Kendall's tau, and Chatterjee's xi
-- ``generator``, ``inv_generator``: Generator and inverse generator for Archimedean copula families
-- ``pickands``: Pickands dependence functions for extreme-value copula families
+- ``cdf``, ``pdf``, ``logpdf``, ``survival_function``: distribution function,
+  density, log-density and survival function
+- ``cond_distr_1``, ``cond_distr_2``: conditional distribution functions, and
+  ``cond_distr_1_inv``, ``cond_distr_2_inv``: conditional quantiles
+- ``generator``, ``inv_generator``: generator and inverse generator of
+  Archimedean families; ``pickands``: Pickands dependence function of
+  extreme-value families
+
+**Dependence measures**
+
+``chatterjees_xi``, ``spearmans_rho``, ``kendalls_tau``, ``blests_nu``,
+``spearmans_footrule``, ``ginis_gamma``, ``blomqvists_beta``, ``hoeffdings_d``,
+``schweizer_wolff_sigma``, ``uniform_distance``, ``lp_distance``,
+``blum_kiefer_rosenblatt``, ``mutual_information``, ``lambda_L`` and
+``lambda_U``, each with the ``method=`` switch described in :doc:`measures`.
 
 **Methods**
 

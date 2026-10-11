@@ -1,10 +1,21 @@
 cff-version: 1.2.0
 message: "If you use copul in your research, please cite it as below."
 title: "copul: copulas and dependence measures in Python"
+abstract: >-
+  copul is a Python package for research on copulas and dependence measures.
+  It combines symbolic copula families (SymPy) with a vectorised numerical
+  API, a numerical engine for rank correlations and measures of dependence
+  such as Chatterjee's xi, exact formulas for checkerboard, Bernstein and
+  shuffle-of-min copulas, statistical estimation and fitting, and research
+  tools for exact regions between measures, optimisation over checkerboard
+  copulas and counterexample search.
 type: software
 authors:
   - family-names: Rockel
     given-names: Marcus
+    orcid: "https://orcid.org/0009-0005-1818-3831"
+    affiliation: "Department of Quantitative Finance, University of Freiburg"
+    email: marcus.rockel@finance.uni-freiburg.de
 version: 0.4.0
 license: MIT
 repository-code: "https://github.com/Corrram/copul"
@@ -15,3 +26,5 @@ keywords:
   - Chatterjee's xi
   - rank correlation
   - checkerboard copula
+  - symbolic computation
+  - Python

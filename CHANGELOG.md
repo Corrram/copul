@@ -143,6 +143,12 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
   configuration; GitHub Actions CI (lint, tests on Python 3.10–3.13, optional
   cvxpy job, build check); `CITATION.cff`; tested README examples; Sphinx
   pages for the new subpackages, the measures and research workflows.
+- Community and release infrastructure: `CONTRIBUTING.md` (support, bug
+  reports, development setup, standards for mathematical contributions),
+  `CODE_OF_CONDUCT.md`, GitHub issue and pull-request templates, a release
+  workflow (tag `vX.Y.Z` → checks, PyPI via trusted publishing, GitHub
+  release with these notes), a JOSS paper draft workflow and the release
+  history below.
 
 ### Changed
 
@@ -187,6 +193,21 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
 
 ### Fixed
 
+- `cp.from_generator` (and `ArchimedeanCopula.from_generator`) raised an
+  `AttributeError`; it now returns a bivariate Archimedean copula family with
+  parameter `theta` (optional `params=` and `theta_interval=`) that matches
+  the built-in families, e.g. Clayton's generator reproduces `cp.Clayton`.
+- `validate_copula` rejected valid copulas whose cdf expression is undefined
+  on the boundary of the unit square (e.g. Gumbel–Barnett), and raised for
+  families without a lambdifiable symbolic cdf (Archimedean and extreme-value
+  families, `XiNuBoundaryCopula`); it now evaluates boundary knots as limits
+  and falls back to the numerical API.
+- `GumbelHougaardEV(theta)` kept `theta` among its free parameters.
+- `GaussianND` (and Sklar joint distributions with Gaussian copulas) in
+  $d \ge 3$ dimensions failed with SciPy < 1.16, i.e. on Python 3.10, because
+  `multivariate_normal.cdf` does not accept `rng=` there (the failing Python
+  3.10 CI job); a seeded fallback now reproduces the result of newer SciPy
+  exactly, so the cdf is deterministic on all supported versions.
 - `BivCheckMin`: Blest's $\nu$ missed the in-cell add-on; `lambda_L` /
   `lambda_U` crashed.
 - `BivCheckW`: Spearman's footrule, Gini's $\gamma$ and Blest's $\nu$ were
@@ -284,6 +305,16 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
 Other scripts calling the renamed measures keep working through the
 deprecated aliases.
 
-## [0.3.8] and earlier
+## Release history before 0.4.0
 
-See the git history.
+Versions before 0.4.0 were published on
+[PyPI](https://pypi.org/project/copul/#history) without a detailed changelog.
+The table summarises them from the git history (PyPI upload dates).
+
+| versions | released | highlights |
+|---|---|---|
+| 0.3.0–0.3.8 | 2025-10-16 – 2025-10-21 | boundary copula families of the exact regions between Chatterjee's $\xi$ and Spearman's $\rho$, Blest's $\nu$ and Spearman's footrule (`XiRhoBoundaryCopula`, `XiNuBoundaryCopula`, `XiPsiApproxLowerBoundaryCopula`); Blest's $\nu$ in `bounds_from_xi`, check-min/check-w copulas and rank-correlation plots; user-facing constructors `cp.from_cdf`, `cp.from_pdf`, `cp.from_generator`, `cp.from_pickands`, `cp.from_matrix` (0.3.7) |
+| 0.2.0–0.2.9 | 2025-03-13 – 2025-10-02 | vectorised cdf, conditional distributions and densities; multivariate Clayton, extreme-value and checkerboard copulas (`CheckPi`, `CheckMin`, `BivCheckW`); Bernstein and shuffle-of-min copulas with closed-form $\rho$, $\tau$, $\xi$; checkerboard copulas from data; CIS, LTD and PLOD verifiers; Spearman's footrule and Gini's $\gamma$; faster samplers (Clayton, Frank, Joe); `validate_copula`; multivariate Fréchet family; `cp.families` split into families, copulas and approximations (0.2.8); `bounds_from_xi` for $\rho$ and $\tau$ (0.2.9) |
+| 0.1.0–0.1.2 | 2024-09-02 – 2025-03-10 | copulas from cdf strings with custom parameter names; checkerboard and upper (check-min) checkerboard copulas, multivariate checkerboard copulas; sampling from arbitrary copulas; Pickands wrapper; `PiOverSigmaMinusPi` |
+| 0.0.7–0.0.17 | 2024-08-08 – 2024-08-20 | first public version of the repository: the 22 Archimedean families of Nelsen (2006), extreme-value, elliptical and further families with symbolic cdfs, densities and conditional distributions; Spearman's $\rho$, Kendall's $\tau$ and Chatterjee's $\xi$; plotting and sampling |
+| 0.0.1–0.0.5 | 2023-05-19 – 2024-04-02 | early pre-releases (before the public repository) |

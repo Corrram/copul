@@ -181,3 +181,27 @@ def test_nearest_correlation():
     assert np.linalg.eigvalsh(B).min() > 0
     GaussianND(B)  # valid
     np.testing.assert_allclose(nearest_correlation(R3), R3)
+
+
+def test_gaussian_cdf_is_reproducible_on_every_scipy():
+    """The 3-d Gaussian copula cdf uses seeded QMC: on SciPy < 1.16 (Python
+    3.10) through a fallback that mirrors ``multivariate_normal.cdf(rng=...)``."""
+    import inspect
+
+    from scipy import stats
+    from scipy.special import ndtri
+
+    from copul.multivariate.elliptical import _CDF_SEED, _seeded_gaussian_cdf
+
+    G = GaussianND(R3)
+    U = np.array([[0.2, 0.3, 0.4], [0.8, 0.7, 0.9], [0.5, 0.5, 1.0]])
+    assert np.array_equal(G.cdf(U), G.cdf(U))  # deterministic
+    X = ndtri(U)
+    fallback = _seeded_gaussian_cdf(X, R3, _CDF_SEED)
+    dist = stats.multivariate_normal(mean=np.zeros(3), cov=R3)
+    if "rng" in inspect.signature(dist.cdf).parameters:
+        np.testing.assert_allclose(
+            fallback, dist.cdf(X, rng=np.random.default_rng(_CDF_SEED)), atol=1e-12
+        )
+    else:
+        np.testing.assert_allclose(fallback, dist.cdf(X), atol=1e-5)
