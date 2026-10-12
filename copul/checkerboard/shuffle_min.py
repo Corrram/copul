@@ -467,6 +467,78 @@ class ShuffleOfMin(BivCoreCopula, CopulaPlottingMixin, CopulaApproximatorMixin):
         """Blest's nu (exact, via the equivalent Min-checkerboard)."""
         return self.as_checkerboard().blests_nu()
 
+    def blests_eta(self) -> float:
+        """Symmetrized Blest coefficient (exact)."""
+        return self.as_checkerboard().blests_eta()
+
+    def hoeffdings_d(self) -> float:
+        """Hoeffding's Lebesgue L² index Phi² (exact)."""
+        return self.as_checkerboard().hoeffdings_d()
+
+    def hoeffding_d(self) -> float:
+        """Hoeffding's copula-measure integral D (exact)."""
+        return self.as_checkerboard().hoeffding_d()
+
+    def blum_kiefer_rosenblatt(self) -> float:
+        """Legacy name for D (exact)."""
+        return self.as_checkerboard().hoeffding_d()
+
+    def bergsma_dassios(self) -> float:
+        """Bergsma--Dassios sign covariance (exact)."""
+        return self.as_checkerboard().bergsma_dassios()
+
+    def schweizer_wolff_sigma(self) -> float:
+        """L¹ distance to independence (exact)."""
+        return self.as_checkerboard().schweizer_wolff_sigma()
+
+    def uniform_distance(self) -> float:
+        """Uniform distance to independence (exact)."""
+        return self.as_checkerboard().uniform_distance()
+
+    def savage_score_correlation(self) -> float:
+        """Savage scores (exact diagonal integrals)."""
+        return self.as_checkerboard().savage_score_correlation()
+
+    def normal_score_correlation(self) -> float:
+        """Closed for the identity shuffle; otherwise numerical diagonal integrals."""
+        if self.is_identity:
+            return 1.0
+        raise NotImplementedError(
+            "Normal scores on off-diagonal singular cells require numerical integration"
+        )
+
+    def trutschnig_zeta(self) -> float:
+        """Zeta1 = 1 for an invertible shuffle."""
+        return 1.0
+
+    def siburg_stoimenov(self) -> float:
+        """Omega = 1 for an invertible shuffle."""
+        return 1.0
+
+    def correlation_ratio(self, *, condition_on_y=False) -> float:
+        """Squared correlation ratio = 1 in either direction."""
+        return 1.0
+
+    def integrated_r2(self, *, condition_on_y=False) -> float:
+        """Integrated R² = 1 in either direction."""
+        return 1.0
+
+    def maximal_correlation(self, *, max_grid=256) -> float:
+        """Maximal correlation = 1 for an invertible shuffle."""
+        return 1.0
+
+    def linfoot_correlation(self) -> float:
+        """Linfoot correlation = 1 for a singular copula."""
+        return 1.0
+
+    def hellinger_correlation(self) -> float:
+        """Hellinger correlation = 1 for a singular copula."""
+        return 1.0
+
+    def silvey_delta(self) -> float:
+        """Silvey's total variation = 1 for a singular copula."""
+        return 1.0
+
     def spearmans_footrule(self, *args, **kwargs) -> float:
         """Spearman's footrule (exact)."""
         return self.as_checkerboard().spearmans_footrule()

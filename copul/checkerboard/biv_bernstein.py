@@ -10,9 +10,8 @@ basis vectors :math:`b_m(u) = (B_{m,1}(u),\dots,B_{m,m}(u))`,
    \partial_1 C(u,v) = b_m'(u)^\top D\, b_n(v),\quad
    \partial_2 C(u,v) = b_m(u)^\top D\, b_n'(v).
 
-All dependence measures reduce to integrals of products of Bernstein
-polynomials (polynomials of degree at most ``2 max(m, n)``), which are
-evaluated *exactly* by Gauss--Legendre quadrature or Beta-function identities:
+Polynomial dependence integrals are evaluated *exactly* by degree-matched
+Gauss--Legendre quadrature or Beta-function identities:
 
 * ``rho  = 12 sum_ij theta_ij (m - i)(n - j) / ((m+1)(n+1)) - 3``
 * ``nu   = 12 sum_ij theta_ij (m - i)(m - i + 1)(n - j) / ((m+1)(m+2)(n+1)) - 2``
@@ -30,7 +29,8 @@ import math
 from typing import TypeAlias
 
 import numpy as np
-from scipy.special import betaln, gammaln
+from scipy.linalg import svdvals
+from scipy.special import betaln, digamma, gammaln
 
 from copul.checkerboard import _biv_engine as eng
 from copul.checkerboard.bernstein import (
@@ -155,6 +155,84 @@ class BivBernsteinCopula(BernsteinCopula, BivCoreCopula, CopulaSamplingMixin):
         wi = (m - i) * (m - i + 1.0) / ((m + 1.0) * (m + 2.0))
         wj = (n - j) / (n + 1.0)
         return float(12.0 * wi @ self.theta @ wj - 2.0)
+
+    def blests_eta(self) -> float:
+        """Symmetrized Blest coefficient (exact)."""
+        return (self.blests_nu() + self.transpose().blests_nu()) / 2
+
+    def siburg_stoimenov(self) -> float:
+        """Siburg--Stoimenov coefficient (exact polynomial moments)."""
+        # Center first to avoid cancellation in xi = 6*int h²-2 near Pi.
+        first = self._integrate_polynomial(
+            lambda u, v: (self.cond_distr_1(u, v) - v) ** 2, 2 * self.m - 2, 2 * self.n
+        )
+        second = self._integrate_polynomial(
+            lambda u, v: (self.cond_distr_2(u, v) - u) ** 2, 2 * self.m, 2 * self.n - 2
+        )
+        return math.sqrt(3 * (first + second))
+
+    def _integrate_polynomial(self, function, degree_u, degree_v):
+        u, wu = _gl_nodes(degree_u)
+        v, wv = _gl_nodes(degree_v)
+        return float(wu @ function(u[:, None], v[None, :]) @ wv)
+
+    def hoeffdings_d(self) -> float:
+        """Phi² = 90 int (C-uv)², exact polynomial integral."""
+        return 90 * self._integrate_polynomial(
+            lambda u, v: (self.cdf(u, v) - u * v) ** 2, 2 * self.m, 2 * self.n
+        )
+
+    def hoeffding_d(self) -> float:
+        """D = 30 int (C-uv)² c, exact polynomial integral."""
+        return 30 * self._integrate_polynomial(
+            lambda u, v: (self.cdf(u, v) - u * v) ** 2 * self.pdf(u, v),
+            3 * self.m - 1,
+            3 * self.n - 1,
+        )
+
+    def blum_kiefer_rosenblatt(self) -> float:
+        """Legacy name for the copula-measure integral D (exact)."""
+        return self.hoeffding_d()
+
+    def bergsma_dassios(self) -> float:
+        """Bergsma--Dassios sign covariance (exact polynomial moments)."""
+        return 0.4 * self.hoeffding_d() + (4 / 15) * self.hoeffdings_d()
+
+    def correlation_ratio(self, *, condition_on_y=False) -> float:
+        """Squared correlation ratio (exact polynomial moments)."""
+        copula = self.transpose() if condition_on_y else self
+        u, wu = _gl_nodes(2 * copula.m - 2)
+        v, wv = _gl_nodes(copula.n)
+        means = (copula.cond_distr_1(u[:, None], v[None, :]) - v) @ wv
+        return float(12 * wu @ (means**2))
+
+    def integrated_r2(self, *, condition_on_y=False) -> float:
+        """Exact polynomial integral after cancelling the factors v(1-v)."""
+        copula = self.transpose() if condition_on_y else self
+        return copula._integrate_polynomial(
+            lambda u, v: (copula.cond_distr_1(u, v) - v) ** 2 / (v * (1 - v)),
+            2 * copula.m - 2,
+            2 * copula.n - 2,
+        )
+
+    def savage_score_correlation(self) -> float:
+        """Beta-mixture score expectations, expressed as digamma differences."""
+        a = digamma(self.m + 1) - digamma(self.m - np.arange(self.m))
+        b = digamma(self.n + 1) - digamma(self.n - np.arange(self.n))
+        return float(a @ self.theta @ b - 1)
+
+    def maximal_correlation(self, *, max_grid=256) -> float:
+        """Exact finite-rank Markov operator norm, independent of max_grid.
+
+        The density has degree (m-1,n-1). Degree-matched Gauss weights give
+        isometries on these polynomial spaces, so the weighted SVD preserves
+        the nonzero singular values of the centered integral operator.
+        """
+        u, wu = _gl_nodes(2 * self.m - 2)
+        v, wv = _gl_nodes(2 * self.n - 2)
+        centered = self.pdf(u[:, None], v[None, :]) - 1
+        matrix = np.sqrt(wu[:, None] * wv[None, :]) * centered
+        return float(np.clip(svdvals(matrix)[0], 0, 1))
 
     def _diag_weights(self, anti=False):
         m, n = self.m, self.n

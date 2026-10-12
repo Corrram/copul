@@ -11,6 +11,7 @@ import sympy as sp
 from copul._lazy import mcolors, plt
 from copul.family.copula_graphs import CopulaGraphs
 from copul.family.core import numeric_api as _numeric_api
+from copul.family.core.rank_measures import RankMeasuresMixin
 from copul.family.core.theory_mixin import TheoryMixin
 from copul.family.rank_correlation_plotter import RankCorrelationPlotter
 from copul.family.tp2_verifier import TP2Verifier
@@ -56,7 +57,7 @@ class _hybridmethod:
         return bound
 
 
-class BivCoreCopula(TheoryMixin):
+class BivCoreCopula(RankMeasuresMixin, TheoryMixin):
     """
     Base class for bivariate copulas using symbolic expressions.
 

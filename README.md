@@ -437,7 +437,7 @@ programmatically.
 
 ```bash
 pip install -e ".[dev]"
-make all         # clean, format, upgrade dependencies, docs, build, fast tests (requires uv)
+make all         # clean, upgrade dependencies, format, docs, build, fast tests (requires uv)
 make test        # fast test suite (pytest -m "not slow and not instable" -n auto)
 make test-all    # including slow tests
 make lint        # ruff

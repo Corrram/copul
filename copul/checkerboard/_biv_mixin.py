@@ -14,6 +14,7 @@ from __future__ import annotations
 import numpy as np
 
 from copul.checkerboard import _biv_engine as eng
+from copul.checkerboard import _rank_measures as rank
 
 
 class BivCheckerboardMixin:
@@ -85,6 +86,76 @@ class BivCheckerboardMixin:
     def blests_nu(self, *args, **kwargs) -> float:
         """Blest's nu (exact)."""
         return eng.blests_nu(self.matr, self._kernel_signs())
+
+    def blests_eta(self) -> float:
+        """Symmetrized Blest coefficient (exact)."""
+        return rank.blests_eta(self.matr, self._kernel_signs())
+
+    def siburg_stoimenov(self) -> float:
+        """Square root of the mean of the two directional xi coefficients (exact)."""
+        return rank.siburg_stoimenov(self.matr, self._kernel_signs())
+
+    def trutschnig_zeta(self) -> float:
+        """Trutschnig's zeta1 (exact, including singular cells)."""
+        return rank.trutschnig_zeta(self.matr, self._kernel_signs())
+
+    def hoeffdings_d(self) -> float:
+        """Hoeffding's Lebesgue L² index Phi² (exact)."""
+        return rank.hoeffdings_d(self.matr, self._kernel_signs())
+
+    def hoeffding_d(self) -> float:
+        """Hoeffding's D, integrated against the copula measure (exact)."""
+        return rank.hoeffding_d(self.matr, self._kernel_signs())
+
+    def blum_kiefer_rosenblatt(self) -> float:
+        """Legacy name for the copula-measure integral D (exact)."""
+        return rank.hoeffding_d(self.matr, self._kernel_signs())
+
+    def bergsma_dassios(self) -> float:
+        """Bergsma--Dassios sign covariance, normalized to maximum 2/3 (exact)."""
+        return rank.bergsma_dassios(self.matr, self._kernel_signs())
+
+    def schweizer_wolff_sigma(self) -> float:
+        """L¹ distance to independence (exact polynomial/logarithmic formula)."""
+        return rank.schweizer_wolff_sigma(self.matr, self._kernel_signs())
+
+    def uniform_distance(self) -> float:
+        """Uniform distance to independence (exact)."""
+        return rank.uniform_distance(self.matr, self._kernel_signs())
+
+    def normal_score_correlation(self) -> float:
+        """Closed for Pi cells and aligned global Min/W diagonals; otherwise numerical."""
+        return rank.normal_score_correlation(self.matr, self._kernel_signs())
+
+    def savage_score_correlation(self) -> float:
+        """Savage scores (exact cell integrals using logarithms and dilogarithms)."""
+        return rank.savage_score_correlation(self.matr, self._kernel_signs())
+
+    def correlation_ratio(self, *, condition_on_y=False) -> float:
+        """Squared correlation ratio (exact); optionally condition on V."""
+        return rank.correlation_ratio(
+            self.matr, self._kernel_signs(), condition_on_y=condition_on_y
+        )
+
+    def integrated_r2(self, *, condition_on_y=False) -> float:
+        """Integrated R² (exact logarithmic formula); optionally condition on V."""
+        return rank.integrated_r2(self.matr, self._kernel_signs(), condition_on_y=condition_on_y)
+
+    def maximal_correlation(self, *, max_grid=256) -> float:
+        """Exact finite matrix norms; independent of the numerical ``max_grid`` option."""
+        return rank.maximal_correlation(self.matr, self._kernel_signs())
+
+    def linfoot_correlation(self) -> float:
+        """Linfoot correlation (exact), equal to one with positive singular mass."""
+        return rank.linfoot_correlation(self.matr, self._kernel_signs())
+
+    def hellinger_correlation(self) -> float:
+        """Hellinger correlation (exact, accounting for singular mass)."""
+        return rank.hellinger_correlation(self.matr, self._kernel_signs())
+
+    def silvey_delta(self) -> float:
+        """Silvey's total variation from independence (exact)."""
+        return rank.silvey_delta(self.matr, self._kernel_signs())
 
     def spearmans_footrule(self, *args, **kwargs) -> float:
         """Spearman's footrule (exact, any ``m x n`` grid)."""

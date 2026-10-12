@@ -382,66 +382,11 @@ def zeta1_from_h(h1: Func, *, rtol=DEFAULT_RTOL, atol=DEFAULT_ATOL, full_output=
     return _ret(*_zeta1_h(h1, rtol, atol), full_output)
 
 
-def _int_poly_abs(w0, w1, c0, c1):
-    r""":math:`\int_0^1 (w_0 + w_1 b)\,|c_0 + c_1 b|\,db` exactly (vectorized)."""
-    w0, w1, c0, c1 = np.broadcast_arrays(*(np.asarray(a, dtype=float) for a in (w0, w1, c0, c1)))
-
-    def prim(b):  # antiderivative of (w0 + w1 b)(c0 + c1 b)
-        return w0 * c0 * b + (w0 * c1 + w1 * c0) * b**2 / 2 + w1 * c1 * b**3 / 3
-
-    with np.errstate(all="ignore"):
-        r = np.where(c1 != 0, -c0 / np.where(c1 != 0, c1, 1.0), -1.0)
-    r = np.where((r > 0) & (r < 1), r, 1.0)
-    s0 = np.sign(c0 + c1 * 0.5 * r)  # sign on (0, r)
-    s1 = np.sign(c0 + c1 * 0.5 * (1 + r))  # sign on (r, 1)
-    zero = np.zeros_like(r)
-    return s0 * (prim(r) - prim(zero)) + s1 * (prim(np.ones_like(r)) - prim(r))
-
-
 def zeta1_checkerboard(P, S=None) -> float:
-    r"""Exact :math:`\zeta_1` of a bivariate checkerboard copula.
+    """Exact zeta1; see :func:`copul.checkerboard._rank_measures.trutschnig_zeta`."""
+    from copul.checkerboard._rank_measures import trutschnig_zeta
 
-    ``P`` is the ``m x n`` mass matrix (normalized internally) and ``S`` the
-    kernel sign matrix (``0``: :math:`\Pi`, ``1``: :math:`M`, ``-1``:
-    :math:`W` cells, see :mod:`copul.checkerboard._biv_engine`).  For
-    :math:`u` in row :math:`i` (local coordinate :math:`a`) and :math:`v` in
-    column :math:`j` (local :math:`b`, :math:`v=(j+b)/n`)
-
-    .. math::
-
-       \partial_1 C(u,v) = m R_{ij} + m\Delta_{ij}\,k(a,b),\qquad
-       R_{ij} = \textstyle\sum_{j'<j}\Delta_{ij'},
-
-    with :math:`k=b` for :math:`\Pi` cells and :math:`k=\mathbf 1\{b>a\}`
-    (:math:`M`) resp. :math:`\mathbf 1\{a+b>1\}` (:math:`W`).  For fixed
-    :math:`b` the indicator equals one on an :math:`a`-set of measure
-    :math:`b` in both singular cases, so with :math:`A = mR_{ij} - j/n` and
-    :math:`p = m\Delta_{ij}` the cell contributes
-
-    .. math::
-
-       \frac{1}{mn}\int_0^1 |A + (p - \tfrac1n) b|\,db \;(\Pi),\qquad
-       \frac{1}{mn}\int_0^1 \bigl[b\,|A + p - \tfrac bn|
-       + (1-b)\,|A - \tfrac bn|\bigr]\,db \;(M, W),
-
-    integrals of piecewise polynomials evaluated exactly.
-    """
-    P = np.asarray(P, dtype=float)
-    P = P / P.sum()
-    m, n = P.shape
-    if S is None:
-        S = np.zeros((m, n), dtype=int)
-    S = np.broadcast_to(np.asarray(S, dtype=int), (m, n))
-    R = np.zeros((m, n))
-    R[:, 1:] = np.cumsum(P, axis=1)[:, :-1]
-    j = np.arange(n)[None, :]
-    A = m * R - j / n
-    p = m * P
-    c = 1.0 / n
-    pi_part = _int_poly_abs(1.0, 0.0, A, p - c)
-    sing_part = _int_poly_abs(0.0, 1.0, A + p, -c) + _int_poly_abs(1.0, -1.0, A, -c)
-    cell = np.where(S == 0, pi_part, sing_part)
-    return float(3.0 * cell.sum() / (m * n))
+    return trutschnig_zeta(P, S)
 
 
 # ---------------------------------------------------------------------------
@@ -708,7 +653,9 @@ def _evaluate(key, funcs, rtol, atol, p, prefer_h):
             return f(funcs.get("h1"), full_output=True)
         f = lambda_l_from_cdf if key == "lambda_l" else lambda_u_from_cdf
         return f(funcs.get("cdf"), full_output=True)
-    raise KeyError(key)  # pragma: no cover
+    from copul.measures.atlas import evaluate
+
+    return evaluate(key, funcs, rtol, atol)
 
 
 def _collect(keys, fn, full_output):

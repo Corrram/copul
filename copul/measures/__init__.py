@@ -75,6 +75,7 @@ from copul.measures.quadrature import (
     integrate_2d,
 )
 from copul.measures.registry import (
+    ATLAS_MEASURES,
     DEFAULT_MEASURES,
     MEASURES,
     Measure,
@@ -84,6 +85,7 @@ from copul.measures.registry import (
 )
 
 __all__ = [
+    "ATLAS_MEASURES",
     "DEFAULT_MEASURES",
     "MEASURES",
     "MEASURE_METHODS",

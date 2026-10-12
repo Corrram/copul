@@ -75,6 +75,18 @@ MEASURE_METHODS = (
     "blum_kiefer_rosenblatt",
     "mutual_information",
     "trutschnig_zeta",
+    "blests_eta",
+    "normal_score_correlation",
+    "savage_score_correlation",
+    "siburg_stoimenov",
+    "hoeffding_d",
+    "bergsma_dassios",
+    "correlation_ratio",
+    "maximal_correlation",
+    "integrated_r2",
+    "linfoot_correlation",
+    "hellinger_correlation",
+    "silvey_delta",
     "lambda_L",
     "lambda_U",
 )
@@ -108,6 +120,18 @@ _METHOD_TO_KEY = {
     "blum_kiefer_rosenblatt": "bkr",
     "mutual_information": "mutual_information",
     "trutschnig_zeta": "zeta1",
+    "blests_eta": "eta",
+    "normal_score_correlation": "normal_score",
+    "savage_score_correlation": "savage_score",
+    "siburg_stoimenov": "omega",
+    "hoeffding_d": "hoeffding_d",
+    "bergsma_dassios": "tau_star",
+    "correlation_ratio": "chi",
+    "maximal_correlation": "maximal_correlation",
+    "integrated_r2": "integrated_r2",
+    "linfoot_correlation": "linfoot",
+    "hellinger_correlation": "hellinger",
+    "silvey_delta": "silvey",
     "lambda_L": "lambda_l",
     "lambda_U": "lambda_u",
 }
@@ -256,8 +280,13 @@ def dispatch(
 
     # -- measure options ---------------------------------------------------
     opts: dict[str, Any] = {}
-    if method_name == "chatterjees_xi" and "condition_on_y" in kwargs:
+    if (
+        method_name in ("chatterjees_xi", "correlation_ratio", "integrated_r2")
+        and "condition_on_y" in kwargs
+    ):
         opts["condition_on_y"] = bool(kwargs.pop("condition_on_y"))
+    if method_name == "maximal_correlation" and "max_grid" in kwargs:
+        opts["max_grid"] = kwargs.pop("max_grid")
     if method_name == "lp_distance":
         if "p" in kwargs:
             opts["p"] = kwargs.pop("p")
@@ -280,7 +309,7 @@ def dispatch(
         opts["condition_on_y"], args = bool(args[0]), ()
     if param_kw:
         copula._set_params((), param_kw)
-    if opts.get("condition_on_y"):
+    if opts.get("condition_on_y") and method_name == "chatterjees_xi":
         key = "xi_2"
 
     symbolic_only = bool(getattr(impl, "__copul_symbolic__", False))
@@ -385,6 +414,12 @@ def dispatch(
 def _numeric(copula, key, opts, eng) -> MeasureResult:
     rtol = float(eng.get("rtol", DEFAULT_RTOL))
     atol = float(eng.get("atol", DEFAULT_ATOL))
+    from copul.measures.atlas import evaluate_copula
+
+    result = evaluate_copula(copula, key, opts, rtol, atol)
+    if result is not None:
+        val, err, source = result
+        return MeasureResult(key, val, err, "numeric", {"source": {key: source}})
     free = free_parameters(copula)
     if not free:
         try:
@@ -444,6 +479,12 @@ def _monte_carlo(copula, key, eng) -> MeasureResult:
         val = 4 * np.mean((U <= 0.5) & (V <= 0.5)) - 1
     elif key == "nu":
         val = 2 - 12 * np.mean((1 - U) ** 2 * V)
+    elif key == "eta":
+        val = 2 - 6 * np.mean((1 - U) ** 2 * V + (1 - V) ** 2 * U)
+    elif key == "normal_score":
+        val = np.corrcoef(stats.norm.ppf(U), stats.norm.ppf(V))[0, 1]
+    elif key == "savage_score":
+        val = np.corrcoef(-np.log1p(-U), -np.log1p(-V))[0, 1]
     else:
         raise NotImplementedError(f"No Monte Carlo estimator for {key!r}.")
     return MeasureResult(

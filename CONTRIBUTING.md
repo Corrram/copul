@@ -54,11 +54,16 @@ pip install -e ".[dev,docs]"                        # dev includes cvxpy
 With [uv](https://docs.astral.sh/uv/) the equivalent is `make install`.
 
 Run `make all` for the complete development workflow: clean generated
-artifacts, format, upgrade dependencies, build the documentation, build and
+artifacts, upgrade dependencies, format, build the documentation, build and
 validate the distributions, then run the fast test suite. The stages run
 sequentially even with `make -j`. This command updates `uv.lock` and
 `requirements.txt` and applies Ruff's safe fixes and formatting. The upgrade
-includes both the `dev` and `docs` extras.
+includes both the `dev` and `docs` extras and runs before formatting so the
+tools are installed first. Tool commands use `uv run --active --no-sync`:
+cleanup, formatting, documentation and tests do not reinstall dependencies.
+Use `make install` or `make upgrade` to explicitly update the environment.
+On Windows, close notebooks and test processes using this environment before
+upgrading: they can keep package files open and prevent their replacement.
 
 Individual targets also support a chosen interpreter, for example
 `make test UV= PYTHON=.venv/Scripts/python.exe` on Windows.

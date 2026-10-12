@@ -14,7 +14,24 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
 
 ### Added
 
-- `make all` runs cleanup, formatting, dependency upgrades, documentation,
+- Closed checkerboard formulas for all 23 atlas coefficients on Pi cells,
+  and all except general singular normal scores on Min/W/mixed cells and
+  shuffles. Includes polynomial/logarithmic distance and integrated R²
+  formulas, singular Hoeffding integrals, and dilogarithmic Savage scores.
+  Normal scores on off-diagonal singular cells retain numerical fallback.
+  Bernstein copulas gain exact polynomial measures, Savage scores and
+  finite-rank maximal correlation; `method="closed"` exposes exact routes.
+
+- All 23 population coefficients from `pairwise-exact-regions.tex` through
+  the shared measure API, selectable with `copul.measures.ATLAS_MEASURES`.
+  Adds symmetrized Blest, normal and Savage scores, Siburg--Stoimenov,
+  Bergsma--Dassios, correlation ratio, maximal correlation, integrated R²,
+  Linfoot, Hellinger and Silvey coefficients. Includes checkerboard formulas,
+  singular-mass handling, symbolic definitions and numerical diagnostics.
+  The explicit `hoeffding_d` name selects the copula-measure integral;
+  existing `hoeffdings_d`/`phi2` and `bkr` semantics remain compatible.
+
+- `make all` runs cleanup, dependency upgrades, formatting, documentation,
   package builds and fast tests in sequence, including under parallel make.
   Dependency upgrades include the documentation extras.
 - **Copula mixture fitting**: `fit_mixture` estimates component parameters
@@ -215,6 +232,9 @@ fixes. See the [migration guide](#migration-guide-03x--040) below.
 
 ### Fixed
 
+- Makefile tool commands use `uv run --no-sync` so cleanup and formatting
+  do not repeatedly reinstall dependencies. `make all` installs/upgrades
+  development tools before formatting and exports the resulting lockfile.
 - The xi--nu region's boundary evaluation and inversion no longer rely on
   extended precision. Algebraically stable formulas prevent cancellation
   at large parameters, restoring correct boundary copulas and reversed

@@ -2,7 +2,8 @@
 
 # Package manager / interpreter (override e.g. with `make test UV=`)
 UV := uv
-RUN := $(if $(UV),$(UV) run --active,)
+# Dependency changes belong to install/upgrade, not each tool invocation.
+RUN := $(if $(UV),$(UV) run --active --no-sync,)
 PYTHON := python
 PY := $(RUN) $(PYTHON)
 PYTEST := $(PY) -m pytest
@@ -16,7 +17,7 @@ DOCS_OUT := docs/build/html
 FAST := -m "not slow and not instable"
 
 help:
-	@echo "all       clean, format, upgrade, docs, build and fast tests (in order)"
+	@echo "all       clean, upgrade, format, docs, build and fast tests (in order)"
 	@echo "install   editable install with dev, docs and optim extras"
 	@echo "test      fast test suite (parallel)"
 	@echo "test-all  all tests including slow and instable ones"
@@ -34,8 +35,8 @@ help:
 # Recursive invocations keep the stages ordered, including with `make -j`.
 all:
 	$(MAKE) clean
-	$(MAKE) format
 	$(MAKE) upgrade
+	$(MAKE) format
 	$(MAKE) docs
 	$(MAKE) build
 	$(MAKE) test
@@ -86,4 +87,4 @@ clean: clean-build
 
 upgrade:
 	$(UV) sync --active --upgrade --extra dev --extra docs
-	$(UV) export --format requirements-txt --extra dev --extra docs --no-hashes --output-file requirements.txt
+	$(UV) export --frozen --format requirements-txt --extra dev --extra docs --no-hashes --output-file requirements.txt

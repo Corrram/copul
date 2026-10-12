@@ -24,7 +24,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
+from copul.measures.atlas_registry import ATLAS_MEASURES, atlas_measures
+
 __all__ = [
+    "ATLAS_MEASURES",
     "DEFAULT_MEASURES",
     "MEASURES",
     "Measure",
@@ -297,6 +300,8 @@ _MEASURE_LIST: list[Measure] = [
         doc="Numerically estimated by extrapolation; closed forms should be preferred.",
     ),
 ]
+
+_MEASURE_LIST.extend(atlas_measures(Measure))
 
 #: Mapping canonical key -> :class:`Measure`.
 MEASURES: dict[str, Measure] = {m.key: m for m in _MEASURE_LIST}
