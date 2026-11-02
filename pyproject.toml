@@ -44,7 +44,7 @@ dependencies = [
     "numpy>=2.0",
     "scipy>=1.14",
     "sympy>=1.14",
-    "pandas>=2.2",
+    "pandas>=3.0.0",
     "matplotlib>=3.9",
     "statsmodels>=0.14",
 ]

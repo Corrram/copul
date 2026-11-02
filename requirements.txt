@@ -3,7 +3,7 @@
 -e .
 alabaster==1.0.0
     # via sphinx
-anyio==4.15.1
+anyio==4.16.0
     # via
     #   httpx
     #   jupyter-server
@@ -15,11 +15,11 @@ argon2-cffi-bindings==26.1.0
     # via argon2-cffi
 arrow==1.4.0
     # via isoduration
-ast-serialize==0.12.1
+ast-serialize==0.13.1
     # via mypy
 asttokens==3.0.2
     # via stack-data
-async-lru==2.3.0
+async-lru==2.4.0
     # via jupyterlab
 attrs==26.1.0
     # via
@@ -37,7 +37,7 @@ bleach==6.4.0
     # via nbconvert
 build==1.6.1
     # via copul
-certifi==2026.7.22
+certifi==2026.10.23
     # via
     #   httpcore
     #   httpx
@@ -71,7 +71,9 @@ contourpy==1.3.3 ; python_full_version == '3.11.*'
     # via matplotlib
 contourpy==1.4.0 ; python_full_version >= '3.12'
     # via matplotlib
-coverage==7.16.2
+coverage==7.16.2 ; python_full_version < '3.11'
+    # via pytest-cov
+coverage==7.17.0 ; python_full_version >= '3.11'
     # via pytest-cov
 cryptography==50.0.2 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
     # via secretstorage
@@ -106,11 +108,11 @@ execnet==2.1.2
     # via pytest-xdist
 executing==2.3.0
     # via stack-data
-fastjsonschema==2.22.2
+fastjsonschema==2.22.3
     # via nbformat
 fonttools==4.65.0 ; python_full_version < '3.11'
     # via matplotlib
-fonttools==4.66.1 ; python_full_version >= '3.11'
+fonttools==4.68.0 ; python_full_version >= '3.11'
     # via matplotlib
 formulaic==1.2.2
     # via statsmodels
@@ -134,10 +136,12 @@ idna==3.20
     #   requests
 imagesize==2.0.1
     # via sphinx
-importlib-metadata==9.0.1 ; (python_full_version < '3.10.2' and platform_machine == 'ppc64le') or (python_full_version < '3.10.2' and platform_machine == 's390x') or (python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x')
+importlib-metadata==9.0.1 ; (python_full_version < '3.10.2' and platform_machine == 'ppc64le') or (python_full_version < '3.10.2' and platform_machine == 's390x') or (python_full_version < '3.11' and platform_machine != 'ppc64le' and platform_machine != 's390x')
     # via
     #   build
     #   keyring
+importlib-metadata==10.1.0 ; python_full_version == '3.11.*' and platform_machine != 'ppc64le' and platform_machine != 's390x'
+    # via keyring
 iniconfig==2.3.1
     # via pytest
 interface-meta==2.0.1
@@ -157,7 +161,7 @@ ipython==8.39.0 ; python_full_version < '3.11'
     #   ipykernel
     #   ipywidgets
     #   jupyter-console
-ipython==9.17.1 ; python_full_version >= '3.11'
+ipython==9.18.0 ; python_full_version >= '3.11'
     # via
     #   ipykernel
     #   ipywidgets
@@ -174,7 +178,7 @@ jaraco-context==6.1.2 ; platform_machine != 'ppc64le' and platform_machine != 's
     # via keyring
 jaraco-functools==4.6.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x'
     # via keyring
-jedi==0.20.0
+jedi==0.20.1
     # via ipython
 jeepney==0.9.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux'
     # via
@@ -192,7 +196,7 @@ joblib==1.6.0
     # via osqp
 json5==0.17.3
     # via jupyterlab-server
-jsonpointer==3.2.1
+jsonpointer==3.7
     # via jsonschema
 jsonschema==4.26.0
     # via
@@ -202,7 +206,7 @@ jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
     # via jsonschema
 jupyter==1.1.1
-jupyter-builder==1.2.3
+jupyter-builder==1.2.4
     # via
     #   jupyterlab
     #   notebook
@@ -238,7 +242,7 @@ jupyter-server==2.21.1
     #   notebook-shim
 jupyter-server-terminals==0.5.4
     # via jupyter-server
-jupyterlab==4.6.4
+jupyterlab==4.6.5
     # via
     #   jupyter
     #   notebook
@@ -278,23 +282,27 @@ matplotlib-inline==0.2.2
     #   ipython
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.3.4
+mistune==3.4.0
     # via nbconvert
-more-itertools==11.1.0 ; platform_machine != 'ppc64le' and platform_machine != 's390x'
+more-itertools==11.1.0 ; python_full_version < '3.11' and platform_machine != 'ppc64le' and platform_machine != 's390x'
+    # via
+    #   jaraco-classes
+    #   jaraco-functools
+more-itertools==11.2.1 ; python_full_version >= '3.11' and platform_machine != 'ppc64le' and platform_machine != 's390x'
     # via
     #   jaraco-classes
     #   jaraco-functools
 mpmath==1.3.0
     # via sympy
-mypy==2.4.0
+mypy==2.4.1
     # via copul
 mypy-extensions==1.1.0
     # via mypy
-narwhals==2.27.1
+narwhals==2.28.0
     # via formulaic
 nbclient==0.11.0
     # via nbconvert
-nbconvert==7.17.1
+nbconvert==7.17.2
     # via
     #   jupyter
     #   jupyter-server
@@ -307,7 +315,7 @@ nest-asyncio2==1.7.4
     # via ipykernel
 nh3==0.3.7
     # via readme-renderer
-notebook==7.6.3
+notebook==7.6.4
     # via jupyter
 notebook-shim==0.2.4
     # via
@@ -392,7 +400,7 @@ pandas==2.3.3 ; python_full_version < '3.11'
     #   formulaic
     #   seaborn
     #   statsmodels
-pandas==3.0.6 ; python_full_version >= '3.11'
+pandas==3.1.0 ; python_full_version >= '3.11'
     # via
     #   copul
     #   formulaic
@@ -400,7 +408,7 @@ pandas==3.0.6 ; python_full_version >= '3.11'
     #   statsmodels
 pandas-stubs==2.3.3.260113 ; python_full_version < '3.11'
     # via copul
-pandas-stubs==3.0.5.260914 ; python_full_version >= '3.11'
+pandas-stubs==3.1.0.261029 ; python_full_version >= '3.11'
     # via copul
 pandocfilters==1.5.1
     # via nbconvert
@@ -412,13 +420,15 @@ patsy==1.0.3
     # via statsmodels
 pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
     # via ipython
-pillow==12.3.0
+pillow==12.3.0 ; python_full_version < '3.11'
+    # via matplotlib
+pillow==13.0.0 ; python_full_version >= '3.11'
     # via matplotlib
 platformdirs==4.12.4 ; python_full_version < '3.11'
     # via jupyter-core
-platformdirs==4.13.0 ; python_full_version >= '3.11'
+platformdirs==4.14.3 ; python_full_version >= '3.11'
     # via jupyter-core
-pluggy==1.6.0
+pluggy==1.7.0
     # via
     #   pytest
     #   pytest-cov
@@ -428,7 +438,7 @@ prompt-toolkit==3.0.53
     # via
     #   ipython
     #   jupyter-console
-psutil==7.2.2 ; (python_full_version < '3.11' and sys_platform == 'cygwin') or (python_full_version < '3.11' and sys_platform == 'emscripten') or (sys_platform != 'cygwin' and sys_platform != 'emscripten')
+psutil==7.2.2 ; (python_full_version < '3.11' and sys_platform == 'android') or (python_full_version < '3.11' and sys_platform == 'cygwin') or (python_full_version < '3.11' and sys_platform == 'emscripten') or (sys_platform != 'android' and sys_platform != 'cygwin' and sys_platform != 'emscripten')
     # via
     #   ipykernel
     #   ipython
@@ -438,7 +448,9 @@ ptyprocess==0.7.0 ; os_name != 'nt' or (sys_platform != 'emscripten' and sys_pla
     #   terminado
 pure-eval==0.2.4
     # via stack-data
-pycparser==3.11 ; implementation_name != 'PyPy'
+pycparser==3.11 ; python_full_version < '3.11' and implementation_name != 'PyPy'
+    # via cffi
+pycparser==3.12 ; python_full_version >= '3.11' and implementation_name != 'PyPy'
     # via cffi
 pygments==2.21.0
     # via
@@ -454,7 +466,7 @@ pyparsing==3.3.3
     # via matplotlib
 pyproject-hooks==1.3.3
     # via build
-pytest==9.1.1
+pytest==9.2.0
     # via
     #   copul
     #   pytest-cov
@@ -463,7 +475,13 @@ pytest-cov==7.1.0
     # via copul
 pytest-xdist==3.8.0
     # via copul
-python-dateutil==2.9.0.post0
+python-dateutil==3.0.0 ; python_full_version < '3.11'
+    # via
+    #   arrow
+    #   jupyter-client
+    #   matplotlib
+    #   pandas
+python-dateutil==4.0.0 ; python_full_version >= '3.11'
     # via
     #   arrow
     #   jupyter-client
@@ -471,11 +489,11 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-json-logger==4.2.0
     # via jupyter-events
-pytz==2026.5 ; python_full_version < '3.11'
+pytz==2026.6 ; python_full_version < '3.11'
     # via pandas
 pywin32-ctypes==0.2.3 ; platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'win32'
     # via keyring
-pywinpty==3.0.5 ; os_name == 'nt'
+pywinpty==3.1.2 ; os_name == 'nt'
     # via
     #   jupyter-server
     #   jupyter-server-terminals
@@ -529,7 +547,7 @@ rpds-py==2026.9.1 ; python_full_version >= '3.11'
     # via
     #   jsonschema
     #   referencing
-ruff==0.17.0
+ruff==0.17.3
     # via copul
 scipy==1.15.3 ; python_full_version < '3.11'
     # via
@@ -567,7 +585,7 @@ secretstorage==3.5.0 ; platform_machine != 'ppc64le' and platform_machine != 's3
     # via keyring
 send2trash==2.1.0
     # via jupyter-server
-setuptools==84.0.0
+setuptools==84.2.1
     # via osqp
 six==1.17.0
     # via
@@ -575,9 +593,9 @@ six==1.17.0
     #   rfc3339-validator
 snowballstemmer==3.1.1
     # via sphinx
-soupsieve==2.10 ; python_full_version < '3.11'
+soupsieve==2.10 ; python_full_version < '3.11.5'
     # via beautifulsoup4
-soupsieve==3.0.1 ; python_full_version >= '3.11'
+soupsieve==3.0.4 ; python_full_version >= '3.11.5'
     # via beautifulsoup4
 sparsediffpy==0.6.1 ; python_full_version >= '3.11'
     # via cvxpy
@@ -591,7 +609,12 @@ sphinx==9.0.4 ; python_full_version == '3.11.*'
     #   copul
     #   sphinx-rtd-theme
     #   sphinxcontrib-jquery
-sphinx==9.1.0 ; python_full_version >= '3.12'
+sphinx==9.1.1 ; python_full_version == '3.12.*'
+    # via
+    #   copul
+    #   sphinx-rtd-theme
+    #   sphinxcontrib-jquery
+sphinx==9.2.0 ; python_full_version >= '3.13'
     # via
     #   copul
     #   sphinx-rtd-theme
@@ -606,7 +629,7 @@ sphinxcontrib-htmlhelp==2.1.0
     # via sphinx
 sphinxcontrib-jquery==4.1
     # via sphinx-rtd-theme
-sphinxcontrib-jsmath==1.0.1
+sphinxcontrib-jsmath==2.0.0
     # via sphinx
 sphinxcontrib-qthelp==2.0.0
     # via sphinx
@@ -624,7 +647,7 @@ terminado==0.18.1
     #   jupyter-server-terminals
 tinycss2==1.5.1
     # via bleach
-tomli==2.5.0 ; python_full_version <= '3.11'
+tomli==2.5.0 ; python_full_version < '3.11'
     # via
     #   build
     #   coverage
@@ -633,7 +656,15 @@ tomli==2.5.0 ; python_full_version <= '3.11'
     #   mypy
     #   pytest
     #   sphinx
-tornado==6.5.10
+tornado==6.5.10 ; python_full_version < '3.11'
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-server
+    #   jupyterlab
+    #   notebook
+    #   terminado
+tornado==6.6 ; python_full_version >= '3.11'
     # via
     #   ipykernel
     #   jupyter-client
@@ -660,7 +691,7 @@ traitlets==5.16.1
     #   nbformat
 twine==7.0.0
     # via copul
-types-pytz==2026.5.0.20261006 ; python_full_version < '3.11'
+types-pytz==2026.6.0.20261031 ; python_full_version < '3.11'
     # via pandas-stubs
 typing-extensions==4.16.0
     # via
@@ -676,10 +707,11 @@ typing-extensions==4.16.0
     #   mistune
     #   mypy
     #   referencing
-tzdata==2026.5
+tzdata==2026.6
     # via
     #   arrow
     #   pandas
+    #   python-dateutil
 uri-template==1.3.0
     # via jsonschema
 urllib3==2.8.0
@@ -687,7 +719,7 @@ urllib3==2.8.0
     #   id
     #   requests
     #   twine
-wcwidth==0.9.2
+wcwidth==0.9.4
     # via prompt-toolkit
 webcolors==25.10.0
     # via jsonschema
@@ -699,7 +731,7 @@ websocket-client==1.9.2
     # via jupyter-server
 widgetsnbextension==4.0.16
     # via ipywidgets
-wrapt==2.5.0
+wrapt==2.5.2
     # via formulaic
-zipp==4.1.1 ; (python_full_version < '3.10.2' and platform_machine == 'ppc64le') or (python_full_version < '3.10.2' and platform_machine == 's390x') or (python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x')
+zipp==4.1.2 ; (python_full_version < '3.10.2' and platform_machine == 'ppc64le') or (python_full_version < '3.10.2' and platform_machine == 's390x') or (python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x')
     # via importlib-metadata
